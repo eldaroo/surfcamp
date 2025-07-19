@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-surf-gradient text-white px-6 py-3 rounded-lg font-semibold 
+           hover:shadow-lg transform hover:scale-105 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-ocean-700 border-2 border-ocean-200 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-ocean-50 hover:border-ocean-300 transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100
+           hover:shadow-xl transition-shadow duration-300;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500
+           transition-colors duration-200;
+  }
+  
+  .input-field:invalid {
+    @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+  }
+  
+  .activity-card {
+    @apply card cursor-pointer hover:border-ocean-200 transition-all duration-200;
+  }
+  
+  .activity-card.selected {
+    @apply border-2 border-ocean-500 bg-ocean-50;
+  }
+  
+  .step-indicator {
+    @apply w-8 h-8 rounded-full border-2 flex items-center justify-center 
+           text-sm font-semibold transition-all duration-200;
+  }
+  
+  .step-indicator.active {
+    @apply bg-ocean-500 border-ocean-500 text-white;
+  }
+  
+  .step-indicator.completed {
+    @apply bg-green-500 border-green-500 text-white;
+  }
+  
+  .step-indicator.inactive {
+    @apply bg-gray-100 border-gray-300 text-gray-500;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-ocean-600 to-ocean-800 bg-clip-text text-transparent;
+  }
+} 

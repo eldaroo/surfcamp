@@ -1,0 +1,22 @@
+# Ignore node_modules in any folder
+node_modules/
+**/node_modules/
+
+# Ignore build and deployment folders
+.next/
+dist/
+out/
+.vercel/
+
+# Ignore environment variables
+.env
+.env.local
+.env.*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
