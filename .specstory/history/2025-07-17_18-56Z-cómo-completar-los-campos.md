@@ -523,11 +523,199 @@ Procedo con la implementación.
 
 ---
 
+```bash
+npm install next-intl
+```
 
+```
+PS C:\Users\loko_\OneDrive\Desktop\Escritorio\surfcamp> npm install next-intl
+
+added 12 packages, and audited 434 packages in 8s
+
+158 packages are looking for funding
+  run `npm fund` for details
+
+1 critical severity vulnerability
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+```
+
+---
+
+```diff
+      STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY,
+    },
++   i18n: {
++     locales: ['es', 'en'],
++     defaultLocale: 'es',
++   },
+  }
+  
+```
+
+---
+
+<details>
+            <summary>Listed directory app • **4** results</summary>
+        
+| Name |
+|-------|
+| 📄 `page.tsx` |
+| 📁 `api` |
+| 📄 `globals.css` |
+| 📄 `layout.tsx` |
+
+</details>
+
+---
+
+<details>
+            <summary>Listed directory app/api • **15** results</summary>
+        
+| Name |
+|-------|
+| 📁 `payment` |
+| 📁 `whatsapp` |
+| 📁 `check-ip` |
+| 📁 `debug-prices` |
+| 📁 `compare-requests` |
+| 📁 `test-exact-postman` |
+| 📁 `ip-check` |
+| 📁 `debug-lobby` |
+| 📁 `test-lobby` |
+| 📁 `test-available-rooms` |
+| 📁 `test` |
+| 📁 `activities` |
+| 📁 `reserve` |
+| 📁 `availability` |
+| 📁 `quote` |
+
+</details>
+
+---
+
+<details>
+            <summary>Listed directory app • **4** results</summary>
+        
+| Name |
+|-------|
+| 📄 `page.tsx` |
+| 📁 `api` |
+| 📄 `globals.css` |
+| 📄 `layout.tsx` |
+
+</details>
+
+---
+
+<details>
+            <summary>Listed current directory • **19** results</summary>
+        
+| Name |
+|-------|
+| 📁 `.next` |
+| 📄 `next.config.js` |
+| 📄 `package-lock.json` |
+| 📄 `package.json` |
+| 📁 `node_modules` |
+| 📁 `.git` |
+| 📄 `.gitignore` |
+| 📁 `.specstory` |
+| 📄 `.cursorindexingignore` |
+| 📁 `components` |
+| 📄 `GREEN_API_SETUP.md` |
+| 📁 `lib` |
+| 📄 `README.md` |
+| 📄 `tsconfig.json` |
+| 📄 `postcss.config.js` |
+| 📄 `tailwind.config.js` |
+| 📄 `next-env.d.ts` |
+| 📁 `app` |
+| 📁 `types` |
+
+</details>
+
+---
+
+```diff
+  import { Inter } from 'next/font/google';
+  import './globals.css';
++ import { NextIntlClientProvider, useMessages } from 'next-intl';
++ import { notFound } from 'next/navigation';
+  
+  const inter = Inter({ subsets: ['latin'] });
+```
+
+```diff
+  export default function RootLayout({
+    children,
++   params
+  }: {
+    children: React.ReactNode;
++   params: { locale: string };
+  }) {
++   let messages;
++   try {
++     messages = require(`../messages/${params.locale}.json`);
++   } catch (error) {
++     notFound();
++   }
+    return (
+-     <html lang="es">
++     <html lang={params.locale}>
+        <body className={inter.className}>
++         <NextIntlClientProvider locale={params.locale} messages={messages}>
+            <div className="min-h-screen bg-gradient-to-br from-ocean-50 to-sand-50">
+              {children}
+            </div>
++         </NextIntlClientProvider>
+        </body>
+      </html>
+```
+
+---
+
+Cancelled
 
 ---
 
 
+
+---
+
+_**User**_
+
+Pudiste implementar los idiomas?
+
+---
+
+_**Assistant**_
+
+¡Sí! Ya implementé la base de la internacionalización. Ahora necesito completar la implementación creando los archivos de traducción y adaptando los componentes. Te muestro lo que ya hice y lo que falta:
+
+## ✅ **Ya implementado:**
+
+1. **Instalé `next-intl`** - La librería para manejar traducciones
+2. **Configuré `next.config.js`** - Para soportar rutas `/es` y `/en`
+3. **Modifiqué `app/layout.tsx`** - Para cargar traducciones según el idioma
+
+## 🔄 **Falta completar:**
+
+1. **Crear archivos de traducción** (es.json, en.json)
+2. **Adaptar los componentes** para usar traducciones
+3. **Crear la estructura de carpetas** para los idiomas
+
+¿Quieres que continúe completando la implementación? Esto incluiría:
+
+- Crear los archivos de traducción con todos los textos
+- Adaptar el Header, componentes de reserva, etc.
+- Hacer que funcione en `/es` y `/en`
+
+¿Procedo con la implementación completa?
 
 ---
 
