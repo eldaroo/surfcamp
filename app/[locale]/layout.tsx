@@ -1,5 +1,6 @@
 import { I18nProvider } from '@/lib/i18n';
 import LanguageSelector from '@/components/LanguageSelector';
+import { Locale } from '@/lib/i18n';
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -15,35 +16,32 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
   console.log('🌍 LocaleLayout - Tipo de locale:', typeof locale);
   
   // Validar que el locale sea válido
-  const validLocales = ['es', 'en'];
-  const isValidLocale = validLocales.includes(locale);
+  const validLocales: Locale[] = ['es', 'en'];
+  const isValidLocale = validLocales.includes(locale as Locale);
   
   console.log('🌍 LocaleLayout - Locale válido:', isValidLocale);
   
   if (!isValidLocale) {
     console.log('❌ LocaleLayout - Locale inválido, redirigiendo a /es');
     return (
-      <html lang="es">
-        <body>
-          <div>Locale no válido. Redirigiendo...</div>
-        </body>
-      </html>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Locale no válido</h1>
+          <p className="text-gray-600">Redirigiendo...</p>
+        </div>
+      </div>
     );
   }
   
   console.log('✅ LocaleLayout - Locale válido, renderizando con:', locale);
   
   return (
-    <html lang={locale}>
-      <body>
-        <I18nProvider initialLocale={locale}>
-          {/* Language Selector en la esquina superior derecha */}
-          <div className="fixed top-4 right-4 z-50">
-            <LanguageSelector />
-          </div>
-          {children}
-        </I18nProvider>
-      </body>
-    </html>
+    <I18nProvider initialLocale={locale as Locale}>
+      {/* Language Selector en la esquina superior derecha */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
+      {children}
+    </I18nProvider>
   );
 } 

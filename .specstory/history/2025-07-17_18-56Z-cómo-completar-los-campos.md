@@ -7886,6 +7886,27 @@ sigue hbiendo un cartel, inclusive cuando la app funciona bien
 
 _**Assistant**_
 
+Veo que el cartel de "3 errors" sigue apareciendo incluso cuando la aplicación funciona bien. Esto es un problema común en Next.js cuando hay errores de cache o archivos corruptos. Voy a hacer una limpieza más profunda y deshabilitar el cache de webpack:
+
+
+---
+
+Cancelled
+
+---
+
+
+
+---
+
+_**User**_
+
+vercel tira este error. Podras analizar el proyecto y decirme si la configuracion esta bien?
+
+---
+
+_**Assistant**_
+
 
 
 ---
