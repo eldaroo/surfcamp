@@ -2,8 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { Waves, Sun, Mountain } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
+import LanguageSelector from './LanguageSelector';
 
 export default function Header() {
+  const { t } = useI18n();
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -24,35 +28,37 @@ export default function Header() {
               </div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gradient">SurfCamp Santa Teresa</h1>
-              <p className="text-sm text-gray-600">Powered by zeneidas</p>
+              <h1 className="text-2xl font-bold text-gradient">{t('header.title')}</h1>
+              <p className="text-sm text-gray-600">{t('header.poweredBy')}</p>
             </div>
           </div>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
-              Inicio
+              {t('header.nav.home')}
             </a>
             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
-              Actividades
+              {t('header.nav.activities')}
             </a>
             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
-              Alojamiento
+              {t('header.nav.accommodation')}
             </a>
             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
-              Contacto
+              {t('header.nav.contact')}
             </a>
           </nav>
 
-          {/* Contact Info */}
+          {/* Contact Info and Language Selector */}
           <div className="hidden lg:flex items-center space-x-4 text-sm text-gray-600">
             <div className="flex items-center space-x-1">
               <Mountain className="w-4 h-4" />
-              <span>Santa Teresa, Costa Rica</span>
+              <span>{t('header.location')}</span>
             </div>
             <div className="h-4 w-px bg-gray-300"></div>
-            <span>+541153695627</span>
+            <span>{t('header.phone')}</span>
+            <div className="h-4 w-px bg-gray-300"></div>
+            <LanguageSelector />
           </div>
         </div>
       </div>

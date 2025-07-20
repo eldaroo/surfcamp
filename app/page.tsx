@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useI18n } from '@/lib/i18n';
 import { useBookingStore } from '@/lib/store';
 import Header from '@/components/Header';
 import BookingSteps from '@/components/BookingSteps';
@@ -15,6 +16,7 @@ import PriceSummary from '@/components/PriceSummary';
 import ContactForm from '@/components/ContactForm';
 
 export default function HomePage() {
+  const { t } = useI18n();
   const { currentStep, bookingData, selectedRoom, selectedActivities, setCurrentStep, priceBreakdown } = useBookingStore();
   const isReadyForPayment =
     bookingData.checkIn &&
@@ -45,20 +47,20 @@ export default function HomePage() {
       case 'confirmation':
         return (
           <div className="card text-center p-8">
-            <h2 className="text-2xl font-bold mb-4">Revisa tu reserva</h2>
+            <h2 className="text-2xl font-bold mb-4">{t('booking.steps.confirmation.title')}</h2>
             {/* Resumen visual */}
             <div className="mb-6">
-              <div><b>Fechas:</b> {bookingData.checkIn && bookingData.checkOut ? `${new Date(bookingData.checkIn).toLocaleDateString('es-ES')} - ${new Date(bookingData.checkOut).toLocaleDateString('es-ES')}` : '-'}</div>
-              <div><b>Huéspedes:</b> {bookingData.guests}</div>
-              <div><b>Alojamiento:</b> {selectedRoom?.roomTypeName || '-'}</div>
-              <div><b>Actividades:</b> {selectedActivities.length > 0 ? selectedActivities.map(a => a.name).join(', ') : 'Ninguna'}</div>
+              <div><b>{t('dates.checkIn')}:</b> {bookingData.checkIn && bookingData.checkOut ? `${new Date(bookingData.checkIn).toLocaleDateString('es-ES')} - ${new Date(bookingData.checkOut).toLocaleDateString('es-ES')}` : '-'}</div>
+              <div><b>{t('dates.guests')}:</b> {bookingData.guests}</div>
+              <div><b>{t('accommodation.title')}:</b> {selectedRoom?.roomTypeName || '-'}</div>
+              <div><b>{t('activities.title')}:</b> {selectedActivities.length > 0 ? selectedActivities.map(a => a.name).join(', ') : t('activities.noActivities')}</div>
             </div>
             <button
               className="btn-primary"
               onClick={() => isReadyForPayment && setCurrentStep('payment')}
               disabled={!isReadyForPayment}
             >
-              Continuar al pago
+              {t('common.continue')}
             </button>
             {!isReadyForPayment && (
               <div className="mt-4 text-red-600">
@@ -90,11 +92,10 @@ export default function HomePage() {
             className="text-center mb-12"
           >
             <h1 className="text-4xl md:text-6xl font-bold text-gradient mb-6">
-              Reserva tu Experiencia de Surf
+              {t('hero.title')}
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Vive la aventura perfecta con clases de surf, yoga y baños de hielo 
-              en un entorno paradisíaco. Personaliza tu estadía y reserva al instante.
+              {t('hero.subtitle')}
             </p>
           </motion.div>
 
