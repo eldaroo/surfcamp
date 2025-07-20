@@ -2,172 +2,74 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CreditCard, ChevronLeft, Lock, CheckCircle } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
-import { formatCurrency, generateBookingReference } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 import BookingConfirmation from './BookingConfirmation';
-import ContactForm from './ContactForm';
 
 export default function PaymentSection() {
-  const { 
-    bookingData,
-    selectedActivities,
-    selectedRoom,
-    priceBreakdown,
-    setCurrentStep,
-    setLoading,
-    setError,
-    error,
-    currentStep // <-- Asegurarse de obtener el paso actual
-  } = useBookingStore();
+  const { t } = useI18n();
+  const { bookingData, selectedRoom, selectedActivities, setCurrentStep } = useBookingStore();
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto' | 'mock'>('mock');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
 
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'mock'>('mock');
-  const [showCardPayment, setShowCardPayment] = useState(false);
-  // Generar orderId solo una vez por sesión de pago
-  const [orderId] = useState(() => generateBookingReference());
-  const orderDescription = bookingData.contactInfo && bookingData.checkIn && bookingData.checkOut
-    ? `Reserva para ${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName} del ${new Date(bookingData.checkIn).toLocaleDateString('es-ES')} al ${new Date(bookingData.checkOut).toLocaleDateString('es-ES')}`
-    : '';
+  const isReadyForPayment =
+    bookingData.checkIn &&
+    bookingData.checkOut &&
+    bookingData.guests &&
+    selectedRoom &&
+    bookingData.contactInfo;
 
   const handlePayment = async () => {
-    if (!priceBreakdown || !bookingData.contactInfo) {
-      setError('Información de reserva incompleta');
+    if (!isReadyForPayment) {
+      setError(t('payment.error.missingData'));
       return;
     }
 
-    setIsProcessingPayment(true);
-    setError(null);
+    setIsProcessing(true);
+    setError('');
 
     try {
-      const bookingReference = generateBookingReference();
-
-      // For demo mode, skip actual payment processing
-      let paymentData = null;
+      // Simular procesamiento de pago
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (paymentMethod === 'mock') {
-        // Simulate demo payment processing
-        console.log('🎯 Processing demo payment...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        paymentData = {
-          success: true,
-          paymentIntentId: `demo_pi_${Date.now()}`,
-          clientSecret: `demo_secret_${Date.now()}`,
-          message: 'Demo payment processed successfully'
-        };
-        
-        console.log('✅ Demo payment completed:', paymentData);
-      } else {
-        // Real Stripe payment (when implemented)
-        const paymentResponse = await fetch('/api/payment/create-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            amount: priceBreakdown.total,
-            currency: 'eur',
-            bookingReference,
-          }),
-        });
-
-        paymentData = await paymentResponse.json();
-
-        if (!paymentResponse.ok) {
-          throw new Error(paymentData.error || 'Error creating payment intent');
-        }
-
-        // Simulate payment processing (replace with real Stripe Elements integration)
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-
-      console.log('🏨 Creating reservation with data:', {
-        checkIn: bookingData.checkIn,
-        checkOut: bookingData.checkOut,
-        guests: bookingData.guests,
-        contactInfo: bookingData.contactInfo,
-        roomTypeId: selectedRoom?.roomTypeId || 'casa-playa',
-        activities: selectedActivities.map(a => a.id),
-        paymentIntentId: paymentData.paymentIntentId,
-      });
-
-      // Create reservation
-      const reservationResponse = await fetch('/api/reserve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          checkIn: bookingData.checkIn,
-          checkOut: bookingData.checkOut,
-          guests: bookingData.guests,
-          contactInfo: bookingData.contactInfo,
-          roomTypeId: selectedRoom?.roomTypeId || 'casa-playa',
-          activities: selectedActivities.map(a => a.id),
-          paymentIntentId: paymentData.paymentIntentId,
-        }),
-      });
-
-      const reservationData = await reservationResponse.json();
-
-      if (!reservationResponse.ok) {
-        throw new Error(reservationData.error || 'Error creating reservation');
-      }
-
-      console.log('✅ Reservation created successfully:', reservationData);
-
-      // Success! Move to success page
+      // Mover al paso de éxito
       setCurrentStep('success');
     } catch (error) {
-      console.error('Payment/Reservation error:', error);
-      setError(error instanceof Error ? error.message : 'Error procesando el pago');
+      setError(error instanceof Error ? error.message : t('payment.error.processing'));
     } finally {
-      setIsProcessingPayment(false);
+      setIsProcessing(false);
     }
   };
 
-  // Renderizar el formulario de contacto si el paso actual es 'contact'
-  if (currentStep === 'contact') {
-    return <ContactForm />;
-  }
-
-  if (!bookingData.contactInfo || !priceBreakdown) {
+  // Si no hay datos completos, mostrar error
+  if (!isReadyForPayment) {
     return (
-      <div className="card">
-        <p className="text-center text-gray-500">
-          Información de reserva incompleta. Por favor vuelve al paso anterior.
-        </p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="card"
+      >
+        <h2 className="text-2xl font-bold mb-4">{t('payment.error.title')}</h2>
+        <div className="mb-4 text-red-600 font-semibold">{t('payment.error.missingData')}</div>
+        <button
+          onClick={() => setCurrentStep('contact')}
+          className="btn-primary"
+        >
+          {t('common.back')}
+        </button>
+      </motion.div>
     );
   }
 
-  // Si el usuario elige pagar con tarjeta, mostrar BookingConfirmation
-  if (showCardPayment) {
-    // Validar datos antes de mostrar BookingConfirmation
-    if (!orderId || !orderDescription || !priceBreakdown || !bookingData.contactInfo) {
-      return (
-        <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-          <h2 className="text-2xl font-bold mb-4">Error en la Confirmación</h2>
-          <div className="mb-4 text-red-600 font-semibold">Faltan datos para el pago. Por favor revisa la información de la reserva.</div>
-          <button className="btn-primary" onClick={() => setShowCardPayment(false)}>Volver</button>
-        </div>
-      );
-    }
-    return (
-      <BookingConfirmation
-        amount={priceBreakdown.total}
-        order_id={orderId}
-        order_description={orderDescription}
-        summary={
-          <div className="mb-4">
-            <div><b>Fechas:</b> {new Date(bookingData.checkIn!).toLocaleDateString('es-ES')} - {new Date(bookingData.checkOut!).toLocaleDateString('es-ES')}</div>
-            <div><b>Huéspedes:</b> {bookingData.guests}</div>
-            {selectedRoom && <div><b>Alojamiento:</b> {selectedRoom.roomTypeName}</div>}
-            {selectedActivities.length > 0 && (
-              <div><b>Actividades:</b> {selectedActivities.map(a => a.name).join(', ')}</div>
-            )}
-          </div>
-        }
-      />
-    );
-  }
+  const nights = Math.ceil(
+    (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
+    (1000 * 60 * 60 * 24)
+  );
+
+  const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
+  const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+  const total = accommodationTotal + activitiesTotal;
 
   return (
     <motion.div
@@ -175,212 +77,196 @@ export default function PaymentSection() {
       animate={{ opacity: 1, y: 0 }}
       className="card"
     >
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-          <CreditCard className="w-5 h-5 text-green-600" />
+      <div className="flex items-center mb-6">
+        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Pago Seguro</h2>
-          <p className="text-gray-600">Completa tu reserva de forma segura</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('payment.title')}</h2>
+          <p className="text-gray-600">{t('payment.subtitle')}</p>
         </div>
       </div>
 
-      {/* Security Notice */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center space-x-2">
-          <Lock className="w-5 h-5 text-green-600" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Payment Form */}
+        <div className="space-y-6">
+          {/* Booking Summary */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-900 mb-3">{t('payment.summary')}</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.client')}:</span>
+                <span className="font-medium">
+                  {bookingData.contactInfo?.firstName} {bookingData.contactInfo?.lastName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.dni')}:</span>
+                <span className="font-medium">{bookingData.contactInfo?.dni}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.email')}:</span>
+                <span className="font-medium">{bookingData.contactInfo?.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.phone')}:</span>
+                <span className="font-medium">{bookingData.contactInfo?.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.dates')}:</span>
+                <span className="font-medium">
+                  {new Date(bookingData.checkIn).toLocaleDateString()} - {new Date(bookingData.checkOut).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">{t('payment.guests')}:</span>
+                <span className="font-medium">{bookingData.guests}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Method Selection */}
           <div>
-            <p className="font-semibold text-green-800">Pago 100% Seguro</p>
-            <p className="text-green-600 text-sm">
-              Tu información está protegida con encriptación SSL
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Booking Summary */}
-      <div className="bg-gray-50 rounded-lg p-6 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Resumen final</h3>
-        
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Cliente:</span>
-            <span className="font-semibold">
-              {bookingData.contactInfo.firstName} {bookingData.contactInfo.lastName}
-            </span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">DNI:</span>
-            <span className="font-semibold">{bookingData.contactInfo.dni}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">Email:</span>
-            <span className="font-semibold">{bookingData.contactInfo.email}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">Teléfono:</span>
-            <span className="font-semibold">{bookingData.contactInfo.phone}</span>
-          </div>
-          
-          <div className="flex justify-between pt-3 border-t border-gray-200">
-            <span className="text-gray-600">Fechas:</span>
-            <span className="font-semibold">
-              {new Date(bookingData.checkIn!).toLocaleDateString('es-ES')} - {' '}
-              {new Date(bookingData.checkOut!).toLocaleDateString('es-ES')}
-            </span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">Huéspedes:</span>
-            <span className="font-semibold">{bookingData.guests}</span>
-          </div>
-
-          {selectedRoom && (
-            <div className="flex justify-between">
-              <span className="text-gray-600">Alojamiento:</span>
-              <span className="font-semibold">{selectedRoom.roomTypeName}</span>
-            </div>
-          )}
-          
-          {selectedActivities.length > 0 && (
-            <div className="pt-3 border-t border-gray-200">
-              <p className="text-gray-600 mb-2">Actividades:</p>
-              {selectedActivities.map((activity) => (
-                <div key={activity.id} className="flex justify-between ml-4">
-                  <span className="text-gray-500">{activity.name}</span>
-                  <span className="font-semibold">
-                    {formatCurrency(activity.price * bookingData.guests!)}
-                  </span>
+            <h3 className="font-semibold text-gray-900 mb-4">{t('payment.method.title')}</h3>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="card"
+                  checked={paymentMethod === 'card'}
+                  onChange={(e) => setPaymentMethod(e.target.value as 'card')}
+                  className="text-blue-600"
+                />
+                <div>
+                  <div className="font-medium">{t('payment.method.card')}</div>
+                  <div className="text-sm text-gray-600">{t('payment.method.cardDescription')}</div>
                 </div>
-              ))}
+              </label>
+
+              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="crypto"
+                  checked={paymentMethod === 'crypto'}
+                  onChange={(e) => setPaymentMethod(e.target.value as 'crypto')}
+                  className="text-blue-600"
+                />
+                <div>
+                  <div className="font-medium">{t('payment.method.crypto')}</div>
+                  <div className="text-sm text-gray-600">{t('payment.method.cryptoDescription')}</div>
+                </div>
+              </label>
+
+              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="mock"
+                  checked={paymentMethod === 'mock'}
+                  onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
+                  className="text-blue-600"
+                />
+                <div>
+                  <div className="font-medium">{t('payment.method.demo')}</div>
+                  <div className="text-sm text-gray-600">{t('payment.method.demoDescription')}</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Security Notice */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-semibold text-green-800">{t('payment.secure.title')}</span>
+            </div>
+            <p className="text-green-700 text-sm mt-1">{t('payment.secure.description')}</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold text-red-800">{t('common.error')}</span>
+              </div>
+              <p className="text-red-700 text-sm mt-1">{error}</p>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Payment Method Selection */}
-      <div className="mb-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Método de pago</h3>
-        
-        <div className="space-y-3">
-          <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="mock"
-              checked={paymentMethod === 'mock'}
-              onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
-              className="text-ocean-600"
-            />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">Pago Demo</p>
-              <p className="text-sm text-gray-600">
-                Para propósitos de demostración (no se procesará ningún cargo real)
-              </p>
-            </div>
-            <div className="text-green-600">
-              <CheckCircle className="w-5 h-5" />
-            </div>
-          </label>
-
-          <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="card"
-              checked={paymentMethod === 'card'}
-              onChange={() => setPaymentMethod('card')}
-              className="text-ocean-600"
-            />
-            <div className="flex-1">
-              <p className="font-semibold text-gray-900">Tarjeta de Crédito/Débito</p>
-              <p className="text-sm text-gray-600">
-                Paga con tarjeta de forma segura usando NOWPayments
-              </p>
-            </div>
-            <CreditCard className="w-5 h-5 text-gray-400" />
-          </label>
-        </div>
-      </div>
-
-      {/* Total */}
-      <div className="bg-ocean-50 rounded-lg p-6 mb-6">
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-bold text-ocean-800">Total a pagar:</span>
-          <span className="text-2xl font-bold text-ocean-600">
-            {formatCurrency(priceBreakdown.total)}
-          </span>
-        </div>
-        <p className="text-sm text-ocean-600 mt-2">
-          Sin IVA • Sin cargos adicionales
-        </p>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"
-        >
-          <p className="text-red-600 text-sm">{error}</p>
-        </motion.div>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex justify-between">
-        <button
-          onClick={() => setCurrentStep('confirmation')}
-          disabled={isProcessingPayment}
-          className="btn-secondary flex items-center space-x-2"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Atrás</span>
-        </button>
-        {paymentMethod === 'card' ? (
-          <button
-            onClick={() => setShowCardPayment(true)}
-            disabled={isProcessingPayment}
-            className="btn-primary flex items-center space-x-2 disabled:opacity-50"
-          >
-            <Lock className="w-4 h-4" />
-            <span>Pagar con tarjeta</span>
-          </button>
-        ) : (
+          {/* Pay Button */}
           <button
             onClick={handlePayment}
-            disabled={isProcessingPayment}
-            className="btn-primary flex items-center space-x-2 disabled:opacity-50"
+            disabled={isProcessing}
+            className="btn-primary w-full flex items-center justify-center space-x-2"
           >
-            <Lock className="w-4 h-4" />
-            <span>
-              {isProcessingPayment ? 'Procesando...' : `Confirmar y Pagar ${formatCurrency(priceBreakdown.total)}`}
-            </span>
+            {isProcessing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>{t('payment.processing')}</span>
+              </>
+            ) : (
+              <>
+                <span>{t('payment.payButton')}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
           </button>
-        )}
-      </div>
+        </div>
 
-      {/* Processing Animation */}
-      {isProcessingPayment && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-        >
-          <div className="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
-            <div className="animate-spin w-12 h-12 border-4 border-ocean-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {paymentMethod === 'mock' ? 'Procesando pago demo...' : 'Procesando tu pago...'}
-            </h3>
-            <p className="text-gray-600">
-              Por favor espera mientras confirmamos tu reserva
-            </p>
+        {/* Price Summary */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
+          
+          <div className="space-y-4">
+            {/* Accommodation */}
+            {selectedRoom && (
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-medium text-gray-900">{selectedRoom.roomTypeName}</div>
+                  <div className="text-sm text-gray-600">
+                    {nights} {nights === 1 ? t('dates.night') : t('dates.nights')} × ${selectedRoom.pricePerNight}
+                  </div>
+                </div>
+                <span className="font-semibold text-gray-900">${accommodationTotal}</span>
+              </div>
+            )}
+
+            {/* Activities */}
+            {selectedActivities.length > 0 && (
+              <div className="border-t border-gray-200 pt-4">
+                <div className="font-medium text-gray-900 mb-2">{t('prices.activities')}</div>
+                <div className="space-y-2">
+                  {selectedActivities.map((activity, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span className="text-gray-600">{activity.name}</span>
+                      <span className="font-medium">${activity.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Total */}
+            <div className="border-t border-gray-200 pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900">{t('prices.total')}</span>
+                <span className="text-2xl font-bold text-blue-600">${total}</span>
+              </div>
+            </div>
           </div>
-        </motion.div>
-      )}
+        </div>
+      </div>
     </motion.div>
   );
 } 

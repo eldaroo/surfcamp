@@ -1,203 +1,108 @@
 'use client';
 
-import { useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Calculator, Calendar, Users, Activity, Home } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
-import { formatCurrency, calculateNights } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export default function PriceSummary() {
-  const { 
-    bookingData, 
-    selectedActivities, 
-    priceBreakdown,
-    setPriceBreakdown,
-    currentStep,
-    isLoading,
-    selectedRoom
-  } = useBookingStore();
-
-  // Calculate quote when data changes
-  useEffect(() => {
-    const calculateQuote = async () => {
-      if (!bookingData.checkIn || !bookingData.checkOut || !bookingData.guests) {
-        return;
-      }
-
-      // Construir el array de actividades con cantidades
-      const activitiesWithQuantities = selectedActivities.map(a => ({
-        activityId: a.id,
-        quantity: bookingData.activityQuantities?.[a.id] || 1
-      }));
-
-      try {
-        const response = await fetch('/api/quote', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            checkIn: bookingData.checkIn,
-            checkOut: bookingData.checkOut,
-            guests: bookingData.guests,
-            activities: activitiesWithQuantities,
-            roomTypeId: selectedRoom?.roomTypeId,
-          }),
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          setPriceBreakdown(data.priceBreakdown);
-        }
-      } catch (error) {
-        console.error('Error calculating quote:', error);
-      }
-    };
-
-    calculateQuote();
-  }, [bookingData, selectedActivities, selectedRoom, setPriceBreakdown]);
+  const { t } = useI18n();
+  const { bookingData, selectedRoom, selectedActivities, priceBreakdown } = useBookingStore();
 
   if (!bookingData.checkIn || !bookingData.checkOut) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card"
-      >
-        <div className="flex items-center space-x-3 mb-4">
-          <Calculator className="w-5 h-5 text-ocean-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Resumen de Precio</h3>
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
+        <div className="text-center py-8">
+          <div className="text-gray-400 text-sm">
+            {t('prices.selectDates')}
+          </div>
         </div>
-        <p className="text-gray-500 text-center py-8">
-          Selecciona fechas para ver el precio
-        </p>
-      </motion.div>
+      </div>
     );
   }
 
-  const nights = calculateNights(
-    new Date(bookingData.checkIn), 
-    new Date(bookingData.checkOut)
+  const nights = Math.ceil(
+    (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
+    (1000 * 60 * 60 * 24)
   );
 
+  const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
+  const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+  const total = accommodationTotal + activitiesTotal;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="card"
-    >
-      <div className="flex items-center space-x-3 mb-6">
-        <Calculator className="w-5 h-5 text-ocean-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Resumen de Precio</h3>
-      </div>
-
-      {/* Booking Summary */}
-      <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Calendar className="w-4 h-4" />
-          <span>
-            {new Date(bookingData.checkIn).toLocaleDateString('es-ES')} - {' '}
-            {new Date(bookingData.checkOut).toLocaleDateString('es-ES')}
-          </span>
+    <div className="card">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
+      
+      <div className="space-y-4">
+        {/* Stay Summary */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h4 className="font-medium text-gray-900 mb-2">{t('dates.summary.title')}</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
+              <span className="font-medium">
+                {new Date(bookingData.checkIn).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
+              <span className="font-medium">
+                {new Date(bookingData.checkOut).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">{t('dates.summary.guests')}:</span>
+              <span className="font-medium">
+                {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests_plural')}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">{t('dates.summary.nights')}:</span>
+              <span className="font-medium">
+                {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+              </span>
+            </div>
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Users className="w-4 h-4" />
-          <span>
-            {bookingData.guests} {bookingData.guests === 1 ? 'huésped' : 'huéspedes'}
-          </span>
-        </div>
 
+        {/* Accommodation */}
         {selectedRoom && (
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Home className="w-4 h-4" />
-            <span>{selectedRoom.roomTypeName}</span>
+          <div className="border-b border-gray-200 pb-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h4 className="font-medium text-gray-900">{selectedRoom.roomTypeName}</h4>
+                <p className="text-sm text-gray-600">
+                  {nights} {nights === 1 ? t('dates.night') : t('dates.nights')} × ${selectedRoom.pricePerNight} {t('prices.perNight')}
+                </p>
+              </div>
+              <span className="font-semibold text-gray-900">${accommodationTotal}</span>
+            </div>
           </div>
         )}
 
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Activity className="w-4 h-4" />
-          <span>
-            {selectedActivities.length} {selectedActivities.length === 1 ? 'actividad' : 'actividades'}
-          </span>
+        {/* Activities */}
+        {selectedActivities.length > 0 && (
+          <div className="border-b border-gray-200 pb-4">
+            <h4 className="font-medium text-gray-900 mb-2">{t('prices.activities')}</h4>
+            <div className="space-y-2">
+              {selectedActivities.map((activity, index) => (
+                <div key={index} className="flex justify-between text-sm">
+                  <span className="text-gray-600">{activity.name}</span>
+                  <span className="font-medium">${activity.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Total */}
+        <div className="pt-4">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-gray-900">{t('prices.total')}</span>
+            <span className="text-2xl font-bold text-blue-600">${total}</span>
+          </div>
         </div>
       </div>
-
-      {/* Price Breakdown */}
-      {isLoading ? (
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded"></div>
-        </div>
-      ) : priceBreakdown ? (
-        <div className="space-y-4">
-          {/* Accommodation - only show if there's a price */}
-          {priceBreakdown.accommodation > 0 && (
-            <div className="flex justify-between">
-              <span className="text-gray-600">
-                Alojamiento ({nights} {nights === 1 ? 'noche' : 'noches'})
-              </span>
-              <span className="font-semibold">
-                {formatCurrency(priceBreakdown.accommodation)}
-              </span>
-            </div>
-          )}
-
-          {/* Activities */}
-          {priceBreakdown.activities.length > 0 && (
-            <div>
-              <p className="text-gray-600 mb-2">Actividades:</p>
-              <div className="space-y-2 ml-4">
-                {priceBreakdown.activities.map((activity, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span className="text-gray-500">
-                      {activity.name} × {activity.quantity}
-                    </span>
-                    <span>{formatCurrency(activity.price * activity.quantity)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Total */}
-          <div className="flex justify-between pt-4 border-t-2 border-ocean-200">
-            <span className="text-lg font-bold text-gray-900">Total</span>
-            <span className="text-lg font-bold text-ocean-600">
-              {formatCurrency(priceBreakdown.total)}
-            </span>
-          </div>
-
-          {/* Price per person */}
-          {bookingData.guests && bookingData.guests > 1 && (
-            <div className="text-center text-sm text-gray-500 pt-2">
-              {formatCurrency(priceBreakdown.total / bookingData.guests)} por persona
-            </div>
-          )}
-        </div>
-      ) : (
-        <p className="text-gray-500 text-center py-4">
-          Calculando precio...
-        </p>
-      )}
-
-      {/* Call to Action */}
-      {currentStep === 'dates' && priceBreakdown && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-6 pt-6 border-t border-gray-200"
-        >
-          <div className="bg-ocean-50 rounded-lg p-4 text-center">
-            <p className="text-ocean-800 font-semibold mb-2">
-              ¡Precio base disponible!
-            </p>
-            <p className="text-ocean-600 text-sm">
-              Continúa para añadir actividades y completar tu reserva
-            </p>
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
+    </div>
   );
 } 

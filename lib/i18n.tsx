@@ -28,18 +28,6 @@ const translations = {
       confirm: "Confirmar",
       close: "Cerrar"
     },
-    header: {
-      title: "SurfCamp Santa Teresa",
-      poweredBy: "Powered by zeneidas",
-      location: "Santa Teresa, Costa Rica",
-      phone: "+541153695627",
-      nav: {
-        home: "Inicio",
-        activities: "Actividades",
-        accommodation: "Alojamiento",
-        contact: "Contacto"
-      }
-    },
     hero: {
       title: "Reserva tu Experiencia de Surf",
       subtitle: "Vive la aventura perfecta con clases de surf, yoga y baños de hielo en un entorno paradisíaco. Personaliza tu estadía y reserva al instante."
@@ -86,6 +74,19 @@ const translations = {
       night: "noche",
       guest: "persona",
       guests_plural: "personas",
+      placeholder: {
+        selectDate: "Selecciona fecha"
+      },
+      validation: {
+        selectDates: "Por favor selecciona las fechas de entrada y salida",
+        pastDate: "No puedes seleccionar fechas pasadas",
+        invalidRange: "La fecha de salida debe ser posterior a la fecha de entrada",
+        guestsRange: "El número de huéspedes debe estar entre 1 y 12"
+      },
+      error: {
+        noAvailability: "No hay disponibilidad para las fechas seleccionadas. Por favor elige otras fechas.",
+        general: "Error verificando disponibilidad"
+      },
       summary: {
         title: "Resumen de tu estadía",
         checkIn: "Entrada",
@@ -146,6 +147,21 @@ const translations = {
       email: "Email",
       phone: "Teléfono",
       dni: "DNI",
+      placeholder: {
+        firstName: "Tu nombre",
+        lastName: "Tu apellido",
+        email: "tu@email.com",
+        phone: "+34 123 456 789",
+        dni: "12345678A"
+      },
+      validation: {
+        firstNameRequired: "El nombre es requerido",
+        lastNameRequired: "El apellido es requerido",
+        emailRequired: "El email es requerido",
+        emailInvalid: "Email inválido",
+        phoneRequired: "El teléfono es requerido",
+        dniRequired: "El DNI es requerido"
+      },
       required: "Campo requerido",
       invalidEmail: "Email inválido",
       invalidPhone: "Teléfono inválido"
@@ -163,10 +179,26 @@ const translations = {
       accommodation: "Alojamiento",
       activities: "Actividades",
       total: "Total",
-      payWithCard: "Pagar con Tarjeta",
-      payWithCrypto: "Pagar con Cripto",
+      method: {
+        title: "Método de pago",
+        card: "Tarjeta de Crédito/Débito",
+        cardDescription: "Paga con tarjeta de forma segura",
+        crypto: "Criptomonedas",
+        cryptoDescription: "Paga con Bitcoin, Ethereum y otras criptos",
+        demo: "Pago Demo",
+        demoDescription: "Para propósitos de demostración (sin cargo real)"
+      },
+      secure: {
+        title: "Pago 100% Seguro",
+        description: "Tu información está protegida con encriptación SSL"
+      },
       processing: "Procesando pago...",
-      securePayment: "Pago seguro con encriptación SSL"
+      payButton: "Confirmar y Pagar",
+      error: {
+        title: "Error en la Confirmación",
+        missingData: "Faltan datos para el pago. Por favor revisa la información de la reserva.",
+        processing: "Error procesando el pago"
+      }
     },
     success: {
       title: "¡Reserva Confirmada!",
@@ -187,7 +219,8 @@ const translations = {
       total: "Total",
       activities: "Actividades",
       accommodation: "Alojamiento",
-      summary: "Resumen de precios"
+      summary: "Resumen de precios",
+      selectDates: "Selecciona fechas para ver el precio"
     }
   },
   en: {
@@ -204,18 +237,6 @@ const translations = {
       delete: "Delete",
       confirm: "Confirm",
       close: "Close"
-    },
-    header: {
-      title: "SurfCamp Santa Teresa",
-      poweredBy: "Powered by zeneidas",
-      location: "Santa Teresa, Costa Rica",
-      phone: "+541153695627",
-      nav: {
-        home: "Home",
-        activities: "Activities",
-        accommodation: "Accommodation",
-        contact: "Contact"
-      }
     },
     hero: {
       title: "Book Your Surf Experience",
@@ -263,6 +284,19 @@ const translations = {
       night: "night",
       guest: "person",
       guests_plural: "people",
+      placeholder: {
+        selectDate: "Select date"
+      },
+      validation: {
+        selectDates: "Please select check-in and check-out dates",
+        pastDate: "You cannot select past dates",
+        invalidRange: "Check-out date must be after check-in date",
+        guestsRange: "Number of guests must be between 1 and 12"
+      },
+      error: {
+        noAvailability: "No availability for selected dates. Please choose different dates.",
+        general: "Error checking availability"
+      },
       summary: {
         title: "Stay Summary",
         checkIn: "Check-in",
@@ -323,6 +357,21 @@ const translations = {
       email: "Email",
       phone: "Phone",
       dni: "ID Number",
+      placeholder: {
+        firstName: "Your first name",
+        lastName: "Your last name",
+        email: "your@email.com",
+        phone: "+1 234 567 890",
+        dni: "12345678"
+      },
+      validation: {
+        firstNameRequired: "First name is required",
+        lastNameRequired: "Last name is required",
+        emailRequired: "Email is required",
+        emailInvalid: "Invalid email",
+        phoneRequired: "Phone is required",
+        dniRequired: "ID number is required"
+      },
       required: "Required field",
       invalidEmail: "Invalid email",
       invalidPhone: "Invalid phone number"
@@ -340,10 +389,26 @@ const translations = {
       accommodation: "Accommodation",
       activities: "Activities",
       total: "Total",
-      payWithCard: "Pay with Card",
-      payWithCrypto: "Pay with Crypto",
+      method: {
+        title: "Payment method",
+        card: "Credit/Debit Card",
+        cardDescription: "Pay securely with card",
+        crypto: "Cryptocurrencies",
+        cryptoDescription: "Pay with Bitcoin, Ethereum and other cryptos",
+        demo: "Demo Payment",
+        demoDescription: "For demonstration purposes (no real charge)"
+      },
+      secure: {
+        title: "100% Secure Payment",
+        description: "Your information is protected with SSL encryption"
+      },
       processing: "Processing payment...",
-      securePayment: "Secure payment with SSL encryption"
+      payButton: "Confirm and Pay",
+      error: {
+        title: "Confirmation Error",
+        missingData: "Missing data for payment. Please review your booking information.",
+        processing: "Error processing payment"
+      }
     },
     success: {
       title: "Booking Confirmed!",
@@ -364,7 +429,8 @@ const translations = {
       total: "Total",
       activities: "Activities",
       accommodation: "Accommodation",
-      summary: "Price summary"
+      summary: "Price summary",
+      selectDates: "Select dates to see price"
     }
   }
 };
@@ -390,12 +456,22 @@ function getNestedTranslation(obj: any, path: string): string {
 
 // Provider
 export function I18nProvider({ children, initialLocale = 'es' }: { children: ReactNode; initialLocale?: Locale }) {
+  console.log('🌍 I18nProvider - Iniciando con initialLocale:', initialLocale);
+  console.log('🌍 I18nProvider - Tipo de initialLocale:', typeof initialLocale);
+  console.log('🌍 I18nProvider - Locale válido:', ['es', 'en'].includes(initialLocale));
+
   const [locale, setLocale] = useState<Locale>(initialLocale);
+
+  console.log('🌍 I18nProvider - Estado locale actual:', locale);
 
   const t = (key: string): string => {
     const translation = getNestedTranslation(translations[locale], key);
-    return typeof translation === 'string' ? translation : key;
+    const result = typeof translation === 'string' ? translation : key;
+    console.log(`🌍 I18nProvider - Traducción: "${key}" -> "${result}" (locale: ${locale})`);
+    return result;
   };
+
+  console.log('✅ I18nProvider - Renderizando con locale:', locale);
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>

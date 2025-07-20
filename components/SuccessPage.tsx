@@ -1,330 +1,236 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CheckCircle, Calendar, Users, Activity, Mail, Phone, Home, Bed } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
-import { formatCurrency, formatDate, calculateNights, generateBookingReference } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export default function SuccessPage() {
-  const { 
-    bookingData,
-    selectedActivities,
-    selectedRoom,
-    priceBreakdown,
-    reset
-  } = useBookingStore();
+  const { t } = useI18n();
+  const { bookingData, selectedRoom, selectedActivities, resetBooking } = useBookingStore();
 
   const handleNewReservation = () => {
-    reset();
+    resetBooking();
   };
 
-  if (!bookingData.contactInfo || !priceBreakdown) {
-    return (
-      <div className="card">
-        <p className="text-center text-gray-500">
-          No se encontró información de la reserva.
-        </p>
-      </div>
-    );
-  }
-
-  const nights = calculateNights(
-    new Date(bookingData.checkIn!), 
-    new Date(bookingData.checkOut!)
+  const nights = Math.ceil(
+    (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
+    (1000 * 60 * 60 * 24)
   );
-  
-  const bookingReference = generateBookingReference();
+
+  const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
+  const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+  const total = accommodationTotal + activitiesTotal;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Success Animation */}
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.5, type: "spring" }}
-        className="text-center mb-8"
-      >
-        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-12 h-12 text-green-600" />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-4xl mx-auto"
+    >
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
         </div>
-        <h1 className="text-4xl font-bold text-green-600 mb-4">
-          ¡Reserva Confirmada!
-        </h1>
-        <p className="text-xl text-gray-600">
-          Tu aventura en el surf camp está confirmada
-        </p>
-      </motion.div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('success.title')}</h1>
+        <p className="text-xl text-gray-600">{t('success.subtitle')}</p>
+      </div>
 
-      {/* Booking Details Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="card mb-8"
-      >
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-          <h2 className="text-2xl font-bold text-green-800 mb-2">
-            Referencia de Reserva
-          </h2>
-          <p className="text-3xl font-mono font-bold text-green-600">
-            {bookingReference}
-          </p>
-          <p className="text-green-700 mt-2">
-            Guarda este número para futuras consultas
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Guest Information */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Users className="w-5 h-5 text-ocean-600" />
-              <span>Información del Huésped</span>
-            </h3>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Nombre:</span>
-                <span className="font-semibold">
-                  {bookingData.contactInfo.firstName} {bookingData.contactInfo.lastName}
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">DNI:</span>
-                <span className="font-semibold">{bookingData.contactInfo.dni}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Email:</span>
-                <span className="font-semibold">{bookingData.contactInfo.email}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Teléfono:</span>
-                <span className="font-semibold">{bookingData.contactInfo.phone}</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Huéspedes:</span>
-                <span className="font-semibold">{bookingData.guests}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Stay Information */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Calendar className="w-5 h-5 text-ocean-600" />
-              <span>Detalles de la Estadía</span>
-            </h3>
-            
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Entrada:</span>
-                <span className="font-semibold">
-                  {formatDate(new Date(bookingData.checkIn!))}
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Salida:</span>
-                <span className="font-semibold">
-                  {formatDate(new Date(bookingData.checkOut!))}
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Noches:</span>
-                <span className="font-semibold">{nights}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Accommodation Information */}
-        {selectedRoom && (
-          <div className="mt-8">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Bed className="w-5 h-5 text-ocean-600" />
-              <span>Alojamiento Reservado</span>
-            </h3>
-            
-            <div className="bg-ocean-50 rounded-lg p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-semibold text-ocean-800">{selectedRoom.roomTypeName}</h4>
-                  <p className="text-sm text-ocean-600">
-                    {formatCurrency(selectedRoom.pricePerNight)} por noche
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-ocean-800">
-                    {formatCurrency(selectedRoom.pricePerNight * nights)}
-                  </p>
-                  <p className="text-sm text-ocean-600">{nights} noches</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Activities */}
-        {selectedActivities.length > 0 && (
-          <div className="mt-8">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-              <Activity className="w-5 h-5 text-ocean-600" />
-              <span>Actividades Reservadas</span>
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {selectedActivities.map((activity) => (
-                <div key={activity.id} className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-semibold text-gray-900">{activity.name}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">
-                      {activity.duration} min • Máx. {activity.maxParticipants} personas
-                    </span>
-                    <span className="font-semibold text-ocean-600">
-                      {formatCurrency(activity.price * bookingData.guests!)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Payment Summary */}
-        <div className="mt-8 bg-ocean-50 rounded-lg p-6">
-          <h3 className="font-semibold text-ocean-800 mb-4">Resumen de Pago</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Booking Details */}
+        <div className="card">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('success.bookingReference')}</h2>
           
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Alojamiento ({nights} noches)</span>
-              <span>{formatCurrency(priceBreakdown.accommodation)}</span>
+          <div className="space-y-4">
+            {/* Client Info */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">{t('payment.client')}</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('contact.firstName')}:</span>
+                  <span className="font-medium">{bookingData.contactInfo?.firstName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('contact.lastName')}:</span>
+                  <span className="font-medium">{bookingData.contactInfo?.lastName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('contact.email')}:</span>
+                  <span className="font-medium">{bookingData.contactInfo?.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('contact.phone')}:</span>
+                  <span className="font-medium">{bookingData.contactInfo?.phone}</span>
+                </div>
+              </div>
             </div>
-            
-            {priceBreakdown.activities.length > 0 && (
-              <>
-                <div className="text-sm text-gray-600">Actividades:</div>
-                {priceBreakdown.activities.map((activity, index) => (
-                  <div key={index} className="flex justify-between text-sm ml-4">
-                    <span>{activity.name} × {activity.quantity}</span>
-                    <span>{formatCurrency(activity.price * activity.quantity)}</span>
+
+            {/* Stay Details */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">{t('dates.summary.title')}</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
+                  <span className="font-medium">
+                    {new Date(bookingData.checkIn).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
+                  <span className="font-medium">
+                    {new Date(bookingData.checkOut).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('dates.summary.guests')}:</span>
+                  <span className="font-medium">
+                    {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests_plural')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{t('dates.summary.nights')}:</span>
+                  <span className="font-medium">
+                    {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Accommodation */}
+            {selectedRoom && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">{t('prices.accommodation')}</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t('accommodation.roomTypes.' + selectedRoom.roomTypeId + '.name')}:</span>
+                    <span className="font-medium">${selectedRoom.pricePerNight} {t('prices.perNight')}</span>
                   </div>
-                ))}
-              </>
+                </div>
+              </div>
             )}
-            
-            <div className="flex justify-between text-xl font-bold text-ocean-800 pt-4 border-t-2 border-ocean-300">
-              <span>Total Pagado</span>
-              <span>{formatCurrency(priceBreakdown.total)}</span>
+
+            {/* Activities */}
+            {selectedActivities.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">{t('prices.activities')}</h3>
+                <div className="space-y-2 text-sm">
+                  {selectedActivities.map((activity, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span className="text-gray-600">{activity.name}:</span>
+                      <span className="font-medium">${activity.price}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Confirmation & Contact */}
+        <div className="space-y-6">
+          {/* Email Confirmation */}
+          <div className="card">
+            <div className="flex items-center space-x-3 mb-4">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <p className="font-semibold text-gray-900">{t('success.confirmationSent')}</p>
             </div>
-            
-            <p className="text-sm text-ocean-600 mt-2">
-              Sin IVA • Sin cargos adicionales
+            <p className="text-gray-600 text-sm">
+              {t('success.confirmationSent')} {bookingData.contactInfo?.email}
             </p>
           </div>
-        </div>
-      </motion.div>
 
-      {/* Next Steps */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="card mb-8"
-      >
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Próximos Pasos</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Mail className="w-4 h-4 text-blue-600" />
+          {/* WhatsApp Confirmation */}
+          <div className="card">
+            <div className="flex items-center space-x-3 mb-4">
+              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+              </svg>
+              <p className="font-semibold text-gray-900">{t('success.whatsappSent')}</p>
             </div>
-            <div>
-              <p className="font-semibold text-gray-900">Confirmación por Email</p>
-              <p className="text-gray-600 text-sm">
-                Recibirás un email de confirmación con todos los detalles en {bookingData.contactInfo.email}
-              </p>
-            </div>
+            <p className="text-gray-600 text-sm">
+              {t('success.whatsappSent')}
+            </p>
           </div>
-          
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Phone className="w-4 h-4 text-green-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Contacto Directo</p>
-              <p className="text-gray-600 text-sm">
-                Nuestro equipo se pondrá en contacto contigo en las próximas 24 horas
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Home className="w-4 h-4 text-purple-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Preparativos</p>
-              <p className="text-gray-600 text-sm">
-                Te enviaremos una lista de qué traer y cómo llegar al surf camp
-              </p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
 
-      {/* Contact Information */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-        className="card mb-8 text-center"
-      >
-        <h3 className="text-xl font-bold text-gray-900 mb-4">¿Necesitas Ayuda?</h3>
-        <p className="text-gray-600 mb-4">
-          Si tienes alguna pregunta sobre tu reserva, no dudes en contactarnos
-        </p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <Phone className="w-6 h-6 text-ocean-600 mx-auto mb-2" />
-            <p className="font-semibold">Teléfono</p>
-            <p className="text-sm text-gray-600">+541153695627</p>
+          {/* Help Section */}
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 mb-4">{t('success.needHelp')}</h3>
+            <p className="text-gray-600 text-sm mb-4">{t('success.helpText')}</p>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center space-x-3">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <span className="text-gray-600">{t('success.phone')}:</span>
+                <span className="font-medium">{t('header.phone')}</span>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span className="text-gray-600">{t('success.email')}:</span>
+                <span className="font-medium">info@surfcamp.com</span>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="text-gray-600">{t('success.location')}:</span>
+                <span className="font-medium">{t('header.location')}</span>
+              </div>
+            </div>
           </div>
-          
-          <div className="text-center">
-            <Mail className="w-6 h-6 text-ocean-600 mx-auto mb-2" />
-            <p className="font-semibold">Email</p>
-                            <p className="text-sm text-gray-600">info@surfcamp-santateresa.com</p>
-          </div>
-          
-          <div className="text-center">
-            <Home className="w-6 h-6 text-ocean-600 mx-auto mb-2" />
-            <p className="font-semibold">Ubicación</p>
-            <p className="text-sm text-gray-600">Santa Teresa, Costa Rica</p>
+
+          {/* Price Summary */}
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
+            
+            <div className="space-y-3">
+              {selectedRoom && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{selectedRoom.roomTypeName}</span>
+                  <span className="font-medium">${accommodationTotal}</span>
+                </div>
+              )}
+              
+              {selectedActivities.map((activity, index) => (
+                <div key={index} className="flex justify-between text-sm">
+                  <span className="text-gray-600">{activity.name}</span>
+                  <span className="font-medium">${activity.price}</span>
+                </div>
+              ))}
+              
+              <div className="border-t border-gray-200 pt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-gray-900">{t('prices.total')}</span>
+                  <span className="text-xl font-bold text-blue-600">${total}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* New Reservation Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9 }}
-        className="text-center"
-      >
+      {/* Action Buttons */}
+      <div className="text-center mt-8">
         <button
           onClick={handleNewReservation}
           className="btn-primary"
         >
-          Hacer Nueva Reserva
+          {t('success.newReservation')}
         </button>
-      </motion.div>
-    </div>
+      </div>
+
+      <div className="text-center mt-4">
+        <p className="text-gray-600">{t('success.thankYou')}</p>
+      </div>
+    </motion.div>
   );
 } 

@@ -1,121 +1,97 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Calendar, Home, Activity, CreditCard, Check, Users } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
+import { useI18n } from '@/lib/i18n';
 
 const steps = [
   {
     id: 'dates',
-    name: 'Fechas',
-    description: 'Selecciona fechas y huéspedes',
-    icon: Calendar,
+    icon: '📅',
+    name: 'dates',
+    description: 'dates'
   },
   {
     id: 'accommodation',
-    name: 'Alojamiento',
-    description: 'Elige tu habitación',
-    icon: Home,
+    icon: '🏠',
+    name: 'accommodation',
+    description: 'accommodation'
   },
   {
     id: 'activities',
-    name: 'Actividades',
-    description: 'Personaliza tu experiencia',
-    icon: Activity,
+    icon: '🏄',
+    name: 'activities',
+    description: 'activities'
   },
   {
     id: 'contact',
-    name: 'Contacto',
-    description: 'Tus datos personales',
-    icon: Users,
+    icon: '👤',
+    name: 'contact',
+    description: 'contact'
   },
   {
     id: 'confirmation',
-    name: 'Confirmación',
-    description: 'Revisa tu reserva',
-    icon: Check,
+    icon: '✅',
+    name: 'confirmation',
+    description: 'confirmation'
   },
   {
     id: 'payment',
-    name: 'Pago',
-    description: 'Completa tu reserva',
-    icon: CreditCard,
-  },
+    icon: '💳',
+    name: 'payment',
+    description: 'payment'
+  }
 ];
 
 export default function BookingSteps() {
   const { currentStep } = useBookingStore();
-
-  const getCurrentStepIndex = () => {
-    return steps.findIndex((step) => step.id === currentStep);
-  };
-
-  const currentStepIndex = getCurrentStepIndex();
+  const { t } = useI18n();
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <nav aria-label="Progress">
-        <ol className="flex items-center justify-between">
-          {steps.map((step, stepIdx) => {
-            const isCompleted = stepIdx < currentStepIndex;
-            const isCurrent = stepIdx === currentStepIndex;
-            const Icon = step.icon;
-
-            return (
-              <li key={step.id} className="flex-1 flex flex-col items-center">
-                <div className="flex items-center w-full">
-                  {/* Step Circle */}
-                  <div
-                    className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors ${
-                      isCompleted
-                        ? 'bg-ocean-600 border-ocean-600 text-white'
-                        : isCurrent
-                        ? 'border-ocean-600 text-ocean-600 bg-white'
-                        : 'border-gray-300 text-gray-400 bg-white'
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      <Icon className="w-5 h-5" />
-                    )}
-                  </div>
-
-                  {/* Connector Line */}
-                  {stepIdx < steps.length - 1 && (
-                    <div
-                      className={`flex-1 h-0.5 mx-2 transition-colors ${
-                        stepIdx < currentStepIndex
-                          ? 'bg-ocean-600'
-                          : 'bg-gray-200'
-                      }`}
-                    />
-                  )}
-                </div>
-
-                {/* Step Label */}
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: stepIdx * 0.1 }}
-                  className="mt-3 text-center"
+    <div className="mb-8">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const isActive = currentStep === step.id;
+          const isCompleted = steps.findIndex(s => s.id === currentStep) > index;
+          
+          return (
+            <div key={step.id} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center text-lg font-semibold transition-all duration-300 ${
+                    isActive
+                      ? 'bg-blue-500 text-white'
+                      : isCompleted
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}
                 >
-                  <p
-                    className={`text-sm font-semibold ${
-                      isCurrent ? 'text-ocean-600' : 'text-gray-600'
+                  {step.icon}
+                </div>
+                <div className="mt-2 text-center">
+                  <div
+                    className={`text-sm font-medium ${
+                      isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
                     }`}
                   >
-                    {step.name}
-                  </p>
-                  <p className="text-xs text-gray-500 hidden sm:block">
-                    {step.description}
-                  </p>
-                </motion.div>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+                    {t(`booking.steps.${step.name}.title`)}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1 max-w-24">
+                    {t(`booking.steps.${step.name}.description`)}
+                  </div>
+                </div>
+              </div>
+              
+              {index < steps.length - 1 && (
+                <div
+                  className={`w-16 h-0.5 mx-4 transition-all duration-300 ${
+                    isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                  }`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 } 

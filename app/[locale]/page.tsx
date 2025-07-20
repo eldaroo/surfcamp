@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useI18n } from '@/lib/i18n';
 import { useBookingStore } from '@/lib/store';
 import Header from '@/components/Header';
 import BookingSteps from '@/components/BookingSteps';
@@ -16,14 +16,22 @@ import PriceSummary from '@/components/PriceSummary';
 import ContactForm from '@/components/ContactForm';
 
 export default function HomePage() {
-  const t = useTranslations();
+  console.log('🏠 HomePage - Iniciando renderizado');
+  
+  const { t } = useI18n();
+  console.log('🏠 HomePage - Hook useI18n obtenido, t function:', typeof t);
+  
   const { currentStep, bookingData, selectedRoom, selectedActivities, setCurrentStep, priceBreakdown } = useBookingStore();
+  console.log('🏠 HomePage - Estado del store obtenido, currentStep:', currentStep);
+  
   const isReadyForPayment =
     bookingData.checkIn &&
     bookingData.checkOut &&
     bookingData.guests &&
     selectedRoom &&
     bookingData.contactInfo;
+
+  console.log('🏠 HomePage - isReadyForPayment:', isReadyForPayment);
 
   // Log de depuración para saber qué datos están presentes
   console.log('Datos para pago:', {
@@ -35,6 +43,8 @@ export default function HomePage() {
   });
 
   const renderCurrentStep = () => {
+    console.log('🏠 HomePage - Renderizando step:', currentStep);
+    
     switch (currentStep) {
       case 'dates':
         return <DateSelector />;
@@ -77,6 +87,8 @@ export default function HomePage() {
         return <DateSelector />;
     }
   };
+
+  console.log('🏠 HomePage - Renderizando página principal');
 
   return (
     <div className="min-h-screen">

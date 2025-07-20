@@ -1,338 +1,257 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Users, ChevronRight } from 'lucide-react';
-import DatePicker from 'react-datepicker';
+import { CalendarIcon } from '@heroicons/react/24/outline';
 import { useBookingStore } from '@/lib/store';
-import { validateDateRange, validateGuestCount, calculateNights } from '@/lib/utils';
-import 'react-datepicker/dist/react-datepicker.css';
+import { useI18n } from '@/lib/i18n';
 
 export default function DateSelector() {
-  const { 
-    bookingData, 
-    setBookingData, 
-    setCurrentStep,
-    setLoading,
-    setError,
-    error
-  } = useBookingStore();
-
-  const [checkIn, setCheckIn] = useState<Date | null>(
-    bookingData.checkIn ? new Date(bookingData.checkIn) : null
-  );
-  const [checkOut, setCheckOut] = useState<Date | null>(
-    bookingData.checkOut ? new Date(bookingData.checkOut) : null
-  );
+  const { t } = useI18n();
+  const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
   const [guests, setGuests] = useState(bookingData.guests || 1);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [showErrorDetails, setShowErrorDetails] = useState(false);
-  const [localLoading, setLocalLoading] = useState(false);
+  const [checkIn, setCheckIn] = useState(bookingData.checkIn || '');
+  const [checkOut, setCheckOut] = useState(bookingData.checkOut || '');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const validateForm = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    // Validaciones
     const errors: string[] = [];
-    
     if (!checkIn || !checkOut) {
-      errors.push('Por favor selecciona las fechas de entrada y salida');
-      return errors;
+      errors.push(t('dates.validation.selectDates'));
     }
 
-    const dateError = validateDateRange(checkIn, checkOut);
-    if (dateError) {
-      errors.push(dateError);
+    if (checkIn && checkOut) {
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (checkInDate < today) {
+        errors.push(t('dates.validation.pastDate'));
+      }
+
+      if (checkOutDate <= checkInDate) {
+        errors.push(t('dates.validation.invalidRange'));
+      }
     }
 
-    const guestError = validateGuestCount(guests);
-    if (guestError) {
-      errors.push(guestError);
+    if (guests < 1 || guests > 12) {
+      errors.push(t('dates.validation.guestsRange'));
     }
 
-    return errors;
-  };
-
-  const handleContinue = async () => {
-    if (localLoading) return; // Evita doble submit
-    const errors = validateForm();
-    
     if (errors.length > 0) {
-      setValidationErrors(errors);
+      setError(errors.join('. '));
+      setIsLoading(false);
       return;
     }
 
-    setValidationErrors([]);
-    setLocalLoading(true);
-    setError(null);
-
     try {
-      // Check availability first
-      const requestUrl = `${window.location.origin}/api/availability`;
-      const requestBody = {
-        checkIn: checkIn!.toISOString(),
-        checkOut: checkOut!.toISOString(),
-        guests,
-      };
-      
-      const availabilityResponse = await fetch('/api/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      });
-
-      const availabilityData = await availabilityResponse.json();
-
-      if (!availabilityResponse.ok) {
-        // Create detailed error message
-        let errorMessage = 'Error verificando disponibilidad';
-        
-        if (availabilityData.error) {
-          errorMessage += `: ${availabilityData.error}`;
-        }
-        
-        if (availabilityData.apiError) {
-          errorMessage += ` (API: ${availabilityData.apiError})`;
-        }
-        
-        // Add technical details with Request URL
-        if (availabilityData.debug) {
-          errorMessage += ` | Debug: ${availabilityData.debug.message || 'Info técnica disponible'}`;
-        }
-        
-        // Add request details
-        errorMessage += ` | Request URL: ${requestUrl}`;
-        errorMessage += ` | Request Body: ${JSON.stringify(requestBody)}`;
-        errorMessage += ` | Response Status: ${availabilityResponse.status}`;
-        
-        // Log detailed error for debugging
-        console.error('❌ AVAILABILITY ERROR DETAILS:', {
-          requestUrl,
-          requestBody,
-          status: availabilityResponse.status,
-          statusText: availabilityResponse.statusText,
-          response: availabilityData,
-        });
-        
-        throw new Error(errorMessage);
-      }
-
-      if (!availabilityData.available) {
-        setError('No hay disponibilidad para las fechas seleccionadas. Por favor elige otras fechas.');
-        return;
-      }
-
-      // Save booking data
+      // Actualizar el store
       setBookingData({
-        checkIn: checkIn!,
-        checkOut: checkOut!,
-        guests,
+        ...bookingData,
+        checkIn: new Date(checkIn),
+        checkOut: new Date(checkOut),
+        guests
       });
 
-      // Move to next step
-      setCurrentStep('accommodation');
-    } catch (error: any) {
-      console.error('❌ ERROR COMPLETO:', error);
-      
-      // Create user-friendly error message with technical details
-      let userMessage = 'Error verificando disponibilidad';
-      
-      if (error.message) {
-        userMessage = error.message;
+      // Verificar disponibilidad
+      const response = await fetch('/api/availability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          checkIn,
+          checkOut,
+          guests
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.available) {
+        setCurrentStep('accommodation');
+      } else {
+        setError(t('dates.error.noAvailability'));
       }
-      
-      // Add technical details for debugging
-      if (error.name && error.name !== 'Error') {
-        userMessage += ` (${error.name})`;
-      }
-      
-      setError(userMessage);
+    } catch (error) {
+      setError(t('dates.error.general'));
     } finally {
-      setLocalLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const nights = checkIn && checkOut ? calculateNights(checkIn, checkOut) : 0;
+  const calculateNights = () => {
+    if (!checkIn || !checkOut) return 0;
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const nights = calculateNights();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.5 }}
       className="card"
     >
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="w-10 h-10 bg-ocean-100 rounded-full flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-ocean-600" />
+      <div className="flex items-center mb-6">
+        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+          <CalendarIcon className="w-6 h-6 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Fechas y Huéspedes</h2>
-          <p className="text-gray-600">Selecciona cuándo quieres vivir la experiencia</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('dates.title')}</h2>
+          <p className="text-gray-600">{t('dates.subtitle')}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Check-in Date */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Fecha de Entrada
-          </label>
-          <DatePicker
-            selected={checkIn}
-            onChange={(date) => setCheckIn(date)}
-            selectsStart
-            startDate={checkIn}
-            endDate={checkOut}
-            minDate={new Date()}
-            placeholderText="Selecciona fecha"
-            className="input-field"
-            dateFormat="dd/MM/yyyy"
-          />
-        </div>
-
-        {/* Check-out Date */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Fecha de Salida
-          </label>
-          <DatePicker
-            selected={checkOut}
-            onChange={(date) => setCheckOut(date)}
-            selectsEnd
-            startDate={checkIn}
-            endDate={checkOut}
-            minDate={checkIn || new Date()}
-            placeholderText="Selecciona fecha"
-            className="input-field"
-            dateFormat="dd/MM/yyyy"
-          />
-        </div>
-      </div>
-
-      {/* Guests Selector */}
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Número de Huéspedes
-        </label>
-        <div className="flex items-center space-x-4">
-          <Users className="w-5 h-5 text-gray-400" />
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setGuests(Math.max(1, guests - 1))}
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
-              disabled={guests <= 1}
-            >
-              -
-            </button>
-            <span className="text-xl font-semibold w-12 text-center">{guests}</span>
-            <button
-              onClick={() => setGuests(Math.min(12, guests + 1))}
-              className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
-              disabled={guests >= 12}
-            >
-              +
-            </button>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Check-in Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('dates.checkIn')}
+            </label>
+            <input
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min={new Date().toISOString().split('T')[0] as string}
+            />
           </div>
-          <span className="text-sm text-gray-500">
-            {guests === 1 ? '1 huésped' : `${guests} huéspedes`}
-          </span>
-        </div>
-      </div>
 
-      {/* Stay Summary */}
-      {checkIn && checkOut && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="bg-ocean-50 rounded-lg p-4 mb-6"
-        >
-          <h3 className="font-semibold text-ocean-800 mb-2">Resumen de tu estadía</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-600">Entrada:</span>
-              <p className="font-semibold">{checkIn.toLocaleDateString('es-ES')}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Salida:</span>
-              <p className="font-semibold">{checkOut.toLocaleDateString('es-ES')}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Noches:</span>
-              <p className="font-semibold">{nights} {nights === 1 ? 'noche' : 'noches'}</p>
-            </div>
-            <div>
-              <span className="text-gray-600">Huéspedes:</span>
-              <p className="font-semibold">{guests} {guests === 1 ? 'persona' : 'personas'}</p>
-            </div>
+          {/* Check-out Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('dates.checkOut')}
+            </label>
+            <input
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min={(checkIn || new Date().toISOString().split('T')[0]) as string}
+            />
           </div>
-        </motion.div>
-      )}
+        </div>
 
-      {/* Error Messages */}
-      {(validationErrors.length > 0 || error) && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"
-        >
-          {validationErrors.map((error, index) => (
-            <p key={index} className="text-red-600 text-sm mb-2">{error}</p>
-          ))}
-          {error && (
-            <div>
-              <p className="text-red-600 text-sm mb-2 font-medium">🚨 {error}</p>
-              
-              {/* Technical Details Toggle */}
-              {error.includes('|') && (
-                <div className="mt-2">
-                  <button
-                    onClick={() => setShowErrorDetails(!showErrorDetails)}
-                    className="text-red-500 text-xs underline hover:text-red-700"
-                  >
-                    {showErrorDetails ? 'Ocultar detalles técnicos' : 'Mostrar detalles técnicos'}
-                  </button>
-                  
-                  {showErrorDetails && (
-                    <div className="mt-2 p-3 bg-red-100 rounded text-xs font-mono text-red-800">
-                      <p className="font-bold mb-1">🔧 INFORMACIÓN TÉCNICA:</p>
-                      <div className="whitespace-pre-wrap break-all">
-                        {error.split('|').map((part, i) => (
-                          <div key={i} className="mb-1">
-                            {part.trim()}
-                          </div>
-                        ))}
-                      </div>
-                      <p className="mt-2 text-xs text-red-600">
-                        💡 Comparte esta información con el equipo técnico para resolver el problema
-                      </p>
-                    </div>
-                  )}
+        {/* Number of Guests */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('dates.guests')}
+          </label>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setGuests(Math.max(1, guests - 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+              >
+                <span className="text-gray-600">-</span>
+              </button>
+              <span className="text-2xl font-bold text-gray-900 w-12 text-center">
+                {guests}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGuests(Math.min(12, guests + 1))}
+                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+              >
+                <span className="text-gray-600">+</span>
+              </button>
+            </div>
+            <span className="text-gray-600">
+              {guests === 1 ? `1 ${t('dates.guest')}` : `${guests} ${t('dates.guests_plural')}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Summary */}
+        {(checkIn || checkOut || guests > 1) && (
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="font-semibold text-gray-900 mb-2">{t('dates.summary.title')}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              {checkIn && (
+                <div>
+                  <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
+                  <span className="ml-2 font-medium">{new Date(checkIn as string).toLocaleDateString()}</span>
                 </div>
               )}
-              
-              {/* General troubleshooting tips */}
-              <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded">
-                <p className="text-orange-800 text-xs font-medium mb-1">🛠️ POSIBLES SOLUCIONES:</p>
-                <ul className="text-orange-700 text-xs space-y-1">
-                  <li>• Verifica tu conexión a internet</li>
-                  <li>• Intenta con fechas diferentes</li>
-                  <li>• Recarga la página e intenta nuevamente</li>
-                  <li>• Si el problema persiste, contacta al soporte técnico</li>
-                </ul>
+              {checkOut && (
+                <div>
+                  <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
+                  <span className="ml-2 font-medium">{new Date(checkOut as string).toLocaleDateString()}</span>
+                </div>
+              )}
+              <div>
+                <span className="text-gray-600">{t('dates.summary.guests')}:</span>
+                <span className="ml-2 font-medium">{guests}</span>
               </div>
             </div>
-          )}
-        </motion.div>
-      )}
+            {nights > 0 && (
+              <div className="mt-2 text-sm text-gray-600">
+                {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* Continue Button */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleContinue}
-          disabled={!checkIn || !checkOut || localLoading}
-          className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span>Continuar</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <ul className="list-disc pl-5 space-y-1">
+                    {error.split('. ').map((err, index) => (
+                      <li key={index}>• {err}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={isLoading || !checkIn || !checkOut}
+            className="btn-primary flex items-center space-x-2"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>{t('common.loading')}</span>
+              </>
+            ) : (
+              <>
+                <span>{t('common.continue')}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
     </motion.div>
   );
 } 
