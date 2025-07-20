@@ -70,15 +70,20 @@ export const sendBookingConfirmation = async (
     guestName: string;
   }
 ) => {
-  return sendWhatsAppMessage(phone, 'booking_confirmation', {
-    checkIn: formatDateForWhatsApp(bookingData.checkIn),
-    checkOut: formatDateForWhatsApp(bookingData.checkOut),
-    roomType: getRoomTypeName(bookingData.roomTypeId),
-    guests: bookingData.guests,
-    bookingReference: bookingData.bookingReference,
-    total: bookingData.total,
-    guestName: bookingData.guestName
-  });
+  const message = `¡Hola ${bookingData.guestName}! 🎉
+
+Tu reserva ha sido confirmada exitosamente.
+
+📅 Check-in: ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 Check-out: ${formatDateForWhatsApp(bookingData.checkOut)}
+🏠 Habitación: ${getRoomTypeName(bookingData.roomTypeId)}
+👥 Huéspedes: ${bookingData.guests}
+💰 Total: $${bookingData.total}
+🔢 Referencia: ${bookingData.bookingReference}
+
+¡Nos vemos pronto en SurfCamp Santa Teresa! 🌊`;
+
+  return sendWhatsAppMessage(phone, message);
 };
 
 // Función para enviar recordatorio de reserva
@@ -91,12 +96,17 @@ export const sendBookingReminder = async (
     guestName: string;
   }
 ) => {
-  return sendWhatsAppMessage(phone, 'booking_reminder', {
-    checkIn: formatDateForWhatsApp(bookingData.checkIn),
-    roomType: getRoomTypeName(bookingData.roomTypeId),
-    bookingReference: bookingData.bookingReference,
-    guestName: bookingData.guestName
-  });
+  const message = `¡Hola ${bookingData.guestName}! 🌊
+
+Te recordamos tu reserva en SurfCamp Santa Teresa:
+
+📅 Check-in: ${formatDateForWhatsApp(bookingData.checkIn)}
+🏠 Habitación: ${getRoomTypeName(bookingData.roomTypeId)}
+🔢 Referencia: ${bookingData.bookingReference}
+
+¡Estamos ansiosos por recibirte! 🏄‍♂️`;
+
+  return sendWhatsAppMessage(phone, message);
 };
 
 // Función para enviar mensaje de bienvenida
@@ -108,11 +118,16 @@ export const sendWelcomeMessage = async (
     guestName: string;
   }
 ) => {
-  return sendWhatsAppMessage(phone, 'welcome_message', {
-    roomType: getRoomTypeName(bookingData.roomTypeId),
-    bookingReference: bookingData.bookingReference,
-    guestName: bookingData.guestName
-  });
+  const message = `¡Bienvenido/a ${bookingData.guestName}! 🎉
+
+Tu reserva en SurfCamp Santa Teresa está lista:
+
+🏠 Habitación: ${getRoomTypeName(bookingData.roomTypeId)}
+🔢 Referencia: ${bookingData.bookingReference}
+
+¡Disfruta de tu estadía! 🌊`;
+
+  return sendWhatsAppMessage(phone, message);
 };
 
 // Función para verificar estado de Green API

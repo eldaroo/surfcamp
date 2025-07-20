@@ -62,10 +62,10 @@ export default function PaymentSection() {
     );
   }
 
-  const nights = Math.ceil(
+  const nights = bookingData.checkIn && bookingData.checkOut ? Math.ceil(
     (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
     (1000 * 60 * 60 * 24)
-  );
+  ) : 0;
 
   const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
   const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
@@ -117,7 +117,7 @@ export default function PaymentSection() {
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.dates')}:</span>
                 <span className="font-medium">
-                  {new Date(bookingData.checkIn).toLocaleDateString()} - {new Date(bookingData.checkOut).toLocaleDateString()}
+                  {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString() : 'N/A'} - {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString() : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between">

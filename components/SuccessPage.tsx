@@ -6,16 +6,17 @@ import { useI18n } from '@/lib/i18n';
 
 export default function SuccessPage() {
   const { t } = useI18n();
-  const { bookingData, selectedRoom, selectedActivities, resetBooking } = useBookingStore();
+  const { bookingData, selectedRoom, selectedActivities, reset } = useBookingStore();
 
   const handleNewReservation = () => {
-    resetBooking();
+    reset();
+    window.location.href = '/es';
   };
 
-  const nights = Math.ceil(
+  const nights = bookingData.checkIn && bookingData.checkOut ? Math.ceil(
     (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
     (1000 * 60 * 60 * 24)
-  );
+  ) : 0;
 
   const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
   const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
@@ -73,13 +74,13 @@ export default function SuccessPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
                   <span className="font-medium">
-                    {new Date(bookingData.checkIn).toLocaleDateString()}
+                    {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
                   <span className="font-medium">
-                    {new Date(bookingData.checkOut).toLocaleDateString()}
+                    {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString() : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">

@@ -1,16 +1,1 @@
-{
-  "/_not-found": "app/_not-found.js",
-  "/api/availability/route": "app/api/availability/route.js",
-  "/api/activities/route": "app/api/activities/route.js",
-  "/api/payment/create-intent/route": "app/api/payment/create-intent/route.js",
-  "/api/payment/nowpayments/status/route": "app/api/payment/nowpayments/status/route.js",
-  "/api/payment/nowpayments/route": "app/api/payment/nowpayments/route.js",
-  "/api/payment/nowpayments/webhook/route": "app/api/payment/nowpayments/webhook/route.js",
-  "/api/quote/route": "app/api/quote/route.js",
-  "/api/reserve/route": "app/api/reserve/route.js",
-  "/api/test/route": "app/api/test/route.js",
-  "/page": "app/page.js",
-  "/api/whatsapp/route": "app/api/whatsapp/route.js",
-  "/api/whatsapp/test/route": "app/api/whatsapp/test/route.js",
-  "/[locale]/page": "app/[locale]/page.js"
-}
+{}

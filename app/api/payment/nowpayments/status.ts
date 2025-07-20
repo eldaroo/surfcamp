@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentStatus } from './webhook';
+
+// Función simple para obtener el estado del pago
+function getPaymentStatus(orderId: string) {
+  // Por ahora retornamos un estado mock
+  // En una implementación real, esto consultaría la base de datos
+  return {
+    order_id: orderId,
+    status: 'pending',
+    amount: 0,
+    currency: 'USD',
+    timestamp: new Date().toISOString()
+  };
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

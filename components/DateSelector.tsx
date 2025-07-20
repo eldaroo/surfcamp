@@ -10,8 +10,8 @@ export default function DateSelector() {
   const { t } = useI18n();
   const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
   const [guests, setGuests] = useState(bookingData.guests || 1);
-  const [checkIn, setCheckIn] = useState(bookingData.checkIn || '');
-  const [checkOut, setCheckOut] = useState(bookingData.checkOut || '');
+  const [checkIn, setCheckIn] = useState(bookingData.checkIn ? new Date(bookingData.checkIn).toISOString().split('T')[0] : '');
+  const [checkOut, setCheckOut] = useState(bookingData.checkOut ? new Date(bookingData.checkOut).toISOString().split('T')[0] : '');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,32 +21,25 @@ export default function DateSelector() {
     setIsLoading(true);
 
     // Validaciones
-    const errors: string[] = [];
     if (!checkIn || !checkOut) {
-      errors.push(t('dates.validation.selectDates'));
+      setError(t('dates.error.selectDates'));
+      setIsLoading(false);
+      return;
     }
 
-    if (checkIn && checkOut) {
-      const checkInDate = new Date(checkIn);
-      const checkOutDate = new Date(checkOut);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      if (checkInDate < today) {
-        errors.push(t('dates.validation.pastDate'));
-      }
-
-      if (checkOutDate <= checkInDate) {
-        errors.push(t('dates.validation.invalidRange'));
-      }
+    if (checkInDate < today) {
+      setError(t('dates.error.pastDate'));
+      setIsLoading(false);
+      return;
     }
 
-    if (guests < 1 || guests > 12) {
-      errors.push(t('dates.validation.guestsRange'));
-    }
-
-    if (errors.length > 0) {
-      setError(errors.join('. '));
+    if (checkOutDate <= checkInDate) {
+      setError(t('dates.error.invalidRange'));
       setIsLoading(false);
       return;
     }
@@ -126,7 +119,7 @@ export default function DateSelector() {
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min={new Date().toISOString().split('T')[0] as string}
+              min={new Date().toISOString().split('T')[0]}
             />
           </div>
 
@@ -140,7 +133,7 @@ export default function DateSelector() {
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min={(checkIn || new Date().toISOString().split('T')[0]) as string}
+              min={checkIn || new Date().toISOString().split('T')[0]}
             />
           </div>
         </div>
@@ -184,13 +177,13 @@ export default function DateSelector() {
               {checkIn && (
                 <div>
                   <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
-                  <span className="ml-2 font-medium">{new Date(checkIn as string).toLocaleDateString()}</span>
+                  <span className="ml-2 font-medium">{new Date(checkIn).toLocaleDateString()}</span>
                 </div>
               )}
               {checkOut && (
                 <div>
                   <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
-                  <span className="ml-2 font-medium">{new Date(checkOut as string).toLocaleDateString()}</span>
+                  <span className="ml-2 font-medium">{new Date(checkOut).toLocaleDateString()}</span>
                 </div>
               )}
               <div>
