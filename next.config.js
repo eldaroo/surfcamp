@@ -7,11 +7,11 @@ const nextConfig = {
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'ALLOWALL'
+            value: 'SAMEORIGIN'
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'self' https://tilda.ws https://*.tilda.ws https://tilda.com https://*.tilda.com *"
+            value: "frame-ancestors *"
           }
         ],
       },
