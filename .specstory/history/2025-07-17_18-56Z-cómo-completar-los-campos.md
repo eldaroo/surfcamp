@@ -10160,7 +10160,75 @@ Refused to display 'https://surfcamp-five.vercel.app/' in a frame because it set
 ```javascript
 {
   key: 'Content-Security-Policy',
-  value: "frame-ancestors 'self' https://tilda.ws https://*.ti
+  value: "frame-ancestors 'self' https://tilda.ws https://*.tilda.ws https://tilda.com https://*.tilda.com"
+}
+```
+
+## ✅ **Dominios Permitidos:**
+- ✅ `https://tilda.ws`
+- ✅ `https://*.tilda.ws` (todos los subdominios)
+- ✅ `https://tilda.com`
+- ✅ `https://*.tilda.com` (todos los subdominios)
+
+## 🚀 **Resultado:**
+
+- ✅ **Headers modernos y compatibles**
+- ✅ **Soporte para todos los dominios de Tilda**
+- ✅ **Deploy automático en Vercel**
+- ✅ **Sin conflictos de navegadores**
+
+## 📋 **Próximos Pasos:**
+
+1. **Espera 2-3 minutos** para que Vercel termine el deploy
+2. **Prueba la incrustación** en tu sitio Tilda nuevamente
+3. **El iframe debería funcionar** sin errores ahora
+
+¡Ahora tu aplicación debería incrustarse perfectamente en Tilda con headers modernos y compatibles! 🎯
+
+---
+
+_**User**_
+
+sigue fallando
+
+---
+
+_**Assistant**_
+
+Veo que el problema persiste. El error en la consola del navegador muestra que aún está configurado `X-Frame-Options: deny`. Esto significa que los cambios en `next.config.js` no se han aplicado correctamente en Vercel.
+
+Voy a verificar si los cambios se han desplegado y hacer una configuración más robusta:
+
+
+---
+
+```bash
+git status
+```
+
+```
+PS C:\Users\loko_\OneDrive\Desktop\Escritorio\surfcamp> git status
+On branch main
+
+
+
+```
+
+---
+
+Cancelled
+
+---
+
+_**User**_
+
+Y?
+
+---
+
+_**Assistant**_
+
+Veo que el problema persiste. El error en la consola del navegador sigue mostrando `X-Frame-Options: deny`, lo que signific
 
 ---
 
