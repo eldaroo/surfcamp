@@ -37,7 +37,12 @@ export async function POST(request: NextRequest) {
       bookingReference
     });
 
-    if (!lobbyPMSClient.isConfigured()) {
+    // Check LobbyPMS configuration first
+    console.log('🔧 Checking LobbyPMS configuration...');
+    const isConfigured = lobbyPMSClient.isConfigured();
+    console.log('🔧 LobbyPMS configured:', isConfigured);
+
+    if (!isConfigured) {
       console.log('🎯 LobbyPMS not configured, using demo mode');
       
       // Enviar mensaje de confirmación por WhatsApp (modo demo sin LobbyPMS)
@@ -72,6 +77,44 @@ export async function POST(request: NextRequest) {
 
       console.log('✅ Demo reservation created:', mockReservation);
       return NextResponse.json(mockReservation);
+    }
+
+    // Test LobbyPMS connection before proceeding
+    console.log('🔧 Testing LobbyPMS connection...');
+    try {
+      const connectionTest = await lobbyPMSClient.testConnection();
+      console.log('🔧 LobbyPMS connection test result:', connectionTest);
+      
+      if (!connectionTest) {
+        console.log('❌ LobbyPMS connection test failed, using demo mode');
+        throw new Error('LobbyPMS connection test failed');
+      }
+    } catch (connectionError) {
+      console.log('❌ LobbyPMS connection error:', connectionError);
+      console.log('🔄 Falling back to demo mode due to connection failure');
+      
+      // Enviar mensaje de confirmación por WhatsApp (modo demo)
+      try {
+        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es).`;
+        const whatsappResult = await sendWhatsAppMessage(
+          '+5491162802566',
+          waMessage
+        );
+        console.log('📱 WhatsApp confirmation sent (demo mode):', whatsappResult);
+      } catch (whatsappError) {
+        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+      }
+      
+      return NextResponse.json({
+        success: true,
+        reservationId: `CONNECTION-FALLBACK-${bookingReference}`,
+        bookingReference,
+        status: 'confirmed',
+        message: 'Reserva confirmada exitosamente (modo demo - LobbyPMS no conecta)',
+        demoMode: true,
+        fallbackReason: 'LobbyPMS connection test failed',
+        originalError: connectionError instanceof Error ? connectionError.message : 'Unknown connection error'
+      });
     }
 
     // Get the corresponding category_id for LobbyPMS
@@ -132,6 +175,7 @@ export async function POST(request: NextRequest) {
     console.log('📡 Sending to LobbyPMS:', bookingData);
 
     try {
+      console.log('🚀 Attempting to create booking in LobbyPMS...');
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
 
       console.log('✅ LobbyPMS reservation successful:', reservationData);

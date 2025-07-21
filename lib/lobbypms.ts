@@ -295,17 +295,59 @@ export class LobbyPMSClient {
    */
   async createBooking(booking: LobbyPMSBooking): Promise<LobbyPMSBooking> {
     try {
+      console.log('🚀 ===== LOBBY PMS CREATE BOOKING =====');
+      console.log('🚀 Endpoint: /bookings');
+      console.log('🚀 Booking data:', JSON.stringify(booking, null, 2));
+      
+      const finalUrl = this.buildURL('/bookings');
+      console.log('🚀 Final URL:', finalUrl);
+      
       const response: AxiosResponse<LobbyPMSBooking> = await axios.post(
-        this.buildURL('/bookings'),
+        finalUrl,
         booking,
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'SurfCampSantaTeresa/1.0'
+          },
           timeout: 15000
         }
       );
+      
+      console.log('✅ LobbyPMS createBooking successful:');
+      console.log('   Status:', response.status);
+      console.log('   Response:', JSON.stringify(response.data, null, 2));
+      
       return response.data;
-    } catch (error) {
-      console.error('LobbyPMS createBooking error:', error);
+    } catch (error: any) {
+      console.error('❌ LobbyPMS createBooking error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        responseType: typeof error.response?.data,
+        responseData: error.response?.data,
+        requestData: booking,
+        url: this.buildURL('/bookings')
+      });
+      
+      // Check if response is HTML (error page)
+      const responseData = error.response?.data;
+      if (typeof responseData === 'string' && 
+          (responseData.includes('<!doctype html>') || 
+           responseData.includes('<html') || 
+           responseData.includes('<!DOCTYPE'))) {
+        
+        const titleMatch = responseData.match(/<title>(.*?)<\/title>/i);
+        const title = titleMatch ? titleMatch[1] : 'Unknown HTML page';
+        
+        console.error('🚨 LobbyPMS createBooking returned HTML page instead of JSON:');
+        console.error('🚨 Page title:', title);
+        console.error('🚨 HTML preview:', responseData.substring(0, 300));
+        
+        throw new Error(`LobbyPMS createBooking API returned HTML page "${title}" instead of JSON - possible IP authorization or API token issue`);
+      }
+      
       throw error;
     }
   }

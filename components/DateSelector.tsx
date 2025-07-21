@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import { useBookingStore } from '@/lib/store';
@@ -14,6 +14,9 @@ export default function DateSelector() {
   const [checkOut, setCheckOut] = useState(bookingData.checkOut ? new Date(bookingData.checkOut).toISOString().split('T')[0] : '');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const checkInRef = useRef<HTMLInputElement>(null);
+  const checkOutRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,11 +118,13 @@ export default function DateSelector() {
               {t('dates.checkIn')}
             </label>
             <input
+              ref={checkInRef}
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={new Date().toISOString().split('T')[0]}
+              style={{ cursor: 'pointer' }}
             />
           </div>
 
@@ -129,11 +134,13 @@ export default function DateSelector() {
               {t('dates.checkOut')}
             </label>
             <input
+              ref={checkOutRef}
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={checkIn || new Date().toISOString().split('T')[0]}
+              style={{ cursor: 'pointer' }}
             />
           </div>
         </div>
