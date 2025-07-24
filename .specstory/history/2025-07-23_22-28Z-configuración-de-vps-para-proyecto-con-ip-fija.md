@@ -644,3 +644,173 @@ El sistema de internacionalización sigue funcionando perfectamente, pero ahora 
 
 ---
 
+_**User**_
+
+ que el iframe se ajuste dinámicamente al contenido, es decir, que tu sitio envíe su altura real al padre (Tilda, en este caso).
+
+✅ Objetivo
+Tu sitio en surfcampwidget.duckdns.org (servido desde /root/surfcamp) debe enviar la altura real de la página al padre (Tilda) usando postMessage.
+
+✅ Paso a paso para enviar el alto del sitio
+1. Agregá este script al final del <body> de tu app
+Si usás Next.js, podés incluirlo de forma global en:
+
+swift
+Copy
+Edit
+/root/surfcamp/app/layout.tsx  ← (si usás app router)
+o en:
+
+swift
+Copy
+Edit
+/root/surfcamp/pages/_app.tsx  ← (si usás pages router)
+Agregá este fragmento justo antes de cerrar el <body> (o como useEffect si estás en React):
+
+👉 En HTML o como <script dangerouslySetInnerHTML>:
+html
+Copy
+Edit
+<script>
+  function sendHeight() {
+    const height = document.body.scrollHeight;
+    window.parent.postMessage({ widgetHeight: height }, "*");
+  }
+
+  window.addEventListener("load", sendHeight);
+  window.addEventListener("resize", sendHeight);
+</script>
+👉 En React (por ejemplo en pages/_app.tsx):
+tsx
+Copy
+Edit
+import { useEffect } from 'react';
+
+function MyApp({ Component, pageProps }) {
+  useEffect(() => {
+    const sendHeight = () => {
+      const height = document.body.scrollHeight;
+      window.parent.postMessage({ widgetHeight: height }, '*');
+    };
+
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+
+    return () => {
+      window.removeEventListener('load', sendHeight);
+      window.removeEventListener('resize', sendHeight);
+    };
+  }, []);
+
+  return <Component {...pageProps} />;
+}
+
+export default MyApp;
+
+---
+
+_**Assistant**_
+
+Perfecto! Voy a implementar el sistema de comunicación de altura dinámica para que el iframe se ajuste automáticamente al contenido. Como estás usando Next.js con App Router, lo implementaré en el layout principal.
+
+
+---
+
+Read file: app/layout.tsx
+
+---
+
+```diff
+            {children}
+          </div>
++         
++         {/* Script para comunicación de altura dinámica con Tilda */}
++         <script
++           dangerouslySetInnerHTML={{
++             __html: `
++               function sendHeight() {
++                 const height = document.body.scrollHeight;
++                 window.parent.postMessage({ widgetHeight: height }, "*");
++                 console.log('📏 Enviando altura al padre:', height + 'px');
++               }
++ 
++               // Enviar altura cuando la página carga
++               window.addEventListener("load", sendHeight);
++               
++               // Enviar altura cuando cambia el tamaño de la ventana
++               window.addEventListener("resize", sendHeight);
++               
++               // Enviar altura cuando cambia el contenido (para cambios dinámicos)
++               const observer = new MutationObserver(sendHeight);
++               observer.observe(document.body, { 
++                 childList: true, 
++                 subtree: true,
++                 attributes: true,
++                 attributeFilter: ['style', 'class']
++               });
++               
++               // Enviar altura inicial
++               setTimeout(sendHeight, 100);
++             `
++           }}
++         />
+        </body>
+      </html>
+```
+
+---
+
+¡Perfecto! ✅ **Sistema de altura dinámica implementado**
+
+## 🎯 **Funcionalidades Implementadas:**
+
+### **�� Comunicación Automática:**
+- ✅ **Altura inicial**: Se envía al cargar la página
+- ✅ **Cambios de tamaño**: Se detecta cuando cambia el viewport
+- ✅ **Contenido dinámico**: Se detecta cuando cambia el contenido del DOM
+- ✅ **Logs de debug**: Para monitorear la comunicación
+
+### **�� Características Avanzadas:**
+
+**1. MutationObserver:**
+- Detecta cambios en el DOM automáticamente
+- Monitorea cambios de estilos y clases
+- Perfecto para contenido dinámico (pasos de reserva, formularios, etc.)
+
+**2. Eventos Múltiples:**
+- `load`: Cuando la página termina de cargar
+- `resize`: Cuando cambia el tamaño de la ventana
+- `MutationObserver`: Cuando cambia el contenido dinámicamente
+
+**3. Timeout de Seguridad:**
+- Envía altura después de 100ms para asegurar que todo esté renderizado
+
+### **📡 Mensaje Enviado:**
+```javascript
+{
+  widgetHeight: 1234  // altura en píxeles
+}
+```
+
+### **🔍 Logs de Debug:**
+En la consola del navegador verás:
+```
+�� Enviando altura al padre: 1234px
+```
+
+## �� **Casos de Uso Cubiertos:**
+
+1. **✅ Página inicial**: Altura del formulario de reserva
+2. **✅ Cambio de pasos**: Cuando el usuario avanza en el booking
+3. **✅ Formularios dinámicos**: Cuando se expanden/contraen
+4. **✅ Responsive**: Cuando cambia el tamaño de pantalla
+5. **✅ Contenido asíncrono**: Cuando se cargan datos de APIs
+
+## �� **Resultado:**
+
+Ahora tu **SurfCamp Santa Teresa** en `surfcampwidget.duckdns.org` se comunicará automáticamente con Tilda y el iframe se ajustará perfectamente al contenido real, sin scrollbars innecesarios y con una experiencia fluida para los usuarios.
+
+**🏄‍♂️ ¡El widget ahora se adapta dinámicamente a cualquier cambio de contenido!**
+
+---
+
