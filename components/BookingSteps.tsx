@@ -52,19 +52,19 @@ export default function BookingSteps() {
         {steps.map((step, index) => {
           const isActive = currentStep === step.id;
           const isCompleted = steps.findIndex(s => s.id === currentStep) > index;
-          
-          return (
+
+            return (
             <div key={step.id} className="flex items-center">
               <div className="flex flex-col items-center">
-                <div
+                  <div
                   className={`w-12 h-12 rounded-lg flex items-center justify-center text-lg font-semibold transition-all duration-300 ${
                     isActive
                       ? 'bg-blue-500 text-white'
                       : isCompleted
                       ? 'bg-green-500 text-white'
                       : 'bg-gray-200 text-gray-500'
-                  }`}
-                >
+                    }`}
+                  >
                   {step.icon}
                 </div>
                 <div className="mt-2 text-center">
@@ -79,18 +79,18 @@ export default function BookingSteps() {
                     {t(`booking.steps.${step.name}.description`)}
                   </div>
                 </div>
-              </div>
-              
+                  </div>
+
               {index < steps.length - 1 && (
-                <div
+                    <div
                   className={`w-16 h-0.5 mx-4 transition-all duration-300 ${
                     isCompleted ? 'bg-green-500' : 'bg-gray-200'
-                  }`}
-                />
-              )}
-            </div>
-          );
-        })}
+                      }`}
+                    />
+                  )}
+                </div>
+            );
+          })}
       </div>
     </div>
   );

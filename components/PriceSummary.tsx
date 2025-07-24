@@ -42,14 +42,14 @@ export default function PriceSummary() {
               <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
               <span className="font-medium">
                 {new Date(bookingData.checkIn).toLocaleDateString()}
-              </span>
-            </div>
+          </span>
+        </div>
             <div className="flex justify-between">
               <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
               <span className="font-medium">
                 {new Date(bookingData.checkOut).toLocaleDateString()}
-              </span>
-            </div>
+          </span>
+        </div>
             <div className="flex justify-between">
               <span className="text-gray-600">{t('dates.summary.guests')}:</span>
               <span className="font-medium">
@@ -77,25 +77,25 @@ export default function PriceSummary() {
               </div>
               <span className="font-semibold text-gray-900">${accommodationTotal}</span>
             </div>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Activities */}
+          {/* Activities */}
         {selectedActivities.length > 0 && (
           <div className="border-b border-gray-200 pb-4">
             <h4 className="font-medium text-gray-900 mb-2">{t('prices.activities')}</h4>
             <div className="space-y-2">
               {selectedActivities.map((activity, index) => (
-                <div key={index} className="flex justify-between text-sm">
+                  <div key={index} className="flex justify-between text-sm">
                   <span className="text-gray-600">{activity.name}</span>
                   <span className="font-medium">${activity.price}</span>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Total */}
+          {/* Total */}
         <div className="pt-4">
           <div className="flex justify-between items-center">
             <span className="text-lg font-semibold text-gray-900">{t('prices.total')}</span>
@@ -103,6 +103,6 @@ export default function PriceSummary() {
           </div>
         </div>
       </div>
-    </div>
+          </div>
   );
 } 

@@ -64,6 +64,10 @@
   .step-indicator.inactive {
     @apply bg-gray-100 border-gray-300 text-gray-500;
   }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-ocean-600 to-sand-500 bg-clip-text text-transparent;
+  }
 }
 
 @layer utilities {

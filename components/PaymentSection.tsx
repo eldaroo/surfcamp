@@ -30,12 +30,50 @@ export default function PaymentSection() {
     setError('');
 
     try {
-      // Simular procesamiento de pago
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('💳 Starting payment process...');
       
-      // Mover al paso de éxito
+      // Convertir fechas Date objects a formato ISO string para la API
+      const formatDateForAPI = (date: Date | string) => {
+        if (typeof date === 'string') return date;
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      };
+
+      const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
+      const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
+      
+      console.log('📅 Formatted dates for API:', {
+        original: { checkIn: bookingData.checkIn, checkOut: bookingData.checkOut },
+        formatted: { checkIn: checkInFormatted, checkOut: checkOutFormatted }
+      });
+
+      // Crear reserva en LobbyPMS
+      console.log('🏨 Creating reservation...');
+      const reservationResponse = await fetch('/api/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkIn: checkInFormatted,
+          checkOut: checkOutFormatted,
+          guests: bookingData.guests,
+          contactInfo: bookingData.contactInfo,
+          roomTypeId: selectedRoom.roomTypeId,
+          activities: selectedActivities.map(a => a.id),
+          paymentIntentId: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        }),
+      });
+
+      const reservationData = await reservationResponse.json();
+
+      if (!reservationResponse.ok) {
+        throw new Error(reservationData.error || 'Error creating reservation');
+      }
+
+      console.log('✅ Reservation created successfully:', reservationData);
+      
+      // Success! Move to success page
       setCurrentStep('success');
     } catch (error) {
+      console.error('❌ Payment/Reservation error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
     } finally {
       setIsProcessing(false);
@@ -59,8 +97,8 @@ export default function PaymentSection() {
           {t('common.back')}
         </button>
       </motion.div>
-    );
-  }
+      );
+    }
 
   const nights = bookingData.checkIn && bookingData.checkOut ? Math.ceil(
     (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
@@ -92,38 +130,38 @@ export default function PaymentSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Payment Form */}
         <div className="space-y-6">
-          {/* Booking Summary */}
+      {/* Booking Summary */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="font-semibold text-gray-900 mb-3">{t('payment.summary')}</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
+          <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.client')}:</span>
                 <span className="font-medium">
                   {bookingData.contactInfo?.firstName} {bookingData.contactInfo?.lastName}
-                </span>
-              </div>
-              <div className="flex justify-between">
+            </span>
+          </div>
+          <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.dni')}:</span>
                 <span className="font-medium">{bookingData.contactInfo?.dni}</span>
-              </div>
-              <div className="flex justify-between">
+          </div>
+          <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.email')}:</span>
                 <span className="font-medium">{bookingData.contactInfo?.email}</span>
-              </div>
-              <div className="flex justify-between">
+          </div>
+          <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.phone')}:</span>
                 <span className="font-medium">{bookingData.contactInfo?.phone}</span>
-              </div>
+          </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.dates')}:</span>
                 <span className="font-medium">
                   {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString() : 'N/A'} - {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString() : 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between">
+            </span>
+          </div>
+          <div className="flex justify-between">
                 <span className="text-gray-600">{t('payment.guests')}:</span>
                 <span className="font-medium">{bookingData.guests}</span>
-              </div>
+          </div>
             </div>
           </div>
 
@@ -158,25 +196,25 @@ export default function PaymentSection() {
                 <div>
                   <div className="font-medium">{t('payment.method.crypto')}</div>
                   <div className="text-sm text-gray-600">{t('payment.method.cryptoDescription')}</div>
-                </div>
+            </div>
               </label>
-
+        
               <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="mock"
-                  checked={paymentMethod === 'mock'}
-                  onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
+            <input
+              type="radio"
+              name="paymentMethod"
+              value="mock"
+              checked={paymentMethod === 'mock'}
+              onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
                   className="text-blue-600"
-                />
+            />
                 <div>
                   <div className="font-medium">{t('payment.method.demo')}</div>
                   <div className="text-sm text-gray-600">{t('payment.method.demoDescription')}</div>
-                </div>
-              </label>
             </div>
-          </div>
+          </label>
+        </div>
+      </div>
 
           {/* Security Notice */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -185,12 +223,12 @@ export default function PaymentSection() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="font-semibold text-green-800">{t('payment.secure.title')}</span>
-            </div>
+        </div>
             <p className="text-green-700 text-sm mt-1">{t('payment.secure.description')}</p>
-          </div>
+      </div>
 
-          {/* Error Message */}
-          {error && (
+      {/* Error Message */}
+      {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,7 +260,7 @@ export default function PaymentSection() {
               </>
             )}
           </button>
-        </div>
+      </div>
 
         {/* Price Summary */}
         <div className="bg-gray-50 rounded-lg p-6">

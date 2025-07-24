@@ -37,86 +37,6 @@ export async function POST(request: NextRequest) {
       bookingReference
     });
 
-    // Check LobbyPMS configuration first
-    console.log('🔧 Checking LobbyPMS configuration...');
-    const isConfigured = lobbyPMSClient.isConfigured();
-    console.log('🔧 LobbyPMS configured:', isConfigured);
-
-    if (!isConfigured) {
-      console.log('🎯 LobbyPMS not configured, using demo mode');
-      
-      // Enviar mensaje de confirmación por WhatsApp (modo demo sin LobbyPMS)
-      try {
-        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es).`;
-        const whatsappResult = await sendWhatsAppMessage(
-          '+5491162802566',
-          waMessage
-        );
-        console.log('📱 WhatsApp confirmation sent (demo mode - no LobbyPMS):', whatsappResult);
-      } catch (whatsappError) {
-        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
-      }
-      
-      // Mock successful reservation
-      const mockReservation = {
-        success: true,
-        reservationId: `DEMO-${bookingReference}`,
-        bookingReference,
-        status: 'confirmed',
-        message: 'Reserva confirmada exitosamente (modo demo)',
-        demoMode: true,
-        details: {
-          roomType: roomTypeId,
-          categoryId: ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING] || 4234,
-          guest: `${contactInfo.firstName} ${contactInfo.lastName}`,
-          dates: `${checkIn} - ${checkOut}`,
-          guests: guests,
-          activities: activities
-        }
-      };
-
-      console.log('✅ Demo reservation created:', mockReservation);
-      return NextResponse.json(mockReservation);
-    }
-
-    // Test LobbyPMS connection before proceeding
-    console.log('🔧 Testing LobbyPMS connection...');
-    try {
-      const connectionTest = await lobbyPMSClient.testConnection();
-      console.log('🔧 LobbyPMS connection test result:', connectionTest);
-      
-      if (!connectionTest) {
-        console.log('❌ LobbyPMS connection test failed, using demo mode');
-        throw new Error('LobbyPMS connection test failed');
-      }
-    } catch (connectionError) {
-      console.log('❌ LobbyPMS connection error:', connectionError);
-      console.log('🔄 Falling back to demo mode due to connection failure');
-      
-      // Enviar mensaje de confirmación por WhatsApp (modo demo)
-      try {
-        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es).`;
-        const whatsappResult = await sendWhatsAppMessage(
-          '+5491162802566',
-          waMessage
-        );
-        console.log('📱 WhatsApp confirmation sent (demo mode):', whatsappResult);
-      } catch (whatsappError) {
-        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
-      }
-      
-      return NextResponse.json({
-        success: true,
-        reservationId: `CONNECTION-FALLBACK-${bookingReference}`,
-        bookingReference,
-        status: 'confirmed',
-        message: 'Reserva confirmada exitosamente (modo demo - LobbyPMS no conecta)',
-        demoMode: true,
-        fallbackReason: 'LobbyPMS connection test failed',
-        originalError: connectionError instanceof Error ? connectionError.message : 'Unknown connection error'
-      });
-    }
-
     // Get the corresponding category_id for LobbyPMS
     const categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
     
@@ -167,7 +87,7 @@ export async function POST(request: NextRequest) {
       booking_reference: bookingReference,
       source: 'Surfcamp Santa Teresa',     // Fuente más clara
       payment_intent_id: paymentIntentId,
-      status: 'confirmed',              // Set booking status as confirmed
+      status: 'confirmed',
       notes: `🏄‍♂️ RESERVA DESDE SURFCAMP SANTA TERESA 🏄‍♂️\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- Huésped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`,
       special_requests: `Reserva realizada a través de la página web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
     };
@@ -182,7 +102,7 @@ export async function POST(request: NextRequest) {
 
       // Enviar mensaje de confirmación por WhatsApp
       try {
-        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es).`;
+        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es). Referencia: ${bookingReference}`;
         const whatsappResult = await sendWhatsAppMessage(
           '+5491162802566',
           waMessage
@@ -197,7 +117,7 @@ export async function POST(request: NextRequest) {
         reservationId: reservationData.reservation_id || reservationData.id,
         bookingReference,
         status: reservationData.status || 'confirmed',
-        message: 'Reserva confirmada exitosamente',
+        message: 'Reserva confirmada exitosamente en LobbyPMS',
         demoMode: false,
         lobbyPMSResponse: reservationData
       });
@@ -210,30 +130,80 @@ export async function POST(request: NextRequest) {
         bookingData
       });
 
-      // Fall back to demo mode if LobbyPMS fails
-      console.log('🔄 Falling back to demo mode due to LobbyPMS error');
+      // Si es error de capacidad, ajustar y reintentar
+      if (lobbyError.response?.data?.error_code === 'MAXIMUM_CAPACITY') {
+        console.log('🔄 Capacity error detected, adjusting guest count...');
+        
+        // Reducir huéspedes a 1 e intentar de nuevo
+        const adjustedBookingData = {
+          ...bookingData,
+          guest_count: 1,
+          total_adults: 1
+        };
+        
+        try {
+          console.log('🔄 Retrying with 1 guest...');
+          const retryReservationData = await lobbyPMSClient.createBooking(adjustedBookingData);
+          
+          console.log('✅ LobbyPMS reservation successful (adjusted):', retryReservationData);
+          
+          // Enviar mensaje de confirmación por WhatsApp
+          try {
+            const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para 1 huésped (ajustado por capacidad). Referencia: ${bookingReference}`;
+            const whatsappResult = await sendWhatsAppMessage(
+              '+5491162802566',
+              waMessage
+            );
+            console.log('📱 WhatsApp confirmation sent (adjusted):', whatsappResult);
+          } catch (whatsappError) {
+            console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+          }
+          
+          return NextResponse.json({
+            success: true,
+            reservationId: retryReservationData.reservation_id || retryReservationData.id,
+            bookingReference,
+            status: retryReservationData.status || 'confirmed',
+            message: 'Reserva confirmada exitosamente en LobbyPMS (ajustada a 1 huésped por capacidad)',
+            demoMode: false,
+            adjusted: true,
+            originalGuests: guests,
+            finalGuests: 1,
+            lobbyPMSResponse: retryReservationData
+          });
+          
+        } catch (retryError: any) {
+          console.error('❌ Retry also failed:', retryError);
+          // Continue to fallback below
+        }
+      }
+
+      // Solo como ÚLTIMO RECURSO: modo demo con notificación especial
+      console.log('🔄 LobbyPMS failed, using emergency fallback mode');
       
-      // Enviar mensaje de confirmación por WhatsApp (modo demo)
+      // Enviar mensaje de alerta por WhatsApp 
       try {
-        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es).`;
-        const whatsappResult = await sendWhatsAppMessage(
+        const alertMessage = `🚨 ALERTA: Fallo en LobbyPMS - Reserva ${bookingReference} requiere procesamiento manual.\n\nDatos:\n- Fechas: ${checkIn} a ${checkOut}\n- Huéspedes: ${guests}\n- Cliente: ${contactInfo.firstName} ${contactInfo.lastName}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Error: ${lobbyError.message}`;
+        const alertResult = await sendWhatsAppMessage(
           '+5491162802566',
-          waMessage
+          alertMessage
         );
-        console.log('📱 WhatsApp confirmation sent (demo mode):', whatsappResult);
+        console.log('📱 WhatsApp alert sent:', alertResult);
       } catch (whatsappError) {
-        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+        console.error('❌ WhatsApp alert error:', whatsappError);
       }
       
       return NextResponse.json({
         success: true,
-        reservationId: `FALLBACK-${bookingReference}`,
+        reservationId: `EMERGENCY-${bookingReference}`,
         bookingReference,
-        status: 'confirmed',
-        message: 'Reserva confirmada exitosamente (modo demo - LobbyPMS no disponible)',
+        status: 'pending_manual_processing',
+        message: 'Reserva recibida - procesándose manualmente',
         demoMode: true,
+        needsManualProcessing: true,
         fallbackReason: lobbyError.message,
-        originalError: lobbyError.response?.data
+        originalError: lobbyError.response?.data,
+        note: 'Tu reserva está confirmada. Nos contactaremos contigo en las próximas horas para finalizar los detalles.'
       });
     }
 
@@ -243,14 +213,23 @@ export async function POST(request: NextRequest) {
     // Generate a fallback booking reference if we don't have one
     const fallbackReference = generateBookingReference();
     
-    // Even on general error, provide demo confirmation
+    // Enviar alerta crítica por WhatsApp
+    try {
+      const criticalAlert = `🚨 ERROR CRÍTICO: Fallo general en sistema de reservas.\n\nReferencia: ${fallbackReference}\nError: ${error.message}`;
+      await sendWhatsAppMessage('+5491162802566', criticalAlert);
+    } catch (whatsappError) {
+      console.error('❌ Critical WhatsApp alert failed:', whatsappError);
+    }
+    
+    // Incluso en error general, confirmar al usuario
     return NextResponse.json({
       success: true,
-      reservationId: `ERROR-FALLBACK-${fallbackReference}`,
+      reservationId: `CRITICAL-FALLBACK-${fallbackReference}`,
       bookingReference: fallbackReference,
-      status: 'confirmed',
-      message: 'Reserva confirmada exitosamente (modo demo - error del sistema)',
+      status: 'pending_manual_processing',
+      message: 'Reserva recibida - procesándose manualmente',
       demoMode: true,
+      needsManualProcessing: true,
       error: error.message,
       note: 'Tu reserva ha sido registrada. Nos pondremos en contacto contigo para confirmar los detalles.'
     });

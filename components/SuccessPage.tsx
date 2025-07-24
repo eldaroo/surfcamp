@@ -17,15 +17,15 @@ export default function SuccessPage() {
     (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
     (1000 * 60 * 60 * 24)
   ) : 0;
-
+  
   const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
   const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
   const total = accommodationTotal + activitiesTotal;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
       className="max-w-4xl mx-auto"
     >
       <div className="text-center mb-8">
@@ -36,8 +36,8 @@ export default function SuccessPage() {
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('success.title')}</h1>
         <p className="text-xl text-gray-600">{t('success.subtitle')}</p>
-      </div>
-
+              </div>
+              
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Booking Details */}
         <div className="card">
@@ -48,19 +48,19 @@ export default function SuccessPage() {
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3">{t('payment.client')}</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('contact.firstName')}:</span>
                   <span className="font-medium">{bookingData.contactInfo?.firstName}</span>
-                </div>
-                <div className="flex justify-between">
+              </div>
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('contact.lastName')}:</span>
                   <span className="font-medium">{bookingData.contactInfo?.lastName}</span>
-                </div>
-                <div className="flex justify-between">
+              </div>
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('contact.email')}:</span>
                   <span className="font-medium">{bookingData.contactInfo?.email}</span>
-                </div>
-                <div className="flex justify-between">
+              </div>
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('contact.phone')}:</span>
                   <span className="font-medium">{bookingData.contactInfo?.phone}</span>
                 </div>
@@ -71,19 +71,19 @@ export default function SuccessPage() {
             <div className="bg-gray-50 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3">{t('dates.summary.title')}</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
                   <span className="font-medium">
                     {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString() : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
+                </span>
+              </div>
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
                   <span className="font-medium">
                     {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString() : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
+                </span>
+              </div>
+              <div className="flex justify-between">
                   <span className="text-gray-600">{t('dates.summary.guests')}:</span>
                   <span className="font-medium">
                     {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests_plural')}
@@ -106,13 +106,13 @@ export default function SuccessPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">{t('accommodation.roomTypes.' + selectedRoom.roomTypeId + '.name')}:</span>
                     <span className="font-medium">${selectedRoom.pricePerNight} {t('prices.perNight')}</span>
-                  </div>
-                </div>
               </div>
-            )}
+            </div>
+          </div>
+        )}
 
-            {/* Activities */}
-            {selectedActivities.length > 0 && (
+        {/* Activities */}
+        {selectedActivities.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">{t('prices.activities')}</h3>
                 <div className="space-y-2 text-sm">
@@ -120,14 +120,14 @@ export default function SuccessPage() {
                     <div key={index} className="flex justify-between">
                       <span className="text-gray-600">{activity.name}:</span>
                       <span className="font-medium">${activity.price}</span>
-                    </div>
-                  ))}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
-        </div>
-
+        )}
+          </div>
+            </div>
+            
         {/* Confirmation & Contact */}
         <div className="space-y-6">
           {/* Email Confirmation */}
@@ -151,11 +151,11 @@ export default function SuccessPage() {
               </svg>
               <p className="font-semibold text-gray-900">{t('success.whatsappSent')}</p>
             </div>
-            <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 text-sm">
               {t('success.whatsappSent')}
-            </p>
+              </p>
           </div>
-
+          
           {/* Help Section */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-4">{t('success.needHelp')}</h3>
@@ -185,10 +185,10 @@ export default function SuccessPage() {
                 </svg>
                 <span className="text-gray-600">{t('success.location')}:</span>
                 <span className="font-medium">{t('header.location')}</span>
-              </div>
+            </div>
             </div>
           </div>
-
+          
           {/* Price Summary */}
           <div className="card">
             <h3 className="font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
@@ -213,12 +213,12 @@ export default function SuccessPage() {
                   <span className="font-semibold text-gray-900">{t('prices.total')}</span>
                   <span className="text-xl font-bold text-blue-600">${total}</span>
                 </div>
-              </div>
+            </div>
             </div>
           </div>
         </div>
-      </div>
-
+          </div>
+          
       {/* Action Buttons */}
       <div className="text-center mt-8">
         <button
@@ -232,6 +232,6 @@ export default function SuccessPage() {
       <div className="text-center mt-4">
         <p className="text-gray-600">{t('success.thankYou')}</p>
       </div>
-    </motion.div>
+      </motion.div>
   );
 } 

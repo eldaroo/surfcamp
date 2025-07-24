@@ -14,7 +14,7 @@ export default function DateSelector() {
   const [checkOut, setCheckOut] = useState(bookingData.checkOut ? new Date(bookingData.checkOut).toISOString().split('T')[0] : '');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +55,7 @@ export default function DateSelector() {
         checkOut: new Date(checkOut),
         guests
       });
-
+      
       // Verificar disponibilidad
       const response = await fetch('/api/availability', {
         method: 'POST',
@@ -72,7 +72,7 @@ export default function DateSelector() {
       const data = await response.json();
 
       if (data.success && data.available) {
-        setCurrentStep('accommodation');
+      setCurrentStep('accommodation');
       } else {
         setError(t('dates.error.noAvailability'));
       }
@@ -112,11 +112,11 @@ export default function DateSelector() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Check-in Date */}
-          <div>
+        {/* Check-in Date */}
+        <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('dates.checkIn')}
-            </label>
+          </label>
             <input
               ref={checkInRef}
               type="date"
@@ -125,14 +125,14 @@ export default function DateSelector() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={new Date().toISOString().split('T')[0]}
               style={{ cursor: 'pointer' }}
-            />
-          </div>
+          />
+        </div>
 
-          {/* Check-out Date */}
-          <div>
+        {/* Check-out Date */}
+        <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('dates.checkOut')}
-            </label>
+          </label>
             <input
               ref={checkOutRef}
               type="date"
@@ -141,40 +141,40 @@ export default function DateSelector() {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={checkIn || new Date().toISOString().split('T')[0]}
               style={{ cursor: 'pointer' }}
-            />
-          </div>
+          />
         </div>
+      </div>
 
         {/* Number of Guests */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('dates.guests')}
-          </label>
-          <div className="flex items-center space-x-4">
+        </label>
+        <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <button
+            <button
                 type="button"
-                onClick={() => setGuests(Math.max(1, guests - 1))}
+              onClick={() => setGuests(Math.max(1, guests - 1))}
                 className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-              >
+            >
                 <span className="text-gray-600">-</span>
-              </button>
+            </button>
               <span className="text-2xl font-bold text-gray-900 w-12 text-center">
                 {guests}
               </span>
-              <button
+            <button
                 type="button"
-                onClick={() => setGuests(Math.min(12, guests + 1))}
+              onClick={() => setGuests(Math.min(12, guests + 1))}
                 className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-              >
+            >
                 <span className="text-gray-600">+</span>
-              </button>
-            </div>
+            </button>
+          </div>
             <span className="text-gray-600">
               {guests === 1 ? `1 ${t('dates.guest')}` : `${guests} ${t('dates.guests_plural')}`}
-            </span>
-          </div>
+          </span>
         </div>
+      </div>
 
         {/* Summary */}
         {(checkIn || checkOut || guests > 1) && (
@@ -182,30 +182,30 @@ export default function DateSelector() {
             <h3 className="font-semibold text-gray-900 mb-2">{t('dates.summary.title')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               {checkIn && (
-                <div>
+            <div>
                   <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
                   <span className="ml-2 font-medium">{new Date(checkIn).toLocaleDateString()}</span>
-                </div>
+            </div>
               )}
               {checkOut && (
-                <div>
+            <div>
                   <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
                   <span className="ml-2 font-medium">{new Date(checkOut).toLocaleDateString()}</span>
-                </div>
+            </div>
               )}
-              <div>
+            <div>
                 <span className="text-gray-600">{t('dates.summary.guests')}:</span>
                 <span className="ml-2 font-medium">{guests}</span>
-              </div>
+            </div>
             </div>
             {nights > 0 && (
               <div className="mt-2 text-sm text-gray-600">
                 {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-              </div>
-            )}
-          </div>
-        )}
-
+                    </div>
+                  )}
+                </div>
+              )}
+              
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -222,16 +222,16 @@ export default function DateSelector() {
                     {error.split('. ').map((err, index) => (
                       <li key={index}>• {err}</li>
                     ))}
-                  </ul>
+                </ul>
                 </div>
               </div>
             </div>
           </div>
-        )}
+      )}
 
         {/* Submit Button */}
-        <div className="flex justify-end">
-          <button
+      <div className="flex justify-end">
+        <button
             type="submit"
             disabled={isLoading || !checkIn || !checkOut}
             className="btn-primary flex items-center space-x-2"
@@ -249,8 +249,8 @@ export default function DateSelector() {
                 </svg>
               </>
             )}
-          </button>
-        </div>
+        </button>
+      </div>
       </form>
     </motion.div>
   );
