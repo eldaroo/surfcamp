@@ -1,5 +1,4 @@
 import { I18nProvider } from '@/lib/i18n';
-import LanguageSelector from '@/components/LanguageSelector';
 import { Locale } from '@/lib/i18n';
 
 interface LocaleLayoutProps {
@@ -37,10 +36,6 @@ export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
   
   return (
     <I18nProvider initialLocale={locale as Locale}>
-      {/* Language Selector en la esquina superior derecha */}
-      <div className="fixed top-4 right-4 z-50">
-        <LanguageSelector />
-      </div>
       {children}
     </I18nProvider>
   );

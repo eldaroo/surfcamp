@@ -1,5 +1,3 @@
 {
-  "/api/reserve/route": "app/api/reserve/route.js",
-  "/api/quote/route": "app/api/quote/route.js",
   "/[locale]/page": "app/[locale]/page.js"
 }

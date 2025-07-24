@@ -484,3 +484,163 @@ Si tienes presupuesto, considera también:
 
 ---
 
+_**User**_
+
+eliminame el header
+
+---
+
+_**Assistant**_
+
+
+
+
+---
+
+```diff
+  'use client';
+- 
+- import { motion } from 'framer-motion';
+- import { Waves, Sun } from 'lucide-react';
+  
+  export default function Header() {
+-   return (
+-     <motion.header
+-       initial={{ opacity: 0, y: -20 }}
+-       animate={{ opacity: 1, y: 0 }}
+-       transition={{ duration: 0.6 }}
+-       className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50"
+-     >
+-       <div className="container mx-auto px-4 py-4">
+-         <div className="flex items-center justify-between">
+-           {/* Logo */}
+-           <div className="flex items-center space-x-3">
+-             <div className="relative">
+-               <div className="w-12 h-12 bg-surf-gradient rounded-full flex items-center justify-center">
+-                 <Waves className="w-6 h-6 text-white" />
+-               </div>
+-               <div className="absolute -top-1 -right-1 w-4 h-4 bg-sand-400 rounded-full flex items-center justify-center">
+-                 <Sun className="w-2 h-2 text-white" />
+-               </div>
+-             </div>
+-             <div>
+-               <h1 className="text-2xl font-bold text-gradient">SurfCamp Santa Teresa</h1>
+-               <p className="text-sm text-gray-600">Powered by zeneidas</p>
+-             </div>
+-           </div>
+- 
+-           {/* Navigation */}
+-           <nav className="hidden md:flex items-center space-x-8">
+-             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
+-               Inicio
+-             </a>
+-             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
+-               Actividades
+-             </a>
+-             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
+-               Alojamiento
+-             </a>
+-             <a href="#" className="text-gray-700 hover:text-ocean-600 transition-colors">
+-               Contacto
+-             </a>
+-           </nav>
+- 
+-           {/* Mobile Menu Button */}
+-           <button className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
+-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+-             </svg>
+-           </button>
+-         </div>
+-       </div>
+-     </motion.header>
+-   );
++   return null;
+  } 
+```
+
+---
+
+¡Perfecto! ✅ **El header ha sido eliminado completamente**
+
+## 🗑️ **Cambios Aplicados:**
+
+- ✅ **Header removido**: El componente ahora retorna `null`
+- ✅ **Imports eliminados**: `motion` y `lucide-react` ya no se importan
+- ✅ **Código limpio**: Solo queda la estructura básica del componente
+
+## �� **Resultado:**
+
+Ahora tu aplicación **SurfCamp Santa Teresa** se mostrará sin el header, dejando más espacio para el contenido principal. El selector de idiomas seguirá visible en la esquina superior derecha ya que está en el layout principal.
+
+**🏄‍♂️ ¡Tu aplicación ahora tiene una interfaz más limpia y minimalista!**
+
+Para ver los cambios, simplemente refresca la página. El header ya no aparecerá y tendrás más espacio para el contenido principal de reservas.
+
+---
+
+_**User**_
+
+tambien sacame el selector de idioma, nos vamos a manejar por url
+
+---
+
+_**Assistant**_
+
+
+
+
+---
+
+Read file: app/[locale]/layout.tsx
+
+---
+
+```diff
+  import { I18nProvider } from '@/lib/i18n';
+- import LanguageSelector from '@/components/LanguageSelector';
+  import { Locale } from '@/lib/i18n';
+  
+```
+
+```diff
+    return (
+      <I18nProvider initialLocale={locale as Locale}>
+-       {/* Language Selector en la esquina superior derecha */}
+-       <div className="fixed top-4 right-4 z-50">
+-         <LanguageSelector />
+-       </div>
+        {children}
+      </I18nProvider>
+```
+
+---
+
+¡Perfecto! ✅ **El selector de idioma ha sido eliminado**
+
+## 🗑️ **Cambios Aplicados:**
+
+- ✅ **LanguageSelector removido**: Ya no se importa ni renderiza
+- ✅ **Layout limpio**: Solo queda el `I18nProvider` esencial
+- ✅ **Navegación por URL**: El idioma se maneja completamente por la URL
+
+## 🌐 **Cómo funciona ahora:**
+
+**Navegación por URL:**
+- **Español**: `/es` 
+- **Inglés**: `/en`
+- **Redirección automática**: Si accedes a `/` te redirige a `/es`
+
+## �� **Beneficios:**
+
+1. **Interfaz más limpia**: Sin elementos flotantes
+2. **SEO mejorado**: URLs específicas por idioma
+3. **Navegación directa**: Los usuarios pueden bookmarkear URLs específicas
+4. **Menos código**: Eliminamos componentes innecesarios
+
+**🏄‍♂️ ¡Tu SurfCamp Santa Teresa ahora tiene una interfaz completamente limpia y minimalista!**
+
+El sistema de internacionalización sigue funcionando perfectamente, pero ahora se maneja exclusivamente a través de las URLs `/es` y `/en`.
+
+---
+
