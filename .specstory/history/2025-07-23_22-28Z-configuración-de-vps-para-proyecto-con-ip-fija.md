@@ -987,7 +987,169 @@ le sigue pasando lo mismo
 
 _**Assistant**_
 
+Veo que el problema persiste. El issue es que el `MutationObserver` sigue detectando cambios que crean un bucle. Voy a implementar una solución más radical que elimine completamente el observer y use un enfoque más simple y confiable.
 
+
+---
+
+```diff
+                (function() {
+                  let lastHeight = 0;
+-                 let sendTimeout = null;
++                 let isSending = false;
+                  
+                  function sendHeight() {
++                   if (isSending) return;
++                   isSending = true;
++                   
+                    // Calcular altura real del contenido
+-                   const bodyHeight = document.body.scrollHeight;
+-                   const htmlHeight = document.documentElement.scrollHeight;
+-                   const height = Math.max(bodyHeight, htmlHeight);
++                   const height = Math.max(
++                     document.body.scrollHeight,
++                     document.documentElement.scrollHeight,
++                     document.body.offsetHeight,
++                     document.documentElement.offsetHeight
++                   );
+                    
+                    // Solo enviar si la altura cambió significativamente
+-                   if (Math.abs(height - lastHeight) > 10) {
++                   if (Math.abs(height - lastHeight) > 50) {
+                      lastHeight = height;
+                      window.parent.postMessage({ widgetHeight: height }, "*");
+                      console.log('📏 Enviando altura al padre:', height + 'px');
+                    }
+-                 }
+-                 
+-                 // Función debounced para evitar spam
+-                 function debouncedSendHeight() {
+-                   if (sendTimeout) clearTimeout(sendTimeout);
+-                   sendTimeout = setTimeout(sendHeight, 100);
++                   
++                   // Reset flag después de un delay
++                   setTimeout(() => {
++                     isSending = false;
++                   }, 200);
+                  }
+                  
+                  // Enviar altura cuando la página carga
+-                 window.addEventListener("load", debouncedSendHeight);
++                 window.addEventListener("load", function() {
++                   setTimeout(sendHeight, 1000);
++                 });
+                  
+                  // Enviar altura cuando cambia el tamaño de la ventana
+-                 window.addEventListener("resize", debouncedSendHeight);
+-                 
+-                 // Observer para cambios de contenido (más específico)
+-                 const observer = new MutationObserver(function(mutations) {
+-                   let shouldUpdate = false;
+-                   
+-                   mutations.forEach(function(mutation) {
+-                     // Solo actualizar si son cambios relevantes
+-                     if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+-                       shouldUpdate = true;
+-                     } else if (mutation.type === 'attributes' && 
+-                              (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+-                       // Verificar si el cambio afecta la altura
+-                       const target = mutation.target;
+-                       if (target && (target.style.height || target.style.display || target.className)) {
+-                         shouldUpdate = true;
+-                       }
+-                     }
+-                   });
+-                   
+-                   if (shouldUpdate) {
+-                     debouncedSendHeight();
+-                   }
+-                 });
++                 window.addEventListener("resize", function() {
++                   setTimeout(sendHeight, 300);
++                 });
++                 
++                 // Enviar altura inicial después de un delay largo
++                 setTimeout(sendHeight, 2000);
+                  
+-                 // Observar solo el contenido principal, no todo el body
+-                 const mainContent = document.querySelector('main') || document.body;
+-                 observer.observe(mainContent, { 
+-                   childList: true, 
+-                   subtree: true,
+-                   attributes: true,
+-                   attributeFilter: ['style', 'class']
+-                 });
+-                 
+-                 // Enviar altura inicial después de un delay
+-                 setTimeout(debouncedSendHeight, 500);
++                 // Enviar altura cada 5 segundos como backup
++                 setInterval(sendHeight, 5000);
+                })();
+              `
+```
+
+---
+
+¡Perfecto! ✅ **Script completamente reescrito para eliminar el bucle infinito**
+
+## 🔧 **Cambios Radicales Implementados:**
+
+### **🚫 Eliminado Completamente:**
+- ❌ **MutationObserver**: Era la causa principal del bucle
+- ❌ **Debouncing complejo**: Simplificado con flags
+- ❌ **Observación de DOM**: Ya no observa cambios del DOM
+
+### **✅ Nuevo Enfoque Simple:**
+
+**1. Flag de Control:**
+```javascript
+let isSending = false;
+if (isSending) return; // Evita ejecuciones simultáneas
+```
+
+**2. Cálculo Más Robusto:**
+```javascript
+const height = Math.max(
+  document.body.scrollHeight,
+  document.documentElement.scrollHeight,
+  document.body.offsetHeight,
+  document.documentElement.offsetHeight
+);
+```
+
+**3. Umbral Más Alto:**
+```javascript
+if (Math.abs(height - lastHeight) > 50) // Solo cambios de 50px+
+```
+
+**4. Delays Estratégicos:**
+- **Load**: 1000ms después de cargar
+- **Resize**: 300ms después de cambiar tamaño
+- **Inicial**: 2000ms después de iniciar
+- **Backup**: Cada 5 segundos
+
+## 📊 **Resultado Esperado:**
+
+Ahora deberías ver en la consola:
+```
+�� Enviando altura al padre: 1234px
+�� Enviando altura al padre: 1456px
+�� Enviando altura al padre: 1678px
+```
+
+**Sin el spam exponencial anterior.**
+
+## �� **Ventajas del Nuevo Enfoque:**
+
+1. **✅ Sin bucles infinitos**: No observa cambios del DOM
+2. **✅ Más estable**: Usa eventos básicos y confiables
+3. **✅ Menos spam**: Umbral de 50px y delays largos
+4. **✅ Backup automático**: Se actualiza cada 5 segundos
+5. **✅ Control de concurrencia**: Flag evita ejecuciones simultáneas
+
+**🏄‍♂️ ¡Ahora el iframe debería ajustarse de forma estable y sin spam!**
+
+El script es mucho más simple y confiable. Si aún ves algún problema, podemos ajustar los delays o el umbral de cambio.
 
 ---
 
