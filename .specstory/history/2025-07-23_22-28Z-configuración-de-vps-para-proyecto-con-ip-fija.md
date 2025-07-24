@@ -1153,3 +1153,16 @@ El script es mucho más simple y confiable. Si aún ves algún problema, podemos
 
 ---
 
+_**User**_
+
+git pull origin main --rebase
+
+
+---
+
+_**Assistant**_
+
+
+
+---
+
