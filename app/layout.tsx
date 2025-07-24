@@ -21,68 +21,48 @@ export default function RootLayout({
             __html: `
               (function() {
                 let lastHeight = 0;
-                let sendTimeout = null;
+                let isSending = false;
                 
                 function sendHeight() {
+                  if (isSending) return;
+                  isSending = true;
+                  
                   // Calcular altura real del contenido
-                  const bodyHeight = document.body.scrollHeight;
-                  const htmlHeight = document.documentElement.scrollHeight;
-                  const height = Math.max(bodyHeight, htmlHeight);
+                  const height = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight,
+                    document.body.offsetHeight,
+                    document.documentElement.offsetHeight
+                  );
                   
                   // Solo enviar si la altura cambió significativamente
-                  if (Math.abs(height - lastHeight) > 10) {
+                  if (Math.abs(height - lastHeight) > 50) {
                     lastHeight = height;
                     window.parent.postMessage({ widgetHeight: height }, "*");
                     console.log('📏 Enviando altura al padre:', height + 'px');
                   }
-                }
-                
-                // Función debounced para evitar spam
-                function debouncedSendHeight() {
-                  if (sendTimeout) clearTimeout(sendTimeout);
-                  sendTimeout = setTimeout(sendHeight, 100);
+                  
+                  // Reset flag después de un delay
+                  setTimeout(() => {
+                    isSending = false;
+                  }, 200);
                 }
                 
                 // Enviar altura cuando la página carga
-                window.addEventListener("load", debouncedSendHeight);
+                window.addEventListener("load", function() {
+                  setTimeout(sendHeight, 1000);
+                });
                 
                 // Enviar altura cuando cambia el tamaño de la ventana
-                window.addEventListener("resize", debouncedSendHeight);
-                
-                // Observer para cambios de contenido (más específico)
-                const observer = new MutationObserver(function(mutations) {
-                  let shouldUpdate = false;
-                  
-                  mutations.forEach(function(mutation) {
-                    // Solo actualizar si son cambios relevantes
-                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                      shouldUpdate = true;
-                    } else if (mutation.type === 'attributes' && 
-                             (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-                      // Verificar si el cambio afecta la altura
-                      const target = mutation.target;
-                      if (target && (target.style.height || target.style.display || target.className)) {
-                        shouldUpdate = true;
-                      }
-                    }
-                  });
-                  
-                  if (shouldUpdate) {
-                    debouncedSendHeight();
-                  }
+                window.addEventListener("resize", function() {
+                  setTimeout(sendHeight, 300);
                 });
                 
-                // Observar solo el contenido principal, no todo el body
-                const mainContent = document.querySelector('main') || document.body;
-                observer.observe(mainContent, { 
-                  childList: true, 
-                  subtree: true,
-                  attributes: true,
-                  attributeFilter: ['style', 'class']
-                });
+                // Enviar altura inicial después de un delay largo
+                setTimeout(sendHeight, 2000);
                 
-                // Enviar altura inicial después de un delay
-                setTimeout(debouncedSendHeight, 500);
+                // Enviar altura cada 5 segundos como backup
+                setInterval(sendHeight, 5000);
               })();
             `
           }}
