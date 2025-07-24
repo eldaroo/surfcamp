@@ -814,3 +814,15 @@ Ahora tu **SurfCamp Santa Teresa** en `surfcampwidget.duckdns.org` se comunicar√
 
 ---
 
+_**User**_
+
+el tama√±o esta siendo mal calculado, por alguna razon se vuelve exponencial
+
+---
+
+_**Assistant**_
+
+
+
+---
+
