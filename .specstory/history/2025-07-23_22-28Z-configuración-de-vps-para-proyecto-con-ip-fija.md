@@ -1566,3 +1566,262 @@ Una vez configurado, tu aplicación estará disponible en:
 
 ---
 
+_**User**_
+
+
+
+---
+
+_**Assistant**_
+
+Veo el problema! El build está fallando porque no puede encontrar el módulo `@/types`. Esto indica que hay un problema con la configuración de TypeScript o que falta el archivo de tipos.
+
+Vamos a solucionarlo:
+
+
+---
+
+```bash
+cd /root/surfcamp && ls -la types/
+```
+
+```
+PS C:\Users\loko_\OneDrive\Desktop\Escritorio\surfcamp> cd /root/surfcamp && ls
+-la types/
+En línea: 1 Carácter: 19
++ cd /root/surfcamp && ls -la types/
++                   ~~
+El token '&&' no es un separador de instrucciones válido en esta versión.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordExce
+ption
+    + FullyQualifiedErrorId : InvalidEndOfLine
+
+```
+
+---
+
+Estoy en tu computadora local, no en el servidor. Necesito que te conectes al servidor primero. Pero puedo ver el problema desde aquí: falta el archivo de tipos.
+
+Vamos a crear el archivo de tipos que falta:
+
+
+---
+
+Could not find file 'types/index.ts' in the workspace.
+
+---
+
+<details>
+            <summary>Listed directory types • **0** results</summary>
+        
+No results found
+</details>
+
+---
+
+El directorio `types` está vacío. Vamos a crear el archivo de tipos que falta:
+
+
+---
+
+```diff
+- 
++ export interface Activity {
++   id: string;
++   name: string;
++   description: string;
++   price: number;
++   duration: number; // in minutes
++   maxParticipants: number;
++   category: 'surf' | 'yoga' | 'ice_bath' | 'transport' | 'other';
++ }
++ 
++ export interface Room {
++   id: string;
++   roomTypeId: string;
++   roomTypeName: string;
++   capacity: number;
++   price: number;
++   available: boolean;
++ }
++ 
++ export interface BookingRequest {
++   checkIn: string;
++   checkOut: string;
++   guests: number;
++   roomTypeId: string;
++   activityIds: string[];
++   contactInfo: {
++     name: string;
++     email: string;
++     phone: string;
++     dni: string;
++   };
++ }
++ 
++ export interface PriceBreakdown {
++   accommodation: number;
++   activities: number;
++   subtotal: number;
++   tax: number;
++   total: number;
++   currency: string;
++ }
++ 
++ export interface AvailabilityCheck {
++   available: boolean;
++   rooms: Room[];
++   message?: string;
++ }
++ 
++ export interface LobbyPMSAvailabilityResponse {
++   success: boolean;
++   available: boolean;
++   rooms?: Room[];
++   message?: string;
++   demoMode?: boolean;
++ }
++ 
++ export interface LobbyPMSBookingResponse {
++   success: boolean;
++   booking_id?: string;
++   reservation_id?: string;
++   status?: string;
++   message?: string;
++   demoMode?: boolean;
++ }
++ 
++ export interface PaymentIntent {
++   clientSecret: string;
++   paymentIntentId: string;
++   amount: number;
++   currency: string;
++ }
++ 
++ export interface WhatsAppMessage {
++   success: boolean;
++   messageId?: string;
++   error?: string;
++ }
++ 
++ export interface ContactFormData {
++   name: string;
++   email: string;
++   phone: string;
++   dni: string;
++ }
++ 
++ export interface BookingData {
++   checkIn?: string;
++   checkOut?: string;
++   guests?: number;
++   roomTypeId?: string;
++   activityIds?: string[];
++   contactInfo?: ContactFormData;
++ }
++ 
++ export interface BookingStore {
++   bookingData: Partial<BookingData>;
++   selectedActivities: Activity[];
++   activityQuantities: Record<string, number>;
++   priceBreakdown: PriceBreakdown | null;
++   availabilityCheck: AvailabilityCheck | null;
++   availableRooms: Room[] | null;
++   selectedRoom: Room | null;
++   currentStep: 'dates' | 'accommodation' | 'activities' | 'contact' | 'confirmation' | 'payment' | 'success';
++   isLoading: boolean;
++   error: string | null;
++ } 
+```
+
+---
+
+¡Perfecto! ✅ **Archivo de tipos creado**
+
+Ahora necesitas subir estos cambios al servidor. Aquí están los pasos:
+
+## 🚀 **Pasos para Solucionar el Problema:**
+
+### **1. Subir los cambios al repositorio:**
+```bash
+# Desde tu computadora local
+git add .
+git commit -m "Fix: Add missing types file"
+git push origin main
+```
+
+### **2. Conectarse al servidor y actualizar:**
+```bash
+# Conectarse al servidor
+ssh root@31.97.100.1
+
+# Una vez en el servidor:
+cd /root/surfcamp
+git pull origin main
+```
+
+### **3. Reinstalar y construir:**
+```bash
+# En el servidor:
+npm install
+npm run build
+```
+
+### **4. Iniciar la aplicación:**
+```bash
+# Si PM2 no está instalado:
+npm install -g pm2
+
+# Iniciar la aplicación:
+pm2 start npm --name "surfcamp" -- start
+
+# Guardar configuración:
+pm2 save
+pm2 startup
+```
+
+### **5. Verificar que funciona:**
+```bash
+# Ver estado de PM2:
+pm2 status
+
+# Ver logs:
+pm2 logs surfcamp
+
+# Verificar puerto:
+netstat -tlnp | grep :3000
+```
+
+## 🔧 **Si aún hay problemas:**
+
+### **Verificar configuración de TypeScript:**
+```bash
+# En el servidor:
+cat tsconfig.json
+```
+
+### **Limpiar cache:**
+```bash
+# En el servidor:
+rm -rf .next
+rm -rf node_modules
+npm install
+npm run build
+```
+
+**¿Quieres que te ayude con algún paso específico?** El problema principal era que faltaba el archivo `types/index.ts` que define todas las interfaces de TypeScript que usa tu aplicación.
+
+---
+
+_**User**_
+
+
+
+---
+
+_**Assistant**_
+
+
+
+---
+
