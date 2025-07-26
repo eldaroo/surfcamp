@@ -1166,3 +1166,403 @@ _**Assistant**_
 
 ---
 
+```bash
+git pull origin main --rebase
+```
+
+```
+PS C:\Users\loko_\OneDrive\Desktop\Escritorio\surfcamp> git pull origin main --r
+ebase
+remote: Enumerating objects: 7, done.
+remote: Counting objects: 100% (7/7), done.
+Unpacking objects: 100% (5/5), 522 bytes | 32.00 KiB/s, done.
+From https://github.com/eldaroo/surfcamp
+ * branch            main       -> FETCH_HEAD
+   cf86166..3e025bb  main       -> origin/main
+Updating cf86166..3e025bb
+Fast-forward
+ .gitignore                                         |    4 +
+ .next/app-build-manifest.json                      |   25 -
+ .next/build-manifest.json                          |   19 -
+ .next/cache/webpack/client-development/0.pack.gz   |  Bin 34965 -> 0 bytes
+ .next/cache/webpack/client-development/1.pack.gz   |  Bin 9940891 -> 0 bytes
+ .next/cache/webpack/client-development/2.pack.gz   |  Bin 4693680 -> 0 bytes
+ .next/cache/webpack/client-development/3.pack.gz   |  Bin 58392 -> 0 bytes
+ .next/cache/webpack/client-development/4.pack.gz   |  Bin 49532 -> 0 bytes
+ .../cache/webpack/client-development/index.pack.gz |  Bin 81025 -> 0 bytes
+ .../webpack/client-development/index.pack.gz.old   |  Bin 2436 -> 0 bytes
+ .next/cache/webpack/server-development/0.pack.gz   |  Bin 3266422 -> 0 bytes
+ .next/cache/webpack/server-development/1.pack.gz   |  Bin 2976377 -> 0 bytes
+ .next/cache/webpack/server-development/2.pack.gz   |  Bin 2305324 -> 0 bytes
+ .next/cache/webpack/server-development/3.pack.gz   |  Bin 2160887 -> 0 bytes
+ .next/cache/webpack/server-development/4.pack.gz   |  Bin 3630688 -> 0 bytes
+ .next/cache/webpack/server-development/5.pack.gz   |  Bin 4012439 -> 0 bytes
+ .next/cache/webpack/server-development/6.pack.gz   |  Bin 3842419 -> 0 bytes
+ .next/cache/webpack/server-development/7.pack.gz   |  Bin 4086698 -> 0 bytes
+ .../cache/webpack/server-development/index.pack.gz |  Bin 57710 -> 0 bytes
+ .../webpack/server-development/index.pack.gz.old   |  Bin 533460 -> 0 bytes
+ .next/package.json                                 |    1 -
+ .next/react-loadable-manifest.json                 |    1 -
+ .next/server/app-paths-manifest.json               |    3 -
+ .next/server/app/[locale]/page.js                  |  388 ---
+ .../app/[locale]/page_client-reference-manifest.js |    1 -
+ .next/server/app/page.js                           |  165 -
+ .next/server/app/page_client-reference-manifest.js |    1 -
+ .next/server/middleware-build-manifest.js          |    1 -
+ .next/server/middleware-manifest.json              |    6 -
+ .next/server/middleware-react-loadable-manifest.js |    1 -
+ .next/server/next-font-manifest.js                 |    1 -
+ .next/server/next-font-manifest.json               |    1 -
+ .next/server/pages-manifest.json                   |    1 -
+ .next/server/server-reference-manifest.js          |    1 -
+ .next/server/server-reference-manifest.json        |    5 -
+ .next/server/vendor-chunks/@babel.js               |   25 -
+ .next/server/vendor-chunks/@heroicons.js           |   25 -
+ .next/server/vendor-chunks/@swc.js                 |   75 -
+ .next/server/vendor-chunks/clsx.js                 |   25 -
+ .next/server/vendor-chunks/date-fns.js             |  475 ---
+ .next/server/vendor-chunks/framer-motion.js        | 2075 ------------
+ .next/server/vendor-chunks/lucide-react.js         |  125 -
+ .next/server/vendor-chunks/next.js                 | 1868 -----------
+ .next/server/vendor-chunks/tailwind-merge.js       |  125 -
+ .../vendor-chunks/use-sync-external-store.js       |   55 -
+ .next/server/vendor-chunks/zustand.js              |   35 -
+ .next/server/webpack-runtime.js                    |  215 --
+ .next/static/chunks/app-pages-internals.js         |  127 -
+ .next/static/chunks/app/[locale]/layout.js         |   61 -
+ .next/static/chunks/app/[locale]/page.js           | 3317 --------------------
+ .next/static/chunks/app/layout.js                  |   59 -
+ .next/static/chunks/app/page.js                    |   28 -
+ .next/static/chunks/main-app.js                    | 1816 -----------
+ .next/static/chunks/polyfills.js                   |    1 -
+ .next/static/chunks/webpack.js                     | 1411 ---------
+ .next/static/css/app/layout.css                    | 1582 ----------
+ .next/static/development/_buildManifest.js         |    1 -
+ .next/static/development/_ssgManifest.js           |    1 -
+ .next/static/media/26a46d62cd723877-s.woff2        |  Bin 18820 -> 0 bytes
+ .next/static/media/55c55f0601d81cf3-s.woff2        |  Bin 25908 -> 0 bytes
+ .next/static/media/581909926a08bbc8-s.woff2        |  Bin 19072 -> 0 bytes
+ .next/static/media/8e9860b6e62d6359-s.woff2        |  Bin 85272 -> 0 bytes
+ .next/static/media/97e0cb1ae144a2a9-s.woff2        |  Bin 11220 -> 0 bytes
+ .next/static/media/df0a9ae256c0569c-s.woff2        |  Bin 10280 -> 0 bytes
+ .next/static/media/e4af272ccee01ff0-s.p.woff2      |  Bin 48432 -> 0 bytes
+ .../webpack/633457081244afec._.hot-update.json     |    1 -
+ .../8514e8d4662b58b4.webpack.hot-update.json       |    1 -
+ .../[locale]/layout.fc1010e2cadc8a77.hot-update.js |   21 -
+ .../[locale]/page.8514e8d4662b58b4.hot-update.js   |   22 -
+ .../app/layout.8514e8d4662b58b4.hot-update.js      |   22 -
+ .../app/layout.b8faed57f71ec2a4.hot-update.js      |   21 -
+ .../app/layout.c78e4e8bf3c49834.hot-update.js      |   22 -
+ .../app/layout.ee8801df7e2d0d52.hot-update.js      |   22 -
+ .../b8faed57f71ec2a4.webpack.hot-update.json       |    1 -
+ .../c78e4e8bf3c49834.webpack.hot-update.json       |    1 -
+ .../ee8801df7e2d0d52.webpack.hot-update.json       |    1 -
+ .../fc1010e2cadc8a77.webpack.hot-update.json       |    1 -
+ .../webpack/webpack.8514e8d4662b58b4.hot-update.js |   18 -
+ .../webpack/webpack.b8faed57f71ec2a4.hot-update.js |   30 -
+ .../webpack/webpack.c78e4e8bf3c49834.hot-update.js |   18 -
+ .../webpack/webpack.ee8801df7e2d0d52.hot-update.js |   18 -
+ .../webpack/webpack.fc1010e2cadc8a77.hot-update.js |   18 -
+ .next/trace                                        |   64 -
+ .next/types/app/[locale]/layout.ts                 |   79 -
+ .next/types/app/[locale]/page.ts                   |   79 -
+ .next/types/app/layout.ts                          |   79 -
+ .next/types/app/page.ts                            |   79 -
+ .next/types/package.json                           |    1 -
+ types/index.ts                                     |  116 -
+ 89 files changed, 4 insertions(+), 14883 deletions(-)
+ delete mode 100644 .next/app-build-manifest.json
+ delete mode 100644 .next/build-manifest.json
+ delete mode 100644 .next/cache/webpack/client-development/0.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/1.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/2.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/3.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/4.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/index.pack.gz
+ delete mode 100644 .next/cache/webpack/client-development/index.pack.gz.old
+ delete mode 100644 .next/cache/webpack/server-development/0.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/1.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/2.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/3.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/4.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/5.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/6.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/7.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/index.pack.gz
+ delete mode 100644 .next/cache/webpack/server-development/index.pack.gz.old
+ delete mode 100644 .next/package.json
+ delete mode 100644 .next/react-loadable-manifest.json
+ delete mode 100644 .next/server/app-paths-manifest.json
+ delete mode 100644 .next/server/app/[locale]/page.js
+ delete mode 100644 .next/server/app/[locale]/page_client-reference-manifest.js
+ delete mode 100644 .next/server/app/page.js
+ delete mode 100644 .next/server/app/page_client-reference-manifest.js
+ delete mode 100644 .next/server/middleware-build-manifest.js
+ delete mode 100644 .next/server/middleware-manifest.json
+ delete mode 100644 .next/server/middleware-react-loadable-manifest.js
+ delete mode 100644 .next/server/next-font-manifest.js
+ delete mode 100644 .next/server/next-font-manifest.json
+ delete mode 100644 .next/server/pages-manifest.json
+ delete mode 100644 .next/server/server-reference-manifest.js
+ delete mode 100644 .next/server/server-reference-manifest.json
+ delete mode 100644 .next/server/vendor-chunks/@babel.js
+ delete mode 100644 .next/server/vendor-chunks/@heroicons.js
+ delete mode 100644 .next/server/vendor-chunks/@swc.js
+ delete mode 100644 .next/server/vendor-chunks/clsx.js
+ delete mode 100644 .next/server/vendor-chunks/date-fns.js
+ delete mode 100644 .next/server/vendor-chunks/framer-motion.js
+ delete mode 100644 .next/server/vendor-chunks/lucide-react.js
+ delete mode 100644 .next/server/vendor-chunks/next.js
+ delete mode 100644 .next/server/vendor-chunks/tailwind-merge.js
+ delete mode 100644 .next/server/vendor-chunks/use-sync-external-store.js
+ delete mode 100644 .next/server/vendor-chunks/zustand.js
+ delete mode 100644 .next/server/webpack-runtime.js
+ delete mode 100644 .next/static/chunks/app-pages-internals.js
+ delete mode 100644 .next/static/chunks/app/[locale]/layout.js
+ delete mode 100644 .next/static/chunks/app/[locale]/page.js
+ delete mode 100644 .next/static/chunks/app/layout.js
+ delete mode 100644 .next/static/chunks/app/page.js
+ delete mode 100644 .next/static/chunks/main-app.js
+ delete mode 100644 .next/static/chunks/polyfills.js
+ delete mode 100644 .next/static/chunks/webpack.js
+ delete mode 100644 .next/static/css/app/layout.css
+ delete mode 100644 .next/static/development/_buildManifest.js
+ delete mode 100644 .next/static/development/_ssgManifest.js
+ delete mode 100644 .next/static/media/26a46d62cd723877-s.woff2
+ delete mode 100644 .next/static/media/55c55f0601d81cf3-s.woff2
+ delete mode 100644 .next/static/media/581909926a08bbc8-s.woff2
+ delete mode 100644 .next/static/media/8e9860b6e62d6359-s.woff2
+ delete mode 100644 .next/static/media/97e0cb1ae144a2a9-s.woff2
+ delete mode 100644 .next/static/media/df0a9ae256c0569c-s.woff2
+ delete mode 100644 .next/static/media/e4af272ccee01ff0-s.p.woff2
+ delete mode 100644 .next/static/webpack/633457081244afec._.hot-update.json
+ delete mode 100644 .next/static/webpack/8514e8d4662b58b4.webpack.hot-update.jso
+n
+ delete mode 100644 .next/static/webpack/app/[locale]/layout.fc1010e2cadc8a77.ho
+t-update.js
+ delete mode 100644 .next/static/webpack/ee8801df7e2d0d52.webpack.hot-update.jso
+n
+ delete mode 100644 .next/static/webpack/fc1010e2cadc8a77.webpack.hot-update.jso
+n
+ delete mode 100644 .next/static/webpack/webpack.8514e8d4662b58b4.hot-update.js
+ delete mode 100644 .next/static/webpack/webpack.b8faed57f71ec2a4.hot-update.js
+ delete mode 100644 .next/static/webpack/webpack.c78e4e8bf3c49834.hot-update.js
+ delete mode 100644 .next/static/webpack/webpack.ee8801df7e2d0d52.hot-update.js
+ delete mode 100644 .next/static/webpack/webpack.fc1010e2cadc8a77.hot-update.js
+ delete mode 100644 .next/trace
+ delete mode 100644 .next/types/app/[locale]/layout.ts
+ delete mode 100644 .next/types/app/[locale]/page.ts
+ delete mode 100644 .next/types/app/layout.ts
+ delete mode 100644 .next/types/app/page.ts
+ delete mode 100644 .next/types/package.json
+ delete mode 100644 types/index.ts
+
+```
+
+---
+
+_**User**_
+
+subi este repo a hostinger, pero no me esta funcionando
+
+---
+
+_**Assistant**_
+
+Veo que tienes el VPS de Hostinger configurado pero el proyecto no está funcionando. Basándome en la información del servidor, veo que hay un proceso Node.js corriendo en el puerto 9000, pero necesitamos verificar y configurar correctamente tu aplicación.
+
+Vamos a diagnosticar y solucionar el problema paso a paso:
+
+
+---
+
+Cancelled
+
+---
+
+_**User**_
+
+Y?
+
+---
+
+_**Assistant**_
+
+Necesito que me proporciones la contraseña del servidor para poder conectarme y diagnosticar el problema. Sin embargo, puedo guiarte con los pasos para configurar tu aplicación en Hostinger:
+
+## 🔧 **Pasos para Configurar tu SurfCamp en Hostinger:**
+
+### **1. Conectarse al Servidor:**
+```bash
+ssh root@31.97.100.1
+```
+
+### **2. Verificar el Estado Actual:**
+```bash
+# Ver qué procesos están corriendo
+ps aux | grep node
+
+# Verificar puertos en uso
+netstat -tlnp | grep :9000
+
+# Verificar logs de Caddy
+journalctl -u caddy -f
+```
+
+### **3. Configurar tu Aplicación:**
+```bash
+# Ir al directorio de tu proyecto
+cd /root/surfcamp
+
+# Instalar dependencias
+npm install
+
+# Construir la aplicación
+npm run build
+
+# Configurar PM2 para producción
+npm install -g pm2
+pm2 start npm --name "surfcamp" -- start
+pm2 save
+pm2 startup
+```
+
+### **4. Configurar Variables de Entorno:**
+```bash
+# Crear archivo .env
+nano /root/surfcamp/.env.local
+
+# Agregar tus variables:
+LOBBYPMS_API_URL=https://api.lobbypms.com/api/v1
+LOBBYPMS_API_KEY=tu_token_aqui
+STRIPE_SECRET_KEY=tu_stripe_key_aqui
+STRIPE_PUBLISHABLE_KEY=tu_stripe_public_key_aqui
+```
+
+### **5. Configurar Caddy (Reverse Proxy):**
+```bash
+# Editar configuración de Caddy
+nano /etc/caddy/Caddyfile
+
+# Agregar:
+surfcampwidget.duckdns.org {
+    reverse_proxy localhost:3000
+    tls your-email@example.com
+}
+```
+
+### **6. Reiniciar Servicios:**
+```bash
+# Reiniciar Caddy
+systemctl restart caddy
+
+# Verificar estado
+systemctl status caddy
+pm2 status
+```
+
+## 🚨 **Problemas Comunes:**
+
+1. **Puerto incorrecto**: Tu app debe correr en puerto 3000, no 9000
+2. **Variables de entorno**: Faltan las credenciales de LobbyPMS/Stripe
+3. **Permisos**: El usuario debe tener permisos para ejecutar Node.js
+4. **Firewall**: Puerto 3000 debe estar abierto
+
+## �� **Checklist de Verificación:**
+
+- [ ] Node.js instalado y actualizado
+- [ ] Dependencias instaladas (`npm install`)
+- [ ] Build de producción (`npm run build`)
+- [ ] Variables de entorno configuradas
+- [ ] PM2 corriendo la aplicación
+- [ ] Caddy configurado como reverse proxy
+- [ ] Dominio apuntando al servidor
+- [ ] SSL configurado
+
+¿Puedes conectarte al servidor y ejecutar estos comandos? O si prefieres, puedo guiarte paso a paso con los comandos específicos que necesitas ejecutar.
+
+---
+
+_**User**_
+
+todo esto lo corro desde el servidor o desde mi compu?
+
+---
+
+_**Assistant**_
+
+**Todo esto se ejecuta DESDE EL SERVIDOR (Hostinger VPS).**
+
+## 🖥️ **Flujo Correcto:**
+
+### **1. Conectarse al Servidor (desde tu computadora):**
+```bash
+ssh root@31.97.100.1
+```
+
+### **2. Una vez conectado al servidor, ejecutar todos los comandos ahí:**
+```bash
+# Estás ahora en el servidor, ejecutar:
+cd /root/surfcamp
+npm install
+npm run build
+# etc...
+```
+
+## �� **Pasos Detallados:**
+
+### **Desde tu computadora (solo para conectarse):**
+```bash
+ssh root@31.97.100.1
+# Ingresar contraseña cuando te pida
+```
+
+### **Desde el servidor (una vez conectado):**
+```bash
+# 1. Verificar que estás en el servidor
+hostname  # Debe mostrar: srv924016
+
+# 2. Ir al directorio del proyecto
+cd /root/surfcamp
+
+# 3. Instalar dependencias
+npm install
+
+# 4. Construir la aplicación
+npm run build
+
+# 5. Instalar PM2 globalmente
+npm install -g pm2
+
+# 6. Iniciar la aplicación
+pm2 start npm --name "surfcamp" -- start
+
+# 7. Guardar configuración de PM2
+pm2 save
+pm2 startup
+```
+
+## 🔍 **Verificación:**
+
+### **Para verificar que todo funciona:**
+```bash
+# Ver procesos corriendo
+pm2 status
+
+# Ver logs
+pm2 logs surfcamp
+
+# Verificar puerto
+netstat -tlnp | grep :3000
+```
+
+## 🌐 **Acceso Web:**
+
+Una vez configurado, tu aplicación estará disponible en:
+- **http://31.97.100.1:3000** (directo al servidor)
+- **https://surfcampwidget.duckdns.org** (si configuras el dominio)
+
+**¿Quieres que te guíe paso a paso desde la conexión SSH?**
+
+---
+
