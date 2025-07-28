@@ -101,156 +101,126 @@ export default function DateSelector() {
       className="card"
     >
       <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-          <CalendarIcon className="w-6 h-6 text-blue-600" />
+        <div className="w-12 h-12 bg-warm-100 rounded-lg flex items-center justify-center mr-4">
+          <CalendarIcon className="w-6 h-6 text-warm-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('dates.title')}</h2>
-          <p className="text-gray-600">{t('dates.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-warm-900">{t('dates.title')}</h2>
+          <p className="text-warm-600">{t('dates.subtitle')}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Check-in Date */}
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('dates.checkIn')}
-          </label>
+          {/* Check-in Date */}
+          <div>
+            <label className="block text-sm font-medium text-warm-700 mb-2">
+              {t('dates.checkIn')} *
+            </label>
             <input
-              ref={checkInRef}
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={new Date().toISOString().split('T')[0]}
-              style={{ cursor: 'pointer' }}
-          />
-        </div>
+              className="w-full px-4 py-3 border border-warm-300 rounded-lg focus:ring-2 focus:ring-warm-500 focus:border-transparent cursor-pointer"
+              ref={checkInRef}
+            />
+          </div>
 
-        {/* Check-out Date */}
-        <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('dates.checkOut')}
-          </label>
+          {/* Check-out Date */}
+          <div>
+            <label className="block text-sm font-medium text-warm-700 mb-2">
+              {t('dates.checkOut')} *
+            </label>
             <input
-              ref={checkOutRef}
               type="date"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
               min={checkIn || new Date().toISOString().split('T')[0]}
-              style={{ cursor: 'pointer' }}
-          />
-        </div>
-      </div>
-
-        {/* Number of Guests */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('dates.guests')}
-        </label>
-        <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-            <button
-                type="button"
-              onClick={() => setGuests(Math.max(1, guests - 1))}
-                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-            >
-                <span className="text-gray-600">-</span>
-            </button>
-              <span className="text-2xl font-bold text-gray-900 w-12 text-center">
-                {guests}
-              </span>
-            <button
-                type="button"
-              onClick={() => setGuests(Math.min(12, guests + 1))}
-                className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-            >
-                <span className="text-gray-600">+</span>
-            </button>
+              className="w-full px-4 py-3 border border-warm-300 rounded-lg focus:ring-2 focus:ring-warm-500 focus:border-transparent cursor-pointer"
+              ref={checkOutRef}
+            />
           </div>
-            <span className="text-gray-600">
-              {guests === 1 ? `1 ${t('dates.guest')}` : `${guests} ${t('dates.guests_plural')}`}
-          </span>
         </div>
-      </div>
+
+        {/* Guests Counter */}
+        <div>
+          <label className="block text-sm font-medium text-warm-700 mb-2">
+            {t('dates.guests')}
+          </label>
+          <div className="flex items-center space-x-4">
+            <button
+              type="button"
+              onClick={() => setGuests(Math.max(1, guests - 1))}
+              className="w-10 h-10 rounded-full border border-warm-300 flex items-center justify-center hover:bg-warm-50"
+            >
+              <span className="text-warm-600">-</span>
+            </button>
+            <span className="text-2xl font-bold text-warm-900 w-12 text-center">
+              {guests}
+            </span>
+            <button
+              type="button"
+              onClick={() => setGuests(guests + 1)}
+              className="w-10 h-10 rounded-full border border-warm-300 flex items-center justify-center hover:bg-warm-50"
+            >
+              <span className="text-warm-600">+</span>
+            </button>
+            <span className="text-warm-600">
+              {guests === 1 ? t('dates.guest') : t('dates.guests')}
+            </span>
+          </div>
+        </div>
 
         {/* Summary */}
-        {(checkIn || checkOut || guests > 1) && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">{t('dates.summary.title')}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        {(checkIn || checkOut) && (
+          <div className="bg-warm-50 rounded-lg p-4">
+            <h3 className="font-semibold text-warm-900 mb-2">{t('dates.summary.title')}</h3>
+            <div className="space-y-1 text-sm">
               {checkIn && (
-            <div>
-                  <span className="text-gray-600">{t('dates.summary.checkIn')}:</span>
-                  <span className="ml-2 font-medium">{new Date(checkIn).toLocaleDateString()}</span>
-            </div>
-              )}
-              {checkOut && (
-            <div>
-                  <span className="text-gray-600">{t('dates.summary.checkOut')}:</span>
-                  <span className="ml-2 font-medium">{new Date(checkOut).toLocaleDateString()}</span>
-            </div>
-              )}
-            <div>
-                <span className="text-gray-600">{t('dates.summary.guests')}:</span>
-                <span className="ml-2 font-medium">{guests}</span>
-            </div>
-            </div>
-            {nights > 0 && (
-              <div className="mt-2 text-sm text-gray-600">
-                {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                    </div>
-                  )}
+                <div>
+                  <span className="text-warm-600">{t('dates.summary.checkIn')}:</span>
+                  <span className="ml-2 font-medium">
+                    {new Date(checkIn).toLocaleDateString('es-ES')}
+                  </span>
                 </div>
               )}
-              
+              {checkOut && (
+                <div>
+                  <span className="text-warm-600">{t('dates.summary.checkOut')}:</span>
+                  <span className="ml-2 font-medium">
+                    {new Date(checkOut).toLocaleDateString('es-ES')}
+                  </span>
+                </div>
+              )}
+              <div>
+                <span className="text-warm-600">{t('dates.summary.guests')}:</span>
+                <span className="ml-2 font-medium">{guests}</span>
+              </div>
+              {nights > 0 && (
+                <div className="mt-2 text-sm text-warm-600">
+                  {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <ul className="list-disc pl-5 space-y-1">
-                    {error.split('. ').map((err, index) => (
-                      <li key={index}>• {err}</li>
-                    ))}
-                </ul>
-                </div>
-              </div>
-            </div>
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
-      )}
+        )}
 
         {/* Submit Button */}
-      <div className="flex justify-end">
         <button
-            type="submit"
-            disabled={isLoading || !checkIn || !checkOut}
-            className="btn-primary flex items-center space-x-2"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>{t('common.loading')}</span>
-              </>
-            ) : (
-              <>
-                <span>{t('common.continue')}</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </>
-            )}
+          type="submit"
+          disabled={isLoading || !checkIn || !checkOut}
+          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? t('common.loading') : t('common.continue')}
         </button>
-      </div>
       </form>
     </motion.div>
   );

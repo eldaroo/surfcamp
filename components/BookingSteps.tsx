@@ -59,10 +59,10 @@ export default function BookingSteps() {
                   <div
                   className={`w-12 h-12 rounded-lg flex items-center justify-center text-lg font-semibold transition-all duration-300 ${
                     isActive
-                      ? 'bg-blue-500 text-white'
+                      ? 'bg-warm-500 text-white'
                       : isCompleted
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'bg-accent-500 text-white'
+                      : 'bg-warm-200 text-warm-500'
                     }`}
                   >
                   {step.icon}
@@ -70,12 +70,12 @@ export default function BookingSteps() {
                 <div className="mt-2 text-center">
                   <div
                     className={`text-sm font-medium ${
-                      isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
+                      isActive ? 'text-warm-600' : isCompleted ? 'text-accent-600' : 'text-warm-500'
                     }`}
                   >
                     {t(`booking.steps.${step.name}.title`)}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1 max-w-24">
+                  <div className="text-xs text-warm-400 mt-1 max-w-24">
                     {t(`booking.steps.${step.name}.description`)}
                   </div>
                 </div>
@@ -84,7 +84,7 @@ export default function BookingSteps() {
               {index < steps.length - 1 && (
                     <div
                   className={`w-16 h-0.5 mx-4 transition-all duration-300 ${
-                    isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                    isCompleted ? 'bg-accent-500' : 'bg-warm-200'
                       }`}
                     />
                   )}

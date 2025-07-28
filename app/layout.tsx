@@ -1,7 +1,11 @@
-import { Inter } from 'next/font/google';
+import { Inter, Roboto } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
+const roboto = Roboto({ 
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-roboto'
+});
 
 export default function RootLayout({
   children,
@@ -10,9 +14,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
-        <div className="min-h-screen bg-gradient-to-br from-ocean-50 to-sand-50">
-          {children}
+      <body className={`${roboto.variable} font-roboto`}>
+        <div className="min-h-screen bg-gradient-to-br from-warm-50 via-accent-50 to-warm-100 relative overflow-hidden">
+          {/* Efectos de fondo orgánicos */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-10 left-10 w-32 h-32 bg-warm-200 rounded-full blur-xl"></div>
+            <div className="absolute top-40 right-20 w-24 h-24 bg-accent-200 rounded-full blur-xl"></div>
+            <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-warm-400 rounded-full blur-xl"></div>
+            <div className="absolute bottom-40 right-1/3 w-28 h-28 bg-accent-200 rounded-full blur-xl"></div>
+          </div>
+          
+          <div className="relative z-10">
+            {children}
+          </div>
         </div>
         
         {/* Script para comunicación de altura dinámica con Tilda */}

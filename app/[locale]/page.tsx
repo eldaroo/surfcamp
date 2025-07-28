@@ -96,55 +96,71 @@ export default function HomePage() {
       
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Hero Section */}
+          {/* Hero Section con energía de surf */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="text-center mb-12"
           >
-            <h1 className="text-4xl md:text-6xl font-bold text-gradient mb-6">
+            <motion.h1 
+              className="text-5xl md:text-6xl font-bold text-warm-900 mb-6 organic-hover"
+              style={{ color: '#1D4148' }}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               {t('hero.title')}
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            </motion.h1>
+            <motion.p 
+              className="text-xl md:text-2xl text-warm-600 max-w-4xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
               {t('hero.subtitle')}
-            </p>
+            </motion.p>
           </motion.div>
 
-          {/* Booking Steps */}
+          {/* Booking Steps con energía orgánica */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-8"
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mb-12"
           >
             <BookingSteps />
           </motion.div>
 
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Booking Form */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="lg:col-span-2"
-            >
-              {renderCurrentStep()}
-            </motion.div>
+          {/* Main Content con efectos orgánicos */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-2">
+              <motion.div
+                className="organic-hover"
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderCurrentStep()}
+              </motion.div>
+            </div>
 
-            {/* Price Summary */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="lg:col-span-1"
-            >
-              <div className="sticky top-8">
+            {/* Right Column - Price Summary */}
+            <div className="lg:col-span-1">
+              <motion.div
+                className="organic-hover"
+                whileHover={{ y: -5 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
                 <PriceSummary />
-              </div>
-            </motion.div>
-          </div>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </main>
     </div>

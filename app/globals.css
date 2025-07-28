@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bochan:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,32 +11,36 @@
   }
   
   body {
-    @apply text-gray-900 antialiased;
+    @apply text-gray-900 antialiased font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-surf-gradient text-white px-6 py-3 rounded-lg font-semibold 
-           hover:shadow-lg transform hover:scale-105 transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+    @apply bg-warm-500 text-white px-6 py-3 rounded-lg font-semibold 
+           hover:bg-warm-600 hover:shadow-lg transform hover:scale-105 transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-white text-ocean-700 border-2 border-ocean-200 px-6 py-3 rounded-lg font-semibold 
-           hover:bg-ocean-50 hover:border-ocean-300 transition-all duration-200
-           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2;
+    @apply bg-white text-warm-600 border-2 border-warm-300 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-warm-50 hover:border-warm-400 hover:shadow-md transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:ring-offset-2;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100
-           hover:shadow-xl transition-shadow duration-300;
+    @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6 border border-warm-200
+           hover:shadow-xl hover:border-warm-300 transition-all duration-300;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg 
-           focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500
-           transition-colors duration-200;
+    @apply w-full px-4 py-3 border border-warm-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:border-warm-500
+           transition-all duration-300 hover:border-warm-400;
   }
   
   .input-field:invalid {
@@ -41,32 +48,147 @@
   }
   
   .activity-card {
-    @apply card cursor-pointer hover:border-ocean-200 transition-all duration-200;
+    @apply card cursor-pointer hover:border-warm-300 hover:shadow-xl transition-all duration-300;
   }
   
   .activity-card.selected {
-    @apply border-2 border-ocean-500 bg-ocean-50;
+    @apply border-2 border-warm-500 bg-gradient-to-br from-warm-50 to-accent-50;
   }
   
   .step-indicator {
-    @apply w-8 h-8 rounded-full border-2 flex items-center justify-center 
-           text-sm font-semibold transition-all duration-200;
+    @apply w-12 h-12 rounded-lg border-2 flex items-center justify-center 
+           text-lg font-semibold transition-all duration-300 shadow-md;
   }
   
   .step-indicator.active {
-    @apply bg-ocean-500 border-ocean-500 text-white;
+    @apply bg-gradient-to-br from-warm-500 to-accent-200 border-warm-500 text-white shadow-lg;
   }
   
   .step-indicator.completed {
-    @apply bg-green-500 border-green-500 text-white;
+    @apply bg-gradient-to-br from-accent-200 to-accent-300 border-accent-200 text-white shadow-lg;
   }
   
   .step-indicator.inactive {
-    @apply bg-gray-100 border-gray-300 text-gray-500;
+    @apply bg-warm-100 border-warm-300 text-warm-500 hover:bg-warm-200;
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-ocean-600 to-sand-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-warm-500 via-accent-200 to-warm-600 bg-clip-text text-transparent;
+  }
+
+  .font-heading {
+    font-family: 'Bochan', serif;
+  }
+
+  .font-body {
+    font-family: 'Roboto', sans-serif;
+  }
+
+  /* Gradientes con energía de surf */
+  .bg-warm-gradient {
+    background: linear-gradient(135deg, #997146 0%, #8C8179 30%, #CCC8BE 60%, #ECE97F 100%);
+  }
+
+  .bg-earth-gradient {
+    background: linear-gradient(135deg, #1D4148 0%, #677A7D 40%, #997146 70%, #ECE97F 100%);
+  }
+
+  .bg-surf-gradient {
+    background: linear-gradient(135deg, #1D4148 0%, #677A7D 25%, #997146 50%, #8C8179 75%, #ECE97F 100%);
+  }
+
+  .text-warm-gradient {
+    background: linear-gradient(135deg, #997146 0%, #8C8179 30%, #CCC8BE 60%, #ECE97F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Efectos orgánicos */
+  .organic-shadow {
+    box-shadow: 0 4px 20px rgba(153, 113, 70, 0.15), 0 2px 8px rgba(236, 233, 127, 0.1);
+  }
+
+  .organic-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .organic-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(153, 113, 70, 0.2), 0 4px 12px rgba(236, 233, 127, 0.15);
+  }
+
+  /* Colores específicos de la paleta */
+  .bg-earth-600 {
+    background-color: #677A7D;
+  }
+
+  .text-earth-600 {
+    color: #677A7D;
+  }
+
+  .border-earth-600 {
+    border-color: #677A7D;
+  }
+
+  .bg-warm-200 {
+    background-color: #CCC8BE;
+  }
+
+  .text-warm-200 {
+    color: #CCC8BE;
+  }
+
+  .border-warm-200 {
+    border-color: #CCC8BE;
+  }
+
+  .bg-warm-400 {
+    background-color: #8C8179;
+  }
+
+  .text-warm-400 {
+    color: #8C8179;
+  }
+
+  .border-warm-400 {
+    border-color: #8C8179;
+  }
+
+  .bg-warm-500 {
+    background-color: #997146;
+  }
+
+  .text-warm-500 {
+    color: #997146;
+  }
+
+  .border-warm-500 {
+    border-color: #997146;
+  }
+
+  .bg-warm-900 {
+    background-color: #1D4148;
+  }
+
+  .text-warm-900 {
+    color: #1D4148;
+  }
+
+  .border-warm-900 {
+    border-color: #1D4148;
+  }
+
+  .bg-accent-200 {
+    background-color: #ECE97F;
+  }
+
+  .text-accent-200 {
+    color: #ECE97F;
+  }
+
+  .border-accent-200 {
+    border-color: #ECE97F;
   }
 }
 

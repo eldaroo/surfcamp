@@ -7,7 +7,63 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'bochan': ['Bochan', 'serif'],
+        'roboto': ['Roboto', 'sans-serif'],
+        'heading': ['Bochan', 'serif'],
+        'body': ['Roboto', 'sans-serif'],
+      },
       colors: {
+        // Paleta ajustada para mejor apariencia visual
+        primary: {
+          50: '#fefdf8',   // Muy claro, casi blanco
+          100: '#fef7cd',   // Amarillo muy claro
+          200: '#fef08a',   // Amarillo claro
+          300: '#fde047',   // Amarillo
+          400: '#facc15',   // Amarillo dorado
+          500: '#eab308',   // Dorado
+          600: '#ca8a04',   // Dorado oscuro
+          700: '#a16207',   // Marrón dorado
+          800: '#854d0e',   // Marrón
+          900: '#713f12',   // Marrón oscuro
+        },
+        warm: {
+          50: '#fefdf8',    // Muy claro
+          100: '#f5f3f0',   // Gris muy claro
+          200: '#CCC8BE',   // Gris cálido - COLOR EXACTO
+          300: '#d4cbc0',   // Gris cálido más oscuro
+          400: '#8C8179',   // Gris marrón cálido - COLOR EXACTO
+          500: '#997146',   // Marrón tierra - COLOR EXACTO
+          600: '#8a6a3d',   // Marrón más oscuro
+          700: '#7a5f35',   // Marrón muy oscuro
+          800: '#6b542d',   // Marrón muy oscuro
+          900: '#1D4148',   // Verde azulado oscuro - COLOR EXACTO
+        },
+        accent: {
+          50: '#fefdf8',    // Muy claro
+          100: '#fefce8',   // Amarillo muy claro
+          200: '#ECE97F',   // Amarillo claro - COLOR EXACTO
+          300: '#fef08a',   // Amarillo
+          400: '#fde047',   // Amarillo dorado
+          500: '#facc15',   // Dorado
+          600: '#eab308',   // Dorado oscuro
+          700: '#ca8a04',   // Marrón dorado
+          800: '#a16207',   // Marrón
+          900: '#854d0e',   // Marrón oscuro
+        },
+        earth: {
+          50: '#fefdf8',    // Muy claro
+          100: '#f5f3f0',   // Gris muy claro
+          200: '#CCC8BE',   // Gris cálido
+          300: '#d4cbc0',   // Gris cálido más oscuro
+          400: '#8C8179',   // Gris marrón cálido
+          500: '#997146',   // Marrón tierra
+          600: '#677A7D',   // Verde azulado medio - COLOR EXACTO
+          700: '#5a6b6e',   // Verde azulado más oscuro
+          800: '#4d5b5e',   // Verde azulado muy oscuro
+          900: '#1D4148',   // Verde azulado oscuro
+        },
+        // Mantener ocean y sand para compatibilidad
         ocean: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -34,6 +90,8 @@ module.exports = {
         }
       },
       backgroundImage: {
+        'warm-gradient': 'linear-gradient(135deg, #997146 0%, #8C8179 50%, #CCC8BE 100%)',
+        'earth-gradient': 'linear-gradient(135deg, #1D4148 0%, #677A7D 50%, #997146 100%)',
         'surf-gradient': 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #0891b2 100%)',
         'sand-gradient': 'linear-gradient(135deg, #fef7cd 0%, #fde047 50%, #facc15 100%)',
       }
