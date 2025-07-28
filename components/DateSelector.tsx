@@ -208,8 +208,8 @@ export default function DateSelector() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="bg-warm-50 border border-warm-200 rounded-lg p-4">
+            <p className="text-warm-600 text-sm">{error}</p>
           </div>
         )}
 

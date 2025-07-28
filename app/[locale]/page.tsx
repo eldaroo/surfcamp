@@ -73,7 +73,7 @@ export default function HomePage() {
               {t('common.continue')}
             </button>
             {!isReadyForPayment && (
-              <div className="mt-4 text-red-600">
+              <div className="mt-4 text-warm-600">
                 Completa todos los datos de la reserva antes de continuar.
               </div>
             )}

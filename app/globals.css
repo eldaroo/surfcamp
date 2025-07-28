@@ -44,7 +44,7 @@
   }
   
   .input-field:invalid {
-    @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+    @apply border-warm-400 focus:ring-warm-500 focus:border-warm-500;
   }
   
   .activity-card {
@@ -52,7 +52,49 @@
   }
   
   .activity-card.selected {
-    @apply border-2 border-warm-500 bg-gradient-to-br from-warm-50 to-accent-50;
+    @apply border-2 border-accent-200 bg-gradient-to-br from-accent-50 to-warm-50 shadow-lg;
+    box-shadow: 0 0 15px rgba(236, 233, 127, 0.25), 0 2px 8px rgba(153, 113, 70, 0.15);
+    transform: translateY(-1px);
+  }
+
+  /* Efectos dorados para elementos seleccionados */
+  .selected-gold {
+    @apply border-2 border-accent-200 bg-gradient-to-br from-accent-50 to-warm-50;
+    box-shadow: 0 0 18px rgba(236, 233, 127, 0.3), 0 4px 12px rgba(153, 113, 70, 0.2);
+    transform: translateY(-2px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .selected-gold:hover {
+    box-shadow: 0 0 22px rgba(236, 233, 127, 0.35), 0 6px 15px rgba(153, 113, 70, 0.25);
+    transform: translateY(-3px);
+  }
+
+  /* Etiquetas con mejor contraste */
+  .tag-feature {
+    @apply px-3 py-1 text-xs rounded-full font-medium;
+  }
+
+  .tag-feature.primary {
+    @apply bg-white text-warm-800 border border-warm-200;
+  }
+
+  .tag-feature.accent {
+    @apply bg-white text-accent-800 border border-accent-200;
+  }
+
+  .tag-feature.secondary {
+    @apply bg-white text-warm-700 border border-warm-200;
+  }
+
+  /* Efectos de hover mejorados */
+  .card-hover-gold {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover-gold:hover {
+    box-shadow: 0 4px 12px rgba(236, 233, 127, 0.15), 0 2px 6px rgba(153, 113, 70, 0.1);
+    transform: translateY(-1px);
   }
   
   .step-indicator {
@@ -200,5 +242,22 @@
   
   .text-gradient {
     @apply bg-gradient-to-r from-ocean-600 to-ocean-800 bg-clip-text text-transparent;
+  }
+} 
+
+/* Ocultar barra de scroll para el selector de pasos */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Centrado automático del paso activo en móvil */
+@media (max-width: 768px) {
+  .scrollbar-hide {
+    scroll-behavior: smooth;
   }
 } 

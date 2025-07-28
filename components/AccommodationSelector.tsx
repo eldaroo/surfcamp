@@ -163,9 +163,9 @@ export default function AccommodationSelector() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6"
+          className="bg-warm-50 border border-warm-200 rounded-lg p-4 mb-6"
         >
-          <p className="text-red-800 text-sm">{error}</p>
+          <p className="text-warm-600 text-sm">{error}</p>
         </motion.div>
       )}
 
@@ -176,87 +176,70 @@ export default function AccommodationSelector() {
             key={room.roomTypeId}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`border-2 rounded-lg p-6 transition-all ${
+            className={`border-2 rounded-lg p-6 transition-all card-hover-gold ${
               (('available' in room && room.available === false) || room.availableRooms === 0)
-                ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                ? 'border-warm-200 bg-warm-50 cursor-not-allowed opacity-60'
                 : selectedRoom?.roomTypeId === room.roomTypeId
-                ? 'border-ocean-500 bg-ocean-50 cursor-pointer'
-                : 'border-gray-200 hover:border-ocean-300 hover:bg-ocean-25 cursor-pointer'
+                ? 'selected-gold cursor-pointer'
+                : 'border-warm-200 hover:border-warm-300 hover:bg-warm-25 cursor-pointer'
             }`}
             onClick={() => handleRoomSelect(room)}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex justify-between items-start">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900">{room.roomTypeName}</h3>
-                  {selectedRoom?.roomTypeId === room.roomTypeId && (
-                    <div className="w-6 h-6 bg-ocean-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
+                <h3 className="text-xl font-semibold text-warm-900 mb-2">
+                  {room.roomTypeName}
+                </h3>
+                <p className="text-warm-600 mb-4">
+                  {room.roomTypeId === 'casa-playa' && 'Habitación compartida con vista al mar y ambiente social'}
+                  {room.roomTypeId === 'casitas-privadas' && 'Casita privada con jardín independiente'}
+                  {room.roomTypeId === 'casas-deluxe' && 'Studio privado a 2 pasos del océano con cocina y baño privado'}
+                </p>
                 
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-                  <div className="flex items-center space-x-1">
-                    <Users className="w-4 h-4" />
-                    <span>
-                                      {room.roomTypeId === 'casa-playa' && 'Hasta 8 huéspedes'}
-                {room.roomTypeId === 'casitas-privadas' && 'Hasta 2 huéspedes'}
-                {room.roomTypeId === 'casas-deluxe' && 'Hasta 2 huéspedes'}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Home className="w-4 h-4" />
-                    <span>
-                      {(('available' in room && room.available === false) || room.availableRooms === 0) 
-                        ? 'No disponible' 
-                        : `${room.availableRooms} ${room.availableRooms === 1 ? 'disponible' : 'disponibles'}`
-                      }
-                    </span>
-                  </div>
-                </div>
-
                 {/* Room Features */}
                 <div className="flex flex-wrap gap-2 mb-3">
                   {room.roomTypeId === 'casa-playa' && (
                     <>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span className="tag-feature primary">
                         Cuarto Compartido
                       </span>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      <span className="tag-feature accent">
                         Vista al Mar
                       </span>
-                      <span className="px-3 py-1 bg-cyan-100 text-cyan-800 text-xs rounded-full">
+                      <span className="tag-feature secondary">
                         Ambiente Social
                       </span>
                     </>
                   )}
                   {room.roomTypeId === 'casitas-privadas' && (
                     <>
-                      <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                      <span className="tag-feature primary">
                         Privacidad Total
                       </span>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      <span className="tag-feature accent">
                         Jardín Privado
                       </span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span className="tag-feature secondary">
                         Ambiente Íntimo
                       </span>
-                      <span className="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                      <span className="tag-feature primary">
                         Casa Independiente
                       </span>
                     </>
                   )}
                   {room.roomTypeId === 'casas-deluxe' && (
                     <>
-                      <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs rounded-full">
-                        Premium
+                      <span className="tag-feature accent">
+                        Beach Studio
                       </span>
-                      <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs rounded-full">
-                        Espaciosa
+                      <span className="tag-feature primary">
+                        Cocina Privada
                       </span>
-                      <span className="px-3 py-1 bg-rose-100 text-rose-800 text-xs rounded-full">
-                        Comodidades Deluxe
+                      <span className="tag-feature secondary">
+                        Baño con Agua Caliente
+                      </span>
+                      <span className="tag-feature primary">
+                        Wi-Fi & AC
                       </span>
                     </>
                   )}
@@ -265,17 +248,17 @@ export default function AccommodationSelector() {
 
               <div className="text-right ml-4">
                 {(('available' in room && room.available === false) || room.availableRooms === 0) ? (
-                  <div className="text-2xl font-bold text-gray-400">
+                  <div className="text-2xl font-bold text-warm-400">
                     No disponible
                   </div>
                 ) : (
                   <>
-                    <div className="text-2xl font-bold text-ocean-600">
+                    <div className="text-2xl font-bold text-warm-600">
                       ${room.pricePerNight}
                     </div>
-                    <div className="text-sm text-gray-600">por noche</div>
+                    <div className="text-sm text-warm-600">por noche</div>
                     {nights > 0 && (
-                      <div className="text-sm font-semibold text-gray-900 mt-1">
+                      <div className="text-sm font-semibold text-warm-900 mt-1">
                         Total: ${room.pricePerNight * nights}
                       </div>
                     )}

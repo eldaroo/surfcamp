@@ -94,12 +94,12 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ amount, order
         <p><b>Descripción:</b> {order_description}</p>
         <p><b>ID de pedido:</b> {order_id}</p>
       </div>
-      {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
-      <button onClick={handlePay} disabled={loading} className="bg-blue-500 text-white px-4 py-2 rounded">
+      {error && <div className="mb-4 text-warm-600 font-semibold">{error}</div>}
+      <button onClick={handlePay} disabled={loading} className="btn-primary w-full">
         {loading ? 'Redirigiendo al pago...' : 'Pagar con tarjeta'}
-          </button>
+      </button>
       {status && <div className="mt-4 text-lg font-semibold">{status}</div>}
-        </div>
+    </div>
   );
 };
 

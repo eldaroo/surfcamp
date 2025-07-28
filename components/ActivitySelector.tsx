@@ -21,37 +21,65 @@ export default function ActivitySelector() {
     setError
   } = useBookingStore();
 
-  const [selectedActivityIds, setSelectedActivityIds] = useState<string[]>(
-    selectedActivities.map(a => a.id)
-  );
-
   const hasQuantitySelector = (category: string) => {
     return ['yoga', 'ice_bath', 'transport'].includes(category);
   };
 
-  const toggleActivity = (activity: Activity) => {
-    const isSelected = selectedActivityIds.includes(activity.id);
-    
-    if (isSelected) {
-      setSelectedActivityIds(prev => prev.filter(id => id !== activity.id));
-      if (hasQuantitySelector(activity.category)) {
-        setActivityQuantity(activity.id, 0);
-      }
-    } else {
-      setSelectedActivityIds(prev => [...prev, activity.id]);
-      if (hasQuantitySelector(activity.category)) {
-        setActivityQuantity(activity.id, 1);
-      }
-    }
+  const getActivityQuantity = (activityId: string) => {
+    return activityQuantities[activityId] || 0;
   };
 
   const updateActivityQuantity = (activityId: string, quantity: number) => {
     setActivityQuantity(activityId, quantity);
+    
+    // Si la cantidad es 0, remover de seleccionados
     if (quantity === 0) {
-      setSelectedActivityIds(prev => prev.filter(id => id !== activityId));
-    } else if (!selectedActivityIds.includes(activityId)) {
-      setSelectedActivityIds(prev => [...prev, activityId]);
+      const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activityId);
+      setSelectedActivities(updatedActivities);
+    } else {
+      // Si la cantidad es > 0, agregar a seleccionados si no está
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
+      if (!isSelected) {
+        const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
+        if (activity) {
+          setSelectedActivities([...selectedActivities, activity]);
+        }
+      }
     }
+  };
+
+  const toggleActivity = (activity: Activity) => {
+    if (activity.category === 'surf') {
+      // Para surf, solo se puede seleccionar UN paquete
+      setSelectedActivities([activity]);
+    } else if (hasQuantitySelector(activity.category)) {
+      // Para actividades con selector de cantidad, NO cambiar la cantidad al tocar la card
+      // Solo agregar/remover de seleccionados si no está seleccionada
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activity.id);
+      if (!isSelected) {
+        // Si no está seleccionada, agregarla con cantidad 1 si no tiene cantidad
+        const currentQuantity = getActivityQuantity(activity.id);
+        if (currentQuantity === 0) {
+          updateActivityQuantity(activity.id, 1);
+        } else {
+          setSelectedActivities([...selectedActivities, activity]);
+        }
+      }
+      // Si ya está seleccionada, no hacer nada al tocar la card
+    } else {
+      // Para otras actividades, se pueden seleccionar múltiples
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activity.id);
+      if (isSelected) {
+        const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activity.id);
+        setSelectedActivities(updatedActivities);
+      } else {
+        setSelectedActivities([...selectedActivities, activity]);
+      }
+    }
+  };
+
+  const handleActivityToggle = (activity: Activity) => {
+    toggleActivity(activity);
   };
 
   const handleContinue = async () => {
@@ -59,16 +87,10 @@ export default function ActivitySelector() {
     setError(null);
 
     try {
-      const activities = AVAILABLE_ACTIVITIES.filter(a => 
-        selectedActivityIds.includes(a.id)
-      );
-      
-      setSelectedActivities(activities);
-
       // Prepare activity data with quantities
-      const activitiesWithQuantities = selectedActivityIds.map(id => ({
-        activityId: id,
-        quantity: activityQuantities[id] || 1
+      const activitiesWithQuantities = selectedActivities.map(activity => ({
+        activityId: activity.id,
+        quantity: activityQuantities[activity.id] || 1
       }));
 
       const quoteResponse = await fetch('/api/quote', {
@@ -99,7 +121,7 @@ export default function ActivitySelector() {
   };
 
   const renderActivityCard = (activity: Activity) => {
-    const isSelected = selectedActivityIds.includes(activity.id);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activity.id);
     const quantity = activityQuantities[activity.id] || (isSelected ? 1 : 0);
     
     let totalPrice: number;
@@ -116,12 +138,16 @@ export default function ActivitySelector() {
     return (
       <motion.div
         key={activity.id}
-        className={`activity-card ${isSelected ? 'selected' : ''} relative`}
-        onClick={hasQuantitySelector(activity.category) ? undefined : () => toggleActivity(activity)}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`card cursor-pointer transition-all duration-300 card-hover-gold min-h-[280px] ${
+          isSelected ? 'selected-gold' : 'hover:border-warm-300'
+        }`}
+        onClick={() => handleActivityToggle(activity)}
       >
         <div className="flex items-start justify-between mb-3">
-          <h3 className="font-semibold text-gray-900 flex-1">{activity.name}</h3>
-          <div className="text-right">
+          <h3 className="font-semibold text-gray-900 flex-1 mr-4">{activity.name}</h3>
+          <div className="text-right flex-shrink-0">
             <p className="font-bold text-ocean-600">{formatCurrency(activity.price)}</p>
             <p className="text-xs text-gray-500">
               {activity.category === 'yoga' ? 'por clase' : 
@@ -145,15 +171,15 @@ export default function ActivitySelector() {
           </div>
         </div>
 
-                {/* Selector de cantidad */}
+        {/* Selector de cantidad */}
         {hasQuantitySelector(activity.category) && (
-          <div className={`rounded-lg p-3 mb-4 ${
-            activity.category === 'yoga' ? 'bg-blue-50' : 
-            activity.category === 'ice_bath' ? 'bg-purple-50' : 
-            'bg-orange-50'
+          <div className={`rounded-lg p-4 mb-4 ${
+            activity.category === 'yoga' ? 'bg-warm-50' : 
+            activity.category === 'ice_bath' ? 'bg-accent-50' : 
+            'bg-warm-100'
           }`}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-warm-700">
                 {activity.category === 'yoga' ? 'Cantidad de clases:' :
                  activity.category === 'ice_bath' ? 'Cantidad de sesiones:' :
                  'Cantidad de viajes:'}
@@ -164,21 +190,21 @@ export default function ActivitySelector() {
                     e.stopPropagation();
                     updateActivityQuantity(activity.id, Math.max(0, quantity - 1));
                   }}
-                  className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-300"
+                  className="w-8 h-8 rounded-full bg-warm-200 flex items-center justify-center text-warm-600 hover:bg-warm-300 transition-colors"
                   disabled={quantity <= 0}
                 >
                   -
                 </button>
-                <span className="w-8 text-center font-semibold">{quantity}</span>
+                <span className="w-8 text-center font-semibold text-warm-900">{quantity}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     updateActivityQuantity(activity.id, quantity + 1);
                   }}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${
-                    activity.category === 'yoga' ? 'bg-blue-500 hover:bg-blue-600' :
-                    activity.category === 'ice_bath' ? 'bg-purple-500 hover:bg-purple-600' :
-                    'bg-orange-500 hover:bg-orange-600'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white transition-colors ${
+                    activity.category === 'yoga' ? 'bg-warm-500 hover:bg-warm-600' :
+                    activity.category === 'ice_bath' ? 'bg-accent-500 hover:bg-accent-600' :
+                    'bg-warm-600 hover:bg-warm-700'
                   }`}
                 >
                   +
@@ -189,9 +215,9 @@ export default function ActivitySelector() {
         )}
 
         {((bookingData.guests && bookingData.guests > 1) || (hasQuantitySelector(activity.category) && quantity > 0)) && (
-          <div className="bg-gray-50 rounded-lg p-3">
+          <div className="bg-warm-50 rounded-lg p-3">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-gray-600">
+              <span className="text-warm-600">
                 {hasQuantitySelector(activity.category) && quantity > 1 
                   ? `${quantity} ${
                       activity.category === 'yoga' ? 'clases' :
@@ -201,7 +227,7 @@ export default function ActivitySelector() {
                   : `Total para ${bookingData.guests || 1} persona${bookingData.guests !== 1 ? 's' : ''}:`
                 }
               </span>
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-warm-900">
                 {formatCurrency(totalPrice)}
               </span>
             </div>
@@ -209,7 +235,7 @@ export default function ActivitySelector() {
         )}
 
         {isSelected && !hasQuantitySelector(activity.category) && (
-          <div className="absolute top-4 right-4 w-6 h-6 bg-ocean-500 rounded-full flex items-center justify-center">
+          <div className="absolute top-4 right-4 w-6 h-6 bg-warm-500 rounded-full flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
@@ -218,9 +244,9 @@ export default function ActivitySelector() {
         
         {hasQuantitySelector(activity.category) && quantity > 0 && (
           <div className={`absolute top-4 right-4 w-6 h-6 rounded-full flex items-center justify-center ${
-            activity.category === 'yoga' ? 'bg-blue-500' :
-            activity.category === 'ice_bath' ? 'bg-purple-500' :
-            'bg-orange-500'
+            activity.category === 'yoga' ? 'bg-warm-500' :
+            activity.category === 'ice_bath' ? 'bg-accent-500' :
+            'bg-warm-600'
           }`}>
             <span className="text-xs text-white font-bold">{quantity}</span>
           </div>
@@ -228,6 +254,11 @@ export default function ActivitySelector() {
       </motion.div>
     );
   };
+
+  const surfActivities = getActivitiesByCategory('surf');
+  const yogaActivities = getActivitiesByCategory('yoga');
+  const iceBathActivities = getActivitiesByCategory('ice_bath');
+  const transportActivities = getActivitiesByCategory('transport');
 
   return (
     <motion.div
@@ -251,33 +282,35 @@ export default function ActivitySelector() {
         </p>
       </div>
 
-      <div className="space-y-6 mb-8">
-        <div>
-          <h3 className="text-lg font-bold text-blue-600 mb-4">🏄‍♂️ Clases de Surf</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getActivitiesByCategory('surf').map(renderActivityCard)}
-          </div>
+      {/* Surf Classes Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-bold text-warm-600 mb-4">🏄‍♂️ Clases de Surf</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {surfActivities.map((activity) => renderActivityCard(activity))}
         </div>
+      </div>
 
-        <div>
-          <h3 className="text-lg font-bold text-green-600 mb-4">🧘‍♀️ Sesiones de Yoga</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getActivitiesByCategory('yoga').map(renderActivityCard)}
-          </div>
+      {/* Yoga Sessions Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-bold text-accent-600 mb-4">🧘‍♀️ Sesiones de Yoga</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {yogaActivities.map((activity) => renderActivityCard(activity))}
         </div>
+      </div>
 
-        <div>
-          <h3 className="text-lg font-bold text-purple-600 mb-4">🧊 Baños de Hielo</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getActivitiesByCategory('ice_bath').map(renderActivityCard)}
-          </div>
+      {/* Ice Bath Sessions Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-bold text-accent-600 mb-4">🧊 Baños de Hielo</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {iceBathActivities.map((activity) => renderActivityCard(activity))}
         </div>
+      </div>
 
-        <div>
-          <h3 className="text-lg font-bold text-orange-600 mb-4">🚐 Transporte Aeropuerto</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getActivitiesByCategory('transport').map(renderActivityCard)}
-          </div>
+      {/* Transport Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-bold text-warm-600 mb-4">🚐 Transporte Aeropuerto</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {transportActivities.map((activity) => renderActivityCard(activity))}
         </div>
       </div>
 
@@ -294,7 +327,7 @@ export default function ActivitySelector() {
           onClick={handleContinue}
           className="btn-primary flex items-center space-x-2"
         >
-          <span>{selectedActivityIds.length > 0 ? 'Continuar' : 'Saltar actividades'}</span>
+          <span>{selectedActivities.length > 0 ? 'Continuar' : 'Saltar actividades'}</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

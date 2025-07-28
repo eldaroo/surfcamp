@@ -9,7 +9,7 @@ import BookingConfirmation from './BookingConfirmation';
 export default function PaymentSection() {
   const { t } = useI18n();
   const { bookingData, selectedRoom, selectedActivities, setCurrentStep } = useBookingStore();
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto' | 'mock'>('mock');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'nowpayments' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -89,7 +89,7 @@ export default function PaymentSection() {
         className="card"
       >
         <h2 className="text-2xl font-bold mb-4">{t('payment.error.title')}</h2>
-        <div className="mb-4 text-red-600 font-semibold">{t('payment.error.missingData')}</div>
+        <div className="mb-4 text-warm-600 font-semibold">{t('payment.error.missingData')}</div>
         <button
           onClick={() => setCurrentStep('contact')}
           className="btn-primary"
@@ -116,129 +116,75 @@ export default function PaymentSection() {
       className="card"
     >
       <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-12 h-12 bg-warm-100 rounded-lg flex items-center justify-center mr-4">
+          <svg className="w-6 h-6 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('payment.title')}</h2>
-          <p className="text-gray-600">{t('payment.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-warm-900">{t('payment.title')}</h2>
+          <p className="text-warm-600">{t('payment.subtitle')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Payment Form */}
         <div className="space-y-6">
-      {/* Booking Summary */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">{t('payment.summary')}</h3>
-            <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.client')}:</span>
-                <span className="font-medium">
-                  {bookingData.contactInfo?.firstName} {bookingData.contactInfo?.lastName}
-            </span>
-          </div>
-          <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.dni')}:</span>
-                <span className="font-medium">{bookingData.contactInfo?.dni}</span>
-          </div>
-          <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.email')}:</span>
-                <span className="font-medium">{bookingData.contactInfo?.email}</span>
-          </div>
-          <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.phone')}:</span>
-                <span className="font-medium">{bookingData.contactInfo?.phone}</span>
-          </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.dates')}:</span>
-                <span className="font-medium">
-                  {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString() : 'N/A'} - {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString() : 'N/A'}
-            </span>
-          </div>
-          <div className="flex justify-between">
-                <span className="text-gray-600">{t('payment.guests')}:</span>
-                <span className="font-medium">{bookingData.guests}</span>
-          </div>
-            </div>
-          </div>
+          {/* Error Message */}
+          {/* The original code had a variable `missingData` which was not defined.
+              Assuming it was meant to be `!isReadyForPayment` or similar.
+              For now, I'll remove it as it's not in the new_code. */}
+          {/* <div className="mb-4 text-warm-600 font-semibold">{t('payment.error.missingData')}</div> */}
 
           {/* Payment Method Selection */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">{t('payment.method.title')}</h3>
-            <div className="space-y-3">
-              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="card"
-                  checked={paymentMethod === 'card'}
-                  onChange={(e) => setPaymentMethod(e.target.value as 'card')}
-                  className="text-blue-600"
-                />
-                <div>
-                  <div className="font-medium">{t('payment.method.card')}</div>
-                  <div className="text-sm text-gray-600">{t('payment.method.cardDescription')}</div>
-                </div>
-              </label>
-
-              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="crypto"
-                  checked={paymentMethod === 'crypto'}
-                  onChange={(e) => setPaymentMethod(e.target.value as 'crypto')}
-                  className="text-blue-600"
-                />
-                <div>
-                  <div className="font-medium">{t('payment.method.crypto')}</div>
-                  <div className="text-sm text-gray-600">{t('payment.method.cryptoDescription')}</div>
-            </div>
-              </label>
-        
-              <label className="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value="mock"
-              checked={paymentMethod === 'mock'}
-              onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
-                  className="text-blue-600"
-            />
-                <div>
-                  <div className="font-medium">{t('payment.method.demo')}</div>
-                  <div className="text-sm text-gray-600">{t('payment.method.demoDescription')}</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-          {/* Security Notice */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="font-semibold text-green-800">{t('payment.secure.title')}</span>
-        </div>
-            <p className="text-green-700 text-sm mt-1">{t('payment.secure.description')}</p>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="font-semibold text-red-800">{t('common.error')}</span>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-warm-900">{t('payment.method.title')}</h3>
+            
+            <label className="flex items-center space-x-3 p-3 border border-warm-300 rounded-lg cursor-pointer hover:bg-warm-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="stripe"
+                checked={paymentMethod === 'stripe'}
+                onChange={(e) => setPaymentMethod(e.target.value as 'stripe')}
+                className="text-warm-600"
+              />
+              <div>
+                <div className="font-medium">{t('payment.method.stripe')}</div>
+                <div className="text-sm text-warm-600">{t('payment.method.stripeDescription')}</div>
               </div>
-              <p className="text-red-700 text-sm mt-1">{error}</p>
-            </div>
-          )}
+            </label>
+
+            <label className="flex items-center space-x-3 p-3 border border-warm-300 rounded-lg cursor-pointer hover:bg-warm-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="nowpayments"
+                checked={paymentMethod === 'nowpayments'}
+                onChange={(e) => setPaymentMethod(e.target.value as 'nowpayments')}
+                className="text-warm-600"
+              />
+              <div>
+                <div className="font-medium">{t('payment.method.crypto')}</div>
+                <div className="text-sm text-warm-600">{t('payment.method.cryptoDescription')}</div>
+              </div>
+            </label>
+            
+            <label className="flex items-center space-x-3 p-3 border border-warm-300 rounded-lg cursor-pointer hover:bg-warm-50">
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="mock"
+                checked={paymentMethod === 'mock'}
+                onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
+                className="text-warm-600"
+              />
+              <div>
+                <div className="font-medium">{t('payment.method.demo')}</div>
+                <div className="text-sm text-warm-600">{t('payment.method.demoDescription')}</div>
+              </div>
+            </label>
+          </div>
 
           {/* Pay Button */}
           <button
@@ -260,49 +206,57 @@ export default function PaymentSection() {
               </>
             )}
           </button>
-      </div>
+        </div>
 
-        {/* Price Summary */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">{t('prices.summary')}</h3>
-          
-          <div className="space-y-4">
-            {/* Accommodation */}
-            {selectedRoom && (
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-medium text-gray-900">{selectedRoom.roomTypeName}</div>
-                  <div className="text-sm text-gray-600">
-                    {nights} {nights === 1 ? t('dates.night') : t('dates.nights')} × ${selectedRoom.pricePerNight}
-                  </div>
+        {/* Payment Summary */}
+        <div className="space-y-6">
+          <div className="bg-warm-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-warm-900 mb-4">{t('payment.summary.title')}</h3>
+            <div className="space-y-3">
+              {selectedRoom && (
+                <div className="flex justify-between">
+                  <span className="text-warm-600">{selectedRoom.roomTypeName}</span>
+                  <span className="font-medium">${accommodationTotal}</span>
                 </div>
-                <span className="font-semibold text-gray-900">${accommodationTotal}</span>
-              </div>
-            )}
-
-            {/* Activities */}
-            {selectedActivities.length > 0 && (
-              <div className="border-t border-gray-200 pt-4">
-                <div className="font-medium text-gray-900 mb-2">{t('prices.activities')}</div>
-                <div className="space-y-2">
-                  {selectedActivities.map((activity, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span className="text-gray-600">{activity.name}</span>
-                      <span className="font-medium">${activity.price}</span>
-                    </div>
-                  ))}
+              )}
+              {selectedActivities.map((activity) => (
+                <div key={activity.id} className="flex justify-between">
+                  <span className="text-warm-600">{activity.name}</span>
+                  <span className="font-medium">${activity.price}</span>
                 </div>
-              </div>
-            )}
-
-            {/* Total */}
-            <div className="border-t border-gray-200 pt-4">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">{t('prices.total')}</span>
-                <span className="text-2xl font-bold text-blue-600">${total}</span>
+              ))}
+              <div className="border-t border-warm-200 pt-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-warm-900">{t('payment.summary.total')}</span>
+                  <span className="text-2xl font-bold text-warm-600">${total}</span>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Security Notice */}
+          <div className="bg-accent-50 border border-accent-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <svg className="w-5 h-5 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="font-semibold text-accent-800">{t('payment.secure.title')}</span>
+            </div>
+            <p className="text-accent-700 text-sm mt-1">{t('payment.secure.description')}</p>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-warm-50 border border-warm-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-semibold text-warm-800">{t('common.error')}</span>
+              </div>
+              <p className="text-warm-700 text-sm mt-1">{error}</p>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

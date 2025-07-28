@@ -16,6 +16,7 @@ export default function ContactForm() {
     dni: bookingData.contactInfo?.dni || ''
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -50,11 +51,13 @@ export default function ContactForm() {
     e.preventDefault();
     
     if (validateForm()) {
+      setIsSubmitting(true);
       setBookingData({
         ...bookingData,
         contactInfo: formData
       });
       setCurrentStep('confirmation');
+      setTimeout(() => setIsSubmitting(false), 1000); // Simulate loading
     }
   };
 
@@ -73,14 +76,14 @@ export default function ContactForm() {
       className="card"
     >
       <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-12 h-12 bg-warm-100 rounded-lg flex items-center justify-center mr-4">
+          <svg className="w-6 h-6 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('contact.title')}</h2>
-          <p className="text-gray-600">{t('contact.subtitle')}</p>
+          <h2 className="text-2xl font-bold text-warm-900">{t('contact.title')}</h2>
+          <p className="text-warm-600">{t('contact.subtitle')}</p>
         </div>
       </div>
 
@@ -88,106 +91,113 @@ export default function ContactForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* First Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('contact.firstName')} *
+            <label htmlFor="firstName" className="block text-sm font-medium text-warm-700 mb-2">
+              {t('contact.firstName')}
             </label>
             <input
               type="text"
+              id="firstName"
               value={formData.firstName}
               onChange={(e) => handleInputChange('firstName', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.firstName ? 'border-red-500' : 'border-gray-300'
+              className={`input-field ${
+                errors.firstName ? 'border-warm-400' : 'border-warm-300'
               }`}
-              placeholder={t('contact.placeholder.firstName')}
+              placeholder={t('contact.firstNamePlaceholder')}
             />
             {errors.firstName && (
-              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+              <p className="mt-1 text-sm text-warm-600">{errors.firstName}</p>
             )}
           </div>
 
           {/* Last Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('contact.lastName')} *
+            <label htmlFor="lastName" className="block text-sm font-medium text-warm-700 mb-2">
+              {t('contact.lastName')}
             </label>
             <input
               type="text"
+              id="lastName"
               value={formData.lastName}
               onChange={(e) => handleInputChange('lastName', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.lastName ? 'border-red-500' : 'border-gray-300'
+              className={`input-field ${
+                errors.lastName ? 'border-warm-400' : 'border-warm-300'
               }`}
-              placeholder={t('contact.placeholder.lastName')}
+              placeholder={t('contact.lastNamePlaceholder')}
             />
             {errors.lastName && (
-              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+              <p className="mt-1 text-sm text-warm-600">{errors.lastName}</p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('contact.email')} *
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder={t('contact.placeholder.email')}
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('contact.phone')} *
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.phone ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder={t('contact.placeholder.phone')}
-            />
-            {errors.phone && (
-              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-            )}
-          </div>
-        </div>
-
-        {/* DNI/ID */}
+        {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('contact.dni')} *
+          <label htmlFor="email" className="block text-sm font-medium text-warm-700 mb-2">
+            {t('contact.email')}
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            className={`input-field ${
+              errors.email ? 'border-warm-400' : 'border-warm-300'
+            }`}
+            placeholder={t('contact.emailPlaceholder')}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-warm-600">{errors.email}</p>
+          )}
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-warm-700 mb-2">
+            {t('contact.phone')}
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
+            className={`input-field ${
+              errors.phone ? 'border-warm-400' : 'border-warm-300'
+            }`}
+            placeholder={t('contact.phonePlaceholder')}
+          />
+          {errors.phone && (
+            <p className="mt-1 text-sm text-warm-600">{errors.phone}</p>
+          )}
+        </div>
+
+        {/* DNI */}
+        <div>
+          <label htmlFor="dni" className="block text-sm font-medium text-warm-700 mb-2">
+            {t('contact.dni')}
           </label>
           <input
             type="text"
+            id="dni"
             value={formData.dni}
             onChange={(e) => handleInputChange('dni', e.target.value)}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-              errors.dni ? 'border-red-500' : 'border-gray-300'
+            className={`input-field ${
+              errors.dni ? 'border-warm-400' : 'border-warm-300'
             }`}
-            placeholder={t('contact.placeholder.dni')}
+            placeholder={t('contact.dniPlaceholder')}
           />
           {errors.dni && (
-            <p className="mt-1 text-sm text-red-600">{errors.dni}</p>
+            <p className="mt-1 text-sm text-warm-600">{errors.dni}</p>
           )}
         </div>
 
         {/* Submit Button */}
         <div className="flex justify-end">
-          <button type="submit" className="btn-primary w-full">
-            {t('common.continue')}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? t('common.loading') : t('common.continue')}
           </button>
         </div>
       </form>
