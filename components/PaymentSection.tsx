@@ -4,11 +4,19 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
+import { getActivityTotalPrice } from '@/lib/prices';
 import BookingConfirmation from './BookingConfirmation';
 
 export default function PaymentSection() {
   const { t } = useI18n();
-  const { bookingData, selectedRoom, selectedActivities, setCurrentStep } = useBookingStore();
+  const { 
+    bookingData, 
+    selectedRoom,
+    selectedActivities, 
+    selectedYogaPackages,
+    selectedSurfPackages,
+    setCurrentStep 
+  } = useBookingStore();
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'nowpayments' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -17,8 +25,9 @@ export default function PaymentSection() {
     bookingData.checkIn &&
     bookingData.checkOut &&
     bookingData.guests &&
-    selectedRoom &&
-    bookingData.contactInfo;
+    selectedActivities.length > 0 &&
+    bookingData.contactInfo &&
+    selectedRoom;
 
   const handlePayment = async () => {
     if (!isReadyForPayment) {
@@ -105,8 +114,25 @@ export default function PaymentSection() {
     (1000 * 60 * 60 * 24)
   ) : 0;
 
-  const accommodationTotal = selectedRoom ? selectedRoom.pricePerNight * nights : 0;
-  const activitiesTotal = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+  const accommodationTotal = selectedRoom ? (
+    selectedRoom.pricePerNight * nights
+  ) : 0;
+
+  const activitiesTotal = selectedActivities.reduce((sum, activity) => {
+    // Calcular precio según el paquete seleccionado
+    if (activity.category === 'yoga') {
+      const yogaPackage = selectedYogaPackages[activity.id];
+      if (!yogaPackage) return sum; // No hay paquete seleccionado
+      return sum + getActivityTotalPrice('yoga', yogaPackage);
+    } else if (activity.category === 'surf') {
+      const surfPackage = selectedSurfPackages[activity.id];
+      if (!surfPackage) return sum; // No hay paquete seleccionado
+      return sum + getActivityTotalPrice('surf', surfPackage);
+    } else {
+      return sum + (activity.price || 0);
+    }
+  }, 0);
+  
   const total = accommodationTotal + activitiesTotal;
 
   return (
@@ -219,12 +245,27 @@ export default function PaymentSection() {
                   <span className="font-medium">${accommodationTotal}</span>
                 </div>
               )}
-              {selectedActivities.map((activity) => (
-                <div key={activity.id} className="flex justify-between">
-                  <span className="text-warm-600">{activity.name}</span>
-                  <span className="font-medium">${activity.price}</span>
-                </div>
-              ))}
+              {selectedActivities.map((activity) => {
+                let activityPrice: number;
+                if (activity.category === 'yoga') {
+                  const selectedYogaPackage = selectedYogaPackages[activity.id];
+                  if (!selectedYogaPackage) return null; // No hay paquete seleccionado
+                  activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage);
+                } else if (activity.category === 'surf') {
+                  const selectedSurfPackage = selectedSurfPackages[activity.id];
+                  if (!selectedSurfPackage) return null; // No hay paquete seleccionado
+                  activityPrice = getActivityTotalPrice('surf', selectedSurfPackage);
+                } else {
+                  activityPrice = activity.price || 0;
+                }
+                
+                return (
+                  <div key={activity.id} className="flex justify-between">
+                    <span className="text-warm-600">{activity.name}</span>
+                    <span className="font-medium">${activityPrice}</span>
+                  </div>
+                );
+              })}
               <div className="border-t border-warm-200 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-warm-900">{t('payment.summary.total')}</span>

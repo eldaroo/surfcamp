@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 import { useBookingStore } from '@/lib/store';
-import Header from '@/components/Header';
 import BookingSteps from '@/components/BookingSteps';
 import DateSelector from '@/components/DateSelector';
 import AccommodationSelector from '@/components/AccommodationSelector';
@@ -92,51 +91,23 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-      
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Hero Section con energía de surf */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center mb-12"
-          >
-            <motion.h1 
-              className="text-5xl md:text-6xl font-bold text-warm-900 mb-6 organic-hover"
-              style={{ color: '#1D4148' }}
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              {t('hero.title')}
-            </motion.h1>
-            <motion.p 
-              className="text-xl md:text-2xl text-warm-600 max-w-4xl mx-auto leading-relaxed"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              {t('hero.subtitle')}
-            </motion.p>
-          </motion.div>
-
-          {/* Booking Steps con energía orgánica */}
+          {/* Booking Steps */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mb-12"
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-8"
           >
             <BookingSteps />
           </motion.div>
 
-          {/* Main Content con efectos orgánicos */}
+          {/* Main Content */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-8"
           >
             {/* Left Column - Main Content */}

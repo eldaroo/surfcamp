@@ -30,10 +30,11 @@ export default function AccommodationSelector() {
   const [loadingRooms, setLoadingRooms] = useState(false);
 
   useEffect(() => {
+    // Cargar habitaciones disponibles desde la API real
     if (!availableRooms && bookingData.checkIn && bookingData.checkOut) {
       fetchAvailableRooms();
     }
-  }, []);
+  }, [bookingData.checkIn, bookingData.checkOut, availableRooms]);
 
   const fetchAvailableRooms = async () => {
     if (!bookingData.checkIn || !bookingData.checkOut || !bookingData.guests) {
@@ -89,7 +90,7 @@ export default function AccommodationSelector() {
     }
 
     setError(null);
-    setCurrentStep('activities');
+    setCurrentStep('contact');
   };
 
   const calculateNights = () => {
@@ -271,7 +272,7 @@ export default function AccommodationSelector() {
       </div>
 
       {/* No rooms available */}
-      {(!availableRooms || availableRooms.length === 0) && !loadingRooms && (
+      {(!availableRooms || availableRooms.length === 0) && (
         <div className="text-center py-8">
           <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">

@@ -56,29 +56,11 @@ export default function DateSelector() {
         guests
       });
       
-      // Verificar disponibilidad
-      const response = await fetch('/api/availability', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          checkIn,
-          checkOut,
-          guests
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.available) {
+      // Avanzar directamente al paso de alojamiento
+      // La verificación de disponibilidad se hará en el AccommodationSelector
       setCurrentStep('accommodation');
-      } else {
-        setError(t('dates.error.noAvailability'));
-      }
     } catch (error) {
       setError(t('dates.error.general'));
-    } finally {
       setIsLoading(false);
     }
   };

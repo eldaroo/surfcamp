@@ -56,7 +56,7 @@ export default function ContactForm() {
         ...bookingData,
         contactInfo: formData
       });
-      setCurrentStep('confirmation');
+      setCurrentStep('payment');
       setTimeout(() => setIsSubmitting(false), 1000); // Simulate loading
     }
   };
@@ -102,7 +102,7 @@ export default function ContactForm() {
               className={`input-field ${
                 errors.firstName ? 'border-warm-400' : 'border-warm-300'
               }`}
-              placeholder={t('contact.firstNamePlaceholder')}
+
             />
             {errors.firstName && (
               <p className="mt-1 text-sm text-warm-600">{errors.firstName}</p>
@@ -122,7 +122,7 @@ export default function ContactForm() {
               className={`input-field ${
                 errors.lastName ? 'border-warm-400' : 'border-warm-300'
               }`}
-              placeholder={t('contact.lastNamePlaceholder')}
+
             />
             {errors.lastName && (
               <p className="mt-1 text-sm text-warm-600">{errors.lastName}</p>
@@ -143,7 +143,7 @@ export default function ContactForm() {
             className={`input-field ${
               errors.email ? 'border-warm-400' : 'border-warm-300'
             }`}
-            placeholder={t('contact.emailPlaceholder')}
+            
           />
           {errors.email && (
             <p className="mt-1 text-sm text-warm-600">{errors.email}</p>
@@ -163,7 +163,7 @@ export default function ContactForm() {
             className={`input-field ${
               errors.phone ? 'border-warm-400' : 'border-warm-300'
             }`}
-            placeholder={t('contact.phonePlaceholder')}
+            
           />
           {errors.phone && (
             <p className="mt-1 text-sm text-warm-600">{errors.phone}</p>
@@ -183,7 +183,7 @@ export default function ContactForm() {
             className={`input-field ${
               errors.dni ? 'border-warm-400' : 'border-warm-300'
             }`}
-            placeholder={t('contact.dniPlaceholder')}
+
           />
           {errors.dni && (
             <p className="mt-1 text-sm text-warm-600">{errors.dni}</p>

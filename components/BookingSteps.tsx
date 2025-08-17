@@ -1,10 +1,16 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { useEffect, useRef } from 'react';
 
-const steps = [
+export const steps = [
+  {
+    id: 'activities',
+    icon: '🏄',
+    name: 'activities',
+    description: 'activities'
+  },
   {
     id: 'dates',
     icon: '📅',
@@ -18,22 +24,10 @@ const steps = [
     description: 'accommodation'
   },
   {
-    id: 'activities',
-    icon: '🏄',
-    name: 'activities',
-    description: 'activities'
-  },
-  {
     id: 'contact',
     icon: '👤',
     name: 'contact',
     description: 'contact'
-  },
-  {
-    id: 'confirmation',
-    icon: '✅',
-    name: 'confirmation',
-    description: 'confirmation'
   },
   {
     id: 'payment',

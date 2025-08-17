@@ -1,5 +1,6 @@
 import { Inter, Roboto } from 'next/font/google';
 import './globals.css';
+import Providers from '@/components/Providers';
 
 const roboto = Roboto({ 
   subsets: ['latin'],
@@ -25,7 +26,9 @@ export default function RootLayout({
           </div>
           
           <div className="relative z-10">
-            {children}
+            <Providers>
+              {children}
+            </Providers>
           </div>
         </div>
         
