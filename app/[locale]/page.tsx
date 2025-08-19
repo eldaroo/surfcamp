@@ -4,14 +4,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 import { useBookingStore } from '@/lib/store';
-import BookingSteps from '@/components/BookingSteps';
 import DateSelector from '@/components/DateSelector';
 import AccommodationSelector from '@/components/AccommodationSelector';
 import ActivitySelector from '@/components/ActivitySelector';
 import BookingConfirmation from '@/components/BookingConfirmation';
 import PaymentSection from '@/components/PaymentSection';
 import SuccessPage from '@/components/SuccessPage';
-import PriceSummary from '@/components/PriceSummary';
+
 import ContactForm from '@/components/ContactForm';
 
 export default function HomePage() {
@@ -100,7 +99,7 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="mb-8"
           >
-            <BookingSteps />
+            {/* Removed BookingSteps component */}
           </motion.div>
 
           {/* Main Content */}
@@ -108,29 +107,15 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            className="w-full"
           >
-            {/* Left Column - Main Content */}
-            <div className="lg:col-span-2">
-              <motion.div
-                className="organic-hover"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.3 }}
-              >
-                {renderCurrentStep()}
-              </motion.div>
-            </div>
-
-            {/* Right Column - Price Summary */}
-            <div className="lg:col-span-1">
-              <motion.div
-                className="organic-hover"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <PriceSummary />
-              </motion.div>
-            </div>
+            <motion.div
+              className="organic-hover"
+              whileHover={{ y: -5 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderCurrentStep()}
+            </motion.div>
           </motion.div>
         </div>
       </main>

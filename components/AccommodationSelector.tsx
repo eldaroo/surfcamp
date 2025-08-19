@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Home, Users, ChevronRight, Check } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
+import { useI18n } from '@/lib/i18n';
 
+// Definir el tipo Room localmente para evitar conflictos
 interface Room {
   roomTypeId: string;
   roomTypeName: string;
   availableRooms: number;
   pricePerNight: number;
-  available?: boolean;
 }
 
 export default function AccommodationSelector() {
@@ -76,8 +76,8 @@ export default function AccommodationSelector() {
   };
 
   const handleRoomSelect = (room: Room) => {
-    // Only allow selection if room is available
-    if (!(('available' in room && room.available === false) || room.availableRooms === 0)) {
+    // Only allow selection if room has available rooms
+    if (room.availableRooms > 0) {
       setSelectedRoom(room);
       setBookingData({ roomTypeId: room.roomTypeId });
     }
@@ -109,8 +109,8 @@ export default function AccommodationSelector() {
         animate={{ opacity: 1, y: 0 }}
         className="card text-center py-12"
       >
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ocean-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Buscando habitaciones disponibles...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-white">Buscando habitaciones disponibles...</p>
       </motion.div>
     );
   }
@@ -122,39 +122,36 @@ export default function AccommodationSelector() {
       transition={{ duration: 0.6 }}
       className="card"
     >
-      <div className="flex items-center space-x-3 mb-6">
-        <div className="w-10 h-10 bg-ocean-100 rounded-full flex items-center justify-center">
-          <Home className="w-5 h-5 text-ocean-600" />
-        </div>
+      <div className="mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Selecciona tu Alojamiento</h2>
-          <p className="text-gray-600">Elige el tipo de habitación para tu estadía</p>
+          <h2 className="text-2xl font-bold text-white font-heading">Selecciona tu Alojamiento</h2>
+          <p className="text-yellow-300">Elige el tipo de habitación para tu estadía</p>
         </div>
       </div>
 
       {/* Stay Summary */}
-      <div className="bg-ocean-50 rounded-lg p-4 mb-6">
-        <h3 className="font-semibold text-ocean-800 mb-2">Resumen de tu búsqueda</h3>
+      <div className="mb-6">
+        <h3 className="font-semibold text-yellow-300 mb-2">Resumen de tu búsqueda</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-gray-600">Entrada:</span>
-            <p className="font-semibold">
+            <span className="text-white">Entrada:</span>
+            <p className="font-semibold text-blue-300">
               {bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString('es-ES') : '-'}
             </p>
           </div>
           <div>
-            <span className="text-gray-600">Salida:</span>
-            <p className="font-semibold">
+            <span className="text-white">Salida:</span>
+            <p className="font-semibold text-blue-300">
               {bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString('es-ES') : '-'}
             </p>
           </div>
           <div>
-            <span className="text-gray-600">Huéspedes:</span>
-            <p className="font-semibold">{bookingData.guests} {bookingData.guests === 1 ? 'persona' : 'personas'}</p>
+            <span className="text-white">Huéspedes:</span>
+            <p className="font-semibold text-blue-300">{bookingData.guests} {bookingData.guests === 1 ? 'persona' : 'personas'}</p>
           </div>
           <div>
-            <span className="text-gray-600">Noches:</span>
-            <p className="font-semibold">{nights} {nights === 1 ? 'noche' : 'noches'}</p>
+            <span className="text-white">Noches:</span>
+            <p className="font-semibold text-blue-300">{nights} {nights === 1 ? 'noche' : 'noches'}</p>
           </div>
         </div>
       </div>
@@ -164,9 +161,9 @@ export default function AccommodationSelector() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-warm-50 border border-warm-200 rounded-lg p-4 mb-6"
+          className="border border-red-400/30 rounded-lg p-4 mb-6"
         >
-          <p className="text-warm-600 text-sm">{error}</p>
+          <p className="text-red-300 text-sm">{error}</p>
         </motion.div>
       )}
 
@@ -177,28 +174,28 @@ export default function AccommodationSelector() {
             key={room.roomTypeId}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`border-2 rounded-lg p-6 transition-all card-hover-gold ${
-              (('available' in room && room.available === false) || room.availableRooms === 0)
-                ? 'border-warm-200 bg-warm-50 cursor-not-allowed opacity-60'
+            className={`border-2 rounded-lg p-6 transition-all ${
+              room.availableRooms === 0
+                ? 'border-white/20 cursor-not-allowed opacity-60'
                 : selectedRoom?.roomTypeId === room.roomTypeId
-                ? 'selected-gold cursor-pointer'
-                : 'border-warm-200 hover:border-warm-300 hover:bg-warm-25 cursor-pointer'
+                ? 'border-yellow-400 bg-white/5 cursor-pointer'
+                : 'border-white/20 hover:border-white/40 cursor-pointer'
             }`}
             onClick={() => handleRoomSelect(room)}
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-warm-900 mb-2">
+                <h3 className="text-xl font-semibold text-white mb-4">
                   {room.roomTypeName}
                 </h3>
-                <p className="text-warm-600 mb-4">
+                <p className="text-white mb-6">
                   {room.roomTypeId === 'casa-playa' && 'Habitación compartida con vista al mar y ambiente social'}
                   {room.roomTypeId === 'casitas-privadas' && 'Casita privada con jardín independiente'}
                   {room.roomTypeId === 'casas-deluxe' && 'Studio privado a 2 pasos del océano con cocina y baño privado'}
                 </p>
                 
                 {/* Room Features */}
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-row flex-wrap gap-2 mb-3">
                   {room.roomTypeId === 'casa-playa' && (
                     <>
                       <span className="tag-feature primary">
@@ -245,24 +242,28 @@ export default function AccommodationSelector() {
                     </>
                   )}
                 </div>
+
+                {/* Total Price */}
+                {!('available' in room && room.available === false) && room.availableRooms > 0 && nights > 0 && (
+                  <div className="mt-4 pt-3 border-t border-white/20">
+                    <div className="text-lg font-semibold text-yellow-300">
+                      Total: ${room.pricePerNight * nights}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="text-right ml-4">
                 {(('available' in room && room.available === false) || room.availableRooms === 0) ? (
-                  <div className="text-2xl font-bold text-warm-400">
+                  <div className="text-2xl font-bold text-red-400">
                     No disponible
                   </div>
                 ) : (
                   <>
-                    <div className="text-2xl font-bold text-warm-600">
+                    <div className="text-2xl font-bold text-blue-400">
                       ${room.pricePerNight}
                     </div>
-                    <div className="text-sm text-warm-600">por noche</div>
-                    {nights > 0 && (
-                      <div className="text-sm font-semibold text-warm-900 mt-1">
-                        Total: ${room.pricePerNight * nights}
-                      </div>
-                    )}
+                    <div className="text-sm text-white">por noche</div>
                   </>
                 )}
               </div>
@@ -274,16 +275,16 @@ export default function AccommodationSelector() {
       {/* No rooms available */}
       {(!availableRooms || availableRooms.length === 0) && (
         <div className="text-center py-8">
-          <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <span className="text-white text-4xl">🏠</span>
+          <h3 className="text-lg font-semibold text-white mb-2">
             No hay habitaciones disponibles
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-blue-300 mb-4">
             No encontramos habitaciones disponibles para las fechas seleccionadas.
           </p>
           <button
             onClick={() => setCurrentStep('dates')}
-            className="btn-secondary"
+            className="px-4 py-2 border border-white/30 rounded-lg text-white hover:bg-white/10 transition-colors"
           >
             Cambiar fechas
           </button>
@@ -292,10 +293,10 @@ export default function AccommodationSelector() {
 
       {/* Action Buttons */}
       {availableRooms && availableRooms.length > 0 && (
-        <div className="flex justify-between pt-6 border-t border-gray-200">
+        <div className="flex justify-between pt-6 border-t border-white/20">
           <button
             onClick={() => setCurrentStep('dates')}
-            className="btn-secondary"
+            className="px-4 py-2 border border-white/30 rounded-lg text-white hover:bg-white/10 transition-colors"
           >
             Cambiar fechas
           </button>
@@ -303,10 +304,10 @@ export default function AccommodationSelector() {
           <button
             onClick={handleContinue}
             disabled={!selectedRoom}
-            className="btn-primary flex items-center space-x-2"
+            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             <span>Continuar</span>
-            <ChevronRight className="w-4 h-4" />
+            <span>→</span>
           </button>
         </div>
       )}

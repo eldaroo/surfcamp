@@ -3,15 +3,14 @@
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { useBookingStore } from '@/lib/store';
-import BookingSteps from '@/components/BookingSteps';
+import { motion } from 'framer-motion';
+import ActivitySelector from '@/components/ActivitySelector';
 import DateSelector from '@/components/DateSelector';
 import AccommodationSelector from '@/components/AccommodationSelector';
-import ActivitySelector from '@/components/ActivitySelector';
-import BookingConfirmation from '@/components/BookingConfirmation';
+import ContactForm from '@/components/ContactForm';
 import PaymentSection from '@/components/PaymentSection';
 import SuccessPage from '@/components/SuccessPage';
-import PriceSummary from '@/components/PriceSummary';
-import ContactForm from '@/components/ContactForm';
+
 import MotionWrapper from '@/components/MotionWrapper';
 
 export default function HomePage() {
@@ -54,44 +53,22 @@ export default function HomePage() {
     <div className="min-h-screen">
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Booking Steps */}
-          <MotionWrapper
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-8"
-          >
-            <BookingSteps />
-          </MotionWrapper>
+
 
           {/* Main Content */}
           <MotionWrapper
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            className="w-full"
           >
-            {/* Left Column - Main Content */}
-            <div className="lg:col-span-2">
-              <MotionWrapper
-                className="organic-hover"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.3 }}
-              >
-                {renderCurrentStep()}
-              </MotionWrapper>
-            </div>
-
-            {/* Right Column - Price Summary */}
-            <div className="lg:col-span-1">
-              <MotionWrapper
-                className="organic-hover"
-                whileHover={{ y: -5 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
-                <PriceSummary />
-              </MotionWrapper>
-            </div>
+            <MotionWrapper
+              className="organic-hover"
+              whileHover={{ y: -5 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderCurrentStep()}
+            </MotionWrapper>
           </MotionWrapper>
         </div>
       </main>

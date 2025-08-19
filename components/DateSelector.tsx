@@ -2,9 +2,9 @@
 
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarIcon } from '@heroicons/react/24/outline';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
+import PriceSummary from '@/components/PriceSummary';
 
 export default function DateSelector() {
   const { t } = useI18n();
@@ -76,27 +76,26 @@ export default function DateSelector() {
   const nights = calculateNights();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="card"
-    >
-      <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-warm-100 rounded-lg flex items-center justify-center mr-4">
-          <CalendarIcon className="w-6 h-6 text-warm-600" />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Columna izquierda - Selector de fechas */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        className="card"
+      >
+              <div className="mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-white font-heading">{t('dates.title')}</h2>
+            <p className="text-yellow-300">{t('dates.subtitle')}</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-warm-900">{t('dates.title')}</h2>
-          <p className="text-warm-600">{t('dates.subtitle')}</p>
-        </div>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Check-in Date */}
           <div>
-            <label className="block text-sm font-medium text-warm-700 mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               {t('dates.checkIn')} *
             </label>
             <input
@@ -104,14 +103,14 @@ export default function DateSelector() {
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-warm-300 rounded-lg focus:ring-2 focus:ring-warm-500 focus:border-transparent cursor-pointer"
+              className="w-full px-4 py-3 border border-white/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white/10 text-white"
               ref={checkInRef}
             />
           </div>
 
           {/* Check-out Date */}
           <div>
-            <label className="block text-sm font-medium text-warm-700 mb-2">
+            <label className="block text-sm font-medium text-white mb-2">
               {t('dates.checkOut')} *
             </label>
             <input
@@ -119,7 +118,7 @@ export default function DateSelector() {
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               min={checkIn || new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-warm-300 rounded-lg focus:ring-2 focus:ring-warm-500 focus:border-transparent cursor-pointer"
+              className="w-full px-4 py-3 border border-white/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white/10 text-white"
               ref={checkOutRef}
             />
           </div>
@@ -127,28 +126,28 @@ export default function DateSelector() {
 
         {/* Guests Counter */}
         <div>
-          <label className="block text-sm font-medium text-warm-700 mb-2">
+          <label className="block text-sm font-medium text-white mb-2">
             {t('dates.guests')}
           </label>
           <div className="flex items-center space-x-4">
             <button
               type="button"
               onClick={() => setGuests(Math.max(1, guests - 1))}
-              className="w-10 h-10 rounded-full border border-warm-300 flex items-center justify-center hover:bg-warm-50"
+              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
-              <span className="text-warm-600">-</span>
+              <span className="text-white">-</span>
             </button>
-            <span className="text-2xl font-bold text-warm-900 w-12 text-center">
+            <span className="text-2xl font-bold text-blue-400 w-12 text-center">
               {guests}
             </span>
             <button
               type="button"
               onClick={() => setGuests(guests + 1)}
-              className="w-10 h-10 rounded-full border border-warm-300 flex items-center justify-center hover:bg-warm-50"
+              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
-              <span className="text-warm-600">+</span>
+              <span className="text-white">+</span>
             </button>
-            <span className="text-warm-600">
+            <span className="text-yellow-300">
               {guests === 1 ? t('dates.guest') : t('dates.guests')}
             </span>
           </div>
@@ -156,31 +155,31 @@ export default function DateSelector() {
 
         {/* Summary */}
         {(checkIn || checkOut) && (
-          <div className="bg-warm-50 rounded-lg p-4">
-            <h3 className="font-semibold text-warm-900 mb-2">{t('dates.summary.title')}</h3>
+          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+            <h3 className="font-semibold text-yellow-300 mb-2">{t('dates.summary.title')}</h3>
             <div className="space-y-1 text-sm">
               {checkIn && (
                 <div>
-                  <span className="text-warm-600">{t('dates.summary.checkIn')}:</span>
-                  <span className="ml-2 font-medium">
+                  <span className="text-white">{t('dates.summary.checkIn')}:</span>
+                  <span className="ml-2 font-medium text-blue-300">
                     {new Date(checkIn).toLocaleDateString('es-ES')}
                   </span>
                 </div>
               )}
               {checkOut && (
                 <div>
-                  <span className="text-warm-600">{t('dates.summary.checkOut')}:</span>
-                  <span className="ml-2 font-medium">
+                  <span className="text-white">{t('dates.summary.checkOut')}:</span>
+                  <span className="ml-2 font-medium text-blue-300">
                     {new Date(checkOut).toLocaleDateString('es-ES')}
                   </span>
                 </div>
               )}
               <div>
-                <span className="text-warm-600">{t('dates.summary.guests')}:</span>
-                <span className="ml-2 font-medium">{guests}</span>
+                <span className="text-white">{t('dates.summary.guests')}:</span>
+                <span className="ml-2 font-medium text-blue-300">{guests}</span>
               </div>
               {nights > 0 && (
-                <div className="mt-2 text-sm text-warm-600">
+                <div className="mt-2 text-sm text-yellow-300">
                   {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                 </div>
               )}
@@ -190,8 +189,8 @@ export default function DateSelector() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-warm-50 border border-warm-200 rounded-lg p-4">
-            <p className="text-warm-600 text-sm">{error}</p>
+          <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4">
+            <p className="text-red-300 text-sm">{error}</p>
           </div>
         )}
 
@@ -199,11 +198,22 @@ export default function DateSelector() {
         <button
           type="submit"
           disabled={isLoading || !checkIn || !checkOut}
-          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-32 py-2 px-4 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
         >
           {isLoading ? t('common.loading') : t('common.continue')}
         </button>
-      </form>
-    </motion.div>
+        </form>
+      </motion.div>
+
+      {/* Columna derecha - Price Summary */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="card"
+      >
+        <PriceSummary />
+      </motion.div>
+    </div>
   );
 } 

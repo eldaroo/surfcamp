@@ -156,4 +156,67 @@ export const checkWhatsAppStatus = async (): Promise<{
   } catch (error) {
     return { configured: false, error: 'Error de conexión' };
   }
+};
+
+// Función para enviar notificación de reserva de baño de hielo
+export const sendIceBathReservationNotification = async (
+  bookingData: {
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
+    phone: string;
+    dni: string;
+    total: number;
+  }
+) => {
+  const message = `🧊 *NUEVA RESERVA DE BAÑO DE HIELO* 🧊
+
+👤 *Cliente:* ${bookingData.guestName}
+📱 *Teléfono:* ${bookingData.phone}
+🆔 *DNI:* ${bookingData.dni}
+📅 *Check-in:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Check-out:* ${formatDateForWhatsApp(bookingData.checkOut)}
+💰 *Total:* $${bookingData.total}
+
+❄️ *Actividad:* Sesión de Baño de Hielo
+⏱️ *Duración:* 45 minutos
+🎯 *Tipo:* Sesión 1:1 personalizada
+
+¡Reserva confirmada para terapia de frío!`;
+
+  return sendWhatsAppMessage('+541153695627', message);
+};
+
+// Función para enviar notificación de reserva de clases de surf
+export const sendSurfClassReservationNotification = async (
+  bookingData: {
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
+    phone: string;
+    dni: string;
+    total: number;
+    surfPackage: string;
+    guests: number;
+  }
+) => {
+  const message = `🏄‍♂️ *NUEVA RESERVA DE CLASES DE SURF* 🏄‍♂️
+
+👤 *Cliente:* ${bookingData.guestName}
+📱 *Teléfono:* ${bookingData.phone}
+🆔 *DNI:* ${bookingData.dni}
+📅 *Check-in:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Check-out:* ${formatDateForWhatsApp(bookingData.checkOut)}
+👥 *Participantes:* ${bookingData.guests}
+📦 *Plan de Progreso:* ${bookingData.surfPackage}
+💰 *Total:* $${bookingData.total}
+
+🌊 *Actividad:* Clases de Surf + Videoanálisis Personalizado
+📹 *Incluye:* Material de video y fotográfico
+🏄 *Equipamiento:* Tabla y lycra incluidas
+🎯 *Enfoque:* Plan de progreso personalizado para desarrollo técnico
+
+¡Reserva confirmada para plan de progreso en surf!`;
+
+  return sendWhatsAppMessage('+541153695627', message);
 }; 
