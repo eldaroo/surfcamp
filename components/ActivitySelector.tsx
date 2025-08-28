@@ -634,7 +634,7 @@ export default function ActivitySelector() {
       // Prepare activity data with quantities and packages
       const activitiesWithQuantities = selectedActivities.map(activity => {
         let quantity = 1;
-        let packageInfo = null;
+        let packageInfo: string | null = null;
         
         if (activity.category === 'yoga') {
           const yogaPackage = getSelectedYogaPackage(activity.id);
@@ -657,6 +657,12 @@ export default function ActivitySelector() {
         };
       });
 
+      // Convertir fechas Date objects a formato ISO string para la API
+      const formatDateForAPI = (date: Date | string) => {
+        if (typeof date === 'string') return date;
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      };
+
       // Enviar al endpoint de quote
       const response = await fetch('/api/quote', {
         method: 'POST',
@@ -664,10 +670,10 @@ export default function ActivitySelector() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          checkIn: bookingData.checkIn,
-          checkOut: bookingData.checkOut,
-          guests: bookingData.guests,
-          roomId: bookingData.roomId,
+          checkIn: formatDateForAPI(bookingData.checkIn!),
+          checkOut: formatDateForAPI(bookingData.checkOut!),
+          guests: bookingData.guests || 1,
+          roomTypeId: bookingData.roomTypeId!,
           activities: activitiesWithQuantities
         }),
       });

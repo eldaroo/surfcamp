@@ -16,10 +16,11 @@ https://tu-dominio.com/api/wetravel-webhook
 ```
 
 ### 2. **Eventos Soportados**
-El webhook maneja los siguientes eventos:
+El webhook maneja los siguientes eventos del formato real de WeTravel:
+- `partial_refund_made` - Reembolso parcial realizado
+- `booking.updated` - Reserva actualizada
 - `payment.completed` - Pago completado exitosamente
 - `payment.failed` - Pago fallido
-- `payment.refunded` - Pago reembolsado
 - `trip.confirmed` - Viaje confirmado
 
 ### 3. **Configuración de Seguridad**
@@ -29,19 +30,36 @@ El webhook maneja los siguientes eventos:
 
 ## 📊 **Estructura del Webhook**
 
-### **Payload Recibido**
+### **Payload Recibido (Formato Real de WeTravel)**
 ```json
 {
-  "event_type": "payment.completed",
-  "trip_id": "01702784",
-  "customer_id": "cus_123",
-  "payment_status": "completed",
-  "amount": 45,
-  "currency": "USD",
-  "metadata": {
-    "trip_id": "st-20250905",
-    "customer_id": "cus_1756394671026_t6e83y4nm"
-  }
+  "data": {
+    "booking_note": "Something notable",
+    "buyer": {
+      "cancelled": false,
+      "email": "john.doe@example.com",
+      "first_name": "John",
+      "full_name": "John Doe",
+      "id": 3797,
+      "last_name": "Doe"
+    },
+    "created_at": "2022-07-31T10:32:48.000+00:00",
+    "departure_date": "2023-10-27",
+    "event_type": "partial_refund_made",
+    "order_id": "1741954582453420000",
+    "participants": [...],
+    "total_deposit_amount": 20000,
+    "total_due_amount": 80000,
+    "total_paid_amount": 20000,
+    "total_price_amount": 100000,
+    "trip_currency": "USD",
+    "trip_end_date": "2023-10-30",
+    "trip_id": "sth_123",
+    "trip_length": 12,
+    "trip_title": "SF Epic Trip!",
+    "trip_uuid": "56710545"
+  },
+  "type": "booking.updated"
 }
 ```
 
@@ -126,16 +144,34 @@ GET https://tu-dominio.com/api/wetravel-webhook
 
 ### **2. Simular Evento de Pago**
 ```bash
-curl -X POST https://tu-dominio.com/api/wetravel-webhook \
+curl -X POST https://surfcampwidget.duckdns.org/api/wetravel-webhook \
   -H "Content-Type: application/json" \
   -d '{
-    "event_type": "payment.completed",
-    "trip_id": "test_123",
-    "customer_id": "test_cus_123",
-    "payment_status": "completed",
-    "amount": 45,
-    "currency": "USD"
+    "data": {
+      "event_type": "partial_refund_made",
+      "trip_id": "test_123",
+      "trip_uuid": "test_uuid_123",
+      "order_id": "test_order_123",
+      "buyer": {
+        "email": "test@example.com",
+        "first_name": "Test",
+        "full_name": "Test User",
+        "id": 123,
+        "last_name": "User",
+        "cancelled": false
+      },
+      "total_paid_amount": 4500,
+      "total_due_amount": 0,
+      "trip_currency": "USD"
+    },
+    "type": "booking.updated"
   }'
+```
+
+### **3. Script de Prueba Automatizado**
+También puedes usar el script `test-webhook.js` incluido:
+```bash
+node test-webhook.js
 ```
 
 ## 🔒 **Seguridad y Validación**
