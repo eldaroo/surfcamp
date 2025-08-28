@@ -169,7 +169,10 @@ const translations = {
     payment: {
       title: "Pago Seguro",
       subtitle: "Completa tu reserva con pago seguro",
-      summary: "Resumen final",
+      summary: {
+        title: "Resumen del Pago",
+        total: "Total"
+      },
       client: "Cliente",
       dni: "DNI",
       email: "Email",
@@ -181,10 +184,8 @@ const translations = {
       total: "Total",
       method: {
         title: "Método de pago",
-        card: "Tarjeta de Crédito/Débito",
-        cardDescription: "Paga con tarjeta de forma segura",
-        crypto: "Criptomonedas",
-        cryptoDescription: "Paga con Bitcoin, Ethereum y otras criptos",
+        wetravel: "WeTravel",
+        wetravelDescription: "Pago seguro con tarjeta de crédito/débito",
         demo: "Pago Demo",
         demoDescription: "Para propósitos de demostración (sin cargo real)"
       },
@@ -194,6 +195,12 @@ const translations = {
       },
       processing: "Procesando pago...",
       payButton: "Confirmar y Pagar",
+      waitingForPayment: {
+        title: "Esperando Procesar Pago",
+        description: "El link de pago se abrió en una nueva pestaña. Complete el pago en WeTravel y regrese aquí cuando termine.",
+        openLinkButton: "Abrir Link de Pago",
+        hideMessageButton: "Ocultar Mensaje"
+      },
       error: {
         title: "Error en la Confirmación",
         missingData: "Faltan datos para el pago. Por favor revisa la información de la reserva.",
@@ -379,7 +386,10 @@ const translations = {
     payment: {
       title: "Secure Payment",
       subtitle: "Complete your booking with secure payment",
-      summary: "Final summary",
+      summary: {
+        title: "Payment Summary",
+        total: "Total"
+      },
       client: "Client",
       dni: "ID Number",
       email: "Email",
@@ -391,10 +401,8 @@ const translations = {
       total: "Total",
       method: {
         title: "Payment method",
-        card: "Credit/Debit Card",
-        cardDescription: "Pay securely with card",
-        crypto: "Cryptocurrencies",
-        cryptoDescription: "Pay with Bitcoin, Ethereum and other cryptos",
+        wetravel: "WeTravel",
+        wetravelDescription: "Secure payment with credit/debit card",
         demo: "Demo Payment",
         demoDescription: "For demonstration purposes (no real charge)"
       },
@@ -404,6 +412,12 @@ const translations = {
       },
       processing: "Processing payment...",
       payButton: "Confirm and Pay",
+      waitingForPayment: {
+        title: "Waiting for Payment Processing",
+        description: "The payment link opened in a new tab. Complete the payment on WeTravel and return here when finished.",
+        openLinkButton: "Open Payment Link",
+        hideMessageButton: "Hide Message"
+      },
       error: {
         title: "Confirmation Error",
         missingData: "Missing data for payment. Please review your booking information.",

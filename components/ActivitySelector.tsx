@@ -8,13 +8,23 @@ import { AVAILABLE_ACTIVITIES } from '@/lib/activities';
 import { getActivityTotalPrice } from '@/lib/prices';
 import { formatCurrency } from '@/lib/utils';
 
+// Constantes con tipos explícitos para evitar errores de TypeScript
+const TIME_SLOTS = ['7:00 AM', '3:00 PM'] as const;
+type TimeSlot = typeof TIME_SLOTS[number];
+
+const YOGA_PACKAGES = ['1-class', '3-classes', '10-classes'] as const;
+type YogaPackage = typeof YOGA_PACKAGES[number];
+
+const SURF_PACKAGES = ['4-classes', '5-classes', '6-classes'] as const;
+type SurfPackage = typeof SURF_PACKAGES[number];
+
 // Función para renderizar las tarjetas de actividad (debe estar fuera del componente principal)
 const createRenderActivityCard = (
   selectedActivities: any[],
   activityQuantities: Record<string, number>,
   bookingData: any,
-  getSelectedYogaPackage: (id: string) => string | null,
-  getSelectedSurfPackage: (id: string) => string | null,
+  getSelectedYogaPackage: (id: string) => '1-class' | '3-classes' | '10-classes' | undefined,
+  getSelectedSurfPackage: (id: string) => '4-classes' | '5-classes' | '6-classes' | undefined,
   getActivityTotalPrice: (category: string, packageType: string, guests: number) => number,
   formatCurrency: (amount: number) => string,
   hasQuantitySelector: (category: string) => boolean,
@@ -22,7 +32,7 @@ const createRenderActivityCard = (
   hasYogaPackageSelector: (category: string) => boolean,
   hasSurfPackageSelector: (category: string) => boolean,
   getActivityQuantity: (id: string) => number,
-  getSelectedTimeSlot: (id: string) => string,
+  getSelectedTimeSlot: (id: string) => '7:00 AM' | '3:00 PM',
   updateTimeSlot: (id: string, timeSlot: '7:00 AM' | '3:00 PM') => void,
   updateYogaPackage: (id: string, packageType: '1-class' | '3-classes' | '10-classes') => void,
   updateSurfPackage: (id: string, packageType: '4-classes' | '5-classes' | '6-classes') => void,
@@ -62,17 +72,15 @@ const createRenderActivityCard = (
         key={activity.id}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`card cursor-pointer transition-all duration-300 h-[500px] bg-white/5 border-gray-600 flex flex-col ${
+        className={`card cursor-pointer transition-all duration-300 h-full bg-white/5 border-gray-600 grid grid-rows-[auto_auto_1fr_auto_auto] gap-4 ${
           isSelected ? 'ring-2 ring-ocean-500 bg-white/10 border-ocean-500' : 'hover:bg-white/10 hover:border-gray-500'
         }`}
         onClick={() => handleActivityToggle(activity)}
       >
-        {/* Header con título y precio en la misma línea */}
-        <div className="flex items-start justify-between mb-4">
-          <h3 className={`text-xl font-bold ${
-            activity.category === 'transport' ? 'text-warm-400' : 'text-accent-200'
-          }`}>
-            {activity.category === 'surf' && 'Clases de Surf'}
+        {/* 1) Header: título + precio */}
+        <div className="flex items-start justify-between">
+          <h3 className="text-xl font-bold text-accent-200">
+            {activity.category === 'surf' && 'Programa de Surf'}
             {activity.category === 'yoga' && 'Sesiones de Yoga'}
             {activity.category === 'ice_bath' && 'Baños de Hielo'}
             {activity.category === 'transport' && 'Transporte Aeropuerto'}
@@ -107,35 +115,35 @@ const createRenderActivityCard = (
           )}
         </div>
 
-        {/* Descripción */}
-        <p className="text-white text-base mb-4">{activity.description}</p>
-
-        {/* Duración */}
-        {activity.duration > 0 && (
-          <div className="mb-4">
-            <span className="text-sm text-white">
-              {activity.category === 'transport' ? '6 horas' : 
-               activity.category === 'surf' ? 
+        {/* 2) Descripción + meta (duración) */}
+        <div className="space-y-2">
+          <p className="text-white text-base">{activity.description}</p>
+          {activity.duration > 0 && (
+            <span className="text-sm text-white/80">
+              {activity.category === 'transport' ? '6 horas' :
+               activity.category === 'surf' ?
                  (() => {
                    const surfPackage = getSelectedSurfPackage(activity.id);
                    if (surfPackage === '4-classes') return '480 min';
                    if (surfPackage === '5-classes') return '600 min';
                    if (surfPackage === '6-classes') return '720 min';
-                   return '480 min'; // default
+                   return '480 min';
                  })()
                : `${activity.duration} min`}
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Selector de cantidad */}
-        {hasQuantitySelector(activity.category) && (
-          <div className="mb-4">
-            {/* Selector de cantidad de personas */}
-            <div className="mb-3">
+        {/* 3) Espaciador flexible: lo aporta grid (1fr) */}
+
+        {/* 4) Controles (cantidad / horario) */}
+        <div className="flex flex-col gap-4">
+          {hasQuantitySelector(activity.category) ? (
+            <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-white">
-                  {activity.category === 'surf' ? 'Cantidad de personas:' : 'Cantidad de personas:'}
+                  {activity.category === 'surf' ? 'Cantidad de personas:' : 
+                   activity.category === 'hosting' ? 'Cantidad de estadías:' : 'Cantidad de personas:'}
                 </span>
                 <div className="flex items-center space-x-2">
                   <button
@@ -153,10 +161,12 @@ const createRenderActivityCard = (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const maxQuantity = activity.category === 'surf' ? 2 : 3;
+                      const maxQuantity = activity.category === 'surf' ? 2 : 
+                                       activity.category === 'hosting' ? 5 : 3;
                       updateActivityQuantity(activity.id, Math.min(maxQuantity, quantity + 1));
                     }}
-                    disabled={activity.category === 'surf' ? quantity >= 2 : quantity >= 3}
+                    disabled={activity.category === 'surf' ? quantity >= 2 : 
+                              activity.category === 'hosting' ? quantity >= 5 : quantity >= 3}
                     className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,165 +175,146 @@ const createRenderActivityCard = (
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* Selector de cantidad de sesiones para ice bath */}
-            {activity.category === 'ice_bath' && (
-              <div className="mb-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white">Cantidad de sesiones:</span>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
-                        updateActivityQuantity(`${activity.id}_sessions`, Math.max(1, currentSessions - 1));
-                      }}
-                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-                      </svg>
-                    </button>
-                    <span className="w-8 text-center font-medium text-white">
-                      {activityQuantities[`${activity.id}_sessions`] || 1}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
-                        updateActivityQuantity(`${activity.id}_sessions`, Math.min(10, currentSessions + 1));
-                      }}
-                      disabled={(activityQuantities[`${activity.id}_sessions`] || 1) >= 10}
-                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
-                      </svg>
-                    </button>
+              {activity.category === 'ice_bath' && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-white">Cantidad de sesiones:</span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
+                          updateActivityQuantity(`${activity.id}_sessions`, Math.max(1, currentSessions - 1));
+                        }}
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20"
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+                        </svg>
+                      </button>
+                      <span className="w-8 text-center font-medium text-white">
+                        {activityQuantities[`${activity.id}_sessions`] || 1}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
+                          updateActivityQuantity(`${activity.id}_sessions`, Math.min(10, currentSessions + 1));
+                        }}
+                        disabled={(activityQuantities[`${activity.id}_sessions`] || 1) >= 10}
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
+          ) : <div />}
+
+          {hasTimeSelector(activity.category) ? (
+            <div>
+              <div className="mb-3">
+                <span className="text-sm font-medium text-white">Horario de recogida:</span>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Selector de horario para transporte */}
-        {hasTimeSelector(activity.category) && (
-          <div className="mb-4">
-            <div className="mb-3">
-              <span className="text-sm font-medium text-white">Horario de recogida:</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {['7:00 AM', '3:00 PM'].map((timeSlot) => (
-                <button
-                  key={timeSlot}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    updateTimeSlot(activity.id, timeSlot);
-                  }}
-                  className={`p-2 rounded-lg border-2 transition-all ${
-                    getSelectedTimeSlot(activity.id) === timeSlot
-                      ? 'border-warm-500 bg-white/10 text-white'
-                      : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
-                  }`}
-                >
-                  <span className="text-sm font-medium">{timeSlot}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Selector de paquete de yoga */}
-        {hasYogaPackageSelector(activity.category) && (
-          <div className="mb-4">
-            <div className="mb-3">
-              <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              {[
-                { value: '1-class', label: '1', price: 12, description: 'Clase' },
-                { value: '3-classes', label: '3', price: 30, description: 'Clases' },
-                { value: '10-classes', label: '10', price: 80, description: 'Clases' }
-              ].map((packageOption) => {
-                const isSelected = getSelectedYogaPackage(activity.id) === packageOption.value;
-                const packagePrice = packageOption.price * (bookingData.guests || 1);
-                
-                return (
+              <div className="grid grid-cols-2 gap-2">
+                {TIME_SLOTS.map((timeSlot) => (
                   <button
-                    key={packageOption.value}
+                    key={timeSlot}
                     onClick={(e) => {
                       e.stopPropagation();
-                      updateYogaPackage(activity.id, packageOption.value);
+                      updateTimeSlot(activity.id, timeSlot);
                     }}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      isSelected
+                    className={`p-2 rounded-lg border-2 transition-all ${
+                      getSelectedTimeSlot(activity.id) === timeSlot
                         ? 'border-warm-500 bg-white/10 text-white'
                         : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
                     }`}
                   >
-                    <div className="text-lg font-bold text-white">{packageOption.label}</div>
-                    <div className="text-sm text-white mt-1">{packageOption.description}</div>
-                    <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
+                    <span className="text-sm font-medium">{timeSlot}</span>
                   </button>
-                );
-              })}
+                ))}
+              </div>
             </div>
-            
-            {/* Botón Clear para yoga */}
-            <div className="text-center mt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clearActivity(activity.id);
-                }}
-                className="text-sm text-blue-300 hover:text-blue-200 underline transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        )}
+          ) : <div />}
+        </div>
 
-        {/* Selector de paquete de surf */}
-        {hasSurfPackageSelector(activity.category) && (
-          <div className="mb-4">
-            <div className="mb-3">
-              <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
+        {/* 5) Footer: planes/precios + Clear */}
+        <div className="space-y-3">
+          {hasYogaPackageSelector(activity.category) ? (
+            <div>
+              <div className="mb-3">
+                <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: '1-class' as YogaPackage, label: '1', price: 12, description: 'Clase' },
+                  { value: '3-classes' as YogaPackage, label: '3', price: 30, description: 'Clases' },
+                  { value: '10-classes' as YogaPackage, label: '10', price: 80, description: 'Clases' }
+                ].map((packageOption) => {
+                  const isSelected = getSelectedYogaPackage(activity.id) === packageOption.value;
+                  const packagePrice = packageOption.price * (bookingData.guests || 1);
+                  return (
+                    <button
+                      key={packageOption.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateYogaPackage(activity.id, packageOption.value);
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        isSelected ? 'border-warm-500 bg-white/10 text-white' : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
+                      }`}
+                    >
+                      <div className="text-lg font-bold text-white">{packageOption.label}</div>
+                      <div className="text-sm text-white mt-1">{packageOption.description}</div>
+                      <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {[
-                { value: '4-classes', label: '4', price: 400, description: 'Clases' },
-                { value: '5-classes', label: '5', price: 500, description: 'Clases' },
-                { value: '6-classes', label: '6', price: 600, description: 'Clases' }
-              ].map((packageOption) => {
-                const isSelected = getSelectedSurfPackage(activity.id) === packageOption.value;
-                const packagePrice = packageOption.price * (bookingData.guests || 1);
-                
-                return (
-                  <button
-                    key={packageOption.value}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateSurfPackage(activity.id, packageOption.value);
-                    }}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      isSelected
-                        ? 'border-ocean-500 bg-white/10 text-white'
-                        : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
-                    }`}
-                  >
-                    <div className="text-lg font-bold text-white">{packageOption.label}</div>
-                    <div className="text-sm text-white mt-1">{packageOption.description}</div>
-                    <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
-                  </button>
-                );
-              })}
+          ) : <div />}
+
+          {hasSurfPackageSelector(activity.category) ? (
+            <div>
+              <div className="mb-3">
+                <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: '4-classes' as SurfPackage, label: '4', price: 400, description: 'Clases' },
+                  { value: '5-classes' as SurfPackage, label: '5', price: 500, description: 'Clases' },
+                  { value: '6-classes' as SurfPackage, label: '6', price: 600, description: 'Clases' }
+                ].map((packageOption) => {
+                  const isSelected = getSelectedSurfPackage(activity.id) === packageOption.value;
+                  const packagePrice = packageOption.price * (bookingData.guests || 1);
+                  return (
+                    <button
+                      key={packageOption.value}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateSurfPackage(activity.id, packageOption.value);
+                      }}
+                      className={`p-3 rounded-lg border-2 transition-all ${
+                        isSelected ? 'border-ocean-500 bg-white/10 text-white' : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
+                      }`}
+                    >
+                      <div className="text-lg font-bold text-white">{packageOption.label}</div>
+                      <div className="text-sm text-white mt-1">{packageOption.description}</div>
+                      <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            
-            {/* Botón Clear para surf */}
-            <div className="text-center mt-2">
+          ) : <div />}
+
+          {(hasYogaPackageSelector(activity.category) || hasSurfPackageSelector(activity.category) || activity.category === 'hosting') ? (
+            <div className="text-center">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -334,8 +325,10 @@ const createRenderActivityCard = (
                 Clear
               </button>
             </div>
-          </div>
-        )}
+          ) : null}
+        </div>
+
+        
 
 
 
@@ -492,15 +485,15 @@ export default function ActivitySelector() {
     return activityQuantities[activityId] || 0;
   };
 
-  const getSelectedTimeSlot = (activityId: string) => {
+  const getSelectedTimeSlot = (activityId: string): '7:00 AM' | '3:00 PM' => {
     return selectedTimeSlots[activityId] || '7:00 AM';
   };
 
-  const getSelectedYogaPackage = (activityId: string) => {
+  const getSelectedYogaPackage = (activityId: string): '1-class' | '3-classes' | '10-classes' | undefined => {
     return selectedYogaPackages[activityId];
   };
 
-  const getSelectedSurfPackage = (activityId: string) => {
+  const getSelectedSurfPackage = (activityId: string): '4-classes' | '5-classes' | '6-classes' | undefined => {
     return selectedSurfPackages[activityId];
   };
 

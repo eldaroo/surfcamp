@@ -73,43 +73,42 @@ export default function ContactForm() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="card p-4"
+      className="card p-3 max-w-xl mx-auto"
     >
-              <div className="mb-4">
+              <div className="mb-3">
         <div>
           <h2 className="text-2xl font-bold text-white font-heading">{t('contact.title')}</h2>
           <p className="text-yellow-300">{t('contact.subtitle')}</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* First Name */}
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-white mb-1">
-              {t('contact.firstName')}
-            </label>
-            <input
-              type="text"
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              className={`input-field ${
-                errors.firstName ? 'border-warm-400' : 'border-warm-300'
-              }`}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        {/* First Name */}
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-white mb-0.5">
+            {t('contact.firstName')}
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            value={formData.firstName}
+            onChange={(e) => handleInputChange('firstName', e.target.value)}
+            className={`input-field ${
+              errors.firstName ? 'border-warm-400' : 'border-warm-300'
+            }`}
 
-            />
-            {errors.firstName && (
-              <p className="mt-1 text-sm text-red-300">{errors.firstName}</p>
-            )}
-          </div>
+          />
+          {errors.firstName && (
+            <p className="mt-1 text-sm text-red-300">{errors.firstName}</p>
+          )}
+        </div>
 
-          {/* Last Name */}
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-white mb-1">
-              {t('contact.lastName')}
-            </label>
-            <input
+        {/* Last Name */}
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-white mb-0.5">
+            {t('contact.lastName')}
+          </label>
+                      <input
               type="text"
               id="lastName"
               value={formData.lastName}
@@ -119,17 +118,16 @@ export default function ContactForm() {
               }`}
 
             />
-            {errors.lastName && (
-              <p className="mt-1 text-sm text-red-300">{errors.lastName}</p>
-            )}
-          </div>
+          {errors.lastName && (
+            <p className="mt-1 text-sm text-red-300">{errors.lastName}</p>
+          )}
         </div>
 
         {/* Email */}
         <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-white mb-1">
-              {t('contact.email')}
-            </label>
+          <label htmlFor="email" className="block text-sm font-medium text-white mb-0.5">
+            {t('contact.email')}
+          </label>
           <input
             type="email"
             id="email"
@@ -147,9 +145,9 @@ export default function ContactForm() {
 
         {/* Phone */}
         <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-white mb-1">
-              {t('contact.phone')}
-            </label>
+          <label htmlFor="phone" className="block text-sm font-medium text-white mb-0.5">
+            {t('contact.phone')}
+          </label>
           <input
             type="tel"
             id="phone"
@@ -167,9 +165,9 @@ export default function ContactForm() {
 
         {/* DNI */}
         <div>
-                      <label htmlFor="dni" className="block text-sm font-medium text-white mb-1">
-              {t('contact.dni')}
-            </label>
+          <label htmlFor="dni" className="block text-sm font-medium text-white mb-0.5">
+            {t('contact.dni')}
+          </label>
           <input
             type="text"
             id="dni"
@@ -190,7 +188,7 @@ export default function ContactForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32"
+            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-28"
           >
             {isSubmitting ? t('common.loading') : t('common.continue')}
           </button>

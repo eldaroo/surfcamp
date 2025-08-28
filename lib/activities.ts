@@ -4,8 +4,8 @@ import { ACTIVITY_PRICES } from './prices';
 export const AVAILABLE_ACTIVITIES: Activity[] = [
   {
     id: 'surf-package',
-    name: 'Clases de Surf',
-    description: 'Clases de surf + videoanálisis personalizado + material de video y fotográfico. Incluye tabla y lycra.',
+    name: 'Programa de Surf',
+    description: 'Clases de surf especializadas para cada nivel + videoanálisis personalizado + material de video y fotográfico. Incluye tabla y lycra.',
     price: ACTIVITY_PRICES.surf.basePrice,
     duration: 480,
     maxParticipants: 2,

@@ -162,7 +162,11 @@ export default function DateSelector() {
                 <div>
                   <span className="text-white">{t('dates.summary.checkIn')}:</span>
                   <span className="ml-2 font-medium text-blue-300">
-                    {new Date(checkIn).toLocaleDateString('es-ES')}
+                    {new Date(checkIn).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
                   </span>
                 </div>
               )}
@@ -170,7 +174,11 @@ export default function DateSelector() {
                 <div>
                   <span className="text-white">{t('dates.summary.checkOut')}:</span>
                   <span className="ml-2 font-medium text-blue-300">
-                    {new Date(checkOut).toLocaleDateString('es-ES')}
+                    {new Date(checkOut).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    })}
                   </span>
                 </div>
               )}

@@ -21,9 +21,11 @@ export default function PaymentSection() {
     selectedSurfPackages,
     setCurrentStep 
   } = useBookingStore();
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'nowpayments' | 'mock'>('mock');
+  const [paymentMethod, setPaymentMethod] = useState<'wetravel' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
+  const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
+  const [wetravelResponse, setWetravelResponse] = useState<any>(null);
 
   const isReadyForPayment =
     bookingData.checkIn &&
@@ -55,6 +57,9 @@ export default function PaymentSection() {
         return;
       }
       
+      // Generar link de pago con WeTravel
+      console.log('🔗 Generating WeTravel payment link...');
+      
       // Convertir fechas Date objects a formato ISO string para la API
       const formatDateForAPI = (date: Date | string) => {
         if (typeof date === 'string') return date;
@@ -64,42 +69,97 @@ export default function PaymentSection() {
       const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
       const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
       
-      console.log('📅 Formatted dates for API:', {
-        original: { checkIn: bookingData.checkIn, checkOut: bookingData.checkOut },
-        formatted: { checkIn: checkInFormatted, checkOut: checkOutFormatted }
+      // Calcular días antes de la salida para el plan de pago
+      const today = new Date();
+      const checkInDate = new Date(checkInFormatted);
+      const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
+      
+      console.log('📅 Payment plan calculation:', {
+        today: today.toISOString().split('T')[0],
+        checkIn: checkInFormatted,
+        daysBeforeDeparture,
+        dueDate: new Date(checkInDate.getTime() - (daysBeforeDeparture * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
       });
 
-      // Crear reserva en LobbyPMS solo para pagos reales
-      console.log('🏨 Creating reservation in LobbyPMS...');
-      const reservationResponse = await fetch('/api/reserve', {
+      // Crear payload para WeTravel (precios en dólares, no en centavos)
+      const wetravelPayload = {
+        data: {
+          trip: {
+            title: "Surf & Yoga Retreat – Santa Teresa",
+            start_date: checkInFormatted,
+            end_date: checkOutFormatted,
+            currency: "USD",
+            participant_fees: "all"
+          },
+          pricing: {
+            price: Math.round(total), // Precio en dólares
+            payment_plan: {
+              allow_auto_payment: false,
+              allow_partial_payment: false,
+              deposit: 0,
+              installments: [
+                { 
+                  price: Math.round(total), // Precio en dólares
+                  days_before_departure: daysBeforeDeparture
+                }
+              ]
+            }
+          },
+          metadata: {
+            trip_id: `st-${checkInFormatted.replace(/-/g, '')}`,
+            customer_id: `cus_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            booking_data: {
+              checkIn: checkInFormatted,
+              checkOut: checkOutFormatted,
+              guests: bookingData.guests,
+              roomType: selectedRoom?.roomTypeName,
+              activities: selectedActivities.map(a => ({
+                id: a.id,
+                name: a.name,
+                package: a.category === 'yoga' ? selectedYogaPackages[a.id] : selectedSurfPackages[a.id]
+              })),
+              total: total
+            }
+          }
+        }
+      };
+
+      console.log('💰 Total price being sent to WeTravel:', total);
+      console.log('📤 Sending request to WeTravel API:', wetravelPayload);
+
+      const wetravelResponse = await fetch('/api/wetravel-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          checkIn: checkInFormatted,
-          checkOut: checkOutFormatted,
-          guests: bookingData.guests,
-          contactInfo: bookingData.contactInfo,
-          roomTypeId: selectedRoom.roomTypeId,
-          activities: selectedActivities.map(a => a.id),
-          paymentIntentId: `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        }),
+        body: JSON.stringify(wetravelPayload),
       });
 
-      const reservationData = await reservationResponse.json();
+      const wetravelData = await wetravelResponse.json();
 
-      if (!reservationResponse.ok) {
-        throw new Error(reservationData.error || 'Error creating reservation');
+      if (!wetravelResponse.ok) {
+        throw new Error(wetravelData.error || 'Error generating payment link');
       }
 
-      console.log('✅ Reservation created successfully in LobbyPMS:', reservationData);
+      console.log('✅ WeTravel payment link generated successfully:', wetravelData);
       
-      // Enviar notificaciones de WhatsApp para actividades específicas
-      await sendActivityWhatsAppNotifications();
+      // Guardar la respuesta de WeTravel en el estado
+      setWetravelResponse(wetravelData);
       
-      // Success! Move to success page
-      setCurrentStep('success');
+      // Redirigir al usuario al link de pago
+      if (wetravelData.payment_url) {
+        // Abrir el link de pago en una nueva pestaña
+        window.open(wetravelData.payment_url, '_blank');
+        
+        // Mostrar estado de esperando procesar pago
+        setError(''); // Limpiar errores previos
+        setIsWaitingForPayment(true);
+        
+        console.log('🔗 Payment link opened in new tab, waiting for payment completion...');
+      } else {
+        throw new Error('No payment URL received from WeTravel');
+      }
+      
     } catch (error) {
-      console.error('❌ Payment/Reservation error:', error);
+      console.error('❌ Payment/WeTravel error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
     } finally {
       setIsProcessing(false);
@@ -236,29 +296,14 @@ export default function PaymentSection() {
               <input
                 type="radio"
                 name="paymentMethod"
-                value="stripe"
-                checked={paymentMethod === 'stripe'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'stripe')}
+                value="wetravel"
+                checked={paymentMethod === 'wetravel'}
+                onChange={(e) => setPaymentMethod(e.target.value as 'wetravel')}
                 className="text-blue-500"
               />
               <div>
-                <div className="font-medium text-white">{t('payment.method.stripe')}</div>
-                <div className="text-sm text-blue-300">{t('payment.method.stripeDescription')}</div>
-              </div>
-            </label>
-
-            <label className="flex items-center space-x-3 p-3 border border-white/30 rounded-lg cursor-pointer hover:bg-white/10">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="nowpayments"
-                checked={paymentMethod === 'nowpayments'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'nowpayments')}
-                className="text-blue-500"
-              />
-              <div>
-                <div className="font-medium text-white">{t('payment.method.crypto')}</div>
-                <div className="text-sm text-blue-300">{t('payment.method.cryptoDescription')}</div>
+                <div className="font-medium text-white">{t('payment.method.wetravel')}</div>
+                <div className="text-sm text-blue-300">{t('payment.method.wetravelDescription')}</div>
               </div>
             </label>
             
@@ -288,19 +333,50 @@ export default function PaymentSection() {
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>
-                  {paymentMethod === 'mock' ? 'Procesando demo...' : t('payment.processing')}
+                  {paymentMethod === 'mock' ? 'Procesando demo...' : 'Generando link de pago...'}
                 </span>
               </>
             ) : (
               <>
                 <span>
-                  {paymentMethod === 'mock' ? 'Completar Demo' : t('payment.payButton')}
+                  {paymentMethod === 'mock' ? 'Completar Demo' : 'Generar Link de Pago'}
                 </span>
-                            <span>→</span>
+                <span>→</span>
               </>
             )}
           </button>
         </div>
+
+        {/* Waiting for Payment Status */}
+        {isWaitingForPayment && (
+          <div className="bg-white/10 border border-yellow-300/50 rounded-lg p-6 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300"></div>
+              <div>
+                <h3 className="text-lg font-semibold text-yellow-300 mb-2">
+                  {t('payment.waitingForPayment.title')}
+                </h3>
+                <p className="text-blue-300 text-sm">
+                  {t('payment.waitingForPayment.description')}
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => window.open(wetravelResponse?.payment_url, '_blank')}
+                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  {t('payment.waitingForPayment.openLinkButton')}
+                </button>
+                <button
+                  onClick={() => setIsWaitingForPayment(false)}
+                  className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  {t('payment.waitingForPayment.hideMessageButton')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment Summary */}
         <div className="space-y-6">

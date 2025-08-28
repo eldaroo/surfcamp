@@ -7,8 +7,8 @@ export const ACTIVITY_PRICES = {
     basePrice: 12, // Precio por clase individual
     packages: {
       '1-class': 1,      // 1 clase = $12
-      '3-classes': 3,    // 3 clases = $36
-      '10-classes': 10   // 10 clases = $120
+      '3-classes': 2.5,  // 3 clases = $30
+      '10-classes': 6.67 // 10 clases = $80
     }
   },
   
