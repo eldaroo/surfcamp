@@ -62,6 +62,9 @@ const translations = {
           title: "Confirmado",
           description: "¡Reserva exitosa!"
         }
+      },
+      validation: {
+        completeAllData: "Completa todos los datos de la reserva antes de continuar."
       }
     },
     dates: {
@@ -124,7 +127,46 @@ const translations = {
       },
       pricePerNight: "por noche",
       total: "Total",
-      notAvailable: "No disponible"
+      notAvailable: "No disponible",
+      selectAccommodation: "Por favor selecciona una opción de alojamiento",
+      searchingRooms: "Buscando habitaciones disponibles...",
+      changeGuests: "Ajustar huéspedes",
+      changeDates: "Cambiar fechas",
+      capacity: "Capacidad",
+      perNight: "por noche",
+      suggestions: "Sugerencias",
+      reducePlease: "Reduce el número de huéspedes",
+      selectDifferentDates: "Selecciona fechas diferentes",
+      contactSurfcamp: "Contacta al surfcamp para opciones especiales",
+      noAvailableMessage: "no encontramos habitaciones con capacidad suficiente.",
+      noAvailableFor: "Para",
+      guestsFrom: "huéspedes del",
+      to: "al",
+      room: "habitación",
+      rooms: "habitaciones",
+      guest: "huésped", 
+      guestsPlural: "huéspedes",
+      sharedRoomBeds: "3 habitaciones con",
+      totalBeds: "camas totales",
+      kingSizeBed: "2 personas en cama king size",
+      roomDescriptions: {
+        "casa-playa": "Habitación compartida con vista al mar y ambiente social",
+        "casitas-privadas": "Casita privada con jardín independiente",
+        "casas-deluxe": "Studio privado a 2 pasos del océano con cocina y baño privado"
+      },
+      features: {
+        sharedRoom: "Cuarto Compartido",
+        oceanView: "Vista al Mar",
+        socialEnvironment: "Ambiente Social",
+        totalPrivacy: "Privacidad Total",
+        privateGarden: "Jardín Privado",
+        intimateEnvironment: "Ambiente Íntimo",
+        independentHouse: "Casa Independiente",
+        beachStudio: "Beach Studio",
+        privateKitchen: "Cocina Privada",
+        hotWaterBathroom: "Baño con Agua Caliente",
+        wifiAC: "Wi-Fi & AC"
+      }
     },
     activities: {
       title: "Selecciona tus Actividades",
@@ -137,7 +179,25 @@ const translations = {
         yoga: "Yoga",
         ice_bath: "Baño de Hielo",
         transport: "Transporte"
-      }
+      },
+      selectProgressPlan: "Selecciona tu Plan de Progreso Personalizado:",
+      selectDates: "Seleccionar Fechas",
+      selectAtLeastOne: "Selecciona al menos una actividad para continuar",
+      errorProcessing: "Error procesando actividades. Por favor intenta de nuevo.",
+      peopleQuantity: "Cantidad de personas:",
+      sessionsQuantity: "Cantidad de sesiones:",
+      perSession: "por sesión",
+      clear: "Clear",
+      classes: "Clases",
+      class: "Clase",
+      perProgram: "por programa",
+      perTrip: "por viaje",
+      perPerson: "por persona",
+      trips: "viajes",
+      sessions: "sesiones",
+      forSessions: "para",
+      people: "personas",
+      pickupTime: "Horario de recogida:"
     },
     contact: {
       title: "Información de Contacto",
@@ -205,7 +265,21 @@ const translations = {
         title: "Error en la Confirmación",
         missingData: "Faltan datos para el pago. Por favor revisa la información de la reserva.",
         processing: "Error procesando el pago"
-      }
+      },
+      processingDemo: "Procesando demo...",
+      generatingLink: "Generando link de pago...",
+      completeDemo: "Completar Demo",
+      generateLink: "Generar Link de Pago",
+      demoMode: "Modo Demo",
+      demoNotice: "Este es un pago de demostración. No se realizará ninguna reserva real en el sistema ni se procesará ningún cargo.",
+      bookingConfirmation: "Confirmación de Reserva",
+      missingPaymentData: "Faltan datos para el pago. Verifica que el monto, la descripción y el ID de pedido estén definidos.",
+      paymentSuccessful: "¡Pago exitoso! 🎉",
+      paymentFailed: "El pago no fue exitoso. 😢",
+      redirectingToPayment: "Redirigiendo al pago...",
+      payWithCard: "Pagar con tarjeta",
+      errorCreatingPayment: "Error al crear el pago",
+      minimumAmount: "El monto mínimo para pagar con USDC (Solana) es"
     },
     success: {
       title: "¡Reserva Confirmada!",
@@ -227,7 +301,13 @@ const translations = {
       activities: "Actividades",
       accommodation: "Alojamiento",
       summary: "Resumen de precios",
-      selectDates: "Selecciona fechas para ver el precio"
+      selectDates: "Selecciona fechas para ver el precio",
+      selectedActivitiesTitle: "Actividades Seleccionadas",
+      activitiesTotal: "Total Actividades:",
+      selectDatesForPrice: "Selecciona fechas para ver el precio completo con alojamiento",
+      estimatedTotal: "Total Estimado",
+      activitySelectedNoPackage: "Actividad seleccionada sin paquete (precio: $0)",
+      activitySelectedNoPlan: "Actividad seleccionada sin plan de progreso (precio: $0)"
     }
   },
   en: {
@@ -279,6 +359,9 @@ const translations = {
           title: "Confirmed",
           description: "Successful booking!"
         }
+      },
+      validation: {
+        completeAllData: "Complete all booking information before continuing."
       }
     },
     dates: {
@@ -334,14 +417,53 @@ const translations = {
           features: ["Private", "Quiet", "Independent"]
         },
         "casas-deluxe": {
-          name: "Deluxe Houses",
-          description: "Premium houses with all amenities, perfect for those seeking luxury and comfort.",
+          name: "Deluxe Studio",
+          description: "Premium studio with all amenities, perfect for those seeking luxury and comfort.",
           features: ["Premium", "Spacious", "Deluxe Amenities"]
         }
       },
       pricePerNight: "per night",
       total: "Total",
-      notAvailable: "Not available"
+      notAvailable: "Not available",
+      selectAccommodation: "Please select an accommodation option",
+      searchingRooms: "Searching for available rooms...",
+      changeGuests: "Adjust guests",
+      changeDates: "Change dates",
+      capacity: "Capacity",
+      perNight: "per night",
+      suggestions: "Suggestions",
+      reducePlease: "Reduce the number of guests",
+      selectDifferentDates: "Select different dates",
+      contactSurfcamp: "Contact the surfcamp for special options",
+      noAvailableMessage: "we couldn't find rooms with sufficient capacity.",
+      noAvailableFor: "For",
+      guestsFrom: "guests from",
+      to: "to",
+      room: "room",
+      rooms: "rooms",
+      guest: "guest",
+      guestsPlural: "guests",
+      sharedRoomBeds: "3 rooms with",
+      totalBeds: "total beds",
+      kingSizeBed: "2 people in a king size bed",
+      roomDescriptions: {
+        "casa-playa": "Shared room with ocean view and social environment",
+        "casitas-privadas": "Private cottage with independent garden",
+        "casas-deluxe": "Private studio 2 steps from the ocean with kitchen and private bathroom"
+      },
+      features: {
+        sharedRoom: "Shared Room",
+        oceanView: "Ocean View",
+        socialEnvironment: "Social Environment",
+        totalPrivacy: "Total Privacy",
+        privateGarden: "Private Garden",
+        intimateEnvironment: "Intimate Environment",
+        independentHouse: "Independent House",
+        beachStudio: "Beach Studio",
+        privateKitchen: "Private Kitchen",
+        hotWaterBathroom: "Hot Water Bathroom",
+        wifiAC: "Wi-Fi & AC"
+      }
     },
     activities: {
       title: "Select Your Activities",
@@ -354,7 +476,25 @@ const translations = {
         yoga: "Yoga",
         ice_bath: "Ice Bath",
         transport: "Transport"
-      }
+      },
+      selectProgressPlan: "Select your Personalized Progress Plan:",
+      selectDates: "Select Dates",
+      selectAtLeastOne: "Select at least one activity to continue",
+      errorProcessing: "Error processing activities. Please try again.",
+      peopleQuantity: "Number of people:",
+      sessionsQuantity: "Number of sessions:",
+      perSession: "per session",
+      clear: "Clear",
+      classes: "Classes",
+      class: "Class",
+      perProgram: "per program",
+      perTrip: "per trip",
+      perPerson: "per person",
+      trips: "trips",
+      sessions: "sessions",
+      forSessions: "for",
+      people: "people",
+      pickupTime: "Pickup time:"
     },
     contact: {
       title: "Contact Information",
@@ -422,7 +562,21 @@ const translations = {
         title: "Confirmation Error",
         missingData: "Missing data for payment. Please review your booking information.",
         processing: "Error processing payment"
-      }
+      },
+      processingDemo: "Processing demo...",
+      generatingLink: "Generating payment link...",
+      completeDemo: "Complete Demo",
+      generateLink: "Generate Payment Link",
+      demoMode: "Demo Mode",
+      demoNotice: "This is a demonstration payment. No real reservation will be made in the system and no charges will be processed.",
+      bookingConfirmation: "Booking Confirmation",
+      missingPaymentData: "Missing payment data. Verify that the amount, description and order ID are defined.",
+      paymentSuccessful: "Payment successful! 🎉",
+      paymentFailed: "Payment was not successful. 😢",
+      redirectingToPayment: "Redirecting to payment...",
+      payWithCard: "Pay with card",
+      errorCreatingPayment: "Error creating payment",
+      minimumAmount: "The minimum amount to pay with USDC (Solana) is"
     },
     success: {
       title: "Booking Confirmed!",
@@ -444,7 +598,13 @@ const translations = {
       activities: "Activities",
       accommodation: "Accommodation",
       summary: "Price summary",
-      selectDates: "Select dates to see price"
+      selectDates: "Select dates to see price",
+      selectedActivitiesTitle: "Selected Activities",
+      activitiesTotal: "Activities Total:",
+      selectDatesForPrice: "Select dates to see complete price with accommodation",
+      estimatedTotal: "Estimated Total",
+      activitySelectedNoPackage: "Activity selected without package (price: $0)",
+      activitySelectedNoPlan: "Activity selected without progress plan (price: $0)"
     }
   }
 };
@@ -469,7 +629,7 @@ function getNestedTranslation(obj: any, path: string): string {
 }
 
 // Provider
-export function I18nProvider({ children, initialLocale = 'es' }: { children: ReactNode; initialLocale?: Locale }) {
+export function I18nProvider({ children, initialLocale = 'en' }: { children: ReactNode; initialLocale?: Locale }) {
   console.log('🌍 I18nProvider - Iniciando con initialLocale:', initialLocale);
   console.log('🌍 I18nProvider - Tipo de initialLocale:', typeof initialLocale);
   console.log('🌍 I18nProvider - Locale válido:', ['es', 'en'].includes(initialLocale));

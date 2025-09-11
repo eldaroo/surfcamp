@@ -1,19 +1,29 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import PriceSummary from '@/components/PriceSummary';
+import CustomDatePicker from '@/components/CustomDatePicker';
 
 export default function DateSelector() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
   const [guests, setGuests] = useState(bookingData.guests || 1);
-  const [checkIn, setCheckIn] = useState(bookingData.checkIn ? new Date(bookingData.checkIn).toISOString().split('T')[0] : '');
-  const [checkOut, setCheckOut] = useState(bookingData.checkOut ? new Date(bookingData.checkOut).toISOString().split('T')[0] : '');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Usar fechas del store global para mantener sincronización
+  const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
+  const checkOutDate = bookingData.checkOut ? new Date(bookingData.checkOut) : null;
+
+  // Sincronizar guests con el store global
+  useEffect(() => {
+    if (bookingData.guests && bookingData.guests !== guests) {
+      setGuests(bookingData.guests);
+    }
+  }, [bookingData.guests, guests]);
 
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
@@ -24,14 +34,12 @@ export default function DateSelector() {
     setIsLoading(true);
 
     // Validaciones
-    if (!checkIn || !checkOut) {
+    if (!checkInDate || !checkOutDate) {
       setError(t('dates.error.selectDates'));
       setIsLoading(false);
       return;
     }
 
-    const checkInDate = new Date(checkIn);
-    const checkOutDate = new Date(checkOut);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -48,11 +56,9 @@ export default function DateSelector() {
     }
 
     try {
-      // Actualizar el store
+      // Actualizar solo los huéspedes en el store (las fechas ya se actualizaron en onChange)
       setBookingData({
         ...bookingData,
-        checkIn: new Date(checkIn),
-        checkOut: new Date(checkOut),
         guests
       });
       
@@ -66,9 +72,9 @@ export default function DateSelector() {
   };
 
   const calculateNights = () => {
-    if (!checkIn || !checkOut) return 0;
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
+    if (!bookingData.checkIn || !bookingData.checkOut) return 0;
+    const start = new Date(bookingData.checkIn);
+    const end = new Date(bookingData.checkOut);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
@@ -76,7 +82,7 @@ export default function DateSelector() {
   const nights = calculateNights();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
       {/* Columna izquierda - Selector de fechas */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -98,13 +104,14 @@ export default function DateSelector() {
             <label className="block text-sm font-medium text-white mb-2">
               {t('dates.checkIn')} *
             </label>
-            <input
-              type="date"
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-white/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white/10 text-white"
-              ref={checkInRef}
+            <CustomDatePicker
+              selected={checkInDate}
+              onChange={(date) => {
+                setBookingData({ checkIn: date || undefined });
+              }}
+              placeholderText={t('dates.checkIn')}
+              minDate={new Date()}
+              maxDate={checkOutDate || undefined}
             />
           </div>
 
@@ -113,13 +120,13 @@ export default function DateSelector() {
             <label className="block text-sm font-medium text-white mb-2">
               {t('dates.checkOut')} *
             </label>
-            <input
-              type="date"
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              min={checkIn || new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-white/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white/10 text-white"
-              ref={checkOutRef}
+            <CustomDatePicker
+              selected={checkOutDate}
+              onChange={(date) => {
+                setBookingData({ checkOut: date || undefined });
+              }}
+              placeholderText={t('dates.checkOut')}
+              minDate={checkInDate || new Date()}
             />
           </div>
         </div>
@@ -132,7 +139,11 @@ export default function DateSelector() {
           <div className="flex items-center space-x-4">
             <button
               type="button"
-              onClick={() => setGuests(Math.max(1, guests - 1))}
+              onClick={() => {
+                const newGuests = Math.max(1, guests - 1);
+                setGuests(newGuests);
+                setBookingData({ guests: newGuests });
+              }}
               className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
               <span className="text-white">-</span>
@@ -142,7 +153,11 @@ export default function DateSelector() {
             </span>
             <button
               type="button"
-              onClick={() => setGuests(guests + 1)}
+              onClick={() => {
+                const newGuests = guests + 1;
+                setGuests(newGuests);
+                setBookingData({ guests: newGuests });
+              }}
               className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
               <span className="text-white">+</span>
@@ -154,15 +169,15 @@ export default function DateSelector() {
         </div>
 
         {/* Summary */}
-        {(checkIn || checkOut) && (
+        {(bookingData.checkIn || bookingData.checkOut) && (
           <div className="bg-white/10 rounded-lg p-4 border border-white/20">
             <h3 className="font-semibold text-yellow-300 mb-2">{t('dates.summary.title')}</h3>
             <div className="space-y-1 text-sm">
-              {checkIn && (
+              {bookingData.checkIn && (
                 <div>
                   <span className="text-white">{t('dates.summary.checkIn')}:</span>
                   <span className="ml-2 font-medium text-blue-300">
-                    {new Date(checkIn).toLocaleDateString('en-GB', {
+                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric'
@@ -170,11 +185,11 @@ export default function DateSelector() {
                   </span>
                 </div>
               )}
-              {checkOut && (
+              {bookingData.checkOut && (
                 <div>
                   <span className="text-white">{t('dates.summary.checkOut')}:</span>
                   <span className="ml-2 font-medium text-blue-300">
-                    {new Date(checkOut).toLocaleDateString('en-GB', {
+                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric'
@@ -184,7 +199,7 @@ export default function DateSelector() {
               )}
               <div>
                 <span className="text-white">{t('dates.summary.guests')}:</span>
-                <span className="ml-2 font-medium text-blue-300">{guests}</span>
+                <span className="ml-2 font-medium text-blue-300">{bookingData.guests || guests}</span>
               </div>
               {nights > 0 && (
                 <div className="mt-2 text-sm text-yellow-300">
@@ -205,7 +220,7 @@ export default function DateSelector() {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isLoading || !checkIn || !checkOut}
+          disabled={isLoading || !checkInDate || !checkOutDate}
           className="w-32 py-2 px-4 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
         >
           {isLoading ? t('common.loading') : t('common.continue')}

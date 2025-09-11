@@ -5,7 +5,7 @@ import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 
 export default function SuccessPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { bookingData, selectedRoom, selectedActivities, priceBreakdown } = useBookingStore();
 
   if (!priceBreakdown) {
@@ -75,13 +75,13 @@ export default function SuccessPage() {
                   <div className="flex justify-between">
                     <span className="text-warm-600">{t('dates.summary.checkIn')}:</span>
                     <span className="font-medium">
-                      {new Date(bookingData.checkIn!).toLocaleDateString('es-ES')}
+                      {new Date(bookingData.checkIn!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-warm-600">{t('dates.summary.checkOut')}:</span>
                     <span className="font-medium">
-                      {new Date(bookingData.checkOut!).toLocaleDateString('es-ES')}
+                      {new Date(bookingData.checkOut!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
                     </span>
                   </div>
                   <div className="flex justify-between">

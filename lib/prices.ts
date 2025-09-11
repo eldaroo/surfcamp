@@ -6,18 +6,18 @@ export const ACTIVITY_PRICES = {
   yoga: {
     basePrice: 12, // Precio por clase individual
     packages: {
-      '1-class': 1,      // 1 clase = $12
-      '3-classes': 2.5,  // 3 clases = $30
-      '10-classes': 6.67 // 10 clases = $80
+      '1-class': 12,   // 1 clase = $12
+      '3-classes': 30, // 3 clases = $30
+      '10-classes': 80 // 10 clases = $80
     }
   },
   
   surf: {
     basePrice: 100, // Precio por clase individual (4 clases = $400, entonces $100 por clase)
     packages: {
-      '4-classes': 4,    // 4 clases = $400
-      '5-classes': 5,    // 5 clases = $500
-      '6-classes': 6     // 6 clases = $600
+      '4-classes': 400,  // 4 clases = $400
+      '5-classes': 500,  // 5 clases = $500
+      '6-classes': 600   // 6 clases = $600
     }
   },
   
@@ -40,16 +40,12 @@ export const ACTIVITY_PRICES = {
 
 // Función para calcular el precio de un paquete de yoga
 export const getYogaPackagePrice = (packageType: '1-class' | '3-classes' | '10-classes'): number => {
-  const basePrice = ACTIVITY_PRICES.yoga.basePrice;
-  const multiplier = ACTIVITY_PRICES.yoga.packages[packageType];
-  return basePrice * multiplier;
+  return ACTIVITY_PRICES.yoga.packages[packageType];
 };
 
 // Función para calcular el precio de un paquete de surf
 export const getSurfPackagePrice = (packageType: '4-classes' | '5-classes' | '6-classes'): number => {
-  const basePrice = ACTIVITY_PRICES.surf.basePrice;
-  const multiplier = ACTIVITY_PRICES.surf.packages[packageType];
-  return basePrice * multiplier;
+  return ACTIVITY_PRICES.surf.packages[packageType];
 };
 
 // Función para obtener el precio base de una actividad

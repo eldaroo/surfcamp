@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body className={`${roboto.variable} font-body`}>
         <div className="min-h-screen bg-[#163237] relative overflow-hidden">
           {/* Efectos de fondo orgánicos */}

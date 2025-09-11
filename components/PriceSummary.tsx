@@ -6,7 +6,7 @@ import { getActivityTotalPrice } from '@/lib/prices';
 
 
 export default function PriceSummary() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { 
     bookingData, 
     selectedRoom, 
@@ -40,7 +40,7 @@ export default function PriceSummary() {
         {/* Activities Summary */}
         {selectedActivities.length > 0 ? (
           <div className="space-y-4">
-            <h4 className="font-medium text-white mb-3 font-roboto">Actividades Seleccionadas</h4>
+            <h4 className="font-medium text-white mb-3 font-roboto">{t('prices.selectedActivitiesTitle')}</h4>
             <div className="space-y-3">
               {selectedActivities.map((activity) => {
                 let activityPrice = 0;
@@ -52,7 +52,7 @@ export default function PriceSummary() {
                     activityPrice = getActivityTotalPrice('yoga', yogaPackage);
                     packageInfo = ` (${yogaPackage})`;
                   } else {
-                    packageInfo = ' ⚠️ Actividad seleccionada sin paquete (precio: $0)';
+                    packageInfo = ' ⚠️ ' + t('prices.activitySelectedNoPackage');
                   }
                 } else if (activity.category === 'surf') {
                   const surfPackage = selectedSurfPackages[activity.id];
@@ -60,7 +60,7 @@ export default function PriceSummary() {
                     activityPrice = getActivityTotalPrice('surf', surfPackage);
                     packageInfo = ` (Plan de Progreso: ${surfPackage})`;
                   } else {
-                    packageInfo = ' ⚠️ Actividad seleccionada sin plan de progreso (precio: $0)';
+                    packageInfo = ' ⚠️ ' + t('prices.activitySelectedNoPlan');
                   }
                 } else {
                   activityPrice = activity.price || 0;
@@ -81,7 +81,7 @@ export default function PriceSummary() {
             {/* Total de Actividades */}
             <div className="border-t border-white/20 pt-4">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-white font-roboto">Total Actividades:</span>
+                <span className="font-medium text-white font-roboto">{t('prices.activitiesTotal')}</span>
                 <span className="text-xl font-bold text-blue-400 font-roboto">
                   ${selectedActivities.reduce((sum, activity) => sum + getActivityPrice(activity), 0)}
                 </span>
@@ -89,7 +89,7 @@ export default function PriceSummary() {
             </div>
 
             <div className="text-sm text-yellow-300 text-center font-roboto">
-              Selecciona fechas para ver el precio completo con alojamiento
+              {t('prices.selectDatesForPrice')}
             </div>
           </div>
         ) : (
@@ -115,13 +115,13 @@ export default function PriceSummary() {
           <div className="flex justify-between">
             <span className="text-white">{t('dates.summary.checkIn')}:</span>
             <span className="font-medium text-blue-300">
-              {new Date(bookingData.checkIn!).toLocaleDateString('es-ES')}
+              {new Date(bookingData.checkIn!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-white">{t('dates.summary.checkOut')}:</span>
             <span className="font-medium text-blue-300">
-              {new Date(bookingData.checkOut!).toLocaleDateString('es-ES')}
+              {new Date(bookingData.checkOut!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
             </span>
           </div>
           <div className="flex justify-between">
@@ -144,7 +144,10 @@ export default function PriceSummary() {
                   {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                 </p>
               </div>
-              <span className="font-semibold text-blue-400">${selectedRoom.pricePerNight * nights}</span>
+              <span className="font-semibold text-blue-400">${selectedRoom.isSharedRoom 
+                ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
+                : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
+              }</span>
             </div>
           </div>
         )}
@@ -170,16 +173,19 @@ export default function PriceSummary() {
         {selectedRoom ? (
           <div className="mt-4 pt-4 border-t border-warm-200">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-white">Total Estimado</span>
+              <span className="text-lg font-semibold text-white">{t('prices.estimatedTotal')}</span>
                               <span className="text-2xl font-bold text-blue-400">
-                  ${selectedRoom.pricePerNight * nights + selectedActivities.reduce((sum, activity) => sum + getActivityPrice(activity), 0)}
+                  ${(selectedRoom.isSharedRoom 
+                    ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
+                    : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
+                  ) + selectedActivities.reduce((sum, activity) => sum + getActivityPrice(activity), 0)}
                 </span>
             </div>
           </div>
         ) : selectedActivities.length > 0 && (
           <div className="mt-4 pt-4 border-t border-warm-200">
             <div className="flex justify-between items-center">
-                              <span className="text-lg font-semibold text-blue-400">Total Actividades</span>
+                              <span className="text-lg font-semibold text-blue-400">{t('prices.activities')} {t('prices.total')}</span>
                               <span className="text-2xl font-bold text-blue-400">
                   ${selectedActivities.reduce((sum, activity) => sum + getActivityPrice(activity), 0)}
                 </span>
@@ -204,13 +210,13 @@ export default function PriceSummary() {
           <div className="flex justify-between">
             <span className="text-warm-600">{t('dates.summary.checkIn')}:</span>
             <span className="font-medium">
-              {new Date(bookingData.checkIn!).toLocaleDateString('es-ES')}
+              {new Date(bookingData.checkIn!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-warm-600">{t('dates.summary.checkOut')}:</span>
             <span className="font-medium">
-              {new Date(bookingData.checkOut!).toLocaleDateString('es-ES')}
+              {new Date(bookingData.checkOut!).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}
             </span>
           </div>
           <div className="flex justify-between">

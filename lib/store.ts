@@ -6,6 +6,10 @@ interface Room {
   roomTypeName: string;
   availableRooms: number;
   pricePerNight: number;
+  maxGuests: number;
+  totalCapacity?: number;
+  canAccommodateRequestedGuests?: boolean;
+  isSharedRoom?: boolean;
 }
 
 interface BookingStore {

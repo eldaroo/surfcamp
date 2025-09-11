@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { AVAILABLE_ACTIVITIES } from '@/lib/activities';
+import { getLocalizedActivities } from '@/lib/activities';
 import { getActivityTotalPrice } from '@/lib/prices';
 import { formatCurrency } from '@/lib/utils';
 
@@ -38,7 +38,8 @@ const createRenderActivityCard = (
   updateSurfPackage: (id: string, packageType: '4-classes' | '5-classes' | '6-classes') => void,
   updateActivityQuantity: (id: string, quantity: number) => void,
   handleActivityToggle: (activity: any) => void,
-  clearActivity: (activityId: string) => void
+  clearActivity: (activityId: string) => void,
+  t: (key: string) => string
 ) => {
   return (activity: any) => {
     const isSelected = selectedActivities.some((a: any) => a.id === activity.id);
@@ -60,7 +61,8 @@ const createRenderActivityCard = (
         totalPrice = getActivityTotalPrice('surf', surfPackage, bookingData.guests || 1);
       }
     } else if (activity.category === 'ice_bath') {
-      totalPrice = activity.price * quantity * (bookingData.guests || 1);
+      const sessions = activityQuantities[`${activity.id}_sessions`] || 1;
+      totalPrice = activity.price * quantity * sessions;
     } else if (activity.category === 'transport') {
       totalPrice = activity.price * quantity * (bookingData.guests || 1);
     } else {
@@ -97,19 +99,32 @@ const createRenderActivityCard = (
                   ? formatCurrency(getActivityTotalPrice('yoga', getSelectedYogaPackage(activity.id)!, quantity))
                   : activity.category === 'surf'
                   ? formatCurrency(getActivityTotalPrice('surf', getSelectedSurfPackage(activity.id)!, quantity))
+                  : activity.category === 'ice_bath'
+                  ? formatCurrency(activity.price * quantity * (activityQuantities[`${activity.id}_sessions`] || 1))
                   : formatCurrency(activity.price * quantity)
                 }
               </p>
               <p className="text-xs text-white">
                 {activity.category === 'yoga' 
-                  ? 'por programa'
+                  ? t('activities.perProgram')
                   : activity.category === 'surf'
-                  ? 'por programa'
+                  ? t('activities.perProgram')
                   : activity.category === 'ice_bath' ? 
-                    (quantity > 1 ? `por ${quantity} sesiones` : 'por sesión') : 
+                    (() => {
+                      const sessions = activityQuantities[`${activity.id}_sessions`] || 1;
+                      if (quantity > 1 && sessions > 1) {
+                        return `${t('activities.forSessions')} ${quantity} ${t('activities.people')} × ${sessions} ${t('activities.sessions')}`;
+                      } else if (quantity > 1) {
+                        return `${t('activities.forSessions')} ${quantity} ${t('activities.people')}`;
+                      } else if (sessions > 1) {
+                        return `${t('activities.forSessions')} ${sessions} ${t('activities.sessions')}`;
+                      } else {
+                        return t('activities.perSession');
+                      }
+                    })() : 
                  activity.category === 'transport' ? 
-                   (quantity > 1 ? `por ${quantity} viajes` : 'por viaje') : 
-                 'por persona'}
+                   (quantity > 1 ? `${t('activities.perTrip')} ${quantity} ${t('activities.trips')}` : t('activities.perTrip')) : 
+                 t('activities.perPerson')}
               </p>
             </div>
           )}
@@ -142,8 +157,8 @@ const createRenderActivityCard = (
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-white">
-                  {activity.category === 'surf' ? 'Cantidad de personas:' : 
-                   activity.category === 'hosting' ? 'Cantidad de estadías:' : 'Cantidad de personas:'}
+                  {activity.category === 'surf' ? t('activities.peopleQuantity') : 
+                   activity.category === 'hosting' ? t('activities.peopleQuantity') : t('activities.peopleQuantity')}
                 </span>
                 <div className="flex items-center space-x-2">
                   <button
@@ -179,7 +194,7 @@ const createRenderActivityCard = (
               {activity.category === 'ice_bath' && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">Cantidad de sesiones:</span>
+                    <span className="text-sm font-medium text-white">{t('activities.sessionsQuantity')}</span>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={(e) => {
@@ -219,7 +234,7 @@ const createRenderActivityCard = (
           {hasTimeSelector(activity.category) ? (
             <div>
               <div className="mb-3">
-                <span className="text-sm font-medium text-white">Horario de recogida:</span>
+                <span className="text-sm font-medium text-white">{t('activities.pickupTime')}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 {TIME_SLOTS.map((timeSlot) => (
@@ -243,18 +258,18 @@ const createRenderActivityCard = (
           ) : <div />}
         </div>
 
-        {/* 5) Footer: planes/precios + Clear */}
+        {/* 5) Footer: planes/precios + {t('activities.clear')} */}
         <div className="space-y-3">
           {hasYogaPackageSelector(activity.category) ? (
             <div>
               <div className="mb-3">
-                <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
+                <span className="text-sm font-medium text-white">{t('activities.selectProgressPlan')}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: '1-class' as YogaPackage, label: '1', price: 12, description: 'Clase' },
-                  { value: '3-classes' as YogaPackage, label: '3', price: 30, description: 'Clases' },
-                  { value: '10-classes' as YogaPackage, label: '10', price: 80, description: 'Clases' }
+                  { value: '1-class' as YogaPackage, label: '1', price: 12, description: t('activities.class') },
+                  { value: '3-classes' as YogaPackage, label: '3', price: 30, description: t('activities.classes') },
+                  { value: '10-classes' as YogaPackage, label: '10', price: 80, description: t('activities.classes') }
                 ].map((packageOption) => {
                   const isSelected = getSelectedYogaPackage(activity.id) === packageOption.value;
                   const packagePrice = packageOption.price * (bookingData.guests || 1);
@@ -282,13 +297,13 @@ const createRenderActivityCard = (
           {hasSurfPackageSelector(activity.category) ? (
             <div>
               <div className="mb-3">
-                <span className="text-sm font-medium text-white">Selecciona tu Plan de Progreso Personalizado:</span>
+                <span className="text-sm font-medium text-white">{t('activities.selectProgressPlan')}</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: '4-classes' as SurfPackage, label: '4', price: 400, description: 'Clases' },
-                  { value: '5-classes' as SurfPackage, label: '5', price: 500, description: 'Clases' },
-                  { value: '6-classes' as SurfPackage, label: '6', price: 600, description: 'Clases' }
+                  { value: '4-classes' as SurfPackage, label: '4', price: 400, description: t('activities.classes') },
+                  { value: '5-classes' as SurfPackage, label: '5', price: 500, description: t('activities.classes') },
+                  { value: '6-classes' as SurfPackage, label: '6', price: 600, description: t('activities.classes') }
                 ].map((packageOption) => {
                   const isSelected = getSelectedSurfPackage(activity.id) === packageOption.value;
                   const packagePrice = packageOption.price * (bookingData.guests || 1);
@@ -322,7 +337,7 @@ const createRenderActivityCard = (
                 }}
                 className="text-sm text-blue-300 hover:text-blue-200 underline transition-colors"
               >
-                Clear
+                {t('activities.clear')}
               </button>
             </div>
           ) : null}
@@ -426,7 +441,18 @@ const ActivityCarousel = ({
 };
 
 export default function ActivitySelector() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  
+  // Get localized activities based on current locale - using useMemo to refresh when locale changes
+  const AVAILABLE_ACTIVITIES = useMemo(() => {
+    console.log('🌍 ActivitySelector - Current locale:', locale);
+    console.log('🌍 ActivitySelector - Window location:', typeof window !== 'undefined' ? window.location.pathname : 'SSR');
+    const activities = getLocalizedActivities(locale || 'en');
+    console.log('📝 ActivitySelector - First activity name:', activities[0]?.name);
+    console.log('📝 ActivitySelector - All activity names:', activities.map(a => a.name));
+    return activities;
+  }, [locale]);
+  
   const {
     bookingData,
     selectedActivities,
@@ -687,7 +713,7 @@ export default function ActivitySelector() {
       setCurrentStep('contact');
     } catch (error) {
       console.error('Error processing activities:', error);
-      setError('Error procesando actividades. Por favor intenta de nuevo.');
+      setError(t('activities.errorProcessing'));
     } finally {
       setLoading(false);
     }
@@ -717,7 +743,8 @@ export default function ActivitySelector() {
       // Remover de actividades seleccionadas
       const updatedActivities = selectedActivities.filter(a => a.id !== activityId);
       setSelectedActivities(updatedActivities);
-    }
+    },
+    t
   );
 
   return (
@@ -731,7 +758,7 @@ export default function ActivitySelector() {
           {/* Título y subtítulo */}
           <div>
             <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <span className="font-heading">Actividades</span>
+              <span className="font-heading">{t('activities.title')}</span>
             </h2>
             <p className="text-accent-200 text-lg mt-2">{t('activities.subtitle')}</p>
           </div>
@@ -795,7 +822,7 @@ export default function ActivitySelector() {
           disabled={selectedActivities.length === 0}
           className="flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed bg-ocean-600 hover:bg-ocean-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
         >
-          <span>Seleccionar Fechas</span>
+          <span>{t('activities.selectDates')}</span>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
@@ -805,7 +832,7 @@ export default function ActivitySelector() {
       {/* Mensaje de ayuda */}
       {selectedActivities.length === 0 && (
         <div className="mt-4 text-center text-base text-accent-200 bg-white/10 rounded-lg p-3 border border-white/20">
-          💡 Selecciona al menos una actividad para continuar
+          💡 {t('activities.selectAtLeastOne')}
         </div>
       )}
     </motion.div>

@@ -346,4 +346,27 @@
   .scrollbar-hide {
     scroll-behavior: smooth;
   }
+}
+
+/* Force date picker language settings */
+html[lang="en-US"] input[type="date"],
+html[lang="en-US"] input[type="date"]::-webkit-calendar-picker-indicator,
+html[lang="en-US"] input[type="date"]::-webkit-inner-spin-button,
+html[lang="en-US"] input[type="date"]::-webkit-clear-button {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Override any Portuguese date picker styles */
+input[type="date"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "lnum" 1;
+}
+
+/* Try to force English locale for WebKit date inputs */
+input[type="date"]::-webkit-datetime-edit {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 } 

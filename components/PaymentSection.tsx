@@ -243,7 +243,9 @@ export default function PaymentSection() {
   ) : 0;
 
   const accommodationTotal = selectedRoom ? (
-    selectedRoom.pricePerNight * nights
+    selectedRoom.isSharedRoom 
+      ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
+      : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
   ) : 0;
 
   const activitiesTotal = selectedActivities.reduce((sum, activity) => {
@@ -261,7 +263,7 @@ export default function PaymentSection() {
     }
   }, 0);
   
-  const total = accommodationTotal + activitiesTotal;
+  const total = 1; // TESTING: Set to $1 USD for payment testing
 
   return (
     <motion.div
@@ -333,13 +335,13 @@ export default function PaymentSection() {
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 <span>
-                  {paymentMethod === 'mock' ? 'Procesando demo...' : 'Generando link de pago...'}
+                  {paymentMethod === 'mock' ? t('payment.processingDemo') : t('payment.generatingLink')}
                 </span>
               </>
             ) : (
               <>
                 <span>
-                  {paymentMethod === 'mock' ? 'Completar Demo' : 'Generar Link de Pago'}
+                  {paymentMethod === 'mock' ? t('payment.completeDemo') : t('payment.generateLink')}
                 </span>
                 <span>→</span>
               </>
@@ -445,10 +447,10 @@ export default function PaymentSection() {
             <div className="bg-white/10 border border-white/20 rounded-lg p-4">
               <div className="flex items-center space-x-2">
                 <span className="text-blue-400">ℹ️</span>
-                <span className="font-semibold text-white">Modo Demo</span>
+                <span className="font-semibold text-white">{t('payment.demoMode')}</span>
               </div>
               <p className="text-blue-300 text-sm mt-1">
-                Este es un pago de demostración. No se realizará ninguna reserva real en el sistema ni se procesará ningún cargo.
+                {t('payment.demoNotice')}
               </p>
             </div>
           )}

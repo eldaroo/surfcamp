@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
         'casa-playa': {
           roomTypeId: 'casa-playa',
           roomTypeName: 'Casa de Playa (Cuarto Compartido)',
-          maxGuests: 8,
+          maxGuests: 8, // Total beds: 3 rooms (2 rooms with 2 beds each + 1 room with 4 beds)
+          isSharedRoom: true, // 3 rooms with shared facilities
           categories: [] as any[],
           availableRoomsByDay: [] as number[],
           prices: [] as number[]
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
         'casitas-privadas': {
           roomTypeId: 'casitas-privadas',
           roomTypeName: 'Casitas Privadas',
-          maxGuests: 2,
+          maxGuests: 2, // Guests per individual casita
+          isSharedRoom: false, // These are individual private rooms
           categories: [] as any[],
           availableRoomsByDay: [] as number[],
           prices: [] as number[]
@@ -49,7 +51,8 @@ export async function POST(request: NextRequest) {
         'casas-deluxe': {
           roomTypeId: 'casas-deluxe',
           roomTypeName: 'Casas Deluxe',
-          maxGuests: 2,
+          maxGuests: 2, // Guests per individual casa
+          isSharedRoom: false, // These are individual private rooms
           categories: [] as any[],
           availableRoomsByDay: [] as number[],
           prices: [] as number[]
@@ -69,12 +72,40 @@ export async function POST(request: NextRequest) {
       // Track individual categories for proper availability calculation
       const individualCategories: { [key: string]: { availableByDay: number[], prices: number[], roomType: string } } = {};
       
+      // Helper function to calculate price per room based on guest count
+      const calculatePricePerRoom = (category: any, guestsRequestedTotal: number, availableRoomsForCategory: number, isSharedRoom: boolean) => {
+        if (!category.prices || category.prices.length === 0) return null;
+        
+        if (isSharedRoom) {
+          // Casa de Playa: precio por cama/persona
+          return category.prices.find((p: any) => p.people === 1)?.value || null;
+        } else {
+          // Casitas/Casas Deluxe: calcular huéspedes por habitación
+          const guestsPerRoom = Math.min(2, Math.ceil(guestsRequestedTotal / availableRoomsForCategory));
+          
+          // Si hay 1 huésped por habitación, usar precio single. Si 2+, usar precio double
+          if (guestsPerRoom === 1) {
+            return category.prices.find((p: any) => p.people === 1)?.value || null;
+          } else {
+            return category.prices.find((p: any) => p.people === 2)?.value || 
+                   category.prices.find((p: any) => p.people === 1)?.value || null; // fallback to single price
+          }
+        }
+      };
+
+      console.log(`\n📊 ==== STARTING CATEGORY PROCESSING ====`);
+      console.log(`📊 Total days to process: ${nights}`);
+      console.log(`📊 Days available from API: ${availabilityData.length}`);
+      console.log(`📊 Guests requested: ${guests}`);
+      
       // Only process the days we need (number of nights)
       const daysToProcess = Math.min(nights, availabilityData.length);
       availabilityData.slice(0, daysToProcess).forEach((dayData, dayIndex) => {
-        console.log(`📅 Processing day ${dayIndex + 1}: ${dayData.date}`);
+        console.log(`\n📅 ===== PROCESSING DAY ${dayIndex + 1}: ${dayData.date} =====`);
         
         if (dayData.categories && Array.isArray(dayData.categories)) {
+          console.log(`📅 Day ${dayIndex + 1} has ${dayData.categories.length} categories`);
+          
           dayData.categories.forEach((category: any, catIndex: number) => {
             console.log(`🏠 ===== PROCESSING CATEGORY ${catIndex + 1} =====`);
             console.log(`🏠 Category ID: ${category.category_id}`);
@@ -82,9 +113,17 @@ export async function POST(request: NextRequest) {
             console.log(`🏠 Available rooms: ${category.available_rooms}`);
             console.log(`🏠 Prices:`, category.prices);
             
+            // Log detailed pricing structure for debugging
+            if (category.prices && category.prices.length > 0) {
+              category.prices.forEach((priceObj: any) => {
+                console.log(`   💰 ${priceObj.people} person(s): $${priceObj.value}`);
+              });
+            }
+            
             // Map categories to our 3 accommodation types
             const categoryName = (category.name || '').toLowerCase();
             const singlePrice = category.prices?.find((p: any) => p.people === 1)?.value;
+            const doublePrice = category.prices?.find((p: any) => p.people === 2)?.value;
             
             // Initialize category tracking if not exists
             if (!individualCategories[categoryName]) {
@@ -101,12 +140,17 @@ export async function POST(request: NextRequest) {
             // 1. CASA DE PLAYA: SOLO "Casa Playa" (las 8 camas dentro de Casa Playa)
             if (categoryName === 'casa playa') {
               console.log('✅ Matched as Casa de Playa (Cuarto Compartido)');
+              console.log(`🏠 Adding category "${category.name}" to casa-playa`);
+              console.log(`🏠 This category has ${category.available_rooms} available rooms`);
+              
               roomTypes['casa-playa'].categories.push(category);
               individualCategories[categoryName].roomType = 'casa-playa';
+              
               // Solo agregar precio si hay disponibilidad
               if (singlePrice && singlePrice > 0 && (category.available_rooms || 0) > 0) {
                 roomTypes['casa-playa'].prices.push(singlePrice);
                 individualCategories[categoryName].prices.push(singlePrice);
+                console.log(`💰 Added price $${singlePrice} for casa-playa`);
               }
             }
             
@@ -158,6 +202,8 @@ export async function POST(request: NextRequest) {
         const roomType = roomTypes[roomTypeKey as keyof typeof roomTypes];
         let totalAvailableForAllDays = 0;
         
+        console.log(`\n🔍 ==== PROCESSING ROOM TYPE: ${roomTypeKey} ====`);
+        
         // Find all categories that belong to this room type
         Object.entries(individualCategories).forEach(([categoryName, categoryData]) => {
           if (categoryData.roomType === roomTypeKey) {
@@ -176,36 +222,145 @@ export async function POST(request: NextRequest) {
         roomType.availableRoomsByDay = [totalAvailableForAllDays]; // Single value representing total available
         
         console.log(`🎯 ${roomTypeKey} - Total available for all days: ${totalAvailableForAllDays}`);
+        console.log(`🎯 ${roomTypeKey} - Max guests per room: ${roomType.maxGuests}`);
+        console.log(`🎯 ${roomTypeKey} - Total capacity: ${totalAvailableForAllDays * roomType.maxGuests} huéspedes`);
+        console.log(`🔍 ==== END PROCESSING: ${roomTypeKey} ====\n`);
       });
+
+      // Validate capacity and filter out room types that cannot accommodate the requested guests
+      console.log(`👥 Validating capacity: ${guests} guests requested`);
+      
+      // Filter room types that can accommodate the requested guests
+      const validRoomTypes: { [key: string]: any } = {};
+      let totalBedsAvailable = 0;
+      
+             Object.entries(roomTypes).forEach(([roomTypeKey, roomType]) => {
+         const availableRooms = roomType.availableRoomsByDay[0] || 0;
+         let totalCapacity = 0;
+         
+         if (roomType.isSharedRoom) {
+           // For shared rooms (Casa de Playa), available_rooms indicates available beds
+           // Casa de Playa has 3 rooms: 2 rooms with 2 beds each + 1 room with 4 beds = 8 total beds
+           totalCapacity = availableRooms;
+           console.log(`🏠 ${roomTypeKey}: ${availableRooms} camas disponibles de ${roomType.maxGuests} totales`);
+         } else {
+           // For individual rooms, multiply available rooms by capacity per room
+           totalCapacity = availableRooms * roomType.maxGuests;
+           console.log(`🏠 ${roomTypeKey}: ${availableRooms} habitaciones × ${roomType.maxGuests} huéspedes = ${totalCapacity} camas totales`);
+         }
+         
+         // Only include room types that can accommodate the requested guests
+         if (totalCapacity >= guests) {
+           validRoomTypes[roomTypeKey] = roomType;
+           totalBedsAvailable += totalCapacity;
+           console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes (${totalCapacity} camas disponibles)`);
+         } else {
+           console.log(`❌ ${roomTypeKey} NO puede acomodar a ${guests} huéspedes (solo ${totalCapacity} camas disponibles)`);
+         }
+       });
+      
+      console.log(`🛏️ Total beds available: ${totalBedsAvailable} (${guests} guests requested)`);
+      
+      // If no room types can accommodate the requested guests, return error
+      if (Object.keys(validRoomTypes).length === 0) {
+        console.log(`❌ No hay ningún tipo de habitación que pueda acomodar a ${guests} huéspedes`);
+        
+        // Create detailed capacity breakdown for better error message
+        const capacityBreakdown = Object.entries(roomTypes).map(([key, roomType]) => {
+          const availableBeds = roomType.availableRoomsByDay[0] || 0;
+          const totalCapacity = availableBeds * roomType.maxGuests;
+          return {
+            roomType: roomType.roomTypeName,
+            availableRooms: availableBeds,
+            maxGuestsPerRoom: roomType.maxGuests,
+            totalCapacity: totalCapacity
+          };
+        });
+        
+        return NextResponse.json({
+          success: false,
+          error: `No hay ningún tipo de habitación que pueda acomodar a ${guests} huéspedes.`,
+          available: false,
+          requestedGuests: guests,
+          totalBedsAvailable: 0,
+          capacityBreakdown: capacityBreakdown,
+          suggestions: [
+            'Reducir el número de huéspedes',
+            'Seleccionar fechas diferentes',
+            'Contactar al surfcamp para opciones especiales'
+          ],
+          debug: {
+            totalDaysFromAPI: availabilityData.length,
+            endpointUsed: '/available-rooms',
+            capacityValidation: {
+              requested: guests,
+              available: 0,
+              insufficient: true,
+              breakdown: capacityBreakdown
+            }
+          }
+        }, { status: 404 });
+      }
+      
+      console.log(`✅ Hay ${Object.keys(validRoomTypes).length} tipos de habitación que pueden acomodar a ${guests} huéspedes`);
 
       // Convert grouped data to final format
       const availableRooms: any[] = [];
       
-      // ALWAYS return all 3 accommodation types, even if not available
-      Object.entries(roomTypes).forEach(([key, roomType]) => {
-        // Calculate representative price (median or most common)
+      // Only return room types that can accommodate the requested guests
+      Object.entries(validRoomTypes).forEach(([key, roomType]) => {
+        // Calculate price per room based on guest count and room availability
         let finalPrice = null;
+        const totalAvailableTemp = roomType.availableRoomsByDay.length > 0 ? roomType.availableRoomsByDay[0] : 0;
         
-        if (roomType.prices.length > 0) {
-          // Use the special price for "Casa Playa" if it exists
+        if (roomType.categories.length > 0 && totalAvailableTemp > 0) {
+          // Use first category as representative for pricing structure
+          const representativeCategory = roomType.categories[0];
+          
           if (key === 'casa-playa') {
-            const casaPlayaPrice = roomType.prices.find(p => p === 20);
-            if (casaPlayaPrice) {
-              finalPrice = casaPlayaPrice;
-            } else {
-              // Use median price
-              const sortedPrices = roomType.prices.sort((a, b) => a - b);
-              finalPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
-            }
+            // Casa de Playa: precio por persona/cama
+            finalPrice = representativeCategory.prices?.find((p: any) => p.people === 1)?.value || null;
           } else {
-            // Use median price for other types
-            const sortedPrices = roomType.prices.sort((a, b) => a - b);
-            finalPrice = sortedPrices[Math.floor(sortedPrices.length / 2)];
+            // Casitas Privadas/Deluxe: usar precio por habitación según ocupación real
+            const singlePrice = representativeCategory.prices?.find((p: any) => p.people === 1)?.value;
+            const doublePrice = representativeCategory.prices?.find((p: any) => p.people === 2)?.value;
+            
+            // Para habitaciones privadas, determinar la ocupación más eficiente
+            console.log(`💰 ${key} available prices - Single: $${singlePrice}, Double: $${doublePrice}`);
+            
+            if (guests === 1) {
+              finalPrice = singlePrice;
+              console.log(`💰 ${key}: 1 guest → single occupancy price: $${finalPrice}`);
+            } else if (guests === 2) {
+              finalPrice = doublePrice || singlePrice;
+              console.log(`💰 ${key}: 2 guests → ${doublePrice ? 'double' : 'single fallback'} price: $${finalPrice}`);
+            } else {
+              // Para más de 2 huéspedes, usar precio doble como base
+              // (el frontend calculará habitaciones necesarias)
+              finalPrice = doublePrice || singlePrice;
+              console.log(`💰 ${key}: ${guests} guests → using ${doublePrice ? 'double' : 'single fallback'} base price: $${finalPrice}`);
+            }
           }
         }
         
         // Add room type regardless of availability
         const totalAvailable = roomType.availableRoomsByDay.length > 0 ? roomType.availableRoomsByDay[0] : 0;
+        
+        // Calculate total capacity for this room type based on room type
+        let totalCapacity = 0;
+        let roomsForDisplay = totalAvailable;
+        
+        if (roomType.isSharedRoom) {
+          // For shared rooms, totalAvailable is the number of available beds
+          totalCapacity = totalAvailable;
+          roomsForDisplay = totalAvailable > 0 ? 1 : 0; // Show 1 shared room if available
+        } else {
+          // For individual rooms, multiply by capacity per room
+          totalCapacity = totalAvailable * roomType.maxGuests;
+          roomsForDisplay = totalAvailable;
+        }
+        
+        const canAccommodateRequestedGuests = totalCapacity >= guests;
         
         availableRooms.push({
           roomTypeId: roomType.roomTypeId,
@@ -213,16 +368,35 @@ export async function POST(request: NextRequest) {
           pricePerNight: finalPrice,
           realPrice: finalPrice,
           priceSource: finalPrice ? 'LOBBYPMS_AVAILABLE_ROOMS_API' : null,
-          maxGuests: roomType.maxGuests,
-          availableRooms: totalAvailable,
+          maxGuests: roomType.maxGuests, // Always show the total capacity regardless of current availability
+          availableRooms: roomsForDisplay, // Show correct number of rooms for display
           available: totalAvailable > 0,
+          totalCapacity: totalCapacity,
+          canAccommodateRequestedGuests: canAccommodateRequestedGuests,
+          isSharedRoom: roomType.isSharedRoom,
           debug: {
             originalCategory: roomType.categories[0] || null, // First category as example (null if none)
             source: 'available-rooms-endpoint',
-            allCategories: roomType.categories.map(c => c.name),
+            allCategories: roomType.categories.map((c: any) => c.name),
             allPrices: roomType.prices,
             availableRoomsByDay: roomType.availableRoomsByDay,
-            minAvailableRooms: totalAvailable
+            minAvailableRooms: totalAvailable,
+            capacityInfo: {
+              roomsAvailable: roomsForDisplay,
+              maxGuestsPerRoom: roomType.isSharedRoom ? totalCapacity : roomType.maxGuests,
+              totalCapacity: totalCapacity,
+              requestedGuests: guests,
+              canAccommodate: canAccommodateRequestedGuests,
+              isSharedRoom: roomType.isSharedRoom
+            },
+            pricingDebug: {
+              selectedPrice: finalPrice,
+              availablePrices: roomType.categories[0]?.prices || [],
+              guestsRequested: guests,
+              priceType: key === 'casa-playa' ? 'per-person' : 
+                        guests === 1 ? 'single-occupancy' : 
+                        guests === 2 ? 'double-occupancy' : 'multiple-rooms'
+            }
           }
         });
       });

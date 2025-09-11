@@ -16,7 +16,7 @@ import ContactForm from '@/components/ContactForm';
 export default function HomePage() {
   console.log('🏠 HomePage - Iniciando renderizado');
   
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   console.log('🏠 HomePage - Hook useI18n obtenido, t function:', typeof t);
   
   const { currentStep, bookingData, selectedRoom, selectedActivities, setCurrentStep, priceBreakdown } = useBookingStore();
@@ -58,7 +58,7 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold mb-4">{t('booking.steps.confirmation.title')}</h2>
             {/* Resumen visual */}
             <div className="mb-6">
-              <div><b>{t('dates.checkIn')}:</b> {bookingData.checkIn && bookingData.checkOut ? `${new Date(bookingData.checkIn).toLocaleDateString('es-ES')} - ${new Date(bookingData.checkOut).toLocaleDateString('es-ES')}` : '-'}</div>
+              <div><b>{t('dates.checkIn')}:</b> {bookingData.checkIn && bookingData.checkOut ? `${new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')} - ${new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}` : '-'}</div>
               <div><b>{t('dates.guests')}:</b> {bookingData.guests}</div>
               <div><b>{t('accommodation.title')}:</b> {selectedRoom?.roomTypeName || '-'}</div>
               <div><b>{t('activities.title')}:</b> {selectedActivities.length > 0 ? selectedActivities.map(a => a.name).join(', ') : t('activities.noActivities')}</div>
@@ -72,7 +72,7 @@ export default function HomePage() {
             </button>
             {!isReadyForPayment && (
               <div className="mt-4 text-warm-600">
-                Completa todos los datos de la reserva antes de continuar.
+                {t('booking.validation.completeAllData')}
               </div>
             )}
           </div>
