@@ -227,7 +227,9 @@ async function handlePartialRefund(webhookData: WeTravelWebhookData) {
       trip_id: webhookData.data.trip_id,
       trip_uuid: webhookData.data.trip_uuid,
       order_id: webhookData.data.order_id,
-      buyer: webhookData.data.buyer.full_name,
+      buyer: webhookData.data.buyer ? 
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+        'Unknown',
       total_paid_amount: webhookData.data.total_paid_amount,
       total_due_amount: webhookData.data.total_due_amount,
       currency: webhookData.data.trip_currency
@@ -254,7 +256,9 @@ async function handleBookingUpdated(webhookData: WeTravelWebhookData) {
       trip_id: webhookData.data.trip_id,
       trip_uuid: webhookData.data.trip_uuid,
       order_id: webhookData.data.order_id,
-      buyer: webhookData.data.buyer.full_name,
+      buyer: webhookData.data.buyer ? 
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+        'Unknown',
       trip_title: webhookData.data.trip_title,
       departure_date: webhookData.data.departure_date,
       total_paid_amount: webhookData.data.total_paid_amount,
@@ -464,15 +468,18 @@ async function handlePaymentCompleted(webhookData: WeTravelWebhookData, tripId?:
 }
 
 // Función para manejar pagos fallidos
-async function handlePaymentFailed(webhookData: WeTravelWebhookData) {
+async function handlePaymentFailed(webhookData: WeTravelWebhookData, tripId?: string) {
   try {
     console.log('❌ Payment failed webhook received:', {
-      trip_id: webhookData.data.trip_id,
-      trip_uuid: webhookData.data.trip_uuid,
+      trip_id: tripId,
+      payment_id: webhookData.data.id,
       order_id: webhookData.data.order_id,
-      buyer: webhookData.data.buyer.full_name,
-      total_due_amount: webhookData.data.total_due_amount,
-      currency: webhookData.data.trip_currency
+      buyer: webhookData.data.buyer ? 
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+        'Unknown',
+      total_amount: webhookData.data.total_amount || webhookData.data.total_due_amount,
+      currency: webhookData.data.currency || webhookData.data.trip_currency,
+      status: webhookData.data.status
     });
 
     // TODO: Implementar lógica para manejar pagos fallidos
@@ -496,7 +503,9 @@ async function handleTripConfirmed(webhookData: WeTravelWebhookData) {
       trip_id: webhookData.data.trip_id,
       trip_uuid: webhookData.data.trip_uuid,
       order_id: webhookData.data.order_id,
-      buyer: webhookData.data.buyer.full_name,
+      buyer: webhookData.data.buyer ? 
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+        'Unknown',
       trip_title: webhookData.data.trip_title,
       departure_date: webhookData.data.departure_date
     });
