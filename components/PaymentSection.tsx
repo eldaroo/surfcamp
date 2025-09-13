@@ -81,9 +81,22 @@ export default function PaymentSection() {
         dueDate: new Date(checkInDate.getTime() - (daysBeforeDeparture * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
       });
 
-      // Crear payload para WeTravel (precios en dólares, no en centavos)
-      const wetravelPayload = {
-        data: {
+      // 💾 Crear payload completo incluyendo datos para guardar en DB
+      const paymentPayload = {
+        checkIn: checkInFormatted,
+        checkOut: checkOutFormatted,
+        guests: bookingData.guests,
+        roomTypeId: selectedRoom?.roomTypeId,
+        contactInfo: bookingData.contactInfo,
+        selectedActivities: selectedActivities.map(a => ({
+          id: a.id,
+          name: a.name,
+          category: a.category,
+          price: a.price,
+          package: a.category === 'yoga' ? selectedYogaPackages[a.id] : selectedSurfPackages[a.id]
+        })),
+        // WeTravel specific data
+        wetravelData: {
           trip: {
             title: "Surf & Yoga Retreat – Santa Teresa",
             start_date: checkInFormatted,
@@ -104,33 +117,17 @@ export default function PaymentSection() {
                 }
               ]
             }
-          },
-          metadata: {
-            trip_id: `st-${checkInFormatted.replace(/-/g, '')}`,
-            customer_id: `cus_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            booking_data: {
-              checkIn: checkInFormatted,
-              checkOut: checkOutFormatted,
-              guests: bookingData.guests,
-              roomType: selectedRoom?.roomTypeName,
-              activities: selectedActivities.map(a => ({
-                id: a.id,
-                name: a.name,
-                package: a.category === 'yoga' ? selectedYogaPackages[a.id] : selectedSurfPackages[a.id]
-              })),
-              total: total
-            }
           }
         }
       };
 
-      console.log('💰 Total price being sent to WeTravel:', total);
-      console.log('📤 Sending request to WeTravel API:', wetravelPayload);
+      console.log('💰 Total price being sent:', total);
+      console.log('📤 Sending request to payment API with full booking data');
 
       const wetravelResponse = await fetch('/api/wetravel-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wetravelPayload),
+        body: JSON.stringify(paymentPayload),
       });
 
       const wetravelData = await wetravelResponse.json();

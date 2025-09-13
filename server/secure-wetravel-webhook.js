@@ -426,11 +426,40 @@ app.post('/api/wetravel-webhook', checkIPAllowlist, getRawBody, async (req, res)
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Payload validation
-    const { type, data } = req.body;
+    // Payload validation - support both WeTravel formats
+    let type, data;
+    
+    // WeTravel format 1: { type, data }
+    if (req.body.type && req.body.data) {
+      type = req.body.type;
+      data = req.body.data;
+    }
+    // WeTravel format 2: { event_type, data, trip_id }
+    else if (req.body.event_type && req.body.data) {
+      type = req.body.event_type;
+      data = req.body.data;
+    }
+    // WeTravel format 3: flat structure
+    else if (req.body.event_type && req.body.id) {
+      type = req.body.event_type;
+      data = req.body;
+    }
+    else {
+      console.error('❌ Invalid webhook payload structure:', JSON.stringify(req.body, null, 2));
+      return res.status(400).json({ 
+        error: 'Invalid webhook payload: missing event_type, trip_id, or type',
+        received_fields: Object.keys(req.body)
+      });
+    }
+
+    // Validate essential data
     if (!type || !data || !data.id) {
-      console.error('❌ Invalid webhook payload structure');
-      return res.status(400).json({ error: 'Invalid payload structure' });
+      console.error('❌ Missing required fields:', { type, data_id: data?.id });
+      return res.status(400).json({ 
+        error: 'Missing required fields: type and data.id',
+        type: type,
+        data_id: data?.id
+      });
     }
 
     // Rate limiting check (basic)
