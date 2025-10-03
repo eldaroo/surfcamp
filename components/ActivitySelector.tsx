@@ -8,6 +8,7 @@ import { useI18n } from '@/lib/i18n';
 import { getLocalizedActivities } from '@/lib/activities';
 import { getActivityTotalPrice } from '@/lib/prices';
 import { formatCurrency } from '@/lib/utils';
+import { Activity } from '@/types';
 
 // Constantes con tipos explícitos para evitar errores de TypeScript
 const TIME_SLOTS = ['7:00 AM', '3:00 PM'] as const;
