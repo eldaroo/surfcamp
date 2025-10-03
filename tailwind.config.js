@@ -8,12 +8,23 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'bochan': ['Bochan', 'serif'],
+        'bochan': ['Bochan Serif', 'serif'],
         'roboto': ['Roboto', 'sans-serif'],
-        'heading': ['Bochan', 'serif'],
+        'heading': ['Bochan Serif', 'serif'],
         'body': ['Roboto', 'sans-serif'],
       },
       colors: {
+        // Brand semantic tokens
+        brand: {
+          bg: '#163237',      // Deep teal background
+          surface: '#1D4148', // Lighter teal surface
+          gold: '#eab308',    // Primary gold (yellow-500)
+          goldLight: '#ECE97F', // Light gold highlights (accent-200)
+          aqua: '#677A7D',    // Cyan for info
+          orange: '#997146',  // Warm orange
+          neutral: '#8C8179', // Neutral gray
+          light: '#CCC8BE',   // Light neutral
+        },
         // Paleta ajustada para mejor apariencia visual
         primary: {
           50: '#fefdf8',   // Muy claro, casi blanco

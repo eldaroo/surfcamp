@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { sendDarioWelcomeMessage } from '@/lib/whatsapp';
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -21,8 +22,6 @@ function verifyWebhookSignature(payload: string, signature: string, secret: stri
     .digest('hex');
   
   const expectedSignature = `sha256=${computedSignature}`;
-  console.log('🔐 Computed signature:', expectedSignature);
-  console.log('🔐 Received signature:', signature);
   
   return crypto.timingSafeEqual(
     Buffer.from(expectedSignature, 'utf8'),
@@ -93,27 +92,31 @@ interface WeTravelWebhookData {
 export async function POST(request: NextRequest) {
   try {
     console.log('🎯 WeTravel webhook received');
-    
+    console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+
     const signature = request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
-    
-    console.log('📝 Raw webhook payload:', rawBody);
-    console.log('🔐 Webhook signature:', signature);
+
+    console.log('📦 Raw body length:', rawBody.length);
+    console.log('🔐 Signature:', signature ? signature.substring(0, 20) + '...' : 'none');
+
+    // Webhook payload received
     
     // Verify webhook signature
-    const webhookSecret = process.env.WETRAVEL_WEBHOOK_SECRET!;
-    if (signature && !verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-      console.error('❌ Invalid webhook signature');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    const webhookSecret = process.env.WETRAVEL_WEBHOOK_SECRET;
+    if (signature && webhookSecret) {
+      if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
+        console.error('❌ Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+      console.log('✅ Webhook signature verified');
+    } else {
+      console.warn('⚠️ Webhook signature validation skipped (no secret or signature)');
     }
     
-    console.log('✅ Webhook signature verified');
+    // Signature verified
     
     const body = JSON.parse(rawBody);
-    console.log('🔔 WeTravel webhook received:', {
-      timestamp: new Date().toISOString(),
-      body: body
-    });
 
     // Validar que sea un webhook válido de WeTravel (soporta múltiples formatos)
     if (!body.type || !body.data) {
@@ -125,21 +128,56 @@ export async function POST(request: NextRequest) {
     }
 
     const webhookData: WeTravelWebhookData = body;
-    
+
     // Determinar el tipo de evento y trip ID según el formato
     let eventType = body.type; // payment.created, payment.updated, etc.
     let tripId = body.data?.trip?.uuid || body.data?.trip_uuid || body.data?.trip_id;
+
+    // Para booking.created, también intentar obtener order_id como fallback
+    let orderId = body.data?.order_id;
+
+    console.log('🎯 WeTravel webhook:', eventType, tripId ? `trip:${tripId}` : 'no-trip-id', orderId ? `order:${orderId}` : 'no-order-id');
     
-    console.log(`📋 Processing webhook - Type: ${eventType}, Trip ID: ${tripId}`);
-    
+    // Process webhook event
     if (!tripId) {
       console.warn('⚠️ No trip ID found in webhook payload');
-      // Continue processing anyway, log for debugging
     }
-    
+
+    // For booking.created, we need to find the payment first to get the correct order_id
+    // before creating the event_key to ensure consistency
+    let actualOrderId = null;
+    if (eventType === 'booking.created' && tripId) {
+      console.log('🔍 Pre-searching for payment with trip_id:', tripId);
+
+      // Quick search to find the correct order_id before creating event_key
+      const { data: foundPayments, error: searchError } = await supabase
+        .from('payments')
+        .select('order_id, wetravel_data')
+        .contains('wetravel_data', { trip_id: tripId })
+        .limit(1);
+
+      console.log('🔍 Pre-search result:', {
+        foundPayments,
+        searchError,
+        searchQuery: { trip_id: tripId },
+        foundCount: foundPayments?.length || 0,
+        foundData: foundPayments?.map(p => ({
+          order_id: p.order_id,
+          wetravel_data_trip_id: p.wetravel_data?.trip_id
+        })) || []
+      });
+
+      if (foundPayments && foundPayments.length > 0) {
+        actualOrderId = foundPayments[0].order_id;
+        console.log('🎯 Found actual order_id for event_key:', actualOrderId);
+      } else {
+        console.log('⚠️ Pre-search did not find payment, will use fallback logic');
+      }
+    }
+
     // Save event to database for audit trail and deduplication
-    const eventKey = `${eventType}_${tripId || 'no_trip_id'}_${Date.now()}`;
-    console.log(`📋 Processing webhook event: ${eventType} for trip ${tripId}`);
+    // Use actual order_id if found, otherwise fallback to provided IDs
+    const eventKey = `${eventType}_${actualOrderId || orderId || tripId || 'no_id'}_${tripId || 'no_trip'}`;
     
     // Check for duplicate events
     const { data: existingEvent } = await supabase
@@ -169,6 +207,13 @@ export async function POST(request: NextRequest) {
       console.log('✅ Event saved to database:', eventKey);
     }
 
+    // After processing, try to fix orphaned events if this is a booking.created
+    if (eventType === 'booking.created') {
+      setTimeout(() => {
+        fixOrphanedEvents(tripId, orderId).catch(console.error);
+      }, 1000); // Give 1 second delay to allow processing
+    }
+
     // Manejar diferentes tipos de eventos
     switch (eventType) {
       case 'payment.created':
@@ -186,12 +231,16 @@ export async function POST(request: NextRequest) {
       case 'payment.updated':
         await handlePaymentUpdated(webhookData, tripId);
         break;
-      
+
+      case 'booking.created':
+        await handleBookingCreated(webhookData, tripId, orderId, actualOrderId, eventKey);
+        break;
+
       // Legacy events
       case 'partial_refund_made':
         await handlePartialRefund(webhookData);
         break;
-      
+
       case 'booking.updated':
         await handleBookingUpdated(webhookData);
         break;
@@ -201,7 +250,7 @@ export async function POST(request: NextRequest) {
         break;
       
       default:
-        console.log(`ℹ️ Unhandled webhook event type: ${eventType}`);
+        console.warn(`Unhandled webhook event: ${eventType}`);
         break;
     }
 
@@ -524,13 +573,283 @@ async function handleTripConfirmed(webhookData: WeTravelWebhookData) {
   }
 }
 
+// Función para manejar reserva creada
+async function handleBookingCreated(webhookData: WeTravelWebhookData, tripId?: string, orderId?: string, actualOrderId?: string, eventKey?: string) {
+  try {
+    console.log('🎉 Booking created webhook received:', {
+      trip_id: tripId,
+      order_id: orderId,
+      actual_order_id: actualOrderId,
+      buyer: webhookData.data.buyer ?
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` :
+        'Unknown',
+      total_amount: webhookData.data.total_amount || webhookData.data.total_price_amount || webhookData.data.total_paid_amount,
+      currency: webhookData.data.currency || webhookData.data.trip_currency,
+      trip_title: webhookData.data.trip_title,
+      participants: webhookData.data.participants?.length || 1
+    });
+
+    // Find payment - use actualOrderId if available, otherwise fallback to previous logic
+    let payments = null;
+    let findError = null;
+
+    if (actualOrderId) {
+      console.log('🎯 Using pre-found order_id to fetch payment details:', actualOrderId);
+      const result = await supabase
+        .from('payments')
+        .select('id, order_id, wetravel_data, status')
+        .eq('order_id', actualOrderId);
+
+      payments = result.data;
+      findError = result.error;
+      console.log('🎯 Pre-found payment result:', { payments: payments?.length, error: findError });
+    } else if (tripId) {
+      // Fallback to trip_id search
+      console.log('🔍 Fallback: searching by trip_id...');
+      const result = await supabase
+        .from('payments')
+        .select('id, order_id, wetravel_data, status')
+        .contains('wetravel_data', { trip_id: tripId });
+
+      payments = result.data;
+      findError = result.error;
+    }
+
+    if (findError) {
+      console.error('❌ Error finding payment:', findError);
+      return;
+    }
+
+    if (payments && payments.length > 0) {
+      const payment = payments[0];
+      console.log(`🎉 Found matching payment: ${payment.id} for order: ${payment.order_id}`);
+
+      // Update payment status to booking_created (intermediate status before completed)
+      const { error: updatePaymentError } = await supabase
+        .from('payments')
+        .update({
+          status: 'booking_created', // New intermediate status
+          wetravel_data: {
+            ...payment.wetravel_data,
+            booking_created_webhook: webhookData,
+            booking_created_at: new Date().toISOString()
+          }
+        })
+        .eq('id', payment.id);
+
+      if (updatePaymentError) {
+        console.error('❌ Error updating payment:', updatePaymentError);
+      } else {
+        console.log('✅ Payment marked as booking_created in database');
+
+        // Update order status to booking_created
+        const { error: updateOrderError } = await supabase
+          .from('orders')
+          .update({ status: 'booking_created' })
+          .eq('id', payment.order_id);
+
+        if (updateOrderError) {
+          console.error('❌ Error updating order status:', updateOrderError);
+        } else {
+          console.log('✅ Order marked as booking_created in database');
+
+          // Send Dario welcome message to customer
+          try {
+            // Get order details for the welcome message
+            const { data: orderData, error: orderError } = await supabase
+              .from('orders')
+              .select('booking_data')
+              .eq('id', payment.order_id)
+              .single();
+
+            if (orderData && orderData.booking_data && !orderError) {
+              const booking = orderData.booking_data;
+
+              // Get room type name
+              const roomTypeNames: { [key: string]: string } = {
+                'casa-playa': 'Casa de Playa (Cuarto Compartido)',
+                'casitas-privadas': 'Casitas Privadas',
+                'casas-deluxe': 'Casas Deluxe'
+              };
+
+              const roomTypeName = roomTypeNames[booking.roomTypeId] || booking.roomTypeId;
+
+              // Prepare activities list
+              const activities = booking.selectedActivities?.map((activity: any) => activity.name) || [];
+
+              // Send welcome message from Dario
+              const messageResult = await sendDarioWelcomeMessage(
+                booking.contactInfo.phone,
+                {
+                  checkIn: booking.checkIn,
+                  checkOut: booking.checkOut,
+                  guestName: booking.contactInfo.firstName,
+                  activities: activities,
+                  roomTypeName: roomTypeName,
+                  guests: booking.guests
+                }
+              );
+
+              if (messageResult.success) {
+                console.log('✅ Dario welcome message sent successfully');
+              } else {
+                console.error('❌ Failed to send Dario welcome message:', messageResult.error);
+              }
+            } else {
+              console.error('❌ Could not retrieve order data for welcome message:', orderError);
+            }
+          } catch (error) {
+            console.error('❌ Error sending Dario welcome message:', error);
+          }
+        }
+
+        // Update the wetravel_events record with the payment and order IDs
+        if (eventKey) {
+          await supabase
+            .from('wetravel_events')
+            .update({
+              payment_id: payment.id,
+              order_id: payment.order_id
+            })
+            .eq('event_key', eventKey);
+        } else {
+          // Fallback update for older events
+          await supabase
+            .from('wetravel_events')
+            .update({
+              payment_id: payment.id,
+              order_id: payment.order_id
+            })
+            .eq('event_type', 'booking.created')
+            .like('event_key', `%${tripId}%`);
+        }
+
+        // Also try to update any existing orphaned events for this trip
+        const { data: orphanUpdate, error: orphanError } = await supabase
+          .from('wetravel_events')
+          .update({
+            payment_id: payment.id,
+            order_id: payment.order_id
+          })
+          .eq('event_type', 'booking.created')
+          .like('event_key', `%${tripId}%`)
+          .is('payment_id', null)
+          .select();
+
+        console.log('🔧 Orphan update result:', {
+          updated: orphanUpdate?.length || 0,
+          error: orphanError,
+          tripId
+        });
+      }
+    } else {
+      console.log('❌ No matching payment found!');
+      console.log('🔍 Search criteria used:', {
+        tripId,
+        orderId,
+        searchAttempts: [
+          tripId ? 'wetravel_data contains trip_id' : null,
+          orderId ? 'wetravel_order_id equals order_id' : null,
+          orderId ? 'wetravel_data contains order_id' : null
+        ].filter(Boolean)
+      });
+      console.log('🎉 Booking details:', {
+        amount: webhookData.data.total_amount || webhookData.data.total_price_amount || webhookData.data.total_paid_amount,
+        currency: webhookData.data.currency || webhookData.data.trip_currency,
+        customer: webhookData.data.buyer ?
+          `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` :
+          'Unknown',
+        trip_title: webhookData.data.trip_title,
+        full_webhook_data: JSON.stringify(webhookData, null, 2)
+      });
+
+      // Try to find any payment records to see what's in the database
+      const { data: allPayments, error: allPaymentsError } = await supabase
+        .from('payments')
+        .select('id, order_id, wetravel_data, wetravel_order_id, status')
+        .limit(5);
+
+      if (!allPaymentsError && allPayments) {
+        console.log('💳 Recent payments in database:', allPayments);
+      }
+    }
+
+    console.log('✅ Booking created webhook processed successfully');
+
+  } catch (error) {
+    console.error('❌ Error handling booking created webhook:', error);
+    throw error;
+  }
+}
+
+// Function to fix orphaned events (events with null payment_id/order_id)
+async function fixOrphanedEvents(tripId?: string, webhookOrderId?: string) {
+  if (!tripId) return;
+
+  try {
+    console.log('🔧 Attempting to fix orphaned events for trip_id:', tripId);
+
+    // Find payment by trip_id
+    const { data: payments, error: findError } = await supabase
+      .from('payments')
+      .select('id, order_id, wetravel_data, status')
+      .contains('wetravel_data', { trip_id: tripId })
+      .limit(1);
+
+    if (findError || !payments || payments.length === 0) {
+      console.log('⚠️ Could not find payment to fix orphaned events');
+      return;
+    }
+
+    const payment = payments[0];
+    console.log('🔧 Found payment for orphan fix:', payment.id, 'order:', payment.order_id);
+
+    // Update all orphaned events for this trip
+    const { data: updatedEvents, error: updateError } = await supabase
+      .from('wetravel_events')
+      .update({
+        payment_id: payment.id,
+        order_id: payment.order_id
+      })
+      .eq('event_type', 'booking.created')
+      .like('event_key', `%${tripId}%`)
+      .is('payment_id', null)
+      .select();
+
+    if (updateError) {
+      console.error('❌ Error fixing orphaned events:', updateError);
+    } else {
+      console.log('✅ Fixed orphaned events:', updatedEvents?.length || 0);
+
+      // Also update payment status if it's still pending
+      if (payment.status === 'pending') {
+        await supabase
+          .from('payments')
+          .update({ status: 'booking_created' })
+          .eq('id', payment.id);
+
+        await supabase
+          .from('orders')
+          .update({ status: 'booking_created' })
+          .eq('id', payment.order_id);
+
+        console.log('✅ Updated payment and order status to booking_created');
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ Error in fixOrphanedEvents:', error);
+  }
+}
+
 // Endpoint GET para verificar que el webhook esté funcionando
 export async function GET() {
-  return NextResponse.json({ 
+  return NextResponse.json({
     status: 'WeTravel webhook endpoint is active',
     timestamp: new Date().toISOString(),
     supported_events: [
       'partial_refund_made',
+      'booking.created',
       'booking.updated',
       'payment.completed',
       'payment.failed',

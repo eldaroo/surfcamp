@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
+import BackButton from './BackButton';
+import PhoneSelector from './PhoneSelector';
 
 export default function ContactForm() {
   const { t } = useI18n();
@@ -69,131 +71,189 @@ export default function ContactForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="card p-3 max-w-xl mx-auto"
-    >
-              <div className="mb-3">
-        <div>
-          <h2 className="text-2xl font-bold text-white font-heading">{t('contact.title')}</h2>
-          <p className="text-yellow-300">{t('contact.subtitle')}</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {/* First Name */}
-        <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-white mb-0.5">
-            {t('contact.firstName')}
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            value={formData.firstName}
-            onChange={(e) => handleInputChange('firstName', e.target.value)}
-            className={`input-field ${
-              errors.firstName ? 'border-warm-400' : 'border-warm-300'
-            }`}
-
-          />
-          {errors.firstName && (
-            <p className="mt-1 text-sm text-red-300">{errors.firstName}</p>
-          )}
+    <div className="min-h-screen bg-gray-900 py-8 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-2xl mx-auto"
+      >
+        {/* Back Button */}
+        <div className="mb-8">
+          <BackButton variant="minimal" />
         </div>
 
-        {/* Last Name */}
-        <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-white mb-0.5">
-            {t('contact.lastName')}
-          </label>
-                      <input
-              type="text"
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              className={`input-field ${
-                errors.lastName ? 'border-warm-400' : 'border-warm-300'
-              }`}
-
-            />
-          {errors.lastName && (
-            <p className="mt-1 text-sm text-red-300">{errors.lastName}</p>
-          )}
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-500/20">
+            <svg className="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-3 font-heading">{t('contact.title')}</h1>
+          <p className="text-xl text-yellow-400 font-heading">{t('contact.subtitle')}</p>
         </div>
 
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-white mb-0.5">
-            {t('contact.email')}
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className={`input-field ${
-              errors.email ? 'border-warm-400' : 'border-warm-300'
-            }`}
-            
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-300">{errors.email}</p>
-          )}
-        </div>
+        {/* Form Card */}
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl">
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-white mb-2 font-heading">Personal Information</h2>
+            <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
+          </div>
 
-        {/* Phone */}
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-white mb-0.5">
-            {t('contact.phone')}
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            value={formData.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            className={`input-field ${
-              errors.phone ? 'border-warm-400' : 'border-warm-300'
-            }`}
-            
-          />
-          {errors.phone && (
-            <p className="mt-1 text-sm text-red-300">{errors.phone}</p>
-          )}
-        </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Name Fields Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* First Name */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-semibold text-gray-300 mb-3">
+                  {t('contact.firstName')}
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  placeholder={t('contact.placeholder.firstName')}
+                  className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                    errors.firstName ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                />
+                {errors.firstName && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {errors.firstName}
+                  </motion.p>
+                )}
+              </div>
 
-        {/* DNI */}
-        <div>
-          <label htmlFor="dni" className="block text-sm font-medium text-white mb-0.5">
-            {t('contact.dni')}
-          </label>
-          <input
-            type="text"
-            id="dni"
-            value={formData.dni}
-            onChange={(e) => handleInputChange('dni', e.target.value)}
-            className={`input-field ${
-              errors.dni ? 'border-warm-400' : 'border-warm-300'
-            }`}
+              {/* Last Name */}
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-semibold text-gray-300 mb-3">
+                  {t('contact.lastName')}
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  placeholder={t('contact.placeholder.lastName')}
+                  className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                    errors.lastName ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                />
+                {errors.lastName && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-2 text-sm text-red-400"
+                  >
+                    {errors.lastName}
+                  </motion.p>
+                )}
+              </div>
+            </div>
 
-          />
-          {errors.dni && (
-            <p className="mt-1 text-sm text-red-300">{errors.dni}</p>
-          )}
-        </div>
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-semibold text-gray-300 mb-3">
+                {t('contact.email')}
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder={t('contact.placeholder.email')}
+                className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                  errors.email ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                }`}
+              />
+              {errors.email && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-400"
+                >
+                  {errors.email}
+                </motion.p>
+              )}
+            </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-28"
-          >
-            {isSubmitting ? t('common.loading') : t('common.continue')}
-          </button>
+            {/* Phone */}
+            <div>
+              <PhoneSelector
+                label={t('contact.phone')}
+                value={formData.phone}
+                onChange={(phone) => handleInputChange('phone', phone)}
+                placeholder={t('contact.placeholder.phone')}
+                error={errors.phone}
+              />
+            </div>
+
+            {/* DNI */}
+            <div>
+              <label htmlFor="dni" className="block text-sm font-semibold text-gray-300 mb-3">
+                {t('contact.dni')}
+              </label>
+              <input
+                type="text"
+                id="dni"
+                value={formData.dni}
+                onChange={(e) => handleInputChange('dni', e.target.value)}
+                placeholder={t('contact.placeholder.dni')}
+                className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                  errors.dni ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                }`}
+              />
+              {errors.dni && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-400"
+                >
+                  {errors.dni}
+                </motion.p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-4">
+              <motion.button
+                type="submit"
+                disabled={isSubmitting}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 ${
+                  isSubmitting
+                    ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                    : 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 shadow-lg hover:shadow-yellow-500/25'
+                }`}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {t('common.loading')}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <span>{t('common.continue')}</span>
+                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </div>
+                )}
+              </motion.button>
+            </div>
+          </form>
         </div>
-      </form>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 } 

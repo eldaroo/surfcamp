@@ -39,7 +39,13 @@
       "Bash(taskkill:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(dir:*)",
+      "Bash(where ngrok)",
+      "Bash(ngrok:*)",
+      "Bash(npx next dev:*)",
+      "Bash(npx eslint:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

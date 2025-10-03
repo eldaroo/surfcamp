@@ -6,6 +6,7 @@ import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import PriceSummary from '@/components/PriceSummary';
 import CustomDatePicker from '@/components/CustomDatePicker';
+import BackButton from './BackButton';
 
 export default function DateSelector() {
   const { t, locale } = useI18n();
@@ -91,6 +92,11 @@ export default function DateSelector() {
         className="card"
       >
               <div className="mb-6">
+          {/* Back Button */}
+          <div className="mb-4">
+            <BackButton variant="minimal" />
+          </div>
+
           <div>
             <h2 className="text-2xl font-bold text-white font-heading">{t('dates.title')}</h2>
             <p className="text-yellow-300">{t('dates.subtitle')}</p>
@@ -107,7 +113,7 @@ export default function DateSelector() {
             <CustomDatePicker
               selected={checkInDate}
               onChange={(date) => {
-                setBookingData({ checkIn: date || undefined });
+                setBookingData({ ...bookingData, checkIn: date || undefined });
               }}
               placeholderText={t('dates.checkIn')}
               minDate={new Date()}
@@ -123,7 +129,7 @@ export default function DateSelector() {
             <CustomDatePicker
               selected={checkOutDate}
               onChange={(date) => {
-                setBookingData({ checkOut: date || undefined });
+                setBookingData({ ...bookingData, checkOut: date || undefined });
               }}
               placeholderText={t('dates.checkOut')}
               minDate={checkInDate || new Date()}
@@ -142,7 +148,7 @@ export default function DateSelector() {
               onClick={() => {
                 const newGuests = Math.max(1, guests - 1);
                 setGuests(newGuests);
-                setBookingData({ guests: newGuests });
+                setBookingData({ ...bookingData, guests: newGuests });
               }}
               className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
@@ -156,7 +162,7 @@ export default function DateSelector() {
               onClick={() => {
                 const newGuests = guests + 1;
                 setGuests(newGuests);
-                setBookingData({ guests: newGuests });
+                setBookingData({ ...bookingData, guests: newGuests });
               }}
               className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
             >
@@ -171,7 +177,7 @@ export default function DateSelector() {
         {/* Summary */}
         {(bookingData.checkIn || bookingData.checkOut) && (
           <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-            <h3 className="font-semibold text-yellow-300 mb-2">{t('dates.summary.title')}</h3>
+            <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
             <div className="space-y-1 text-sm">
               {bookingData.checkIn && (
                 <div>

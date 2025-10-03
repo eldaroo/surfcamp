@@ -1,28 +1,48 @@
-/* Importar solo las fuentes Roboto y Bochan */
+/* Importar solo las fuentes Roboto y Bochan Serif local */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bochan:wght@400;500;600;700&display=swap');
+
+/* Definir fuente local Bochan Serif */
+@font-face {
+  font-family: 'Bochan Serif';
+  src: url('/fonts/BochanSerif.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-bg: #0f2a2b;
+    --brand-surface: #14363a;
+    --brand-border: #2a4c4f;
+    --brand-gold: #f2c14e;        /* primary */
+    --brand-gold-weak: #e9d08a;   /* disabled */
+    --brand-aqua: #39c6c6;        /* info/success */
+    --brand-orange: #f39b4a;      /* soft highlight */
+    --brand-text: #f2f5f4;
+    --brand-text-dim: #c7d0cf;
+  }
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   /* Fuente base para todo el body */
   body {
     @apply antialiased;
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
     color: white;
-    background-color: #163237;
+    background-color: var(--brand-bg);
   }
 
   /* Fuente para todos los headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Bochan', serif;
+    font-family: 'Bochan Serif', serif;
     font-weight: 600;
     color: white;
   }
@@ -41,7 +61,7 @@
 
   /* Clases de utilidad para fuentes */
   .font-heading {
-    font-family: 'Bochan', serif !important;
+    font-family: 'Bochan Serif', serif !important;
     font-weight: 600;
     color: white;
   }
@@ -56,7 +76,7 @@
   h5.font-heading,
   h6.font-heading,
   span.font-heading {
-    font-family: 'Bochan', serif !important;
+    font-family: 'Bochan Serif', serif !important;
   }
 
   .font-body {
@@ -71,7 +91,7 @@
   }
 
   .font-bochan {
-    font-family: 'Bochan', serif !important;
+    font-family: 'Bochan Serif', serif !important;
     color: white;
   }
 }
@@ -181,7 +201,7 @@
   }
 
   .font-heading {
-    font-family: 'Bochan', serif !important;
+    font-family: 'Bochan Serif', serif !important;
     font-weight: 600;
   }
 
@@ -195,7 +215,7 @@
   }
 
   .font-bochan {
-    font-family: 'Bochan', serif !important;
+    font-family: 'Bochan Serif', serif !important;
   }
 
   /* Estilos para tarjetas en tema oscuro */

@@ -24,7 +24,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ amount, order
   if (!amount || !order_id || !order_description) {
     return (
       <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-        <h2 className="text-2xl font-bold mb-4">{t('payment.bookingConfirmation')}</h2>
+        <h2 className="text-2xl font-bold mb-4 font-heading">{t('payment.bookingConfirmation')}</h2>
         <div className="mb-4 text-red-600 font-semibold">{t('payment.missingPaymentData')}</div>
         <div className="mb-2"><b>Monto:</b> {amount ? amount + ' USD' : <span className="text-red-600">(no definido)</span>}</div>
         <div className="mb-2"><b>Descripción:</b> {order_description || <span className="text-red-600">(no definida)</span>}</div>
@@ -89,7 +89,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ amount, order
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">{t('payment.bookingConfirmation')}</h2>
+      <h2 className="text-2xl font-bold mb-4 font-heading">{t('payment.bookingConfirmation')}</h2>
       {summary}
       <div className="mb-4">
         <p><b>Monto:</b> {amount} USD</p>

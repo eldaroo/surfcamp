@@ -55,13 +55,13 @@ export default function HomePage() {
       case 'confirmation':
         return (
           <div className="card text-center p-8">
-            <h2 className="text-2xl font-bold mb-4">{t('booking.steps.confirmation.title')}</h2>
+            <h2 className="text-2xl font-bold mb-4 font-heading">{t('booking.steps.confirmation.title')}</h2>
             {/* Resumen visual */}
             <div className="mb-6">
               <div><b>{t('dates.checkIn')}:</b> {bookingData.checkIn && bookingData.checkOut ? `${new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')} - ${new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES')}` : '-'}</div>
               <div><b>{t('dates.guests')}:</b> {bookingData.guests}</div>
               <div><b>{t('accommodation.title')}:</b> {selectedRoom?.roomTypeName || '-'}</div>
-              <div><b>{t('activities.title')}:</b> {selectedActivities.length > 0 ? selectedActivities.map(a => a.name).join(', ') : t('activities.noActivities')}</div>
+              <div><b>{t('activities.title')}:</b> {selectedActivities.length > 0 ? selectedActivities.map((a: any) => a.name).join(', ') : t('activities.noActivities')}</div>
             </div>
             <button
               className="btn-primary"

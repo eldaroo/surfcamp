@@ -44,16 +44,16 @@ export const ACTIVITY_BASE_DATA = [
 export const ACTIVITY_TRANSLATIONS = {
   es: {
     'surf-package': {
-      name: 'Programa de Surf',
-      description: 'Clases de surf especializadas para cada nivel + videoanálisis personalizado + material de video y fotográfico. Incluye tabla y lycra.',
+      name: 'Programa de Surf - Domina las Olas',
+      description: 'Aprende a surfear como un profesional en Santa Teresa. Lecciones personalizadas, videoanálisis exclusivo y material completo. Tabla y lycra incluidos. Instructores certificados. Grupos reducidos.',
     },
     'yoga-package': {
-      name: 'Sesiones de Yoga',
-      description: 'Sesiones de yoga al amanecer para comenzar el día con energía y equilibrio. Elige el paquete que mejor se adapte a tu estadía.',
+      name: 'Yoga Matutino - Alinea tu Cuerpo y Mente',
+      description: 'Comienza el día centrado y energizado con sesiones frente al océano dirigidas por instructores certificados. Clases matutinas frente al océano. Mats y accesorios incluidos. Flujo suave, adecuado para todos los niveles. Grupos pequeños para atención personal.',
     },
     'ice-bath-session': {
-      name: 'Baños de Hielo',
-      description: 'Sesión 1:1 de terapia de frío para regeneración completa. Incluye movimiento y técnicas de respiración para máxima recuperación.',
+      name: 'Terapia de Baño de Hielo - Recarga tu Cuerpo',
+      description: 'Siéntete vivo, recupérate más rápido y mejora tu estado de ánimo con una inmersión en frío guiada. Respiración guiada y preparación de movimiento. Recuperación inmediata para músculos adoloridos. Regeneración perfecta post-surf. Experiencia privada 1:1.',
     },
     'transport-airport': {
       name: 'Transporte Aeropuerto San José',
@@ -66,16 +66,16 @@ export const ACTIVITY_TRANSLATIONS = {
   },
   en: {
     'surf-package': {
-      name: 'Surf Program',
-      description: 'Specialized surf classes for every level + personalized video analysis + video and photo material. Includes board and wetsuit.',
+      name: 'Surf Program - Ride the Wave',
+      description: 'Learn to Surf Like a Pro in Santa Teresa. Personalized lessons, video analysis, and exclusive materials. Board and wetsuit included. Certified instructors. Small groups.',
     },
     'yoga-package': {
-      name: 'Yoga Sessions',
-      description: 'Sunrise yoga sessions to start the day with energy and balance. Choose the package that best fits your stay.',
+      name: 'Morning Yoga - Align Your Body & Mind',
+      description: 'Start your day grounded and energized with ocean-view sessions led by certified instructors. Oceanfront morning classes. Mats & props included. Gentle flow, suitable for all levels. Small group size for personal attention.',
     },
     'ice-bath-session': {
-      name: 'Ice Baths',
-      description: '1:1 cold therapy session for complete regeneration. Includes movement and breathing techniques for maximum recovery.',
+      name: 'Ice Bath Therapy - Recharge Your Body',
+      description: 'Feel alive, recover faster, and boost your mood with a guided cold immersion. Guided breathwork & movement prep. Immediate recovery for sore muscles. Perfect post-surf regeneration. Private, 1:1 experience.',
     },
     'transport-airport': {
       name: 'San José Airport Transport',

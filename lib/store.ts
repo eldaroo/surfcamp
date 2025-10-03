@@ -20,6 +20,7 @@ interface BookingStore {
   selectedTimeSlots: Record<string, '7:00 AM' | '3:00 PM'>; // activityId -> timeSlot
   selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // activityId -> yogaPackage
   selectedSurfPackages: Record<string, '4-classes' | '5-classes' | '6-classes'>; // activityId -> surfPackage
+  selectedSurfClasses: Record<string, number>; // activityId -> number of classes
   priceBreakdown: PriceBreakdown | null;
   availabilityCheck: AvailabilityCheck | null;
   
@@ -39,11 +40,14 @@ interface BookingStore {
   setSelectedTimeSlot: (activityId: string, timeSlot: '7:00 AM' | '3:00 PM') => void;
   setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void;
   setSelectedSurfPackage: (activityId: string, surfPackage: '4-classes' | '5-classes' | '6-classes') => void;
+  setSelectedSurfClasses: (activityId: string, classes: number) => void;
   setPriceBreakdown: (breakdown: PriceBreakdown | null) => void;
   setAvailabilityCheck: (check: AvailabilityCheck | null) => void;
   setAvailableRooms: (rooms: Room[] | null) => void;
   setSelectedRoom: (room: Room | null) => void;
   setCurrentStep: (step: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success') => void;
+  goBack: () => void;
+  canGoBack: () => boolean;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
@@ -56,6 +60,7 @@ const initialState = {
   selectedTimeSlots: {},
   selectedYogaPackages: {},
   selectedSurfPackages: {},
+  selectedSurfClasses: {},
   priceBreakdown: null,
   availabilityCheck: null,
   availableRooms: null,
@@ -97,6 +102,12 @@ export const useBookingStore = create<BookingStore>((set) => ({
       const newSelectedSurfPackages = { ...state.selectedSurfPackages, [activityId]: surfPackage };
       return { selectedSurfPackages: newSelectedSurfPackages };
     }),
+
+  setSelectedSurfClasses: (activityId, classes) =>
+    set((state) => {
+      const newSelectedSurfClasses = { ...state.selectedSurfClasses, [activityId]: classes };
+      return { selectedSurfClasses: newSelectedSurfClasses };
+    }),
   
   setPriceBreakdown: (breakdown) =>
     set({ priceBreakdown: breakdown }),
@@ -112,12 +123,29 @@ export const useBookingStore = create<BookingStore>((set) => ({
   
   setCurrentStep: (step) =>
     set({ currentStep: step }),
-  
+
+  goBack: () =>
+    set((state) => {
+      const stepOrder: Array<'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success'> = [
+        'activities', 'dates', 'accommodation', 'contact', 'confirmation', 'payment', 'success'
+      ];
+      const currentIndex = stepOrder.indexOf(state.currentStep);
+      if (currentIndex > 0) {
+        return { currentStep: stepOrder[currentIndex - 1] };
+      }
+      return state;
+    }),
+
+  canGoBack: () => {
+    const state = useBookingStore.getState();
+    return state.currentStep !== 'activities' && state.currentStep !== 'success';
+  },
+
   setLoading: (loading) =>
     set({ isLoading: loading }),
-  
+
   setError: (error) =>
     set({ error }),
-  
+
   reset: () => set(initialState),
 })); 

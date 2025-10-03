@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, CSSProperties } from 'react';
 import { motion } from 'framer-motion';
+import { Star, Users, Clock, Flame, ShieldCheck, Sparkles, Minus, Plus, Timer, Award, CheckCircle, TrendingUp, Heart, MapPin, Calendar } from 'lucide-react';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getLocalizedActivities } from '@/lib/activities';
@@ -17,6 +18,265 @@ type YogaPackage = typeof YOGA_PACKAGES[number];
 
 const SURF_PACKAGES = ['4-classes', '5-classes', '6-classes'] as const;
 type SurfPackage = typeof SURF_PACKAGES[number];
+type CardTheme = {
+  background: string;
+  borderColor: string;
+  shadow: string;
+  accent: string;
+  accentContrast: string;
+  badgePrimaryBg: string;
+  badgePrimaryBorder: string;
+  badgeSecondaryBg: string;
+  badgeSecondaryBorder: string;
+  text: string;
+  muted: string;
+  duration: string;
+};
+
+const CARD_THEMES: Record<string, CardTheme> = {
+  surf: {
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    borderColor: 'rgba(71, 85, 105, 0.5)',
+    shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    accent: '#fbbf24',
+    accentContrast: '#1f2937',
+    badgePrimaryBg: 'rgba(71, 85, 105, 0.3)',
+    badgePrimaryBorder: 'rgba(71, 85, 105, 0.5)',
+    badgeSecondaryBg: 'rgba(71, 85, 105, 0.2)',
+    badgeSecondaryBorder: 'rgba(71, 85, 105, 0.3)',
+    text: '#ffffff',
+    muted: '#e2e8f0',
+    duration: '#0ea5e9',
+  },
+  yoga: {
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    borderColor: 'rgba(71, 85, 105, 0.5)',
+    shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    accent: '#06b6d4',
+    accentContrast: '#fff',
+    badgePrimaryBg: 'rgba(71, 85, 105, 0.3)',
+    badgePrimaryBorder: 'rgba(71, 85, 105, 0.5)',
+    badgeSecondaryBg: 'rgba(71, 85, 105, 0.2)',
+    badgeSecondaryBorder: 'rgba(71, 85, 105, 0.3)',
+    text: '#ffffff',
+    muted: '#e2e8f0',
+    duration: '#10b981',
+  },
+  ice_bath: {
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    borderColor: 'rgba(71, 85, 105, 0.5)',
+    shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    accent: '#0ea5e9',
+    accentContrast: '#fff',
+    badgePrimaryBg: 'rgba(71, 85, 105, 0.3)',
+    badgePrimaryBorder: 'rgba(71, 85, 105, 0.5)',
+    badgeSecondaryBg: 'rgba(71, 85, 105, 0.2)',
+    badgeSecondaryBorder: 'rgba(71, 85, 105, 0.3)',
+    text: '#ffffff',
+    muted: '#e2e8f0',
+    duration: '#38bdf8',
+  },
+  default: {
+    background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+    borderColor: 'rgba(71, 85, 105, 0.5)',
+    shadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+    accent: '#fbbf24',
+    accentContrast: '#1f2937',
+    badgePrimaryBg: 'rgba(71, 85, 105, 0.3)',
+    badgePrimaryBorder: 'rgba(71, 85, 105, 0.5)',
+    badgeSecondaryBg: 'rgba(71, 85, 105, 0.2)',
+    badgeSecondaryBorder: 'rgba(71, 85, 105, 0.3)',
+    text: '#ffffff',
+    muted: '#e2e8f0',
+    duration: '#0ea5e9',
+  },
+};
+
+type MarketingContent = {
+  title: string;
+  subtitle: string;
+  rating: string;
+  limited: string;
+  trust: string;
+  socialProof: string;
+  accent: string;
+  accentSecondary: string;
+  accentSoft: string;
+  contrastText: string;
+  groupInfo: string;
+  tagline?: string;
+};
+
+const MARKETING_CONTENT: Record<string, MarketingContent> = {
+  surf: {
+    title: 'Programa de Surf',
+    subtitle: '',
+    rating: '4.9 (120 reviews)',
+    limited: '',
+    trust: 'Premium',
+    socialProof: '',
+    accent: '#fbbf24',
+    accentSecondary: '#f59e0b',
+    accentSoft: 'rgba(251, 191, 36, 0.18)',
+    contrastText: '#1f2937',
+    groupInfo: 'Hasta 5 personas',
+    tagline: '',
+  },
+  yoga: {
+    title: 'Yoga Matutino',
+    subtitle: 'Sunrise yoga sessions to start the day with energy and balance.',
+    rating: '',
+    limited: '',
+    trust: '',
+    socialProof: '',
+    accent: '#06b6d4',
+    accentSecondary: '#0891b2',
+    accentSoft: 'rgba(6, 182, 212, 0.16)',
+    contrastText: '#fff',
+    groupInfo: 'Grupos pequeños',
+    tagline: '',
+  },
+  ice_bath: {
+    title: 'Ice Bath Therapy',
+    subtitle: '1:1 cold therapy session for complete regeneration. Includes movement and breathing techniques for maximum recovery.',
+    rating: '',
+    limited: '',
+    trust: '',
+    socialProof: '',
+    accent: '#0ea5e9',
+    accentSecondary: '#0284c7',
+    accentSoft: 'rgba(14, 165, 233, 0.18)',
+    contrastText: '#fff',
+    groupInfo: 'Sesión privada',
+    tagline: '',
+  },
+  transport: {
+    title: 'Transporte Aeropuerto',
+    subtitle: 'Traslado directo desde/hacia San José',
+    rating: '',
+    limited: '',
+    trust: '',
+    socialProof: '',
+    accent: '#fbbf24',
+    accentSecondary: '#f59e0b',
+    accentSoft: 'rgba(251, 191, 36, 0.18)',
+    contrastText: '#1f2937',
+    groupInfo: 'Hasta 8 personas',
+    tagline: '',
+  },
+  hosting: {
+    title: 'Servicio de Hosting',
+    subtitle: 'Organización personalizada de tu estadía',
+    rating: '',
+    limited: '',
+    trust: '',
+    socialProof: '',
+    accent: '#fbbf24',
+    accentSecondary: '#f59e0b',
+    accentSoft: 'rgba(251, 191, 36, 0.18)',
+    contrastText: '#1f2937',
+    groupInfo: 'Personalizado',
+    tagline: '',
+  },
+  default: {
+    title: '',
+    subtitle: '',
+    rating: '4.8 (100 reviews)',
+    limited: 'Save 30%',
+    trust: 'Premium',
+    socialProof: '',
+    accent: '#38bdf8',
+    accentSecondary: '#60a5fa',
+    accentSoft: 'rgba(96, 165, 250, 0.16)',
+    contrastText: '#082f49',
+    groupInfo: 'Atención personal',
+    tagline: '',
+  },
+};
+
+// UI text translations for activity cards
+const UI_TRANSLATIONS = {
+  es: {
+    // Surf card specifics
+    certifiedInstructors: 'Profesores certificados',
+    includesEquipment: 'Incluye lycra y tabla',
+    videoAnalysis: 'Video analysis',
+    transportIncluded: 'Traslados a otros spots incluidos',
+    classesOfHours: 'clases de 2h',
+    smallGroups: 'Grupos reducidos',
+
+    // General UI
+    hoursOfTravel: 'horas de viaje',
+    minutes: 'minutos',
+    allLevels: 'Todos los niveles',
+    postSurfRecovery: 'Post-surf recovery',
+    doorToDoor: 'Puerta a puerta',
+    completeService: 'Servicio completo',
+    people: 'Personas',
+    sessions: 'Sesiones',
+    schedule: 'Horario',
+    plan: 'Plan',
+    classUnit: 'clase',
+    classesUnit: 'clases',
+    numberOfClasses: 'Número de clases',
+    totalPrice: 'Precio total',
+    completeProgram: 'programa completo',
+    completeClasses: 'clases completas',
+    perSession: 'por sesión',
+    persons: 'personas',
+    sessionsUnit: 'sesiones',
+    trips: 'viajes',
+    perTrip: 'por viaje',
+    perPerson: 'por persona',
+    selected: '✓ Seleccionado',
+    bookNow: 'Reservar Ahora',
+    clear: 'Limpiar',
+
+    // Trust indicators
+    limitedSpots: 'Limited spots per group – book today to secure your wave',
+    trustedTravelers: 'Trusted by travelers from 15+ countries'
+  },
+  en: {
+    // Surf card specifics
+    certifiedInstructors: 'Certified instructors',
+    includesEquipment: 'Board and wetsuit included',
+    videoAnalysis: 'Video analysis',
+    transportIncluded: 'Transport to other spots included',
+    classesOfHours: '2-hour classes',
+    smallGroups: 'Small groups',
+
+    // General UI
+    hoursOfTravel: 'hours of travel',
+    minutes: 'minutes',
+    allLevels: 'All levels',
+    postSurfRecovery: 'Post-surf recovery',
+    doorToDoor: 'Door to door',
+    completeService: 'Complete service',
+    people: 'People',
+    sessions: 'Sessions',
+    schedule: 'Schedule',
+    plan: 'Plan',
+    classUnit: 'class',
+    classesUnit: 'classes',
+    numberOfClasses: 'Number of classes',
+    totalPrice: 'Total price',
+    completeProgram: 'complete program',
+    completeClasses: 'complete classes',
+    perSession: 'per session',
+    persons: 'people',
+    sessionsUnit: 'sessions',
+    trips: 'trips',
+    perTrip: 'per trip',
+    perPerson: 'per person',
+    selected: '✓ Selected',
+    bookNow: 'Book Now',
+    clear: 'Clear',
+
+    // Trust indicators
+    limitedSpots: 'Limited spots per group – book today to secure your wave',
+    trustedTravelers: 'Trusted by travelers from 15+ countries'
+  }
+};
 
 // Función para renderizar las tarjetas de actividad (debe estar fuera del componente principal)
 const createRenderActivityCard = (
@@ -25,6 +285,9 @@ const createRenderActivityCard = (
   bookingData: any,
   getSelectedYogaPackage: (id: string) => '1-class' | '3-classes' | '10-classes' | undefined,
   getSelectedSurfPackage: (id: string) => '4-classes' | '5-classes' | '6-classes' | undefined,
+  getSelectedSurfClasses: (id: string) => number,
+  updateSurfClasses: (id: string, classes: number) => void,
+  calculateSurfPrice: (classes: number) => number,
   getActivityTotalPrice: (category: string, packageType: string, guests: number) => number,
   formatCurrency: (amount: number) => string,
   hasQuantitySelector: (category: string) => boolean,
@@ -39,12 +302,16 @@ const createRenderActivityCard = (
   updateActivityQuantity: (id: string, quantity: number) => void,
   handleActivityToggle: (activity: any) => void,
   clearActivity: (activityId: string) => void,
-  t: (key: string) => string
+  t: (key: string) => string,
+  locale: 'es' | 'en'
 ) => {
   return (activity: any) => {
     const isSelected = selectedActivities.some((a: any) => a.id === activity.id);
     const quantity = activityQuantities[activity.id] || (isSelected ? 1 : 0);
-    
+
+    // Get UI translations for current locale
+    const ui = UI_TRANSLATIONS[locale] || UI_TRANSLATIONS.es;
+
     let totalPrice: number;
     if (activity.category === 'yoga') {
       const yogaPackage = getSelectedYogaPackage(activity.id);
@@ -54,12 +321,8 @@ const createRenderActivityCard = (
         totalPrice = getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
       }
     } else if (activity.category === 'surf') {
-      const surfPackage = getSelectedSurfPackage(activity.id);
-      if (!surfPackage) {
-        totalPrice = 0;
-      } else {
-        totalPrice = getActivityTotalPrice('surf', surfPackage, bookingData.guests || 1);
-      }
+      const surfClasses = getSelectedSurfClasses(activity.id);
+      totalPrice = calculateSurfPrice(surfClasses) * (bookingData.guests || 1);
     } else if (activity.category === 'ice_bath') {
       const sessions = activityQuantities[`${activity.id}_sessions`] || 1;
       totalPrice = activity.price * quantity * sessions;
@@ -69,284 +332,505 @@ const createRenderActivityCard = (
       totalPrice = activity.price * (bookingData.guests || 1);
     }
 
+    // Get marketing content for the activity
+    const marketing = MARKETING_CONTENT[activity.category] || MARKETING_CONTENT.default;
+    const theme = CARD_THEMES[activity.category] || CARD_THEMES.default;
+
+    // Get activity icon
+    const getActivityIcon = () => {
+      switch (activity.category) {
+        case 'surf':
+          return <Flame className="w-6 h-6" />;
+        case 'yoga':
+          return <Heart className="w-6 h-6" />;
+        case 'ice_bath':
+          return <ShieldCheck className="w-6 h-6" />;
+        case 'transport':
+          return <MapPin className="w-6 h-6" />;
+        case 'hosting':
+          return <Award className="w-6 h-6" />;
+        default:
+          return <Sparkles className="w-6 h-6" />;
+      }
+    };
+
     return (
       <motion.div
         key={activity.id}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`card cursor-pointer transition-all duration-300 h-full bg-white/5 border-gray-600 grid grid-rows-[auto_auto_1fr_auto_auto] gap-4 ${
-          isSelected ? 'ring-2 ring-ocean-500 bg-white/10 border-ocean-500' : 'hover:bg-white/10 hover:border-gray-500'
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        whileHover={{ y: -4, scale: 1.02 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={`relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-500 h-full group ${
+          isSelected ? 'ring-4 ring-orange-400/50 shadow-2xl shadow-orange-400/20' : 'hover:shadow-2xl hover:shadow-black/30'
         }`}
+        style={{
+          background: theme.background,
+          border: `1px solid ${theme.borderColor}`,
+          boxShadow: theme.shadow,
+        }}
         onClick={() => handleActivityToggle(activity)}
       >
-        {/* 1) Header: título + precio */}
-        <div className="flex items-start justify-between">
-          <h3 className="text-xl font-bold text-accent-200">
-            {activity.category === 'surf' && 'Programa de Surf'}
-            {activity.category === 'yoga' && 'Sesiones de Yoga'}
-            {activity.category === 'ice_bath' && 'Baños de Hielo'}
-            {activity.category === 'transport' && 'Transporte Aeropuerto'}
-            {activity.category === 'hosting' && 'Servicios de Hosting'}
-          </h3>
-          
-          {/* Precio */}
-          {((activity.category === 'yoga' && getSelectedYogaPackage(activity.id)) || 
-            (activity.category === 'surf' && getSelectedSurfPackage(activity.id)) || 
-            activity.category !== 'yoga' && activity.category !== 'surf') && (
-            <div className="text-right flex flex-col items-end">
-              <p className="font-bold text-blue-300 text-lg">
-                {activity.category === 'yoga' 
-                  ? formatCurrency(getActivityTotalPrice('yoga', getSelectedYogaPackage(activity.id)!, quantity))
-                  : activity.category === 'surf'
-                  ? formatCurrency(getActivityTotalPrice('surf', getSelectedSurfPackage(activity.id)!, quantity))
-                  : activity.category === 'ice_bath'
-                  ? formatCurrency(activity.price * quantity * (activityQuantities[`${activity.id}_sessions`] || 1))
-                  : formatCurrency(activity.price * quantity)
-                }
-              </p>
-              <p className="text-xs text-white">
-                {activity.category === 'yoga' 
-                  ? t('activities.perProgram')
-                  : activity.category === 'surf'
-                  ? t('activities.perProgram')
-                  : activity.category === 'ice_bath' ? 
-                    (() => {
-                      const sessions = activityQuantities[`${activity.id}_sessions`] || 1;
-                      if (quantity > 1 && sessions > 1) {
-                        return `${t('activities.forSessions')} ${quantity} ${t('activities.people')} × ${sessions} ${t('activities.sessions')}`;
-                      } else if (quantity > 1) {
-                        return `${t('activities.forSessions')} ${quantity} ${t('activities.people')}`;
-                      } else if (sessions > 1) {
-                        return `${t('activities.forSessions')} ${sessions} ${t('activities.sessions')}`;
-                      } else {
-                        return t('activities.perSession');
-                      }
-                    })() : 
-                 activity.category === 'transport' ? 
-                   (quantity > 1 ? `${t('activities.perTrip')} ${quantity} ${t('activities.trips')}` : t('activities.perTrip')) : 
-                 t('activities.perPerson')}
-              </p>
-            </div>
-          )}
-        </div>
+        {/* Glow effect when selected */}
+        {isSelected && (
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 via-transparent to-cyan-400/10 pointer-events-none" />
+        )}
 
-        {/* 2) Descripción + meta (duración) */}
-        <div className="space-y-2">
-          <p className="text-white text-base">{activity.description}</p>
-          {activity.duration > 0 && (
-            <span className="text-sm text-white/80">
-              {activity.category === 'transport' ? '6 horas' :
-               activity.category === 'surf' ?
-                 (() => {
-                   const surfPackage = getSelectedSurfPackage(activity.id);
-                   if (surfPackage === '4-classes') return '480 min';
-                   if (surfPackage === '5-classes') return '600 min';
-                   if (surfPackage === '6-classes') return '720 min';
-                   return '480 min';
-                 })()
-               : `${activity.duration} min`}
-            </span>
-          )}
-        </div>
+        {/* Top gradient overlay */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
 
-        {/* 3) Espaciador flexible: lo aporta grid (1fr) */}
-
-        {/* 4) Controles (cantidad / horario) */}
-        <div className="flex flex-col gap-4">
-          {hasQuantitySelector(activity.category) ? (
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">
-                  {activity.category === 'surf' ? t('activities.peopleQuantity') : 
-                   activity.category === 'hosting' ? t('activities.peopleQuantity') : t('activities.peopleQuantity')}
+        <div className="relative p-5 h-full flex flex-col">
+          {/* Header with icon and badges */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: theme.accent, color: theme.accentContrast }}>
+                {getActivityIcon()}
+              </div>
+              {marketing.trust && (
+                <span className="px-3 py-1 text-xs font-bold rounded-full" style={{
+                  backgroundColor: theme.badgePrimaryBg,
+                  border: `1px solid ${theme.badgePrimaryBorder}`,
+                  color: theme.accent
+                }}>
+                  {marketing.trust}
                 </span>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateActivityQuantity(activity.id, Math.max(0, quantity - 1));
-                    }}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-                    </svg>
-                  </button>
-                  <span className="w-8 text-center font-medium text-white">{quantity}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const maxQuantity = activity.category === 'surf' ? 2 : 
-                                       activity.category === 'hosting' ? 5 : 3;
-                      updateActivityQuantity(activity.id, Math.min(maxQuantity, quantity + 1));
-                    }}
-                    disabled={activity.category === 'surf' ? quantity >= 2 : 
-                              activity.category === 'hosting' ? quantity >= 5 : quantity >= 3}
-                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
-                    </svg>
-                  </button>
+              )}
+            </div>
+
+            {/* Price in top right corner for Surf */}
+            {activity.category === 'surf' ? (
+              <div className="text-right">
+                <div className="text-2xl font-bold" style={{ color: theme.accent }}>
+                  ${calculateSurfPrice(getSelectedSurfClasses(activity.id)) * (bookingData.guests || 1)}
+                </div>
+                <div className="text-xs" style={{ color: theme.muted }}>
+                  {ui.totalPrice}
                 </div>
               </div>
+            ) : activity.category === 'yoga' ? (
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full"
+              >
+                {(() => {
+                  const selectedPackage = getSelectedYogaPackage(activity.id);
+                  if (selectedPackage === '3-classes') return '17% OFF';
+                  if (selectedPackage === '10-classes') return '33% OFF';
+                  return '';
+                })()}
+              </motion.div>
+            ) : null}
+          </div>
 
-              {activity.category === 'ice_bath' && (
-                <div className="mt-3">
+          {/* 1. Title */}
+          <h3 className="text-xl font-bold mb-2" style={{ color: theme.text }}>
+            {marketing.title || activity.name}
+          </h3>
+
+          {/* 2. Brief description - Surf gets bullet points */}
+          {activity.category === 'surf' ? (
+            <div className="mb-6 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-sm" style={{ color: theme.muted }}>{ui.certifiedInstructors}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-sm" style={{ color: theme.muted }}>{ui.includesEquipment}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-sm" style={{ color: theme.muted }}>{ui.videoAnalysis}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-green-400 font-bold">✓</span>
+                <span className="text-sm" style={{ color: theme.muted }}>{ui.transportIncluded}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm mb-4" style={{ color: theme.muted }}>
+              {marketing.subtitle}
+            </p>
+          )}
+
+          {/* 3. Benefits with icons - Consolidated for Surf */}
+          {activity.category === 'surf' ? (
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Timer className="w-4 h-4" style={{ color: theme.accent }} />
+                <span className="text-sm" style={{ color: theme.text }}>
+                  {getSelectedSurfClasses(activity.id)} {ui.classesOfHours}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4" style={{ color: theme.accent }} />
+                <span className="text-sm" style={{ color: theme.text }}>
+                  {ui.smallGroups}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2 mb-4">
+              {activity.duration > 0 && (
+                <div className="flex items-center gap-3">
+                  <Timer className="w-5 h-5" style={{ color: theme.accent }} />
+                  <span className="text-sm font-medium" style={{ color: theme.text }}>
+                    {activity.category === 'transport' ? `6 ${ui.hoursOfTravel}` : `${activity.duration} ${ui.minutes}`}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5" style={{ color: theme.accent }} />
+                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                  {marketing.groupInfo}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5" style={{ color: theme.accent }} />
+                <span className="text-sm font-medium" style={{ color: theme.text }}>
+                  {activity.category === 'yoga' ? ui.allLevels :
+                   activity.category === 'ice_bath' ? ui.postSurfRecovery :
+                   activity.category === 'transport' ? ui.doorToDoor :
+                   ui.completeService}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 4. Rating and reviews - Only for Surf */}
+          {activity.category === 'surf' && (
+            <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <span className="text-sm font-semibold" style={{ color: theme.text }}>
+                {marketing.rating}
+              </span>
+            </div>
+          )}
+
+          {/* 5. Selection controls */}
+
+          <div className={`space-y-4 ${activity.category === 'surf' ? 'mb-8' : 'mb-6'}`}>
+            {hasQuantitySelector(activity.category) && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-semibold" style={{ color: theme.text }}>
+                    {ui.people}
+                  </span>
+                  <div className="flex items-center gap-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateActivityQuantity(activity.id, Math.max(0, quantity - 1));
+                      }}
+                      className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{
+                        backgroundColor: theme.accent,
+                        color: theme.accentContrast
+                      }}
+                    >
+                      <Minus className="w-5 h-5" />
+                    </motion.button>
+                    <span className="w-12 text-center font-bold text-2xl" style={{ color: theme.text }}>
+                      {quantity}
+                    </span>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const maxQuantity = activity.category === 'surf' ? 2 :
+                                         activity.category === 'hosting' ? 5 : 3;
+                        updateActivityQuantity(activity.id, Math.min(maxQuantity, quantity + 1));
+                      }}
+                      disabled={activity.category === 'surf' ? quantity >= 2 :
+                                activity.category === 'hosting' ? quantity >= 5 : quantity >= 3}
+                      className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: theme.accent,
+                        color: theme.accentContrast
+                      }}
+                    >
+                      <Plus className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                {activity.category === 'ice_bath' && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">{t('activities.sessionsQuantity')}</span>
-                    <div className="flex items-center space-x-2">
-                      <button
+                    <span className="text-base font-semibold" style={{ color: theme.text }}>
+                      {ui.sessions}
+                    </span>
+                    <div className="flex items-center gap-4">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
                           updateActivityQuantity(`${activity.id}_sessions`, Math.max(1, currentSessions - 1));
                         }}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20"
+                        className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200"
+                        style={{
+                          backgroundColor: theme.accent,
+                          color: theme.accentContrast
+                        }}
                       >
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-                        </svg>
-                      </button>
-                      <span className="w-8 text-center font-medium text-white">
+                        <Minus className="w-5 h-5" />
+                      </motion.button>
+                      <span className="w-12 text-center font-bold text-2xl" style={{ color: theme.text }}>
                         {activityQuantities[`${activity.id}_sessions`] || 1}
                       </span>
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           const currentSessions = activityQuantities[`${activity.id}_sessions`] || 1;
                           updateActivityQuantity(`${activity.id}_sessions`, Math.min(10, currentSessions + 1));
                         }}
                         disabled={(activityQuantities[`${activity.id}_sessions`] || 1) >= 10}
-                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: theme.accent,
+                          color: theme.accentContrast
+                        }}
                       >
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14m-7-7h14" />
-                        </svg>
-                      </button>
+                        <Plus className="w-5 h-5" />
+                      </motion.button>
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {hasTimeSelector(activity.category) && (
+              <div className="space-y-4">
+                <span className="text-base font-semibold" style={{ color: theme.text }}>{ui.schedule}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  {TIME_SLOTS.map((timeSlot) => (
+                    <motion.button
+                      key={timeSlot}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateTimeSlot(activity.id, timeSlot);
+                      }}
+                      className={`p-4 rounded-lg text-sm font-semibold transition-all duration-200`}
+                      style={{
+                        backgroundColor: getSelectedTimeSlot(activity.id) === timeSlot ? theme.accent : theme.badgeSecondaryBg,
+                        color: getSelectedTimeSlot(activity.id) === timeSlot ? theme.accentContrast : theme.text,
+                        border: `2px solid ${getSelectedTimeSlot(activity.id) === timeSlot ? theme.accent : 'transparent'}`
+                      }}
+                    >
+                      <Clock className="w-4 h-4 inline mr-2" />
+                      {timeSlot}
+                    </motion.button>
+                  ))}
                 </div>
-              )}
-            </div>
-          ) : <div />}
+              </div>
+            )}
+          </div>
 
-          {hasTimeSelector(activity.category) ? (
-            <div>
-              <div className="mb-3">
-                <span className="text-sm font-medium text-white">{t('activities.pickupTime')}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {TIME_SLOTS.map((timeSlot) => (
-                  <button
-                    key={timeSlot}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateTimeSlot(activity.id, timeSlot);
-                    }}
-                    className={`p-2 rounded-lg border-2 transition-all ${
-                      getSelectedTimeSlot(activity.id) === timeSlot
-                        ? 'border-warm-500 bg-white/10 text-white'
-                        : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{timeSlot}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : <div />}
-        </div>
-
-        {/* 5) Footer: planes/precios + {t('activities.clear')} */}
-        <div className="space-y-3">
-          {hasYogaPackageSelector(activity.category) ? (
-            <div>
-              <div className="mb-3">
-                <span className="text-sm font-medium text-white">{t('activities.selectProgressPlan')}</span>
-              </div>
+          {/* Package selectors */}
+          {hasYogaPackageSelector(activity.category) && (
+            <div className="space-y-3">
+              <span className="text-sm font-semibold" style={{ color: theme.text }}>{ui.plan}</span>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: '1-class' as YogaPackage, label: '1', price: 12, description: t('activities.class') },
-                  { value: '3-classes' as YogaPackage, label: '3', price: 30, description: t('activities.classes') },
-                  { value: '10-classes' as YogaPackage, label: '10', price: 80, description: t('activities.classes') }
+                  { value: '1-class' as YogaPackage, label: '1', description: ui.classUnit },
+                  { value: '3-classes' as YogaPackage, label: '3', description: ui.classesUnit },
+                  { value: '10-classes' as YogaPackage, label: '10', description: ui.classesUnit }
                 ].map((packageOption) => {
-                  const isSelected = getSelectedYogaPackage(activity.id) === packageOption.value;
-                  const packagePrice = packageOption.price * (bookingData.guests || 1);
+                  const isPackageSelected = getSelectedYogaPackage(activity.id) === packageOption.value;
+
                   return (
-                    <button
+                    <motion.button
                       key={packageOption.value}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         updateYogaPackage(activity.id, packageOption.value);
                       }}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        isSelected ? 'border-warm-500 bg-white/10 text-white' : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
-                      }`}
-                    >
-                      <div className="text-lg font-bold text-white">{packageOption.label}</div>
-                      <div className="text-sm text-white mt-1">{packageOption.description}</div>
-                      <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : <div />}
-
-          {hasSurfPackageSelector(activity.category) ? (
-            <div>
-              <div className="mb-3">
-                <span className="text-sm font-medium text-white">{t('activities.selectProgressPlan')}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { value: '4-classes' as SurfPackage, label: '4', price: 400, description: t('activities.classes') },
-                  { value: '5-classes' as SurfPackage, label: '5', price: 500, description: t('activities.classes') },
-                  { value: '6-classes' as SurfPackage, label: '6', price: 600, description: t('activities.classes') }
-                ].map((packageOption) => {
-                  const isSelected = getSelectedSurfPackage(activity.id) === packageOption.value;
-                  const packagePrice = packageOption.price * (bookingData.guests || 1);
-                  return (
-                    <button
-                      key={packageOption.value}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateSurfPackage(activity.id, packageOption.value);
+                      className={`p-3 rounded-lg text-center transition-all duration-200`}
+                      style={{
+                        backgroundColor: isPackageSelected ? theme.accent : theme.badgeSecondaryBg,
+                        color: isPackageSelected ? theme.accentContrast : theme.text,
+                        border: `1px solid ${isPackageSelected ? theme.accent : 'transparent'}`
                       }}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        isSelected ? 'border-ocean-500 bg-white/10 text-white' : 'border-white/20 bg-transparent hover:border-white/40 hover:bg-white/5 text-white'
-                      }`}
                     >
-                      <div className="text-lg font-bold text-white">{packageOption.label}</div>
-                      <div className="text-sm text-white mt-1">{packageOption.description}</div>
-                      <div className="text-lg font-bold text-white mt-2">${packagePrice}</div>
-                    </button>
+                      <div className="text-lg font-bold">{packageOption.label}</div>
+                      <div className="text-xs opacity-80">{packageOption.description}</div>
+                    </motion.button>
                   );
                 })}
               </div>
             </div>
-          ) : <div />}
+          )}
 
-          {(hasYogaPackageSelector(activity.category) || hasSurfPackageSelector(activity.category) || activity.category === 'hosting') ? (
-            <div className="text-center">
+          {hasSurfPackageSelector(activity.category) && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold" style={{ color: theme.text }}>{ui.numberOfClasses}</span>
+                <span className="text-lg font-bold" style={{ color: theme.accent }}>
+                  {getSelectedSurfClasses(activity.id)} {ui.classesUnit}
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="range"
+                  min={3}
+                  max={10}
+                  value={getSelectedSurfClasses(activity.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    const classes = parseInt(e.target.value);
+                    updateSurfClasses(activity.id, classes);
+                  }}
+                  className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, ${theme.accent} 0%, ${theme.accent} ${((getSelectedSurfClasses(activity.id)) - 3) / (10 - 3) * 100}%, ${theme.badgeSecondaryBg} ${((getSelectedSurfClasses(activity.id)) - 3) / (10 - 3) * 100}%, ${theme.badgeSecondaryBg} 100%)`
+                  }}
+                />
+                <style jsx>{`
+                  input[type="range"]::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: ${theme.accent};
+                    cursor: pointer;
+                    border: 3px solid white;
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+                  }
+                  input[type="range"]::-moz-range-thumb {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: ${theme.accent};
+                    cursor: pointer;
+                    border: 3px solid white;
+                    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+                  }
+                `}</style>
+              </div>
+              <div className="flex justify-between text-xs" style={{ color: theme.muted }}>
+                <span>3 {ui.classesUnit}</span>
+                <span>10 {ui.classesUnit}</span>
+              </div>
+            </div>
+          )}
+
+          {/* 6. Price and main CTA */}
+          <div className="mt-auto space-y-6">
+            {((activity.category === 'yoga' && getSelectedYogaPackage(activity.id)) ||
+              (activity.category === 'surf' && getSelectedSurfPackage(activity.id)) ||
+              activity.category !== 'yoga' && activity.category !== 'surf') && (
+              <>
+                <div className="text-center py-3">
+                  <div className="text-sm font-medium mb-1" style={{ color: theme.muted }}>
+                    {ui.totalPrice}
+                  </div>
+                  <div className="text-3xl font-bold" style={{ color: theme.accent }}>
+                    {activity.category === 'yoga'
+                      ? formatCurrency(getActivityTotalPrice('yoga', getSelectedYogaPackage(activity.id)!, quantity))
+                      : activity.category === 'surf'
+                      ? formatCurrency(calculateSurfPrice(getSelectedSurfClasses(activity.id)) * (bookingData.guests || 1))
+                      : activity.category === 'ice_bath'
+                      ? formatCurrency(activity.price * quantity * (activityQuantities[`${activity.id}_sessions`] || 1))
+                      : formatCurrency(activity.price * quantity)}
+                  </div>
+                  <div className="text-xs opacity-70" style={{ color: theme.muted }}>
+                    {activity.category === 'yoga'
+                      ? ui.completeProgram
+                      : activity.category === 'surf'
+                      ? `${getSelectedSurfClasses(activity.id)} ${ui.completeClasses}`
+                      : activity.category === 'ice_bath' ?
+                        (() => {
+                          const sessions = activityQuantities[`${activity.id}_sessions`] || 1;
+                          if (quantity > 1 && sessions > 1) {
+                            return `${quantity} ${ui.persons} × ${sessions} ${ui.sessionsUnit}`;
+                          } else if (quantity > 1) {
+                            return `${quantity} ${ui.persons}`;
+                          } else if (sessions > 1) {
+                            return `${sessions} ${ui.sessionsUnit}`;
+                          } else {
+                            return ui.perSession;
+                          }
+                        })() :
+                     activity.category === 'transport' ?
+                       (quantity > 1 ? `${quantity} ${ui.trips}` : ui.perTrip) :
+                     ui.perPerson}
+                  </div>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleActivityToggle(activity);
+                  }}
+                  className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: isSelected ? '#f59e0b' : theme.accent,
+                    color: isSelected ? '#1f2937' : theme.accentContrast,
+                    boxShadow: `0 3px 12px ${isSelected ? '#f59e0b40' : theme.accent + '40'}`,
+                    border: isSelected ? '1px solid #f59e0b' : `1px solid ${theme.accent}`
+                  }}
+                >
+                  {isSelected ? ui.selected : ui.bookNow}
+                </motion.button>
+              </>
+            )}
+
+            {/* Clear button */}
+            {(hasYogaPackageSelector(activity.category) || activity.category === 'hosting' || activity.category === 'ice_bath') && isSelected && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   clearActivity(activity.id);
                 }}
-                className="text-sm text-blue-300 hover:text-blue-200 underline transition-colors"
+                className="w-full py-2 text-xs font-medium opacity-60 hover:opacity-100 transition-opacity"
+                style={{ color: theme.muted }}
               >
-                {t('activities.clear')}
+                {ui.clear}
               </button>
-            </div>
-          ) : null}
+            )}
+
+            {/* Surf disclaimers as separate badges before button */}
+            {activity.category === 'surf' && (
+              <div className="mb-3 space-y-2">
+                <div className="p-2 rounded-lg flex items-center gap-2" style={{
+                  backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)'
+                }}>
+                  <span className="text-yellow-400">⚠️</span>
+                  <p className="text-xs font-medium" style={{ color: theme.accent }}>
+                    {ui.limitedSpots}
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg flex items-center gap-2" style={{
+                  backgroundColor: 'rgba(71, 85, 105, 0.2)',
+                  border: '1px solid rgba(71, 85, 105, 0.3)'
+                }}>
+                  <span className="text-blue-400">🌍</span>
+                  <p className="text-xs font-medium" style={{ color: theme.text }}>
+                    {ui.trustedTravelers}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-
-        
-
-
-
 
       </motion.div>
     );
@@ -464,12 +948,16 @@ export default function ActivitySelector() {
     setSelectedTimeSlot,
     setSelectedYogaPackage,
     setSelectedSurfPackage,
+    setSelectedSurfClasses,
     selectedTimeSlots,
     selectedYogaPackages,
     selectedSurfPackages,
+    selectedSurfClasses,
     setPriceBreakdown,
     setError
   } = useBookingStore();
+
+  // Surf classes are now managed in the store, no local state needed
 
   // Filtrar actividades por categoría
   const surfActivities = AVAILABLE_ACTIVITIES.filter(activity => activity.category === 'surf');
@@ -521,6 +1009,40 @@ export default function ActivitySelector() {
 
   const getSelectedSurfPackage = (activityId: string): '4-classes' | '5-classes' | '6-classes' | undefined => {
     return selectedSurfPackages[activityId];
+  };
+
+  const getSelectedSurfClasses = (activityId: string): number => {
+    return selectedSurfClasses[activityId] || 4;
+  };
+
+  const updateSurfClasses = (activityId: string, classes: number) => {
+    setSelectedSurfClasses(activityId, classes);
+
+    // Ensure activity is selected when classes are chosen
+    const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+    if (!isSelected) {
+      const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+      if (activity) {
+        setSelectedActivities([...selectedActivities, activity]);
+      }
+    }
+  };
+
+  // Progressive pricing calculation for surf
+  const calculateSurfPrice = (classes: number): number => {
+    // Price points: 3 classes = $300, 5 classes = $460, 10 classes = $890
+    if (classes <= 3) return 300;
+    if (classes <= 5) {
+      // Interpolate between 3 and 5 classes
+      const ratio = (classes - 3) / (5 - 3);
+      return Math.round(300 + (460 - 300) * ratio);
+    }
+    if (classes <= 10) {
+      // Interpolate between 5 and 10 classes
+      const ratio = (classes - 5) / (10 - 5);
+      return Math.round(460 + (890 - 460) * ratio);
+    }
+    return 890;
   };
 
   const updateTimeSlot = (activityId: string, timeSlot: '7:00 AM' | '3:00 PM') => {
@@ -592,9 +1114,23 @@ export default function ActivitySelector() {
         }
       });
     };
-    
+
     initializeQuantities();
   }, []);
+
+  // Auto-select surf program as it's always included
+  useEffect(() => {
+    const surfActivity = AVAILABLE_ACTIVITIES.find(a => a.category === 'surf');
+    if (surfActivity && !selectedActivities.some(a => a.id === surfActivity.id)) {
+      // Add surf to selected activities
+      setSelectedActivities([...selectedActivities, surfActivity]);
+
+      // Set default surf classes to 4 if not already set
+      if (!selectedSurfClasses[surfActivity.id]) {
+        setSelectedSurfClasses(surfActivity.id, 4);
+      }
+    }
+  }, [AVAILABLE_ACTIVITIES, selectedActivities, selectedSurfClasses]);
 
   const toggleActivity = (activityId: string) => {
     const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
@@ -719,13 +1255,16 @@ export default function ActivitySelector() {
     }
   };
 
-  // Crear la función renderActivityCard usando la función factory
-  const renderActivityCard = createRenderActivityCard(
+  // Crear la función renderActivityCard usando la función factory con useMemo para actualizar cuando cambien las dependencias
+  const renderActivityCard = useMemo(() => createRenderActivityCard(
     selectedActivities,
     activityQuantities,
     bookingData,
     getSelectedYogaPackage,
     getSelectedSurfPackage,
+    getSelectedSurfClasses,
+    updateSurfClasses,
+    calculateSurfPrice,
     getActivityTotalPrice,
     formatCurrency,
     hasQuantitySelector,
@@ -743,9 +1282,31 @@ export default function ActivitySelector() {
       // Remover de actividades seleccionadas
       const updatedActivities = selectedActivities.filter(a => a.id !== activityId);
       setSelectedActivities(updatedActivities);
+      // Clear surf classes from store if it's a surf activity
+      const activity = AVAILABLE_ACTIVITIES.find(a => a.id === activityId);
+      if (activity && activity.category === 'surf') {
+        setSelectedSurfClasses(activityId, 4); // Reset to default
+      }
     },
-    t
-  );
+    t,
+    locale
+  ), [
+    selectedActivities,
+    activityQuantities,
+    bookingData, // Include full bookingData object
+    selectedSurfClasses,
+    selectedYogaPackages,
+    selectedSurfPackages,
+    selectedTimeSlots,
+    t,
+    locale,
+    // Also include the functions that could change
+    getSelectedYogaPackage,
+    getSelectedSurfPackage,
+    getSelectedSurfClasses,
+    getActivityQuantity,
+    getSelectedTimeSlot
+  ]);
 
   return (
     <motion.div
@@ -838,3 +1399,7 @@ export default function ActivitySelector() {
     </motion.div>
   );
 } 
+
+
+
+

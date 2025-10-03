@@ -219,4 +219,41 @@ export const sendSurfClassReservationNotification = async (
 ¡Reserva confirmada para plan de progreso en surf!`;
 
   return sendWhatsAppMessage('+541153695627', message);
+};
+
+// Función para enviar mensaje personalizado de Dario al cliente después del booking
+export const sendDarioWelcomeMessage = async (
+  phone: string,
+  bookingData: {
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
+    activities: string[];
+    roomTypeName: string;
+    guests: number;
+  }
+) => {
+  const activitiesList = bookingData.activities.join(', ');
+
+  const message = `¡Hola ${bookingData.guestName}! 👋
+
+Soy Dario, y quería presentarme personalmente para confirmar tu reserva en Zeneida's Garden.
+
+✅ *Tu reserva está confirmada:*
+📅 *Fechas:* ${formatDateForWhatsApp(bookingData.checkIn)} - ${formatDateForWhatsApp(bookingData.checkOut)}
+🏠 *Alojamiento:* ${bookingData.roomTypeName}
+👥 *Huéspedes:* ${bookingData.guests}
+🎯 *Actividades:* ${activitiesList}
+
+🤙 *Próximos pasos:*
+Los profesores se van a estar contactando contigo para coordinar los horarios de las clases y todos los detalles.
+
+💬 Estoy acá para cualquier duda que tengas antes, durante o después de tu estadía. No dudes en escribirme cuando necesites!
+
+¡Nos vemos pronto! 🌊🏄‍♂️
+
+*Dario*
+Zeneida's Garden`;
+
+  return sendWhatsAppMessage(phone, message);
 }; 
