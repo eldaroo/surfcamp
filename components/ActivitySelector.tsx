@@ -307,7 +307,7 @@ const createRenderActivityCard = (
   locale: 'es' | 'en'
 ) => {
   return (activity: any) => {
-    const isSelected = selectedActivities.some((a: any) => a.id === activity.id);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activity.id);
     const quantity = activityQuantities[activity.id] || (isSelected ? 1 : 0);
 
     // Get UI translations for current locale
@@ -1020,9 +1020,9 @@ export default function ActivitySelector() {
     setSelectedSurfClasses(activityId, classes);
 
     // Ensure activity is selected when classes are chosen
-    const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
     if (!isSelected) {
-      const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+      const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity) {
         setSelectedActivities([...selectedActivities, activity]);
       }
@@ -1050,9 +1050,9 @@ export default function ActivitySelector() {
     setSelectedTimeSlot(activityId, timeSlot);
     
     // Asegurar que la actividad esté seleccionada cuando se elige un horario
-    const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
     if (!isSelected) {
-      const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+      const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity) {
         setSelectedActivities([...selectedActivities, activity]);
       }
@@ -1063,9 +1063,9 @@ export default function ActivitySelector() {
     setSelectedYogaPackage(activityId, yogaPackage);
     
     // Asegurar que la actividad esté seleccionada cuando se elige un paquete
-    const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
     if (!isSelected) {
-      const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+      const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity) {
         setSelectedActivities([...selectedActivities, activity]);
       }
@@ -1076,9 +1076,9 @@ export default function ActivitySelector() {
     setSelectedSurfPackage(activityId, surfPackage);
     
     // Asegurar que la actividad esté seleccionada cuando se elige un paquete
-    const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+    const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
     if (!isSelected) {
-      const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+      const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity) {
         setSelectedActivities([...selectedActivities, activity]);
       }
@@ -1090,13 +1090,13 @@ export default function ActivitySelector() {
     
     // Si la cantidad es 0, remover de seleccionados
     if (quantity === 0) {
-      const updatedActivities = selectedActivities.filter((a: any) => a.id !== activityId);
+      const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activityId);
       setSelectedActivities(updatedActivities);
     } else {
       // Si la cantidad es > 0, agregar a seleccionados si no está
-      const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
       if (!isSelected) {
-        const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+        const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
         if (activity) {
           setSelectedActivities([...selectedActivities, activity]);
         }
@@ -1134,16 +1134,16 @@ export default function ActivitySelector() {
   }, [AVAILABLE_ACTIVITIES, selectedActivities, selectedSurfClasses]);
 
   const toggleActivity = (activityId: string) => {
-    const activity = AVAILABLE_ACTIVITIES.find((a: any) => a.id === activityId);
+    const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
     if (!activity) return;
 
     if (activity.category === 'surf' || activity.category === 'yoga') {
       // Para surf y yoga, solo se puede seleccionar UN paquete de cada categoría
       const otherActivitiesInCategory = selectedActivities.filter(
-        (a: any) => a.category === activity.category && a.id !== activityId
+        (a: Activity) => a.category === activity.category && a.id !== activityId
       );
       const activitiesFromOtherCategories = selectedActivities.filter(
-        (a: any) => a.category !== activity.category
+        (a: Activity) => a.category !== activity.category
       );
       
       // Permitir seleccionar la actividad sin paquete
@@ -1153,7 +1153,7 @@ export default function ActivitySelector() {
     } else if (hasQuantitySelector(activity.category)) {
       // Para actividades con selector de cantidad, NO cambiar la cantidad al tocar la card
       // Solo agregar/remover de seleccionados si no está seleccionada
-      const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
       if (!isSelected) {
         // Si no está seleccionada, agregarla con cantidad 1 si no tiene cantidad
         const currentQuantity = getActivityQuantity(activityId);
@@ -1164,14 +1164,14 @@ export default function ActivitySelector() {
         }
       } else {
         // Si está seleccionada, removerla
-        const updatedActivities = selectedActivities.filter((a: any) => a.id !== activityId);
+        const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activityId);
         setSelectedActivities(updatedActivities);
       }
     } else {
       // Para otras actividades (hosting, etc.), toggle simple
-      const isSelected = selectedActivities.some((a: any) => a.id === activityId);
+      const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
       if (isSelected) {
-        const updatedActivities = selectedActivities.filter((a: any) => a.id !== activityId);
+        const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activityId);
         setSelectedActivities(updatedActivities);
       } else {
         setSelectedActivities([...selectedActivities, activity]);
@@ -1195,7 +1195,7 @@ export default function ActivitySelector() {
 
     try {
       // Prepare activity data with quantities and packages
-      const activitiesWithQuantities = selectedActivities.map(activity => {
+      const activitiesWithQuantities = selectedActivities.map((activity: Activity) => {
         let quantity = 1;
         let packageInfo: string | null = null;
         
