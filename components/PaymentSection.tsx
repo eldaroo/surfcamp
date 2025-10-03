@@ -70,13 +70,17 @@ export default function PaymentSection() {
       }
     });
 
-    const total = accommodation + activitiesTotal;
+    const subtotal = accommodation + activitiesTotal;
+    const tax = 0; // Add tax calculation if needed
+    const total = subtotal + tax;
 
     return {
       accommodation,
       activities: activitiesTotal,
+      subtotal,
+      tax,
       total,
-      nights
+      currency: 'USD'
     };
   };
 

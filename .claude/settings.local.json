@@ -45,7 +45,8 @@
       "Bash(ngrok:*)",
       "Bash(npx next dev:*)",
       "Bash(npx eslint:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(del temp_function.tsx)"
     ],
     "deny": [],
     "ask": []

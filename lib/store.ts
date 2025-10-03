@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create, StoreApi, UseBoundStore } from 'zustand';
 import { Activity, BookingRequest, PriceBreakdown, AvailabilityCheck } from '@/types';
 
 interface Room {
@@ -70,7 +70,7 @@ const initialState = {
   error: null,
 };
 
-export const useBookingStore = create<BookingStore>((set) => ({
+export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<BookingStore>((set) => ({
   ...initialState,
   
   setBookingData: (data) =>

@@ -1281,10 +1281,10 @@ export default function ActivitySelector() {
     handleActivityToggle,
     (activityId: string) => {
       // Remover de actividades seleccionadas
-      const updatedActivities = selectedActivities.filter(a => a.id !== activityId);
+      const updatedActivities = selectedActivities.filter((a: Activity) => a.id !== activityId);
       setSelectedActivities(updatedActivities);
       // Clear surf classes from store if it's a surf activity
-      const activity = AVAILABLE_ACTIVITIES.find(a => a.id === activityId);
+      const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity && activity.category === 'surf') {
         setSelectedSurfClasses(activityId, 4); // Reset to default
       }
