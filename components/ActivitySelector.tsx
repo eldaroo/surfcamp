@@ -1121,7 +1121,7 @@ export default function ActivitySelector() {
   // Auto-select surf program as it's always included
   useEffect(() => {
     const surfActivity = AVAILABLE_ACTIVITIES.find(a => a.category === 'surf');
-    if (surfActivity && !selectedActivities.some(a => a.id === surfActivity.id)) {
+    if (surfActivity && !selectedActivities.some((a: Activity) => a.id === surfActivity.id)) {
       // Add surf to selected activities
       setSelectedActivities([...selectedActivities, surfActivity]);
 
