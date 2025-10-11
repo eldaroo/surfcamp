@@ -21,6 +21,7 @@ interface BookingStore {
   selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // activityId -> yogaPackage
   selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>; // activityId -> surfPackage
   selectedSurfClasses: Record<string, number>; // activityId -> number of classes
+  personalizationName: string;
   priceBreakdown: PriceBreakdown | null;
   availabilityCheck: AvailabilityCheck | null;
   
@@ -41,6 +42,8 @@ interface BookingStore {
   setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void;
   setSelectedSurfPackage: (activityId: string, surfPackage: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => void;
   setSelectedSurfClasses: (activityId: string, classes: number) => void;
+  setPersonalizationName: (name: string) => void;
+
   setPriceBreakdown: (breakdown: PriceBreakdown | null) => void;
   setAvailabilityCheck: (check: AvailabilityCheck | null) => void;
   setAvailableRooms: (rooms: Room[] | null) => void;
@@ -61,6 +64,7 @@ const initialState = {
   selectedYogaPackages: {},
   selectedSurfPackages: {},
   selectedSurfClasses: {},
+  personalizationName: '',
   priceBreakdown: null,
   availabilityCheck: null,
   availableRooms: null,
@@ -109,6 +113,10 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       return { selectedSurfClasses: newSelectedSurfClasses };
     }),
   
+
+  setPersonalizationName: (name) =>
+    set(() => ({ personalizationName: name })),
+
   setPriceBreakdown: (breakdown) =>
     set({ priceBreakdown: breakdown }),
   
