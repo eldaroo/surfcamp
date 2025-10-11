@@ -8,7 +8,7 @@ export interface Activity {
   category: 'surf' | 'yoga' | 'ice_bath' | 'transport' | 'hosting' | 'other';
   timeSlot?: '7:00 AM' | '3:00 PM';
   yogaPackage?: '1-class' | '3-classes' | '10-classes';
-  surfPackage?: '4-classes' | '5-classes' | '6-classes';
+  surfPackage?: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes';
 }
 
 export interface Room {

@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LobbyPMSReservationRequest } from '@/types';
+import { Activity, LobbyPMSReservationRequest } from '@/types';
 import { generateBookingReference } from '@/lib/utils';
 import { lobbyPMSClient } from '@/lib/lobbypms';
 import { sendBookingConfirmation, sendWhatsAppMessage } from '@/lib/whatsapp';
+import { getActivityById } from '@/lib/activities';
+import { lookupActivityProductId } from '@/lib/lobbypms-products';
 
 // Mapeo de roomTypeId a category_id de LobbyPMS
 const ROOM_TYPE_MAPPING = {
@@ -11,9 +13,147 @@ const ROOM_TYPE_MAPPING = {
   'casas-deluxe': 5348       // Studio 1 (representativa de casas deluxe)
 };
 
+const DEFAULT_INVENTORY_CENTER_ID = process.env.LOBBYPMS_DEFAULT_INVENTORY_CENTER_ID;
+
+const normalizeActivityKey = (value: string) =>
+  value.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+
+const getEnvProductId = (activityId: string, activityPackage?: string, classCount?: number) => {
+  const baseKey = `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}`;
+  const packageKey = activityPackage
+    ? `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}_${normalizeActivityKey(activityPackage)}`
+    : null;
+
+  if (packageKey && process.env[packageKey]) {
+    return process.env[packageKey];
+  }
+
+  if (process.env[baseKey]) {
+    return process.env[baseKey];
+  }
+
+  return lookupActivityProductId(activityId, {
+    package: activityPackage,
+    classCount: classCount ?? undefined
+  });
+};
+
+const getEnvInventoryCenterId = (activityId: string, activityPackage?: string) => {
+  const baseKey = `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}_INVENTORY`;
+  const packageKey = activityPackage
+    ? `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}_${normalizeActivityKey(activityPackage)}_INVENTORY`
+    : null;
+
+  if (packageKey && process.env[packageKey]) {
+    return process.env[packageKey];
+  }
+
+  return process.env[baseKey] || DEFAULT_INVENTORY_CENTER_ID;
+};
+
+const parsePackageMultiplier = (activityPackage?: string) => {
+  if (!activityPackage) return 1;
+  const match = activityPackage.match(/\d+/);
+  if (!match) return 1;
+  const value = parseInt(match[0], 10);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+};
+
+interface ResolvedActivityConsumption {
+  id: string;
+  category?: Activity['category'];
+  package?: string;
+  classCount?: number;
+}
+
+const resolveActivitiesForConsumption = (
+  selectedActivities: any[],
+  fallbackIds: string[] = []
+): ResolvedActivityConsumption[] => {
+  if (selectedActivities && selectedActivities.length > 0) {
+    return selectedActivities.map((activity: any) => {
+      const baseActivity = getActivityById(activity.id);
+      const rawClassCount = typeof activity.classCount === 'number' ? activity.classCount : undefined;
+      const normalizedClassCount = rawClassCount && Number.isFinite(rawClassCount)
+        ? Math.max(1, Math.round(rawClassCount))
+        : undefined;
+
+      return {
+        id: activity.id,
+        category: activity.category || baseActivity?.category,
+        package: activity.package,
+        classCount: normalizedClassCount ?? (activity.package ? parsePackageMultiplier(activity.package) : undefined)
+      };
+    });
+  }
+
+  return fallbackIds.map((id) => {
+    const baseActivity = getActivityById(id);
+    const isSurf = baseActivity?.category === 'surf';
+    return {
+      id,
+      category: baseActivity?.category,
+      package: isSurf ? '4-classes' : undefined,
+      classCount: isSurf ? 4 : undefined
+    };
+  });
+};
+
+const buildConsumptionItems = (
+  activities: ResolvedActivityConsumption[],
+  guests: number
+) => {
+  const itemsMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
+
+  activities.forEach((activity) => {
+    if (!activity?.id) return;
+
+    const normalizedClassCount = typeof activity.classCount === 'number' && Number.isFinite(activity.classCount)
+      ? Math.max(1, Math.round(activity.classCount))
+      : undefined;
+
+    const productId = getEnvProductId(activity.id, activity.package, normalizedClassCount);
+
+    if (!productId) {
+      console.warn('?s??,? [RESERVE] No LobbyPMS product mapping for activity. Skipping consumption:', {
+        activityId: activity.id,
+        package: activity.package,
+        classCount: normalizedClassCount
+      });
+      return;
+    }
+
+    const baseQuantityCategories: Activity['category'][] = ['yoga', 'ice_bath'];
+    const baseGuests = guests && baseQuantityCategories.includes(activity.category as Activity['category'])
+      ? guests
+      : 1;
+
+    const packageMultiplier = activity.category === 'surf'
+      ? 1
+      : normalizedClassCount ?? (activity.package ? parsePackageMultiplier(activity.package) : 1);
+    const quantity = Math.max(1, baseGuests) * Math.max(1, packageMultiplier);
+
+    if (!itemsMap[productId]) {
+      const inventoryCenterId = getEnvInventoryCenterId(activity.id, activity.package) || undefined;
+      itemsMap[productId] = {
+        product_id: productId,
+        cant: quantity,
+        ...(inventoryCenterId ? { inventory_center_id: inventoryCenterId } : {})
+      };
+    } else {
+      itemsMap[productId].cant += quantity;
+    }
+  });
+
+  return Object.values(itemsMap);
+};
+
+
 export async function POST(request: NextRequest) {
   try {
+    console.log('🏨 [RESERVE] Incoming reservation request');
     const body = await request.json();
+    console.log('🏨 [RESERVE] Raw request body:', JSON.stringify(body, null, 2));
     const { 
       checkIn, 
       checkOut, 
@@ -21,6 +161,8 @@ export async function POST(request: NextRequest) {
       contactInfo,
       roomTypeId = 'casa-playa', // Default room type
       activities = [],
+      selectedActivities: selectedActivitiesPayload = [],
+      activityIds = [],
       paymentIntentId
     } = body;
 
@@ -37,11 +179,20 @@ export async function POST(request: NextRequest) {
       bookingReference
     });
 
+    console.log('🏨 [RESERVE] Environment snapshot:', {
+      nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+      lobbypmsApiUrl: process.env.LOBBYPMS_API_URL,
+      hasLobbyApiKey: !!process.env.LOBBYPMS_API_KEY,
+      vercelUrl: process.env.VERCEL_URL,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     // Get the corresponding category_id for LobbyPMS
     const categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
     
     if (!categoryId) {
       console.error('❌ Invalid room type:', roomTypeId);
+      console.error('🏨 [RESERVE] Known roomTypeIds:', ROOM_TYPE_MAPPING);
       return NextResponse.json(
         { error: `Tipo de habitación no válido: ${roomTypeId}` },
         { status: 400 }
@@ -69,6 +220,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Prepare LobbyPMS reservation request with correct field names and date format
+    const baseNotes = `🏄‍♂️ RESERVA DESDE SURFCAMP SANTA TERESA 🏄‍♂️\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- Huésped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`;
     const bookingData = {
       start_date: formattedCheckIn,     // Y-m-d format as required by LobbyPMS
       end_date: formattedCheckOut,      // Y-m-d format as required by LobbyPMS
@@ -88,17 +240,75 @@ export async function POST(request: NextRequest) {
       source: 'Surfcamp Santa Teresa',     // Fuente más clara
       payment_intent_id: paymentIntentId,
       status: 'confirmed',
-      notes: `🏄‍♂️ RESERVA DESDE SURFCAMP SANTA TERESA 🏄‍♂️\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- Huésped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`,
+      notes: `${baseNotes}\n- Nota Surfcamp: Surfcamp`,
       special_requests: `Reserva realizada a través de la página web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
     };
+
+    const fallbackActivityIds = Array.isArray(activityIds) && activityIds.length > 0
+      ? activityIds
+      : Array.isArray(activities)
+        ? activities
+            .map((item: any) => (typeof item === 'string' ? item : item?.id))
+            .filter((id: string | undefined): id is string => Boolean(id))
+        : [];
+
+    const resolvedActivities = resolveActivitiesForConsumption(
+      Array.isArray(selectedActivitiesPayload) ? selectedActivitiesPayload : [],
+      fallbackActivityIds
+    );
+
+    // Ensure customer exists in LobbyPMS before booking
+    try {
+      if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
+        await lobbyPMSClient.createCustomer({
+          customer_document: contactInfo.dni,
+          customer_nationality: 'ES',
+          name: contactInfo.firstName,
+          surname: contactInfo.lastName,
+          phone: contactInfo.phone,
+          email: contactInfo.email,
+          note: `Cliente creado desde Surfcamp Santa Teresa (${bookingReference})`
+        });
+      } else {
+        console.warn('⚠️ [RESERVE] Missing customer data to create LobbyPMS customer:', {
+          hasDni: !!contactInfo?.dni,
+          hasFirstName: !!contactInfo?.firstName,
+          hasLastName: !!contactInfo?.lastName
+        });
+      }
+    } catch (customerError) {
+      console.error('❌ [RESERVE] Failed to create LobbyPMS customer:', customerError);
+      // Continue with booking even if customer creation failed (LobbyPMS may auto-create)
+    }
 
     console.log('📡 Sending to LobbyPMS:', bookingData);
 
     try {
       console.log('🚀 Attempting to create booking in LobbyPMS...');
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
+      console.log('🏨 [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
 
       console.log('✅ LobbyPMS reservation successful:', reservationData);
+
+      const bookingId =
+        reservationData?.booking?.booking_id ||
+        reservationData?.booking_id ||
+        reservationData?.id;
+
+      if (!bookingId) {
+        console.warn('⚠️ [RESERVE] Could not determine booking_id from LobbyPMS response. Skipping add-product-service.');
+      } else {
+        try {
+          const consumptionItems = buildConsumptionItems(resolvedActivities, guests || 1);
+          if (consumptionItems.length > 0) {
+            await lobbyPMSClient.addProductsToBooking(bookingId, consumptionItems);
+          } else {
+            console.warn('?s??,? [RESERVE] No consumption items resolved for booking. Skipping addProductsToBooking call.');
+          }
+        } catch (consumptionError) {
+          console.error('❌ [RESERVE] Failed to add products/services to booking:', consumptionError);
+        }
+      }
 
       // Enviar mensaje de confirmación por WhatsApp
       try {
@@ -114,7 +324,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        reservationId: reservationData.reservation_id || reservationData.id,
+        reservationId: bookingId,
         bookingReference,
         status: reservationData.status || 'confirmed',
         message: 'Reserva confirmada exitosamente en LobbyPMS',
@@ -129,6 +339,7 @@ export async function POST(request: NextRequest) {
         data: lobbyError.response?.data,
         bookingData
       });
+      console.error('🏨 [RESERVE] LobbyPMS error stack:', lobbyError.stack);
 
       // Si es error de capacidad, ajustar y reintentar
       if (lobbyError.response?.data?.error_code === 'MAXIMUM_CAPACITY') {
@@ -146,6 +357,28 @@ export async function POST(request: NextRequest) {
           const retryReservationData = await lobbyPMSClient.createBooking(adjustedBookingData);
           
           console.log('✅ LobbyPMS reservation successful (adjusted):', retryReservationData);
+
+          const adjustedBookingId =
+            retryReservationData?.booking?.booking_id ||
+            retryReservationData?.booking_id ||
+            retryReservationData?.reservation_id ||
+            retryReservationData?.id;
+
+          if (!adjustedBookingId) {
+            console.warn('?s??,? [RESERVE] Could not determine booking_id from adjusted LobbyPMS response. Skipping add-product-service.');
+          } else {
+            try {
+              const consumptionItems = buildConsumptionItems(resolvedActivities, guests || 1);
+              if (consumptionItems.length > 0) {
+                await lobbyPMSClient.addProductsToBooking(adjustedBookingId, consumptionItems);
+              } else {
+                console.warn('?s??,? [RESERVE] No consumption items resolved for adjusted booking.');
+              }
+            } catch (consumptionError) {
+              console.error('??O [RESERVE] Failed to add products/services to adjusted booking:', consumptionError);
+            }
+          }
+
           
           // Enviar mensaje de confirmación por WhatsApp
           try {
@@ -209,7 +442,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ General reservation error:', error);
-    
+    console.error('🏨 [RESERVE] Error stack:', error.stack);
+
     // Generate a fallback booking reference if we don't have one
     const fallbackReference = generateBookingReference();
     
@@ -234,4 +468,10 @@ export async function POST(request: NextRequest) {
       note: 'Tu reserva ha sido registrada. Nos pondremos en contacto contigo para confirmar los detalles.'
     });
   }
-} 
+}
+
+
+
+
+
+

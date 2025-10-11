@@ -17,7 +17,7 @@ type TimeSlot = typeof TIME_SLOTS[number];
 const YOGA_PACKAGES = ['1-class', '3-classes', '10-classes'] as const;
 type YogaPackage = typeof YOGA_PACKAGES[number];
 
-const SURF_PACKAGES = ['4-classes', '5-classes', '6-classes'] as const;
+const SURF_PACKAGES = ['3-classes', '4-classes', '5-classes', '6-classes', '7-classes', '8-classes', '9-classes', '10-classes'] as const;
 type SurfPackage = typeof SURF_PACKAGES[number];
 type CardTheme = {
   background: string;
@@ -285,7 +285,7 @@ const createRenderActivityCard = (
   activityQuantities: Record<string, number>,
   bookingData: any,
   getSelectedYogaPackage: (id: string) => '1-class' | '3-classes' | '10-classes' | undefined,
-  getSelectedSurfPackage: (id: string) => '4-classes' | '5-classes' | '6-classes' | undefined,
+  getSelectedSurfPackage: (id: string) => '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes' | undefined,
   getSelectedSurfClasses: (id: string) => number,
   updateSurfClasses: (id: string, classes: number) => void,
   calculateSurfPrice: (classes: number) => number,
@@ -299,7 +299,7 @@ const createRenderActivityCard = (
   getSelectedTimeSlot: (id: string) => '7:00 AM' | '3:00 PM',
   updateTimeSlot: (id: string, timeSlot: '7:00 AM' | '3:00 PM') => void,
   updateYogaPackage: (id: string, packageType: '1-class' | '3-classes' | '10-classes') => void,
-  updateSurfPackage: (id: string, packageType: '4-classes' | '5-classes' | '6-classes') => void,
+  updateSurfPackage: (id: string, packageType: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => void,
   updateActivityQuantity: (id: string, quantity: number) => void,
   handleActivityToggle: (activity: any) => void,
   clearActivity: (activityId: string) => void,
@@ -1008,7 +1008,7 @@ export default function ActivitySelector() {
     return selectedYogaPackages[activityId];
   };
 
-  const getSelectedSurfPackage = (activityId: string): '4-classes' | '5-classes' | '6-classes' | undefined => {
+  const getSelectedSurfPackage = (activityId: string): '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes' | undefined => {
     return selectedSurfPackages[activityId];
   };
 
@@ -1017,7 +1017,9 @@ export default function ActivitySelector() {
   };
 
   const updateSurfClasses = (activityId: string, classes: number) => {
-    setSelectedSurfClasses(activityId, classes);
+    const normalizedClasses = Math.min(10, Math.max(3, Math.round(classes)));
+    setSelectedSurfClasses(activityId, normalizedClasses);
+    setSelectedSurfPackage(activityId, `${normalizedClasses}-classes` as SurfPackage);
 
     // Ensure activity is selected when classes are chosen
     const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
@@ -1072,10 +1074,16 @@ export default function ActivitySelector() {
     }
   };
 
-  const updateSurfPackage = (activityId: string, surfPackage: '4-classes' | '5-classes' | '6-classes') => {
+  const updateSurfPackage = (activityId: string, surfPackage: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => {
     setSelectedSurfPackage(activityId, surfPackage);
+
+    const parsedClasses = parseInt(surfPackage, 10);
+    if (Number.isFinite(parsedClasses)) {
+      const normalizedClasses = Math.min(10, Math.max(3, parsedClasses));
+      setSelectedSurfClasses(activityId, normalizedClasses);
+    }
     
-    // Asegurar que la actividad esté seleccionada cuando se elige un paquete
+    // Asegurar que la actividad estAc seleccionada cuando se elige un paquete
     const isSelected = selectedActivities.some((a: Activity) => a.id === activityId);
     if (!isSelected) {
       const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
@@ -1126,12 +1134,15 @@ export default function ActivitySelector() {
       // Add surf to selected activities
       setSelectedActivities([...selectedActivities, surfActivity]);
 
-      // Set default surf classes to 4 if not already set
+      // Set default surf classes/package if not already set
       if (!selectedSurfClasses[surfActivity.id]) {
         setSelectedSurfClasses(surfActivity.id, 4);
       }
+      if (!selectedSurfPackages[surfActivity.id]) {
+        setSelectedSurfPackage(surfActivity.id, '4-classes');
+      }
     }
-  }, [AVAILABLE_ACTIVITIES, selectedActivities, selectedSurfClasses]);
+  }, [AVAILABLE_ACTIVITIES, selectedActivities, selectedSurfClasses, selectedSurfPackages]);
 
   const toggleActivity = (activityId: string) => {
     const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
@@ -1198,6 +1209,7 @@ export default function ActivitySelector() {
       const activitiesWithQuantities = selectedActivities.map((activity: Activity) => {
         let quantity = 1;
         let packageInfo: string | null = null;
+        let classCount: number | null = null;
         
         if (activity.category === 'yoga') {
           const yogaPackage = getSelectedYogaPackage(activity.id);
@@ -1206,8 +1218,12 @@ export default function ActivitySelector() {
           }
         } else if (activity.category === 'surf') {
           const surfPackage = getSelectedSurfPackage(activity.id);
+          const surfClasses = getSelectedSurfClasses(activity.id);
           if (surfPackage) {
             packageInfo = surfPackage;
+          }
+          if (surfClasses) {
+            classCount = surfClasses;
           }
         } else {
           quantity = activityQuantities[activity.id] || 1;
@@ -1216,7 +1232,8 @@ export default function ActivitySelector() {
         return {
           activityId: activity.id,
           quantity,
-          package: packageInfo
+          package: packageInfo,
+          classCount
         };
       });
 
@@ -1287,6 +1304,7 @@ export default function ActivitySelector() {
       const activity = AVAILABLE_ACTIVITIES.find((a: Activity) => a.id === activityId);
       if (activity && activity.category === 'surf') {
         setSelectedSurfClasses(activityId, 4); // Reset to default
+        setSelectedSurfPackage(activityId, '4-classes');
       }
     },
     t,
@@ -1400,6 +1418,11 @@ export default function ActivitySelector() {
     </motion.div>
   );
 } 
+
+
+
+
+
 
 
 

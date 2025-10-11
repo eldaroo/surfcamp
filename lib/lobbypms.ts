@@ -291,6 +291,118 @@ export class LobbyPMSClient {
   }
 
   /**
+   * Create or ensure a customer exists in LobbyPMS
+   */
+  async createCustomer(customer: {
+    customer_document: string;
+    customer_nationality: string;
+    name: string;
+    surname?: string;
+    second_surname?: string;
+    phone?: string;
+    email?: string;
+    note?: string;
+    gender?: 'male' | 'female';
+    birthdate?: string;
+    document_id?: string;
+    address?: string;
+    activities?: string;
+  }): Promise<void> {
+    const endpoint = '/customer/1'; // 1 => Persona
+
+    try {
+      console.log('🚀 ===== LOBBY PMS CREATE CUSTOMER =====');
+      console.log('🚀 Endpoint:', endpoint);
+      console.log('🚀 Customer payload:', JSON.stringify(customer, null, 2));
+
+      const finalUrl = this.buildURL(endpoint);
+      console.log('🚀 Customer URL:', finalUrl);
+
+      await axios.post(finalUrl, customer, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': 'SurfCampSantaTeresa/1.0'
+        },
+        timeout: 15000
+      });
+
+      console.log('✅ LobbyPMS createCustomer successful');
+    } catch (error: any) {
+      const responseData = error.response?.data;
+      console.error('❌ LobbyPMS createCustomer error:', {
+        message: error.message,
+        status: error.response?.status,
+        data: responseData,
+        url: this.buildURL(endpoint)
+      });
+
+      if (responseData?.error_code === 'INPUT_PARAMETERS') {
+        console.log('ℹ️ LobbyPMS customer may already exist (duplicate document). Continuing.');
+        return;
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Create or update a customer record in LobbyPMS
+   */
+  async createCustomer(customer: {
+    customer_document: string;
+    customer_nationality: string;
+    name: string;
+    surname?: string;
+    second_surname?: string;
+    phone?: string;
+    email?: string;
+    note?: string;
+    gender?: 'male' | 'female';
+    birthdate?: string;
+    document_id?: string;
+    address?: string;
+    activities?: string;
+  }): Promise<void> {
+    const endpoint = '/customer/1';
+
+    try {
+      console.log('🚀 ===== LOBBY PMS CREATE CUSTOMER =====');
+      console.log('🚀 Endpoint:', endpoint);
+      console.log('🚀 Customer payload:', JSON.stringify(customer, null, 2));
+
+      const finalUrl = this.buildURL(endpoint);
+      console.log('🚀 Customer URL:', finalUrl);
+
+      await axios.post(finalUrl, customer, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'User-Agent': 'SurfCampSantaTeresa/1.0'
+        },
+        timeout: 15000
+      });
+
+      console.log('✅ LobbyPMS createCustomer successful');
+    } catch (error: any) {
+      const responseData = error.response?.data;
+      console.error('❌ LobbyPMS createCustomer error:', {
+        message: error.message,
+        status: error.response?.status,
+        data: responseData,
+        url: this.buildURL(endpoint)
+      });
+
+      if (responseData?.error_code === 'INPUT_PARAMETERS') {
+        console.log('ℹ️ LobbyPMS customer may already exist. Continuing flow.');
+        return;
+      }
+
+      throw error;
+    }
+  }
+
+  /**
    * Create a new booking
    */
   async createBooking(booking: LobbyPMSBooking): Promise<LobbyPMSBooking> {
@@ -351,6 +463,63 @@ export class LobbyPMSClient {
       throw error;
     }
   }
+
+  /**
+   * Add products/services to a booking
+   */
+  async addProductsToBooking(bookingId: number | string, items: Array<{ product_id: string; cant: number; inventory_center_id?: string }>): Promise<void> {
+    if (!items || items.length === 0) {
+      console.log('?,1?,? No items to add to booking. Skipping add-product-service call.');
+      return;
+    }
+
+    const endpoint = '/booking/add-product-service';
+    const finalUrl = this.buildURL(endpoint);
+    const headers = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'User-Agent': 'SurfCampSantaTeresa/1.0'
+    };
+
+    const normalizedItems = items.map((item) => ({
+      product_id: item.product_id,
+      cant: item.cant,
+      ...(item.inventory_center_id ? { inventory_center_id: item.inventory_center_id } : {})
+    }));
+
+    for (const item of normalizedItems) {
+      const payload = {
+        booking_id: bookingId,
+        items: [item]
+      };
+
+      try {
+        console.log('dYs? ===== LOBBY PMS ADD PRODUCT/SERVICE =====');
+        console.log('dYs? Endpoint:', endpoint);
+        console.log('dYs? Booking ID:', bookingId);
+        console.log('dYs? Item payload:', JSON.stringify(payload, null, 2));
+        console.log('dYs? Add product/service URL:', finalUrl);
+
+        const response = await axios.post(finalUrl, payload, {
+          headers,
+          timeout: 15000
+        });
+
+        console.log('?o. LobbyPMS addProductsToBooking successful:', JSON.stringify(response.data, null, 2));
+      } catch (error: any) {
+        console.error('??O LobbyPMS addProductsToBooking error:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          url: finalUrl,
+          payload
+        });
+
+        throw error;
+      }
+    }
+  }
+
 
   /**
    * Get rates information

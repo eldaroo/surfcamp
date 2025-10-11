@@ -285,6 +285,7 @@ const translations = {
       },
       processingDemo: "Procesando demo...",
       generatingLink: "Generando link de pago...",
+      pleaseWait: "Por favor espera un momento",
       completeDemo: "Completar Demo",
       generateLink: "Generar Link de Pago",
       demoMode: "Modo Demo",
@@ -602,6 +603,7 @@ const translations = {
       },
       processingDemo: "Processing demo...",
       generatingLink: "Generating payment link...",
+      pleaseWait: "Please wait a moment",
       completeDemo: "Complete Demo",
       generateLink: "Generate Payment Link",
       demoMode: "Demo Mode",
@@ -670,22 +672,13 @@ function getNestedTranslation(obj: any, path: string): string {
 
 // Provider
 export function I18nProvider({ children, initialLocale = 'en' }: { children: ReactNode; initialLocale?: Locale }) {
-  console.log('🌍 I18nProvider - Iniciando con initialLocale:', initialLocale);
-  console.log('🌍 I18nProvider - Tipo de initialLocale:', typeof initialLocale);
-  console.log('🌍 I18nProvider - Locale válido:', ['es', 'en'].includes(initialLocale));
-
   const [locale, setLocale] = useState<Locale>(initialLocale);
-
-  console.log('🌍 I18nProvider - Estado locale actual:', locale);
 
   const t = (key: string): string => {
     const translation = getNestedTranslation(translations[locale], key);
     const result = typeof translation === 'string' ? translation : key;
-    console.log(`🌍 I18nProvider - Traducción: "${key}" -> "${result}" (locale: ${locale})`);
     return result;
   };
-
-  console.log('✅ I18nProvider - Renderizando con locale:', locale);
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t }}>

@@ -20,10 +20,10 @@ export default function PaymentSection() {
     selectedActivities,
     selectedYogaPackages,
     selectedSurfPackages,
+    selectedSurfClasses,
     setCurrentStep,
     setPriceBreakdown
   } = useBookingStore();
-  const [paymentMethod, setPaymentMethod] = useState<'wetravel' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
@@ -58,15 +58,15 @@ export default function PaymentSection() {
       if (activity.category === 'yoga') {
         const yogaPackage = selectedYogaPackages[activity.id];
         if (yogaPackage) {
-          activitiesTotal += getActivityTotalPrice('yoga', yogaPackage);
+          activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
         }
       } else if (activity.category === 'surf') {
-        const surfPackage = selectedSurfPackages[activity.id];
-        if (surfPackage) {
-          activitiesTotal += getActivityTotalPrice('surf', surfPackage);
+        const surfClasses = selectedSurfClasses[activity.id];
+        if (surfClasses) {
+          activitiesTotal += getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
         }
       } else {
-        activitiesTotal += activity.price;
+        activitiesTotal += activity.price * (bookingData.guests || 1);
       }
     });
 
@@ -176,17 +176,62 @@ export default function PaymentSection() {
 
     try {
       console.log('💳 Starting payment process...');
-      
-      // Si es pago demo, ir directo a éxito sin reservar en LobbyPMS
-      if (paymentMethod === 'mock') {
-        console.log('🎭 Demo payment selected - skipping LobbyPMS reservation');
-        // Simular procesamiento
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('✅ Demo payment completed successfully');
-        setCurrentStep('success');
-        return;
+
+      // Abrir ventana inmediatamente para evitar bloqueo de pop-ups
+      // y mostrar mensaje de carga
+      const paymentWindow = window.open('', '_blank');
+      if (paymentWindow) {
+        const loadingTitle = t('payment.generatingLink');
+        const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
+
+        paymentWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${loadingTitle}</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                  color: white;
+                }
+                .loader {
+                  text-align: center;
+                }
+                .spinner {
+                  border: 4px solid rgba(255, 255, 255, 0.1);
+                  border-top: 4px solid #fbbf24;
+                  border-radius: 50%;
+                  width: 50px;
+                  height: 50px;
+                  animation: spin 1s linear infinite;
+                  margin: 0 auto 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                h2 { margin: 0 0 10px; }
+                p { margin: 0; opacity: 0.8; }
+              </style>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <h2>${loadingTitle}</h2>
+                <p>${loadingMessage}</p>
+              </div>
+            </body>
+          </html>
+        `);
       }
-      
+
       // Generar link de pago con WeTravel
       console.log('🔗 Generating WeTravel payment link...');
       
@@ -223,7 +268,13 @@ export default function PaymentSection() {
           name: a.name,
           category: a.category,
           price: a.price,
-          package: a.category === 'yoga' ? selectedYogaPackages[a.id] : selectedSurfPackages[a.id]
+          package:
+            a.category === 'yoga'
+              ? selectedYogaPackages[a.id]
+              : a.category === 'surf'
+                ? selectedSurfPackages[a.id]
+                : undefined,
+          classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
         })),
         // WeTravel specific data
         wetravelData: {
@@ -267,15 +318,21 @@ export default function PaymentSection() {
       }
 
       console.log('✅ WeTravel payment link generated successfully:', wetravelData);
-      
+
       // Guardar la respuesta de WeTravel en el estado
       setWetravelResponse(wetravelData);
-      
+
       // Redirigir al usuario al link de pago
       if (wetravelData.payment_url) {
-        // Abrir el link de pago en una nueva pestaña
-        window.open(wetravelData.payment_url, '_blank');
-        
+        // Actualizar la URL de la ventana ya abierta
+        if (paymentWindow) {
+          paymentWindow.location.href = wetravelData.payment_url;
+          paymentWindow.focus();
+        } else {
+          // Fallback si la ventana fue bloqueada
+          window.open(wetravelData.payment_url, '_blank');
+        }
+
         // Mostrar estado de esperando procesar pago
         setError(''); // Limpiar errores previos
         setIsWaitingForPayment(true);
@@ -292,12 +349,20 @@ export default function PaymentSection() {
         // Start polling payment status
         startPaymentStatusPolling(orderId, tripId);
       } else {
+        // Cerrar la ventana si no hay URL
+        if (paymentWindow) {
+          paymentWindow.close();
+        }
         throw new Error('No payment URL received from WeTravel');
       }
       
     } catch (error) {
       console.error('❌ Payment/WeTravel error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
+      // Cerrar la ventana de pago si ocurrió un error
+      if (paymentWindow && !paymentWindow.closed) {
+        paymentWindow.close();
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -390,17 +455,17 @@ export default function PaymentSection() {
     if (activity.category === 'yoga') {
       const yogaPackage = selectedYogaPackages[activity.id];
       if (!yogaPackage) return sum; // No hay paquete seleccionado
-      return sum + getActivityTotalPrice('yoga', yogaPackage);
+      return sum + getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
     } else if (activity.category === 'surf') {
-      const surfPackage = selectedSurfPackages[activity.id];
-      if (!surfPackage) return sum; // No hay paquete seleccionado
-      return sum + getActivityTotalPrice('surf', surfPackage);
+      const surfClasses = selectedSurfClasses[activity.id];
+      if (!surfClasses) return sum; // No hay clases seleccionadas
+      return sum + getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
     } else {
-      return sum + (activity.price || 0);
+      return sum + ((activity.price || 0) * (bookingData.guests || 1));
     }
   }, 0);
-  
-  const total = 1; // TESTING: Set to $1 USD for payment testing
+
+  const total = accommodationTotal + activitiesTotal;
 
   return (
     <motion.div
@@ -432,41 +497,6 @@ export default function PaymentSection() {
               For now, I'll remove it as it's not in the new_code. */}
           {/* <div className="mb-4 text-warm-600 font-semibold">{t('payment.error.missingData')}</div> */}
 
-          {/* Payment Method Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white font-heading">{t('payment.method.title')}</h3>
-            
-            <label className="flex items-center space-x-3 p-3 border border-white/30 rounded-lg cursor-pointer hover:bg-white/10">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="wetravel"
-                checked={paymentMethod === 'wetravel'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'wetravel')}
-                className="text-blue-500"
-              />
-              <div>
-                <div className="font-medium text-white">{t('payment.method.wetravel')}</div>
-                <div className="text-sm text-blue-300">{t('payment.method.wetravelDescription')}</div>
-              </div>
-            </label>
-            
-            <label className="flex items-center space-x-3 p-3 border border-white/30 rounded-lg cursor-pointer hover:bg-white/10">
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="mock"
-                checked={paymentMethod === 'mock'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'mock')}
-                className="text-blue-500"
-              />
-              <div>
-                <div className="font-medium text-white">{t('payment.method.demo')}</div>
-                <div className="text-sm text-blue-300">{t('payment.method.demoDescription')}</div>
-              </div>
-            </label>
-          </div>
-
           {/* Pay Button */}
           <button
             onClick={handlePayment}
@@ -476,15 +506,11 @@ export default function PaymentSection() {
             {isProcessing ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>
-                  {paymentMethod === 'mock' ? t('payment.processingDemo') : t('payment.generatingLink')}
-                </span>
+                <span>{t('payment.generatingLink')}</span>
               </>
             ) : (
               <>
-                <span>
-                  {paymentMethod === 'mock' ? t('payment.completeDemo') : t('payment.generateLink')}
-                </span>
+                <span>{t('payment.generateLink')}</span>
                 <span>→</span>
               </>
             )}
@@ -540,32 +566,31 @@ export default function PaymentSection() {
               )}
               {selectedActivities.map((activity: any) => {
                 let activityPrice: number;
+                let activityDetails: string = '';
+
                 if (activity.category === 'yoga') {
                   const selectedYogaPackage = selectedYogaPackages[activity.id];
                   if (!selectedYogaPackage) return null; // No hay paquete seleccionado
-                  activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage);
+                  activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, bookingData.guests || 1);
+                  activityDetails = `(${selectedYogaPackage})`;
                 } else if (activity.category === 'surf') {
-                  const selectedSurfPackage = selectedSurfPackages[activity.id];
-                  if (!selectedSurfPackage) return null; // No hay plan de progreso seleccionado
-                  activityPrice = getActivityTotalPrice('surf', selectedSurfPackage);
+                  const surfClasses = selectedSurfClasses[activity.id];
+                  if (!surfClasses) return null; // No hay clases seleccionadas
+                  activityPrice = getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
+                  activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
                 } else {
-                  activityPrice = activity.price || 0;
+                  activityPrice = (activity.price || 0) * (bookingData.guests || 1);
                 }
-                
+
                 return (
                   <div key={activity.id} className="flex justify-between">
                     <span className="text-white">
                       {activity.name}
-                      {activity.category === 'surf' && selectedSurfPackages[activity.id] && (
+                      {activityDetails && (
                         <span className="text-sm text-blue-300 ml-2">
-                          (Plan de Progreso: {selectedSurfPackages[activity.id]})
+                          {activityDetails}
                         </span>
                       )}
-                                              {activity.category === 'yoga' && selectedYogaPackages[activity.id] && (
-                          <span className="text-sm text-blue-300 ml-2">
-                            (Paquete: {selectedYogaPackages[activity.id]})
-                          </span>
-                        )}
                     </span>
                     <span className="font-medium text-blue-400">${activityPrice}</span>
                   </div>
@@ -588,19 +613,6 @@ export default function PaymentSection() {
             </div>
             <p className="text-blue-300 text-sm mt-1">{t('payment.secure.description')}</p>
           </div>
-
-          {/* Demo Payment Notice */}
-          {paymentMethod === 'mock' && (
-            <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-blue-400">ℹ️</span>
-                <span className="font-semibold text-white">{t('payment.demoMode')}</span>
-              </div>
-              <p className="text-blue-300 text-sm mt-1">
-                {t('payment.demoNotice')}
-              </p>
-            </div>
-          )}
 
           {/* Error Message */}
           {error && (

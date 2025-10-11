@@ -26,16 +26,26 @@ export async function POST(request: NextRequest) {
     let wetravelPayload;
     let bookingData = null;
     
-    // NEW FORMAT: { checkIn, checkOut, guests, roomTypeId, contactInfo, ... }
+    // NEW FORMAT: { checkIn, checkOut, guests, roomTypeId, contactInfo, wetravelData, ... }
     if (body.checkIn && body.checkOut && body.contactInfo) {
       console.log('📝 New format detected - will save to DB and create payment');
-      
-      const { checkIn, checkOut, guests, roomTypeId, contactInfo, selectedActivities } = body;
-      
-      // Calculate totals (simplified for now)
+
+      const { checkIn, checkOut, guests, roomTypeId, contactInfo, selectedActivities, wetravelData } = body;
+
+      // Get price from wetravelData if provided, otherwise use $1 for testing
+      const price = wetravelData?.pricing?.price || 1;
+      const installmentPrice = wetravelData?.pricing?.payment_plan?.installments?.[0]?.price || price;
+      const daysBeforeDeparture = wetravelData?.pricing?.payment_plan?.installments?.[0]?.days_before_departure ||
+        Math.max(1, Math.ceil((new Date(checkIn).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+
+      console.log('💰 Price from payload:', price);
+      console.log('💰 Installment price:', installmentPrice);
+      console.log('📅 Days before departure:', daysBeforeDeparture);
+
+      // Calculate totals
       const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-      const totalAmountCents = 100; // $1.00 in cents for testing
-      
+      const totalAmountCents = Math.round(price * 100); // Convert to cents
+
       // Prepare booking data
       bookingData = {
         checkIn,
@@ -47,13 +57,11 @@ export async function POST(request: NextRequest) {
         nights,
         totalAmountCents
       };
-      
+
       // Create WeTravel payload from booking data
-      const daysBeforeDeparture = Math.max(1, Math.ceil((new Date(checkIn).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-      
       wetravelPayload = {
         data: {
-          trip: {
+          trip: wetravelData?.trip || {
             title: "Surf & Yoga Retreat – Santa Teresa",
             start_date: checkIn,
             end_date: checkOut,
@@ -61,14 +69,14 @@ export async function POST(request: NextRequest) {
             participant_fees: "all"
           },
           pricing: {
-            price: 1, // $1 for testing
+            price: price,
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
               deposit: 0,
               installments: [
-                { 
-                  price: 1, // $1 for testing
+                {
+                  price: installmentPrice,
                   days_before_departure: daysBeforeDeparture
                 }
               ]
@@ -80,8 +88,8 @@ export async function POST(request: NextRequest) {
           }
         }
       };
-      
-      console.log('✅ Converted to WeTravel format successfully');
+
+      console.log('✅ Converted to WeTravel format successfully with price:', price);
     }
     // OLD FORMAT: { data: { trip: { start_date, end_date }, pricing: { price } } }
     else if (body.data?.trip?.start_date && body.data?.trip?.end_date && body.data?.pricing?.price) {
@@ -99,6 +107,7 @@ export async function POST(request: NextRequest) {
     // 💾 SUPABASE: Save to database FIRST if we have booking data
     let orderId = null;
     let paymentId = null;
+    let createdPaymentRecord: any = null;
     
     if (bookingData) {
       // Generate unique IDs
@@ -141,7 +150,9 @@ export async function POST(request: NextRequest) {
             wetravel_data: {
               created_from: 'payment_request',
               booking_data: bookingData,
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              metadata_order_id: orderId,
+              internal_payment_id: paymentId
             }
           })
           .select();
@@ -151,6 +162,8 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('✅ Payment saved to Supabase:', paymentResult);
+
+        createdPaymentRecord = paymentResult?.[0] || null;
 
         // Add DB IDs to WeTravel metadata
         wetravelPayload.data.metadata = {
@@ -221,26 +234,51 @@ export async function POST(request: NextRequest) {
 
     // Extraer la URL de pago de la respuesta de WeTravel
     const paymentUrl = wetravelData.data?.trip?.url || wetravelData.payment_url || wetravelData.url;
-    const tripId = wetravelData.data?.trip?.uuid || wetravelData.trip_id;
-    
+    const tripId =
+      wetravelData.data?.trip?.uuid ||
+      wetravelData.data?.trip_uuid ||
+      wetravelData.trip?.uuid ||
+      wetravelData.trip_id ||
+      null;
+    const wetravelOrderId = wetravelData.data?.order_id || wetravelData.order_id || null;
+    const wetravelPaymentId = wetravelData.data?.id || wetravelData.id || null;
+    const metadataOrderId =
+      wetravelData.data?.metadata?.order_id ||
+      wetravelData.metadata?.order_id ||
+      wetravelData.data?.metadata?.booking_data?.order_id ||
+      null;
+
     console.log('🔗 Extracted payment URL:', paymentUrl);
     console.log('🆔 Extracted trip ID:', tripId);
+    console.log('🧾 Extracted WeTravel order ID:', wetravelOrderId);
+    console.log('💳 Extracted WeTravel payment ID:', wetravelPaymentId);
+    console.log('🧩 Metadata order ID:', metadataOrderId);
 
     // 💾 SUPABASE: Update payment with WeTravel response
     if (bookingData && paymentId) {
       try {
+        const updatedWetravelData = {
+          ...((createdPaymentRecord?.wetravel_data as Record<string, unknown>) || {}),
+          wetravel_response: wetravelData,
+          payment_url: paymentUrl,
+          updated_at: new Date().toISOString(),
+          ...(tripId ? { trip_id: tripId } : {}),
+          ...(wetravelOrderId ? { wetravel_order_id: wetravelOrderId } : {}),
+          ...(wetravelPaymentId ? { wetravel_payment_id: wetravelPaymentId } : {}),
+          ...(metadataOrderId ? { metadata_order_id: metadataOrderId } : {})
+        };
+
+        const paymentUpdatePayload: Record<string, unknown> = {
+          wetravel_data: updatedWetravelData
+        };
+
+        if (wetravelOrderId || metadataOrderId) {
+          paymentUpdatePayload.wetravel_order_id = wetravelOrderId || metadataOrderId;
+        }
+
         const { error: updateError } = await supabase
           .from('payments')
-          .update({
-            wetravel_data: {
-              created_from: 'payment_request',
-              booking_data: bookingData,
-              wetravel_response: wetravelData,
-              payment_url: paymentUrl,
-              trip_id: tripId,
-              updated_at: new Date().toISOString()
-            }
-          })
+          .update(paymentUpdatePayload)
           .eq('id', paymentId);
 
         if (updateError) {
@@ -258,6 +296,9 @@ export async function POST(request: NextRequest) {
       success: true,
       payment_url: paymentUrl,
       trip_id: tripId,
+      wetravel_order_id: wetravelOrderId || metadataOrderId || null,
+      wetravel_payment_id: wetravelPaymentId || null,
+      metadata_order_id: metadataOrderId || null,
       metadata: wetravelData.data || wetravelData.metadata,
       // Include DB IDs if created
       ...(orderId && { order_id: orderId }),
@@ -265,7 +306,10 @@ export async function POST(request: NextRequest) {
       debug: {
         originalFormat: body.checkIn ? 'new' : 'legacy',
         dbSaved: !!bookingData,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        trip_id: tripId,
+        wetravel_order_id: wetravelOrderId || metadataOrderId || null,
+        wetravel_payment_id: wetravelPaymentId || null
       }
     };
     

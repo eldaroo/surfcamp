@@ -1,0 +1,94 @@
+﻿{
+  "data": [
+    {
+      "service_id": 219724,
+      "name": "yoga class huesped",
+      "value": "10.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 219726,
+      "name": "yoga pack 3",
+      "value": "30.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 219727,
+      "name": "yoga pack 10",
+      "value": "75.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 465954,
+      "name": "sesion 1 a 1",
+      "value": "40.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 488396,
+      "name": "Programa de Surf de 3 clases y videoanalisis ",
+      "value": "300.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489528,
+      "name": "Programa de Surf de 4 clases y videoanalisis ",
+      "value": "380.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489529,
+      "name": "Programa de Surf de 5 clases y videoanalisis ",
+      "value": "460.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489530,
+      "name": "Programa de Surf de 6 clases y videoanalisis ",
+      "value": "546.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489532,
+      "name": "Programa de Surf de 7 clases y videoanalisis ",
+      "value": "632.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489533,
+      "name": "Programa de Surf de 8 clases y videoanalisis ",
+      "value": "718.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489534,
+      "name": "Programa de Surf de 9 clases y videoanalisis ",
+      "value": "804.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 489536,
+      "name": "Programa de Surf de 10 clases y videoanalisis ",
+      "value": "890.00",
+      "infinite_inventory": 1,
+      "stock": null
+    }
+  ],
+  "meta": {
+    "total_records": 12,
+    "current_page": 1,
+    "records_per_page": 100,
+    "total_pages": 1
+  }
+}

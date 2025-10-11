@@ -89,16 +89,212 @@ interface WeTravelWebhookData {
   type: string;
 }
 
+interface WeTravelIdentifiers {
+  tripId?: string | null;
+  wetravelOrderId?: string | null;
+  metadataOrderId?: string | null;
+  wetravelPaymentId?: string | null;
+  metadataPaymentId?: string | null;
+}
+
+interface PaymentRecord {
+  id: string;
+  order_id: string;
+  status: string;
+  wetravel_data: Record<string, unknown> | null;
+  wetravel_order_id?: string | null;
+}
+
+interface PaymentSearchContext extends WeTravelIdentifiers {
+  actualOrderId?: string | null;
+  eventType?: string;
+}
+
+interface PaymentSearchResult {
+  payment: PaymentRecord;
+  matchedBy: string;
+}
+
+interface BookingEventContext {
+  eventKey?: string;
+  actualOrderId?: string | null;
+}
+
+function extractWebhookIdentifiers(webhookData: WeTravelWebhookData): WeTravelIdentifiers {
+  const data = webhookData?.data || {};
+  const metadata = (data as Record<string, any>)?.metadata || {};
+  const metadataBooking = (metadata as Record<string, any>)?.booking_data || {};
+
+  const tripId =
+    data?.trip?.uuid ||
+    data?.trip_uuid ||
+    data?.trip_id ||
+    metadata?.trip_id ||
+    metadataBooking?.trip_id ||
+    metadataBooking?.tripUuid ||
+    null;
+
+  const wetravelOrderId = data?.order_id || metadata?.wetravel_order_id || null;
+  const metadataOrderId =
+    metadata?.order_id ||
+    metadataBooking?.order_id ||
+    metadataBooking?.orderId ||
+    null;
+
+  const wetravelPaymentId = data?.id || data?.payment_id || null;
+  const metadataPaymentId = metadata?.payment_id || metadata?.paymentId || null;
+
+  return {
+    tripId,
+    wetravelOrderId,
+    metadataOrderId,
+    wetravelPaymentId,
+    metadataPaymentId
+  };
+}
+
+function buildUpdatedWetravelData(
+  existing: Record<string, unknown> | null | undefined,
+  patch: Record<string, unknown>
+) {
+  return {
+    ...(existing || {}),
+    ...patch
+  };
+}
+
+async function findMatchingPayment(
+  context: PaymentSearchContext
+): Promise<PaymentSearchResult | null> {
+  const selectColumns = 'id, order_id, status, wetravel_data, wetravel_order_id';
+  const attempts: Array<{
+    label: string;
+    run: () => Promise<{ payment: PaymentRecord | null; error: any }>;
+  }> = [];
+
+  const addEqAttempt = (field: string, value?: string | null, label?: string) => {
+    if (!value) return;
+    attempts.push({
+      label: label || `${field} = ${value}`,
+      run: async () => {
+        const { data, error } = await supabase
+          .from('payments')
+          .select(selectColumns)
+          .eq(field, value)
+          .maybeSingle();
+        return {
+          payment: (data as PaymentRecord | null) || null,
+          error
+        };
+      }
+    });
+  };
+
+  const addContainsAttempt = (
+    value: Record<string, unknown>,
+    label: string
+  ) => {
+    if (!value || Object.keys(value).length === 0) return;
+    attempts.push({
+      label,
+      run: async () => {
+        const { data, error } = await supabase
+          .from('payments')
+          .select(selectColumns)
+          .contains('wetravel_data', value)
+          .limit(1);
+        const paymentArray = (data as PaymentRecord[] | null) || [];
+        return {
+          payment: paymentArray.length > 0 ? paymentArray[0] : null,
+          error
+        };
+      }
+    });
+  };
+
+  addEqAttempt('order_id', context.actualOrderId, 'order_id (actualOrderId)');
+  addEqAttempt('order_id', context.metadataOrderId, 'order_id (metadataOrderId)');
+  addEqAttempt('order_id', context.wetravelOrderId, 'order_id (wetravelOrderId)');
+  addEqAttempt('wetravel_order_id', context.metadataOrderId, 'wetravel_order_id (metadataOrderId)');
+  addEqAttempt('wetravel_order_id', context.wetravelOrderId, 'wetravel_order_id (WeTravel order_id)');
+
+  addContainsAttempt(
+    context.tripId ? { trip_id: context.tripId } : {},
+    'wetravel_data contains trip_id'
+  );
+  addContainsAttempt(
+    context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {},
+    'wetravel_data contains metadata_order_id'
+  );
+  addContainsAttempt(
+    context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {},
+    'wetravel_data contains wetravel_order_id'
+  );
+  addContainsAttempt(
+    context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {},
+    'wetravel_data contains wetravel_payment_id'
+  );
+  addContainsAttempt(
+    context.metadataPaymentId
+      ? { metadata: { payment_id: context.metadataPaymentId } }
+      : {},
+    'wetravel_data.metadata.payment_id'
+  );
+
+  for (const attempt of attempts) {
+    console.log('🔍 [LOBBYPMS-DEBUG] Payment search attempt:', attempt.label);
+    try {
+      const { payment, error } = await attempt.run();
+      if (error) {
+        console.error('❌ [LOBBYPMS-DEBUG] Payment search error:', {
+          label: attempt.label,
+          error,
+          eventType: context.eventType || 'unknown'
+        });
+        continue;
+      }
+
+      if (payment) {
+        console.log('✅ [LOBBYPMS-DEBUG] Payment found:', {
+          matchedBy: attempt.label,
+          paymentId: payment.id,
+          orderId: payment.order_id,
+          wetravelOrderId: payment.wetravel_order_id || null
+        });
+        return {
+          payment,
+          matchedBy: attempt.label
+        };
+      }
+    } catch (searchError) {
+      console.error('❌ [LOBBYPMS-DEBUG] Unexpected payment search failure:', {
+        label: attempt.label,
+        error: searchError,
+        eventType: context.eventType || 'unknown'
+      });
+    }
+  }
+
+  console.log('⚠️ [LOBBYPMS-DEBUG] No matching payment found after attempts:', {
+    eventType: context.eventType || 'unknown',
+    attempts: attempts.map((attempt) => attempt.label)
+  });
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    console.log('🎯 WeTravel webhook received');
-    console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
+    console.log('');
+    console.log('🔵 [LOBBYPMS-DEBUG] ='.repeat(40));
+    console.log('🔵 [LOBBYPMS-DEBUG] 🎯 WeTravel webhook received');
+    console.log('🔵 [LOBBYPMS-DEBUG] 📋 Headers:', Object.fromEntries(request.headers.entries()));
 
     const signature = request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
 
-    console.log('📦 Raw body length:', rawBody.length);
-    console.log('🔐 Signature:', signature ? signature.substring(0, 20) + '...' : 'none');
+    console.log('🔵 [LOBBYPMS-DEBUG] 📦 Raw body length:', rawBody.length);
+    console.log('🔵 [LOBBYPMS-DEBUG] 🔐 Signature:', signature ? signature.substring(0, 20) + '...' : 'none');
 
     // Webhook payload received
     
@@ -118,9 +314,11 @@ export async function POST(request: NextRequest) {
     
     const body = JSON.parse(rawBody);
 
+    console.log('🔵 [LOBBYPMS-DEBUG] 📦 Parsed body:', JSON.stringify(body, null, 2));
+
     // Validar que sea un webhook válido de WeTravel (soporta múltiples formatos)
     if (!body.type || !body.data) {
-      console.warn('⚠️ Invalid webhook payload received:', body);
+      console.warn('🔵 [LOBBYPMS-DEBUG] ⚠️ Invalid webhook payload received:', body);
       return NextResponse.json(
         { error: 'Invalid webhook payload: missing type or data' },
         { status: 400 }
@@ -129,55 +327,47 @@ export async function POST(request: NextRequest) {
 
     const webhookData: WeTravelWebhookData = body;
 
-    // Determinar el tipo de evento y trip ID según el formato
-    let eventType = body.type; // payment.created, payment.updated, etc.
-    let tripId = body.data?.trip?.uuid || body.data?.trip_uuid || body.data?.trip_id;
+    // Determinar el tipo de evento y extraer identificadores útiles
+    const eventType = body.type; // payment.created, payment.updated, etc.
+    const identifiers = extractWebhookIdentifiers(webhookData);
 
-    // Para booking.created, también intentar obtener order_id como fallback
-    let orderId = body.data?.order_id;
+    let tripId =
+      identifiers.tripId ||
+      body.data?.trip?.uuid ||
+      body.data?.trip_uuid ||
+      body.data?.trip_id ||
+      null;
 
-    console.log('🎯 WeTravel webhook:', eventType, tripId ? `trip:${tripId}` : 'no-trip-id', orderId ? `order:${orderId}` : 'no-order-id');
+    let orderId = identifiers.wetravelOrderId || body.data?.order_id || null;
+    const metadataOrderId = identifiers.metadataOrderId || null;
+    const wetravelPaymentId = identifiers.wetravelPaymentId || null;
+    const metadataPaymentId = identifiers.metadataPaymentId || null;
+
+    console.log('🔵 [LOBBYPMS-DEBUG] 🎯 WeTravel webhook:', eventType, tripId ? `trip:${tripId}` : 'no-trip-id', orderId ? `order:${orderId}` : 'no-order-id');
+    console.log('🔵 [LOBBYPMS-DEBUG] 🧩 Identifiers extracted:', {
+      tripId,
+      wetravelOrderId: orderId,
+      metadataOrderId,
+      wetravelPaymentId,
+      metadataPaymentId
+    });
     
     // Process webhook event
     if (!tripId) {
       console.warn('⚠️ No trip ID found in webhook payload');
     }
 
-    // For booking.created, we need to find the payment first to get the correct order_id
-    // before creating the event_key to ensure consistency
-    let actualOrderId = null;
-    if (eventType === 'booking.created' && tripId) {
-      console.log('🔍 Pre-searching for payment with trip_id:', tripId);
-
-      // Quick search to find the correct order_id before creating event_key
-      const { data: foundPayments, error: searchError } = await supabase
-        .from('payments')
-        .select('order_id, wetravel_data')
-        .contains('wetravel_data', { trip_id: tripId })
-        .limit(1);
-
-      console.log('🔍 Pre-search result:', {
-        foundPayments,
-        searchError,
-        searchQuery: { trip_id: tripId },
-        foundCount: foundPayments?.length || 0,
-        foundData: foundPayments?.map(p => ({
-          order_id: p.order_id,
-          wetravel_data_trip_id: p.wetravel_data?.trip_id
-        })) || []
-      });
-
-      if (foundPayments && foundPayments.length > 0) {
-        actualOrderId = foundPayments[0].order_id;
-        console.log('🎯 Found actual order_id for event_key:', actualOrderId);
-      } else {
-        console.log('⚠️ Pre-search did not find payment, will use fallback logic');
-      }
+    // Prefer metadata order_id for deduplicación y vínculo interno
+    let actualOrderId = metadataOrderId || null;
+    if (actualOrderId) {
+      console.log('🎯 [LOBBYPMS-DEBUG] Using metadata order_id as internal reference:', actualOrderId);
+    } else if (eventType === 'booking.created') {
+      console.log('⚠️ [LOBBYPMS-DEBUG] Metadata order_id not provided; relying on WeTravel identifiers only');
     }
 
     // Save event to database for audit trail and deduplication
     // Use actual order_id if found, otherwise fallback to provided IDs
-    const eventKey = `${eventType}_${actualOrderId || orderId || tripId || 'no_id'}_${tripId || 'no_trip'}`;
+    const eventKey = `${eventType}_${actualOrderId || metadataOrderId || orderId || tripId || 'no_id'}_${tripId || 'no_trip'}`;
     
     // Check for duplicate events
     const { data: existingEvent } = await supabase
@@ -198,7 +388,7 @@ export async function POST(request: NextRequest) {
         event_key: eventKey,
         event_type: eventType,
         payment_id: null, // Will be updated if we find matching payment
-        order_id: null    // Will be updated if we find matching order
+        order_id: actualOrderId || metadataOrderId || null
       });
     
     if (eventError) {
@@ -210,58 +400,81 @@ export async function POST(request: NextRequest) {
     // After processing, try to fix orphaned events if this is a booking.created
     if (eventType === 'booking.created') {
       setTimeout(() => {
-        fixOrphanedEvents(tripId, orderId).catch(console.error);
+        fixOrphanedEvents(tripId, orderId, metadataOrderId).catch(console.error);
       }, 1000); // Give 1 second delay to allow processing
     }
 
     // Manejar diferentes tipos de eventos
+    console.log('🔵 [LOBBYPMS-DEBUG] 🔀 Routing to event handler for:', eventType);
+
+    const baseSearchContext: PaymentSearchContext = {
+      tripId,
+      wetravelOrderId: orderId,
+      metadataOrderId,
+      wetravelPaymentId,
+      metadataPaymentId,
+      actualOrderId,
+      eventType
+    };
+
     switch (eventType) {
       case 'payment.created':
-        await handlePaymentCreated(webhookData, tripId);
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handlePaymentCreated');
+        await handlePaymentCreated(webhookData, baseSearchContext);
         break;
-      
+
       case 'payment.completed':
-        await handlePaymentCompleted(webhookData, tripId, eventType);
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handlePaymentCompleted');
+        await handlePaymentCompleted(webhookData, baseSearchContext, eventType);
         break;
-      
+
       case 'payment.failed':
-        await handlePaymentFailed(webhookData, tripId);
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handlePaymentFailed');
+        await handlePaymentFailed(webhookData, baseSearchContext);
         break;
-      
+
       case 'payment.updated':
-        await handlePaymentUpdated(webhookData, tripId);
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handlePaymentUpdated');
+        await handlePaymentUpdated(webhookData, baseSearchContext);
         break;
 
       case 'booking.created':
-        await handleBookingCreated(webhookData, tripId, orderId, actualOrderId, eventKey);
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handleBookingCreated');
+        await handleBookingCreated(webhookData, baseSearchContext, { eventKey, actualOrderId });
         break;
 
       // Legacy events
       case 'partial_refund_made':
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handlePartialRefund');
         await handlePartialRefund(webhookData);
         break;
 
       case 'booking.updated':
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handleBookingUpdated');
         await handleBookingUpdated(webhookData);
         break;
-      
+
       case 'trip.confirmed':
+        console.log('🔵 [LOBBYPMS-DEBUG] ➡️ Calling handleTripConfirmed');
         await handleTripConfirmed(webhookData);
         break;
-      
+
       default:
-        console.warn(`Unhandled webhook event: ${eventType}`);
+        console.warn('🔵 [LOBBYPMS-DEBUG] ⚠️ Unhandled webhook event:', eventType);
         break;
     }
 
+    console.log('🔵 [LOBBYPMS-DEBUG] ✅ Event handler completed for:', eventType);
+
     // Responder con éxito a WeTravel
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Webhook processed successfully' 
+    console.log('🔵 [LOBBYPMS-DEBUG] 📤 Sending success response to WeTravel');
+    return NextResponse.json({
+      success: true,
+      message: 'Webhook processed successfully'
     });
 
   } catch (error) {
-    console.error('❌ Error processing WeTravel webhook:', error);
+    console.error('🔵 [LOBBYPMS-DEBUG] ❌ Error processing WeTravel webhook:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -329,46 +542,68 @@ async function handleBookingUpdated(webhookData: WeTravelWebhookData) {
 }
 
 // Función para manejar pagos creados
-async function handlePaymentCreated(webhookData: WeTravelWebhookData, tripId?: string) {
+async function handlePaymentCreated(
+  webhookData: WeTravelWebhookData,
+  context: PaymentSearchContext
+) {
   try {
     console.log('💳 Payment created webhook received:', {
-      trip_id: tripId,
+      trip_id: context.tripId,
       payment_id: webhookData.data.id,
       order_id: webhookData.data.order_id,
+      metadata_order_id: context.metadataOrderId,
       amount: webhookData.data.total_amount,
       currency: webhookData.data.currency,
       status: webhookData.data.status,
       buyer: webhookData.data.buyer?.first_name + ' ' + webhookData.data.buyer?.last_name
     });
 
-    // For payment.created, we mainly log and potentially update status
-    // The payment should already exist in our DB from the payment link creation
-    if (tripId) {
-      const { data: payments, error: findError } = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data, status')
-        .contains('wetravel_data', { trip_id: tripId });
+    const match = await findMatchingPayment({
+      ...context,
+      eventType: 'payment.created'
+    });
 
-      if (!findError && payments && payments.length > 0) {
-        const payment = payments[0];
-        console.log(`💳 Found matching payment: ${payment.id} for trip: ${tripId}`);
-        
-        // Update with WeTravel payment data
-        await supabase
-          .from('payments')
-          .update({
-            wetravel_data: {
-              ...payment.wetravel_data,
-              payment_created_webhook: webhookData,
-              wetravel_payment_id: webhookData.data.id,
-              wetravel_order_id: webhookData.data.order_id,
-              updated_at: new Date().toISOString()
-            }
-          })
-          .eq('id', payment.id);
-        
-        console.log('✅ Payment updated with WeTravel payment creation data');
+    if (!match) {
+      console.log('⚠️ Payment created webhook could not be matched to an existing payment record');
+      return;
+    }
+
+    const payment = match.payment;
+    console.log('💳 Matched payment for payment.created:', {
+      paymentId: payment.id,
+      orderId: payment.order_id,
+      matchedBy: match.matchedBy
+    });
+
+    const updatedWetravelData = buildUpdatedWetravelData(
+      payment.wetravel_data as Record<string, unknown> | null,
+      {
+        payment_created_webhook: webhookData,
+        updated_at: new Date().toISOString(),
+        ...(context.tripId ? { trip_id: context.tripId } : {}),
+        ...(context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {}),
+        ...(context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {}),
+        ...(context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {})
       }
+    );
+
+    const updatePayload: Record<string, unknown> = {
+      wetravel_data: updatedWetravelData
+    };
+
+    if (context.wetravelOrderId || context.metadataOrderId) {
+      updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
+    }
+
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', payment.id);
+
+    if (updateError) {
+      console.error('❌ Error updating payment with payment.created data:', updateError);
+    } else {
+      console.log('✅ Payment updated with WeTravel payment creation data');
     }
 
     console.log('✅ Payment created webhook processed successfully');
@@ -380,38 +615,65 @@ async function handlePaymentCreated(webhookData: WeTravelWebhookData, tripId?: s
 }
 
 // Función para manejar pagos actualizados
-async function handlePaymentUpdated(webhookData: WeTravelWebhookData, tripId?: string) {
+async function handlePaymentUpdated(
+  webhookData: WeTravelWebhookData,
+  context: PaymentSearchContext
+) {
   try {
     console.log('🔄 Payment updated webhook received:', {
-      trip_id: tripId,
+      trip_id: context.tripId,
       payment_id: webhookData.data.id,
+      metadata_order_id: context.metadataOrderId,
       status: webhookData.data.status,
       amount: webhookData.data.total_amount
     });
 
-    // Similar logic to payment.completed but for status updates
-    if (tripId) {
-      const { data: payments, error: findError } = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data')
-        .contains('wetravel_data', { trip_id: tripId });
+    const match = await findMatchingPayment({
+      ...context,
+      eventType: 'payment.updated'
+    });
 
-      if (!findError && payments && payments.length > 0) {
-        const payment = payments[0];
-        
-        await supabase
-          .from('payments')
-          .update({
-            wetravel_data: {
-              ...payment.wetravel_data,
-              payment_updated_webhook: webhookData,
-              updated_at: new Date().toISOString()
-            }
-          })
-          .eq('id', payment.id);
-        
-        console.log('✅ Payment updated with latest WeTravel data');
+    if (!match) {
+      console.log('⚠️ Payment updated webhook could not be matched to an existing payment record');
+      return;
+    }
+
+    const payment = match.payment;
+    console.log('🔄 Matched payment for payment.updated:', {
+      paymentId: payment.id,
+      orderId: payment.order_id,
+      matchedBy: match.matchedBy
+    });
+
+    const updatedWetravelData = buildUpdatedWetravelData(
+      payment.wetravel_data as Record<string, unknown> | null,
+      {
+        payment_updated_webhook: webhookData,
+        updated_at: new Date().toISOString(),
+        ...(context.tripId ? { trip_id: context.tripId } : {}),
+        ...(context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {}),
+        ...(context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {}),
+        ...(context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {})
       }
+    );
+
+    const updatePayload: Record<string, unknown> = {
+      wetravel_data: updatedWetravelData
+    };
+
+    if (context.wetravelOrderId || context.metadataOrderId) {
+      updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
+    }
+
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', payment.id);
+
+    if (updateError) {
+      console.error('❌ Error updating payment with payment.updated data:', updateError);
+    } else {
+      console.log('✅ Payment updated with latest WeTravel data');
     }
 
     console.log('✅ Payment updated webhook processed successfully');
@@ -423,90 +685,101 @@ async function handlePaymentUpdated(webhookData: WeTravelWebhookData, tripId?: s
 }
 
 // Función para manejar pagos completados
-async function handlePaymentCompleted(webhookData: WeTravelWebhookData, tripId?: string, eventType?: string) {
+async function handlePaymentCompleted(
+  webhookData: WeTravelWebhookData,
+  context: PaymentSearchContext,
+  eventType?: string
+) {
   try {
     console.log('💰 Payment completed webhook received:', {
-      trip_id: tripId,
+      trip_id: context.tripId,
       payment_id: webhookData.data.id,
       order_id: webhookData.data.order_id,
-      buyer: webhookData.data.buyer ? 
-        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+      metadata_order_id: context.metadataOrderId,
+      buyer: webhookData.data.buyer ?
+        `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` :
         'Unknown',
       total_amount: webhookData.data.total_amount || webhookData.data.total_paid_amount,
       currency: webhookData.data.currency || webhookData.data.trip_currency,
       status: webhookData.data.status
     });
 
-    // Find payment by trip_id in the wetravel_data JSONB field
-    if (!tripId) {
-      console.log('ℹ️ No trip ID available, cannot find matching payment');
-      return;
-    }
+    const match = await findMatchingPayment({
+      ...context,
+      eventType: eventType || 'payment.completed'
+    });
 
-    const { data: payments, error: findError } = await supabase
-      .from('payments')
-      .select('id, order_id, wetravel_data, status')
-      .contains('wetravel_data', { trip_id: tripId });
-
-    if (findError) {
-      console.error('❌ Error finding payment:', findError);
-      return;
-    }
-
-    if (payments && payments.length > 0) {
-      const payment = payments[0];
-      console.log(`💰 Found matching payment: ${payment.id} for order: ${payment.order_id}`);
-      
-      // Update payment status to completed
-      const { error: updatePaymentError } = await supabase
-        .from('payments')
-        .update({
-          status: 'completed',
-          wetravel_data: {
-            ...payment.wetravel_data,
-            payment_completed_webhook: webhookData,
-            completed_at: new Date().toISOString()
-          }
-        })
-        .eq('id', payment.id);
-
-      if (updatePaymentError) {
-        console.error('❌ Error updating payment:', updatePaymentError);
-      } else {
-        console.log('✅ Payment marked as completed in database');
-        
-        // Update order status to paid
-        const { error: updateOrderError } = await supabase
-          .from('orders')
-          .update({ status: 'paid' })
-          .eq('id', payment.order_id);
-
-        if (updateOrderError) {
-          console.error('❌ Error updating order status:', updateOrderError);
-        } else {
-          console.log('✅ Order marked as paid in database');
-        }
-        
-        // Update the wetravel_events record with the payment and order IDs
-        await supabase
-          .from('wetravel_events')
-          .update({
-            payment_id: payment.id,
-            order_id: payment.order_id
-          })
-          .eq('event_type', eventType)
-          .like('event_key', `%${tripId}%`);
-      }
-    } else {
-      console.log('ℹ️ No matching payment found for trip_id:', tripId);
+    if (!match) {
+      console.log('ℹ️ No matching payment found for payment.completed webhook');
       console.log('💰 Payment details:', {
         amount: webhookData.data.total_amount || webhookData.data.total_paid_amount,
         currency: webhookData.data.currency || webhookData.data.trip_currency,
-        customer: webhookData.data.buyer ? 
-          `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
+        customer: webhookData.data.buyer ?
+          `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` :
           'Unknown'
       });
+      return;
     }
+
+    const payment = match.payment;
+    console.log('💰 Matched payment for payment.completed:', {
+      paymentId: payment.id,
+      orderId: payment.order_id,
+      matchedBy: match.matchedBy
+    });
+
+    const updatedWetravelData = buildUpdatedWetravelData(
+      payment.wetravel_data as Record<string, unknown> | null,
+      {
+        payment_completed_webhook: webhookData,
+        completed_at: new Date().toISOString(),
+        ...(context.tripId ? { trip_id: context.tripId } : {}),
+        ...(context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {}),
+        ...(context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {}),
+        ...(context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {})
+      }
+    );
+
+    const updatePayload: Record<string, unknown> = {
+      status: 'completed',
+      wetravel_data: updatedWetravelData
+    };
+
+    if (context.wetravelOrderId || context.metadataOrderId) {
+      updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
+    }
+
+    const { error: updatePaymentError } = await supabase
+      .from('payments')
+      .update(updatePayload)
+      .eq('id', payment.id);
+
+    if (updatePaymentError) {
+      console.error('❌ Error updating payment to completed:', updatePaymentError);
+      return;
+    }
+
+    console.log('✅ Payment marked as completed in database');
+
+    const { error: updateOrderError } = await supabase
+      .from('orders')
+      .update({ status: 'paid' })
+      .eq('id', payment.order_id);
+
+    if (updateOrderError) {
+      console.error('❌ Error updating order status:', updateOrderError);
+    } else {
+      console.log('✅ Order marked as paid in database');
+    }
+
+    await supabase
+      .from('wetravel_events')
+      .update({
+        payment_id: payment.id,
+        order_id: payment.order_id
+      })
+      .eq('event_type', eventType)
+      .like('event_key', `%${context.tripId || ''}%`);
 
     console.log('✅ Payment completed webhook processed successfully');
     
@@ -517,12 +790,16 @@ async function handlePaymentCompleted(webhookData: WeTravelWebhookData, tripId?:
 }
 
 // Función para manejar pagos fallidos
-async function handlePaymentFailed(webhookData: WeTravelWebhookData, tripId?: string) {
+async function handlePaymentFailed(
+  webhookData: WeTravelWebhookData,
+  context: PaymentSearchContext
+) {
   try {
     console.log('❌ Payment failed webhook received:', {
-      trip_id: tripId,
+      trip_id: context.tripId,
       payment_id: webhookData.data.id,
       order_id: webhookData.data.order_id,
+      metadata_order_id: context.metadataOrderId,
       buyer: webhookData.data.buyer ? 
         `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` : 
         'Unknown',
@@ -532,7 +809,7 @@ async function handlePaymentFailed(webhookData: WeTravelWebhookData, tripId?: st
     });
 
     // TODO: Implementar lógica para manejar pagos fallidos
-    // 1. Buscar la reserva por trip_id o order_id
+    // 1. Buscar la reserva por trip_id o order_id (usar context)
     // 2. Actualizar el estado a 'payment_failed'
     // 3. Notificar al usuario sobre el problema
     // 4. Ofrecer opciones alternativas de pago
@@ -574,12 +851,21 @@ async function handleTripConfirmed(webhookData: WeTravelWebhookData) {
 }
 
 // Función para manejar reserva creada
-async function handleBookingCreated(webhookData: WeTravelWebhookData, tripId?: string, orderId?: string, actualOrderId?: string, eventKey?: string) {
+async function handleBookingCreated(
+  webhookData: WeTravelWebhookData,
+  context: PaymentSearchContext,
+  bookingContext: BookingEventContext
+) {
   try {
-    console.log('🎉 Booking created webhook received:', {
-      trip_id: tripId,
-      order_id: orderId,
-      actual_order_id: actualOrderId,
+    console.log('');
+    console.log('='.repeat(80));
+    console.log('🔵 [LOBBYPMS-DEBUG] BOOKING CREATED WEBHOOK HANDLER STARTED');
+    console.log('='.repeat(80));
+    console.log('🔵 [LOBBYPMS-DEBUG] Booking created webhook received:', {
+      trip_id: context.tripId,
+      wetravel_order_id: context.wetravelOrderId,
+      metadata_order_id: context.metadataOrderId,
+      event_key: bookingContext.eventKey,
       buyer: webhookData.data.buyer ?
         `${webhookData.data.buyer.first_name} ${webhookData.data.buyer.last_name}` :
         'Unknown',
@@ -589,169 +875,17 @@ async function handleBookingCreated(webhookData: WeTravelWebhookData, tripId?: s
       participants: webhookData.data.participants?.length || 1
     });
 
-    // Find payment - use actualOrderId if available, otherwise fallback to previous logic
-    let payments = null;
-    let findError = null;
+    const match = await findMatchingPayment({
+      ...context,
+      eventType: 'booking.created'
+    });
 
-    if (actualOrderId) {
-      console.log('🎯 Using pre-found order_id to fetch payment details:', actualOrderId);
-      const result = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data, status')
-        .eq('order_id', actualOrderId);
-
-      payments = result.data;
-      findError = result.error;
-      console.log('🎯 Pre-found payment result:', { payments: payments?.length, error: findError });
-    } else if (tripId) {
-      // Fallback to trip_id search
-      console.log('🔍 Fallback: searching by trip_id...');
-      const result = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data, status')
-        .contains('wetravel_data', { trip_id: tripId });
-
-      payments = result.data;
-      findError = result.error;
-    }
-
-    if (findError) {
-      console.error('❌ Error finding payment:', findError);
-      return;
-    }
-
-    if (payments && payments.length > 0) {
-      const payment = payments[0];
-      console.log(`🎉 Found matching payment: ${payment.id} for order: ${payment.order_id}`);
-
-      // Update payment status to booking_created (intermediate status before completed)
-      const { error: updatePaymentError } = await supabase
-        .from('payments')
-        .update({
-          status: 'booking_created', // New intermediate status
-          wetravel_data: {
-            ...payment.wetravel_data,
-            booking_created_webhook: webhookData,
-            booking_created_at: new Date().toISOString()
-          }
-        })
-        .eq('id', payment.id);
-
-      if (updatePaymentError) {
-        console.error('❌ Error updating payment:', updatePaymentError);
-      } else {
-        console.log('✅ Payment marked as booking_created in database');
-
-        // Update order status to booking_created
-        const { error: updateOrderError } = await supabase
-          .from('orders')
-          .update({ status: 'booking_created' })
-          .eq('id', payment.order_id);
-
-        if (updateOrderError) {
-          console.error('❌ Error updating order status:', updateOrderError);
-        } else {
-          console.log('✅ Order marked as booking_created in database');
-
-          // Send Dario welcome message to customer
-          try {
-            // Get order details for the welcome message
-            const { data: orderData, error: orderError } = await supabase
-              .from('orders')
-              .select('booking_data')
-              .eq('id', payment.order_id)
-              .single();
-
-            if (orderData && orderData.booking_data && !orderError) {
-              const booking = orderData.booking_data;
-
-              // Get room type name
-              const roomTypeNames: { [key: string]: string } = {
-                'casa-playa': 'Casa de Playa (Cuarto Compartido)',
-                'casitas-privadas': 'Casitas Privadas',
-                'casas-deluxe': 'Casas Deluxe'
-              };
-
-              const roomTypeName = roomTypeNames[booking.roomTypeId] || booking.roomTypeId;
-
-              // Prepare activities list
-              const activities = booking.selectedActivities?.map((activity: any) => activity.name) || [];
-
-              // Send welcome message from Dario
-              const messageResult = await sendDarioWelcomeMessage(
-                booking.contactInfo.phone,
-                {
-                  checkIn: booking.checkIn,
-                  checkOut: booking.checkOut,
-                  guestName: booking.contactInfo.firstName,
-                  activities: activities,
-                  roomTypeName: roomTypeName,
-                  guests: booking.guests
-                }
-              );
-
-              if (messageResult.success) {
-                console.log('✅ Dario welcome message sent successfully');
-              } else {
-                console.error('❌ Failed to send Dario welcome message:', messageResult.error);
-              }
-            } else {
-              console.error('❌ Could not retrieve order data for welcome message:', orderError);
-            }
-          } catch (error) {
-            console.error('❌ Error sending Dario welcome message:', error);
-          }
-        }
-
-        // Update the wetravel_events record with the payment and order IDs
-        if (eventKey) {
-          await supabase
-            .from('wetravel_events')
-            .update({
-              payment_id: payment.id,
-              order_id: payment.order_id
-            })
-            .eq('event_key', eventKey);
-        } else {
-          // Fallback update for older events
-          await supabase
-            .from('wetravel_events')
-            .update({
-              payment_id: payment.id,
-              order_id: payment.order_id
-            })
-            .eq('event_type', 'booking.created')
-            .like('event_key', `%${tripId}%`);
-        }
-
-        // Also try to update any existing orphaned events for this trip
-        const { data: orphanUpdate, error: orphanError } = await supabase
-          .from('wetravel_events')
-          .update({
-            payment_id: payment.id,
-            order_id: payment.order_id
-          })
-          .eq('event_type', 'booking.created')
-          .like('event_key', `%${tripId}%`)
-          .is('payment_id', null)
-          .select();
-
-        console.log('🔧 Orphan update result:', {
-          updated: orphanUpdate?.length || 0,
-          error: orphanError,
-          tripId
-        });
-      }
-    } else {
-      console.log('❌ No matching payment found!');
+    if (!match) {
+      console.log('❌ No matching payment found for booking.created webhook');
       console.log('🔍 Search criteria used:', {
-        tripId,
-        orderId,
-        searchAttempts: [
-          tripId ? 'wetravel_data contains trip_id' : null,
-          orderId ? 'wetravel_order_id equals order_id' : null,
-          orderId ? 'wetravel_data contains order_id' : null
-        ].filter(Boolean)
+        tripId: context.tripId,
+        wetravelOrderId: context.wetravelOrderId,
+        metadataOrderId: context.metadataOrderId
       });
       console.log('🎉 Booking details:', {
         amount: webhookData.data.total_amount || webhookData.data.total_price_amount || webhookData.data.total_paid_amount,
@@ -763,7 +897,6 @@ async function handleBookingCreated(webhookData: WeTravelWebhookData, tripId?: s
         full_webhook_data: JSON.stringify(webhookData, null, 2)
       });
 
-      // Try to find any payment records to see what's in the database
       const { data: allPayments, error: allPaymentsError } = await supabase
         .from('payments')
         .select('id, order_id, wetravel_data, wetravel_order_id, status')
@@ -772,39 +905,318 @@ async function handleBookingCreated(webhookData: WeTravelWebhookData, tripId?: s
       if (!allPaymentsError && allPayments) {
         console.log('💳 Recent payments in database:', allPayments);
       }
+
+    } else {
+      const payment = match.payment;
+      console.log(`🎉 Found matching payment (${match.matchedBy}):`, {
+        paymentId: payment.id,
+        orderId: payment.order_id,
+        status: payment.status
+      });
+
+      const updatedWetravelData = buildUpdatedWetravelData(
+        payment.wetravel_data as Record<string, unknown> | null,
+        {
+          booking_created_webhook: webhookData,
+          booking_created_at: new Date().toISOString(),
+          ...(context.tripId ? { trip_id: context.tripId } : {}),
+          ...(context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {}),
+          ...(context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {}),
+          ...(context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {})
+        }
+      );
+
+      const paymentUpdatePayload: Record<string, unknown> = {
+        status: 'booking_created',
+        wetravel_data: updatedWetravelData
+      };
+
+      if (context.wetravelOrderId || context.metadataOrderId) {
+        paymentUpdatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
+      }
+
+      const { error: updatePaymentError } = await supabase
+        .from('payments')
+        .update(paymentUpdatePayload)
+        .eq('id', payment.id);
+
+      if (updatePaymentError) {
+        console.error('❌ Error updating payment:', updatePaymentError);
+        return;
+      }
+
+      console.log('✅ Payment marked as booking_created in database');
+
+      const { error: updateOrderError } = await supabase
+        .from('orders')
+        .update({ status: 'booking_created' })
+        .eq('id', payment.order_id);
+
+      if (updateOrderError) {
+        console.error('❌ Error updating order status:', updateOrderError);
+      } else {
+        console.log('✅ Order marked as booking_created in database');
+      }
+
+          try {
+            console.log('🔵 [LOBBYPMS-DEBUG] Fetching order data for payment order_id:', payment.order_id);
+            const { data: orderData, error: orderError } = await supabase
+              .from('orders')
+              .select('booking_data')
+              .eq('id', payment.order_id)
+              .single();
+
+        console.log('🔵 [LOBBYPMS-DEBUG] Order data fetch result:', {
+          hasData: !!orderData,
+          hasBookingData: !!orderData?.booking_data,
+          error: orderError,
+          orderId: payment.order_id
+        });
+
+        if (orderData && orderData.booking_data && !orderError) {
+          const booking = orderData.booking_data;
+          console.log('🔵 [LOBBYPMS-DEBUG] Booking data retrieved:', {
+            checkIn: booking.checkIn,
+            checkOut: booking.checkOut,
+            guests: booking.guests,
+            roomTypeId: booking.roomTypeId,
+            hasContactInfo: !!booking.contactInfo,
+            activitiesCount: booking.selectedActivities?.length || 0
+          });
+
+          const getReserveBaseUrl = () => {
+            const normalizedEnvUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
+
+            if (process.env.NODE_ENV !== 'production') {
+              if (process.env.DEV_RESERVE_BASE_URL) {
+                return process.env.DEV_RESERVE_BASE_URL.replace(/\/$/, '');
+              }
+
+              if (normalizedEnvUrl && normalizedEnvUrl.startsWith('http://localhost')) {
+                return normalizedEnvUrl;
+              }
+
+              return 'http://localhost:3000';
+            }
+
+            if (process.env.VERCEL_URL) {
+              return `https://${process.env.VERCEL_URL}`;
+            }
+
+            if (normalizedEnvUrl) {
+              return normalizedEnvUrl;
+            }
+
+            return 'http://localhost:3000';
+          };
+
+          const reserveBaseUrl = getReserveBaseUrl();
+
+          const reserveUrl = `${reserveBaseUrl}/api/reserve`;
+
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve base URL resolution:', {
+            nodeEnv: process.env.NODE_ENV,
+            vercelUrl: process.env.VERCEL_URL,
+            nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
+            devReserveBaseUrl: process.env.DEV_RESERVE_BASE_URL,
+            resolvedBaseUrl: reserveBaseUrl,
+            finalReserveUrl: reserveUrl
+          });
+
+                const reservePayload = {
+                  checkIn: booking.checkIn,
+                  checkOut: booking.checkOut,
+                  guests: booking.guests,
+                  roomTypeId: booking.roomTypeId,
+                  contactInfo: booking.contactInfo,
+                  activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
+                  selectedActivities: booking.selectedActivities || []
+                };
+
+          console.log('🔵 [LOBBYPMS-DEBUG] Creating reservation in LobbyPMS...');
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve URL:', reserveUrl);
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve payload:', JSON.stringify(reservePayload, null, 2));
+
+          let reserveResponse: Response | null = null;
+          try {
+            reserveResponse = await fetch(reserveUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(reservePayload)
+            });
+          } catch (fetchError) {
+            console.error('🔵 [LOBBYPMS-DEBUG] ❌ Network error calling /api/reserve:', fetchError);
+            throw fetchError;
+          }
+
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve response status:', reserveResponse.status);
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve response ok:', reserveResponse.ok);
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve response headers:', Object.fromEntries(reserveResponse.headers.entries()));
+
+          const reserveData = await reserveResponse.json();
+          console.log('🔵 [LOBBYPMS-DEBUG] Reserve response data:', JSON.stringify(reserveData, null, 2));
+
+          if (!reserveResponse.ok) {
+            console.error('🔵 [LOBBYPMS-DEBUG] ❌ Reserve response not OK:', {
+              status: reserveResponse.status,
+              statusText: reserveResponse.statusText,
+              response: reserveData
+            });
+          }
+
+          if (reserveResponse.ok) {
+            console.log('🔵 [LOBBYPMS-DEBUG] ✅ LobbyPMS reservation created successfully');
+            console.log('🔵 [LOBBYPMS-DEBUG] Reservation ID:', reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id);
+
+            const updateResult = await supabase
+              .from('orders')
+              .update({
+                lobbypms_reservation_id: reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id,
+                lobbypms_data: reserveData
+              })
+              .eq('id', payment.order_id);
+
+            console.log('🔵 [LOBBYPMS-DEBUG] Order update result:', {
+              error: updateResult.error,
+              orderId: payment.order_id
+            });
+          } else {
+            console.error('🔵 [LOBBYPMS-DEBUG] ❌ Failed to create LobbyPMS reservation');
+            console.error('🔵 [LOBBYPMS-DEBUG] Status:', reserveResponse.status);
+            console.error('🔵 [LOBBYPMS-DEBUG] Response:', reserveData);
+          }
+
+          try {
+            const roomTypeNames: { [key: string]: string } = {
+              'casa-playa': 'Casa de Playa (Cuarto Compartido)',
+              'casitas-privadas': 'Casitas Privadas',
+              'casas-deluxe': 'Casas Deluxe'
+            };
+
+            const roomTypeName = roomTypeNames[booking.roomTypeId] || booking.roomTypeId;
+
+            const activities = booking.selectedActivities?.map((activity: any) => activity.name) || [];
+
+            const messageResult = await sendDarioWelcomeMessage(
+              booking.contactInfo.phone,
+              {
+                checkIn: booking.checkIn,
+                checkOut: booking.checkOut,
+                guestName: booking.contactInfo.firstName,
+                activities,
+                roomTypeName,
+                guests: booking.guests
+              }
+            );
+
+            if (messageResult.success) {
+              console.log('✅ Dario welcome message sent successfully');
+            } else {
+              console.error('❌ Failed to send Dario welcome message:', messageResult.error);
+            }
+          } catch (error) {
+            console.error('❌ Error sending Dario welcome message:', error);
+          }
+
+        } else {
+          console.error('🔵 [LOBBYPMS-DEBUG] ❌ No booking data found or error fetching order:', {
+            hasOrderData: !!orderData,
+            hasBookingData: !!orderData?.booking_data,
+            error: orderError
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ Error processing Booking Created flow:', error);
+      }
+
+      if (bookingContext.eventKey) {
+        await supabase
+          .from('wetravel_events')
+          .update({
+            payment_id: payment.id,
+            order_id: payment.order_id
+          })
+          .eq('event_key', bookingContext.eventKey);
+      } else {
+        await supabase
+          .from('wetravel_events')
+          .update({
+            payment_id: payment.id,
+            order_id: payment.order_id
+          })
+          .eq('event_type', 'booking.created')
+          .like('event_key', `%${context.tripId || ''}%`);
+      }
+
+      const { data: orphanUpdate, error: orphanError } = await supabase
+        .from('wetravel_events')
+        .update({
+          payment_id: payment.id,
+          order_id: payment.order_id
+        })
+        .eq('event_type', 'booking.created')
+        .like('event_key', `%${context.tripId || ''}%`)
+        .is('payment_id', null)
+        .select();
+
+      console.log('🔧 Orphan update result:', {
+        updated: orphanUpdate?.length || 0,
+        error: orphanError,
+        tripId: context.tripId
+      });
     }
 
-    console.log('✅ Booking created webhook processed successfully');
+    console.log('='.repeat(80));
+    console.log('🔵 [LOBBYPMS-DEBUG] ✅ BOOKING CREATED WEBHOOK HANDLER COMPLETED SUCCESSFULLY');
+    console.log('='.repeat(80));
+    console.log('');
 
   } catch (error) {
-    console.error('❌ Error handling booking created webhook:', error);
+    console.log('='.repeat(80));
+    console.error('🔵 [LOBBYPMS-DEBUG] ❌ ERROR IN BOOKING CREATED WEBHOOK HANDLER:', error);
+    console.log('='.repeat(80));
+    console.log('');
     throw error;
   }
 }
 
 // Function to fix orphaned events (events with null payment_id/order_id)
-async function fixOrphanedEvents(tripId?: string, webhookOrderId?: string) {
-  if (!tripId) return;
+async function fixOrphanedEvents(
+  tripId?: string | null,
+  webhookOrderId?: string | null,
+  metadataOrderId?: string | null
+) {
+  if (!tripId && !webhookOrderId && !metadataOrderId) return;
 
   try {
-    console.log('🔧 Attempting to fix orphaned events for trip_id:', tripId);
+    console.log('🔧 Attempting to fix orphaned events:', {
+      tripId,
+      webhookOrderId,
+      metadataOrderId
+    });
 
-    // Find payment by trip_id
-    const { data: payments, error: findError } = await supabase
-      .from('payments')
-      .select('id, order_id, wetravel_data, status')
-      .contains('wetravel_data', { trip_id: tripId })
-      .limit(1);
+    const match = await findMatchingPayment({
+      tripId: tripId || undefined,
+      wetravelOrderId: webhookOrderId || undefined,
+      metadataOrderId: metadataOrderId || undefined,
+      eventType: 'fixOrphanedEvents'
+    });
 
-    if (findError || !payments || payments.length === 0) {
+    if (!match) {
       console.log('⚠️ Could not find payment to fix orphaned events');
       return;
     }
 
-    const payment = payments[0];
-    console.log('🔧 Found payment for orphan fix:', payment.id, 'order:', payment.order_id);
+    const payment = match.payment;
+    console.log('🔧 Found payment for orphan fix:', {
+      paymentId: payment.id,
+      orderId: payment.order_id,
+      matchedBy: match.matchedBy
+    });
 
-    // Update all orphaned events for this trip
     const { data: updatedEvents, error: updateError } = await supabase
       .from('wetravel_events')
       .update({
@@ -812,7 +1224,7 @@ async function fixOrphanedEvents(tripId?: string, webhookOrderId?: string) {
         order_id: payment.order_id
       })
       .eq('event_type', 'booking.created')
-      .like('event_key', `%${tripId}%`)
+      .like('event_key', `%${tripId || ''}%`)
       .is('payment_id', null)
       .select();
 
@@ -821,7 +1233,6 @@ async function fixOrphanedEvents(tripId?: string, webhookOrderId?: string) {
     } else {
       console.log('✅ Fixed orphaned events:', updatedEvents?.length || 0);
 
-      // Also update payment status if it's still pending
       if (payment.status === 'pending') {
         await supabase
           .from('payments')

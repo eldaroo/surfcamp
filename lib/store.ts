@@ -19,7 +19,7 @@ interface BookingStore {
   activityQuantities: Record<string, number>; // activityId -> quantity
   selectedTimeSlots: Record<string, '7:00 AM' | '3:00 PM'>; // activityId -> timeSlot
   selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // activityId -> yogaPackage
-  selectedSurfPackages: Record<string, '4-classes' | '5-classes' | '6-classes'>; // activityId -> surfPackage
+  selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>; // activityId -> surfPackage
   selectedSurfClasses: Record<string, number>; // activityId -> number of classes
   priceBreakdown: PriceBreakdown | null;
   availabilityCheck: AvailabilityCheck | null;
@@ -39,7 +39,7 @@ interface BookingStore {
   setActivityQuantity: (activityId: string, quantity: number) => void;
   setSelectedTimeSlot: (activityId: string, timeSlot: '7:00 AM' | '3:00 PM') => void;
   setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void;
-  setSelectedSurfPackage: (activityId: string, surfPackage: '4-classes' | '5-classes' | '6-classes') => void;
+  setSelectedSurfPackage: (activityId: string, surfPackage: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => void;
   setSelectedSurfClasses: (activityId: string, classes: number) => void;
   setPriceBreakdown: (breakdown: PriceBreakdown | null) => void;
   setAvailabilityCheck: (check: AvailabilityCheck | null) => void;

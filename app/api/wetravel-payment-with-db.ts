@@ -155,8 +155,28 @@ export async function POST(request: NextRequest) {
       throw new Error(`WeTravel API error: ${error.message || 'Unknown error'}`);
     }
 
-    const wetravelData = await wetravelResponse.json();
-    
+    const weTravelResponse = await wetravelResponse.json();
+
+    const extractedTripId =
+      weTravelResponse?.data?.trip?.uuid ||
+      weTravelResponse?.data?.trip_uuid ||
+      weTravelResponse?.trip?.uuid ||
+      weTravelResponse?.trip_id ||
+      null;
+    const extractedWeTravelOrderId =
+      weTravelResponse?.data?.order_id ||
+      weTravelResponse?.order_id ||
+      null;
+    const extractedWeTravelPaymentId =
+      weTravelResponse?.data?.id ||
+      weTravelResponse?.id ||
+      null;
+    const metadataOrderId =
+      weTravelResponse?.data?.metadata?.order_id ||
+      weTravelResponse?.metadata?.order_id ||
+      weTravelResponse?.data?.metadata?.booking_data?.order_id ||
+      null;
+
     // 📊 STEP 5: Update payment with WeTravel response
     await client.query(`
       UPDATE payments SET 
@@ -166,24 +186,28 @@ export async function POST(request: NextRequest) {
     `, [
       paymentId,
       JSON.stringify({
-        ...JSON.parse(wetravelData.wetravel_data || '{}'),
-        wetravel_response: wetravelData,
-        payment_url: wetravelData.payment_url,
-        updated_at: new Date().toISOString()
+        ...JSON.parse(weTravelResponse.wetravel_data || '{}'),
+        wetravel_response: weTravelResponse,
+        payment_url: weTravelResponse.payment_url,
+        updated_at: new Date().toISOString(),
+        ...(extractedTripId ? { trip_id: extractedTripId } : {}),
+        ...(extractedWeTravelOrderId ? { wetravel_order_id: extractedWeTravelOrderId } : {}),
+        ...(extractedWeTravelPaymentId ? { wetravel_payment_id: extractedWeTravelPaymentId } : {}),
+        ...(metadataOrderId ? { metadata_order_id: metadataOrderId } : {})
       })
     ]);
 
     await client.query('COMMIT');
 
     console.log('✅ WeTravel payment link created and saved');
-    console.log(`🔗 Payment URL: ${wetravelData.payment_url}`);
+    console.log(`🔗 Payment URL: ${weTravelResponse.payment_url}`);
 
     // 📊 STEP 6: Return success response
     const response = {
       success: true,
       order_id: orderId,
       payment_id: paymentId,
-      payment_url: wetravelData.payment_url,
+      payment_url: weTravelResponse.payment_url,
       total_amount: finalAmount,
       currency: 'USD',
       status: 'pending',
@@ -192,7 +216,10 @@ export async function POST(request: NextRequest) {
         room_price: roomPrice,
         activities_total: activitiesTotal,
         final_amount_cents: finalAmount,
-        wetravel_price_dollars: Math.round(finalAmount / 100)
+        wetravel_price_dollars: Math.round(finalAmount / 100),
+        trip_id: extractedTripId,
+        metadata_order_id: metadataOrderId || null,
+        wetravel_order_id: extractedWeTravelOrderId || null
       }
     };
 
