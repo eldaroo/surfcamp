@@ -59,6 +59,19 @@ const parsePackageMultiplier = (activityPackage?: string) => {
   return Number.isFinite(value) && value > 0 ? value : 1;
 };
 
+const normalizePhoneNumber = (phone?: string | null) => {
+  if (!phone) return undefined;
+  const digitsOnly = phone.replace(/\D+/g, "");
+  if (digitsOnly.length < 8 || digitsOnly.length > 15) {
+    return undefined;
+  }
+  if (phone.trim().startsWith("+")) {
+    const plusDigits = `+${digitsOnly}`;
+    return plusDigits;
+  }
+  return digitsOnly;
+};
+
 interface ResolvedActivityConsumption {
   id: string;
   category?: Activity['category'];
@@ -154,10 +167,10 @@ export async function POST(request: NextRequest) {
     console.log('🏨 [RESERVE] Incoming reservation request');
     const body = await request.json();
     console.log('🏨 [RESERVE] Raw request body:', JSON.stringify(body, null, 2));
-    const { 
-      checkIn, 
-      checkOut, 
-      guests, 
+    const {
+      checkIn,
+      checkOut,
+      guests,
       contactInfo,
       roomTypeId = 'casa-playa', // Default room type
       activities = [],
@@ -165,6 +178,20 @@ export async function POST(request: NextRequest) {
       activityIds = [],
       paymentIntentId
     } = body;
+
+    const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
+    if (contactInfo?.phone) {
+      if (phoneForLobby) {
+        if (phoneForLobby !== contactInfo.phone) {
+          console.log('[RESERVE] Normalized phone number for LobbyPMS:', {
+            original: contactInfo.phone,
+            normalized: phoneForLobby,
+          });
+        }
+      } else {
+        console.warn('[RESERVE] Phone discarded for LobbyPMS (fails validation rules):', contactInfo.phone);
+      }
+    }
 
     const bookingReference = generateBookingReference();
 
@@ -230,10 +257,10 @@ export async function POST(request: NextRequest) {
       guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
       holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`, // Required when customer document is not present
       guest_email: contactInfo.email,
-      guest_phone: contactInfo.phone,
       guest_document: contactInfo.dni,  // DNI del huésped
       customer_document: contactInfo.dni, // También como customer_document por si LobbyPMS lo requiere así
       customer_nationality: 'ES',       // Nacionalidad por defecto España (requerido cuando hay documento)
+      customer_email: contactInfo.email,
       category_id: categoryId,
       room_type_id: roomTypeId,
       booking_reference: bookingReference,
@@ -243,6 +270,11 @@ export async function POST(request: NextRequest) {
       notes: `${baseNotes}\n- Nota Surfcamp: Surfcamp`,
       special_requests: `Reserva realizada a través de la página web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
     };
+
+    if (phoneForLobby) {
+      (bookingData as any).guest_phone = phoneForLobby;
+      (bookingData as any).customer_phone = phoneForLobby;
+    }
 
     const fallbackActivityIds = Array.isArray(activityIds) && activityIds.length > 0
       ? activityIds
@@ -260,15 +292,32 @@ export async function POST(request: NextRequest) {
     // Ensure customer exists in LobbyPMS before booking
     try {
       if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
-        await lobbyPMSClient.createCustomer({
+        console.log('[RESERVE] Creating LobbyPMS customer with payload:', {
           customer_document: contactInfo.dni,
-          customer_nationality: 'ES',
+          customer_nationality: contactInfo?.nationality || 'ES',
           name: contactInfo.firstName,
           surname: contactInfo.lastName,
-          phone: contactInfo.phone,
+          phoneOriginal: contactInfo.phone,
+          phoneNormalized: phoneForLobby || null,
+          email: contactInfo.email
+        });
+
+        const customerPayload: Record<string, any> = {
+          customer_document: contactInfo.dni,
+          customer_nationality: contactInfo?.nationality || 'ES',
+          name: contactInfo.firstName,
+          surname: contactInfo.lastName,
           email: contactInfo.email,
           note: `Cliente creado desde Surfcamp Santa Teresa (${bookingReference})`
-        });
+        };
+
+        if (phoneForLobby) {
+          customerPayload.phone = phoneForLobby;
+        }
+
+        const customerResult = await lobbyPMSClient.createCustomer(customerPayload);
+
+        console.log('[RESERVE] LobbyPMS createCustomer response:', customerResult);
       } else {
         console.warn('⚠️ [RESERVE] Missing customer data to create LobbyPMS customer:', {
           hasDni: !!contactInfo?.dni,
@@ -287,6 +336,24 @@ export async function POST(request: NextRequest) {
       console.log('🚀 Attempting to create booking in LobbyPMS...');
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
       console.log('🏨 [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
+
+      const registeredGuests =
+        reservationData?.booking?.guests?.registered ??
+        reservationData?.booking?.registered_guests ??
+        reservationData?.registeredGuests ??
+        reservationData?.registered_guests ??
+        null;
+      const expectedGuests =
+        guests ??
+        (typeof bookingData === 'object' ? (bookingData as any)?.guest_count : undefined) ??
+        (typeof bookingData === 'object' ? (bookingData as any)?.total_adults : undefined) ??
+        null;
+
+      console.log('[RESERVE] Guest registration status:', {
+        registeredGuests,
+        expectedGuests,
+        lobbyResponseHasGuestsField: Boolean(reservationData?.booking?.guests),
+      });
 
       console.log('✅ LobbyPMS reservation successful:', reservationData);
 

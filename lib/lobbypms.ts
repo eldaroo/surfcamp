@@ -307,7 +307,7 @@ export class LobbyPMSClient {
     document_id?: string;
     address?: string;
     activities?: string;
-  }): Promise<void> {
+  }): Promise<any> {
     const endpoint = '/customer/1'; // 1 => Persona
 
     try {
@@ -318,7 +318,7 @@ export class LobbyPMSClient {
       const finalUrl = this.buildURL(endpoint);
       console.log('🚀 Customer URL:', finalUrl);
 
-      await axios.post(finalUrl, customer, {
+      const response = await axios.post(finalUrl, customer, {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
@@ -327,7 +327,8 @@ export class LobbyPMSClient {
         timeout: 15000
       });
 
-      console.log('✅ LobbyPMS createCustomer successful');
+      console.log('✅ LobbyPMS createCustomer successful:', JSON.stringify(response.data, null, 2));
+      return response.data;
     } catch (error: any) {
       const responseData = error.response?.data;
       console.error('❌ LobbyPMS createCustomer error:', {
@@ -339,63 +340,7 @@ export class LobbyPMSClient {
 
       if (responseData?.error_code === 'INPUT_PARAMETERS') {
         console.log('ℹ️ LobbyPMS customer may already exist (duplicate document). Continuing.');
-        return;
-      }
-
-      throw error;
-    }
-  }
-
-  /**
-   * Create or update a customer record in LobbyPMS
-   */
-  async createCustomer(customer: {
-    customer_document: string;
-    customer_nationality: string;
-    name: string;
-    surname?: string;
-    second_surname?: string;
-    phone?: string;
-    email?: string;
-    note?: string;
-    gender?: 'male' | 'female';
-    birthdate?: string;
-    document_id?: string;
-    address?: string;
-    activities?: string;
-  }): Promise<void> {
-    const endpoint = '/customer/1';
-
-    try {
-      console.log('🚀 ===== LOBBY PMS CREATE CUSTOMER =====');
-      console.log('🚀 Endpoint:', endpoint);
-      console.log('🚀 Customer payload:', JSON.stringify(customer, null, 2));
-
-      const finalUrl = this.buildURL(endpoint);
-      console.log('🚀 Customer URL:', finalUrl);
-
-      await axios.post(finalUrl, customer, {
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'User-Agent': 'SurfCampSantaTeresa/1.0'
-        },
-        timeout: 15000
-      });
-
-      console.log('✅ LobbyPMS createCustomer successful');
-    } catch (error: any) {
-      const responseData = error.response?.data;
-      console.error('❌ LobbyPMS createCustomer error:', {
-        message: error.message,
-        status: error.response?.status,
-        data: responseData,
-        url: this.buildURL(endpoint)
-      });
-
-      if (responseData?.error_code === 'INPUT_PARAMETERS') {
-        console.log('ℹ️ LobbyPMS customer may already exist. Continuing flow.');
-        return;
+        return responseData;
       }
 
       throw error;

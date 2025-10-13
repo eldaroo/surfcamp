@@ -7,6 +7,18 @@ import { useI18n } from '@/lib/i18n';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
+const isValidPhoneNumber = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const digitsOnly = trimmed.replace(/\D+/g, '');
+  if (digitsOnly.length < 8 || digitsOnly.length > 15) return false;
+  const allowedCharsPattern = /^[+\d\s()-]+$/;
+  return allowedCharsPattern.test(trimmed);
+};
+
+const normalizePhoneForStore = (value: string) =>
+  value.replace(/\s+/g, ' ').trim();
+
 export default function ContactForm() {
   const { t } = useI18n();
   const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
@@ -39,6 +51,8 @@ export default function ContactForm() {
 
     if (!formData.phone.trim()) {
       newErrors.phone = t('contact.validation.phoneRequired');
+    } else if (!isValidPhoneNumber(formData.phone)) {
+      newErrors.phone = t('contact.invalidPhone');
     }
 
     if (!formData.dni.trim()) {
@@ -54,9 +68,14 @@ export default function ContactForm() {
     
     if (validateForm()) {
       setIsSubmitting(true);
+      const normalizedFormData = {
+        ...formData,
+        phone: normalizePhoneForStore(formData.phone),
+      };
+      setFormData(normalizedFormData);
       setBookingData({
         ...bookingData,
-        contactInfo: formData
+        contactInfo: normalizedFormData
       });
       setCurrentStep('payment');
       setTimeout(() => setIsSubmitting(false), 1000); // Simulate loading
