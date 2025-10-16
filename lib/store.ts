@@ -115,7 +115,14 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
   
 
   setPersonalizationName: (name) =>
-    set(() => ({ personalizationName: name })),
+    set(() => {
+      const normalizedName = (name || '').trim();
+      console.log('[STORE] setPersonalizationName called', {
+        incoming: name,
+        normalized: normalizedName,
+      });
+      return { personalizationName: normalizedName };
+    }),
 
   setPriceBreakdown: (breakdown) =>
     set({ priceBreakdown: breakdown }),

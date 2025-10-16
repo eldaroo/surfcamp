@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
+const buildLeadGuestName = (firstName: string, lastName: string) =>
+  `${firstName.trim()} ${lastName.trim()}`.trim();
+
 export default function ContactForm() {
   const { t } = useI18n();
-  const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
+  const {
+    bookingData,
+    setBookingData,
+    setCurrentStep,
+    setPersonalizationName,
+    personalizationName,
+  } = useBookingStore();
   const [formData, setFormData] = useState({
     firstName: bookingData.contactInfo?.firstName || '',
     lastName: bookingData.contactInfo?.lastName || '',
@@ -19,6 +28,40 @@ export default function ContactForm() {
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const leadGuestName = buildLeadGuestName(
+      bookingData.contactInfo?.firstName || '',
+      bookingData.contactInfo?.lastName || ''
+    );
+
+    if (!leadGuestName) {
+      if (personalizationName) {
+        setPersonalizationName('');
+      }
+      console.log('[ContactForm] No lead guest name found. Clearing personalization name.');
+      return;
+    }
+
+    if (
+      !personalizationName ||
+      personalizationName === leadGuestName ||
+      personalizationName === leadGuestName.charAt(0)
+    ) {
+      console.log('[ContactForm] Syncing personalization name from booking data.', {
+        firstName: bookingData.contactInfo?.firstName,
+        lastName: bookingData.contactInfo?.lastName,
+        leadGuestName,
+        existingPersonalizationName: personalizationName,
+      });
+      setPersonalizationName(leadGuestName);
+    }
+  }, [
+    bookingData.contactInfo?.firstName,
+    bookingData.contactInfo?.lastName,
+    personalizationName,
+    setPersonalizationName,
+  ]);
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -58,13 +101,39 @@ export default function ContactForm() {
         ...bookingData,
         contactInfo: formData
       });
+
+      const leadGuestName = buildLeadGuestName(formData.firstName, formData.lastName);
+      console.log('[ContactForm] Submit lead guest name computed.', {
+        leadGuestName,
+        formData,
+      });
+      setPersonalizationName(leadGuestName);
+
       setCurrentStep('payment');
       setTimeout(() => setIsSubmitting(false), 1000); // Simulate loading
     }
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+
+      if (field === 'firstName' || field === 'lastName') {
+        const leadGuestName = buildLeadGuestName(
+          field === 'firstName' ? value : updated.firstName,
+          field === 'lastName' ? value : updated.lastName
+        );
+        console.log('[ContactForm] Lead guest name updated via input change.', {
+          field,
+          value,
+          updated,
+          leadGuestName,
+        });
+        setPersonalizationName(leadGuestName);
+      }
+
+      return updated;
+    });
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }

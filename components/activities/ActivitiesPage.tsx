@@ -9,6 +9,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Activity } from "@/types";
 import ActivityCard from "./ActivityCard";
 import HeaderPersonalization from "./HeaderPersonalization";
+import { ArrowRight } from "lucide-react";
 
 type SurfPackage = '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes';
 
@@ -39,6 +40,7 @@ const ActivitiesPage = () => {
     setActivityQuantity,
     selectedTimeSlots,
     setSelectedTimeSlot,
+    setCurrentStep,
   } = useBookingStore();
 
   const participants = bookingData.guests && bookingData.guests > 0 ? bookingData.guests : 1;
@@ -186,6 +188,36 @@ const ActivitiesPage = () => {
     ]
   );
 
+  const handleContinue = () => {
+    // Verificar si ya tenemos fechas y alojamiento seleccionados
+    const { checkIn, checkOut } = bookingData;
+    const hasSelectedRoom = !!useBookingStore.getState().selectedRoom;
+
+    // Si faltan fechas, ir a dates
+    if (!checkIn || !checkOut) {
+      setCurrentStep("dates");
+    }
+    // Si tenemos fechas pero falta alojamiento, ir a accommodation
+    else if (!hasSelectedRoom) {
+      setCurrentStep("accommodation");
+    }
+    // Si tenemos todo, ir a contact
+    else {
+      setCurrentStep("contact");
+    }
+  };
+
+  const copy = {
+    es: {
+      continue: "Continuar",
+    },
+    en: {
+      continue: "Continue",
+    },
+  };
+
+  const currentCopy = copy[(locale as "es" | "en") || "es"];
+
   return (
     <div className="card mx-auto max-w-7xl px-4 py-8">
       <HeaderPersonalization
@@ -230,6 +262,16 @@ const ActivitiesPage = () => {
             />
           );
         })}
+      </div>
+
+      <div className="mt-10 flex justify-center">
+        <button
+          onClick={handleContinue}
+          className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 px-8 py-4 text-base font-semibold text-slate-900 shadow-lg shadow-amber-300/40 transition-all hover:from-amber-200 hover:to-amber-300 hover:shadow-amber-300/60"
+        >
+          <span>{currentCopy.continue}</span>
+          <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+        </button>
       </div>
     </div>
   );

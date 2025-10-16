@@ -49,11 +49,23 @@ const HeaderPersonalization = ({
   const summary = useMemo(() => {
     const baseName = name.trim() || t.defaultGroup;
     if (participants <= 1) {
+      console.log('[HeaderPersonalization] Summary for single participant.', {
+        rawName: name,
+        baseName,
+        participants,
+      });
       return baseName;
     }
 
     const extra = participants - 1;
-    return `${baseName} + ${extra} ${t.participantSuffix(extra)}`;
+    const result = `${baseName} + ${extra} ${t.participantSuffix(extra)}`;
+    console.log('[HeaderPersonalization] Summary for group.', {
+      rawName: name,
+      baseName,
+      participants,
+      result,
+    });
+    return result;
   }, [name, participants, t]);
 
   const handleParticipantChange = (event: ChangeEvent<HTMLSelectElement>) => {
