@@ -46,7 +46,8 @@
       "Bash(npx next dev:*)",
       "Bash(npx eslint:*)",
       "Bash(node:*)",
-      "Bash(del temp_function.tsx)"
+      "Bash(del temp_function.tsx)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

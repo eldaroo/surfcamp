@@ -228,7 +228,28 @@ const ActivitiesPage = () => {
         onParticipantsChange={(value) => setBookingData({ guests: value })}
       />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <style jsx>{`
+        .activity-cards-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .activity-cards-grid > * {
+          min-height: 280px;
+        }
+        @media (min-width: 768px) {
+          .activity-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-auto-rows: minmax(320px, auto);
+          }
+          .activity-cards-grid > * {
+            min-height: 320px;
+          }
+        }
+      `}</style>
+
+      <div className="activity-cards-grid">
         {localizedActivities.map((activity) => {
           const isSelected = selectedActivities.some((item) => item.id === activity.id);
           const totalPrice = computeActivityPrice(activity);

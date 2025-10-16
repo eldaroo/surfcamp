@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Activity } from "@/types";
 import {
@@ -165,6 +166,29 @@ const sellingPointsContent = {
   },
 } as const;
 
+const activityImages = {
+  surf: {
+    gradient: "from-blue-500 via-cyan-400 to-teal-500",
+    emoji: "🏄",
+  },
+  yoga: {
+    gradient: "from-purple-500 via-pink-400 to-rose-500",
+    emoji: "🧘",
+  },
+  ice_bath: {
+    gradient: "from-cyan-500 via-blue-400 to-indigo-500",
+    emoji: "❄️",
+  },
+  transport: {
+    gradient: "from-orange-500 via-amber-400 to-yellow-500",
+    emoji: "🚐",
+  },
+  hosting: {
+    gradient: "from-green-500 via-emerald-400 to-teal-500",
+    emoji: "🏠",
+  },
+} as const;
+
 const descriptiveContent = {
   yoga: {
     es: {
@@ -270,6 +294,12 @@ const ActivityCard = ({
   const trustMessage = typeof marketing.trust === "object" ? marketing.trust[locale] : "";
 
   const isSurf = activity.category === "surf";
+  const [isFlipped, setIsFlipped] = useState(false);
+  const imageData = activityImages[activity.category as keyof typeof activityImages] || activityImages.surf;
+
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
+  };
 
   const renderYogaPackages = () => {
     if (!onYogaPackageChange) return null;
@@ -396,114 +426,154 @@ const ActivityCard = ({
   };
 
   return (
-    <motion.div
-      layout
-      className="group flex h-full flex-col justify-between rounded-3xl border border-slate-700/60 bg-slate-900/70 px-6 py-7 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20"
-    >
-      <div className="space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-amber-200">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              {activity.category.replace("_", " ")}
-            </span>
-            <h3 className="mt-5 text-xl font-bold text-slate-100">{activity.name}</h3>
+    <div className="flip-card w-full h-full min-h-[280px] md:min-h-[320px]" style={{ perspective: '1000px' }}>
+      <motion.div
+        className="flip-card-inner w-full h-full min-h-[280px] md:min-h-[320px] relative"
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+        style={{ transformStyle: 'preserve-3d' }}
+      >
+        {/* Front Face - Image */}
+        <div
+          className="flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden cursor-pointer"
+          style={{ backfaceVisibility: 'hidden' }}
+          onClick={handleFlip}
+        >
+          <div className={`w-full h-full bg-gradient-to-br ${imageData.gradient} flex flex-col items-center justify-center relative min-h-[280px]`}>
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10 text-center px-6 py-8">
+              <div className="text-6xl md:text-8xl mb-4 md:mb-6">{imageData.emoji}</div>
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">{activity.name}</h2>
+              <p className="text-base md:text-xl text-white/90 uppercase tracking-wider">{activity.category.replace("_", " ")}</p>
+            </div>
+            <div className="absolute bottom-4 md:bottom-6 right-4 md:right-6 bg-white/20 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-semibold">
+              {locale === "es" ? "Toca para ver detalles" : "Tap to see details"}
+            </div>
+          </div>
+        </div>
 
-            {isSurf && ratingValue && (
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-1.5">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 fill-amber-300 text-amber-300"
-                    />
-                  ))}
-                  <span className="ml-1 text-sm font-bold text-slate-100">
-                    {ratingValue}
+        {/* Back Face - Details */}
+        <div
+          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl"
+          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+        >
+          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-y-auto md:overflow-visible">
+            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-6">
+              <div className="flex items-start justify-between flex-shrink-0">
+                <div className="flex-1">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/70 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] md:tracking-[0.3em] text-amber-200">
+                    <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
+                    {activity.category.replace("_", " ")}
                   </span>
-                  <span className="text-xs text-slate-400">({reviewsText})</span>
+                  <h3 className="mt-3 md:mt-5 text-lg md:text-xl font-bold text-slate-100">{activity.name}</h3>
+
+                  {isSurf && ratingValue && (
+                    <div className="mt-3 md:mt-4 space-y-1.5 md:space-y-2">
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="h-3 md:h-4 w-3 md:w-4 fill-amber-300 text-amber-300"
+                          />
+                        ))}
+                        <span className="ml-1 text-xs md:text-sm font-bold text-slate-100">
+                          {ratingValue}
+                        </span>
+                        <span className="text-[10px] md:text-xs text-slate-400">({reviewsText})</span>
+                      </div>
+                      {trustMessage && (
+                        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs text-slate-300">
+                          <Globe className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
+                          <span>{trustMessage}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isSurf && sellingPoints && sellingPoints.length > 0 ? (
+                    <ul className="mt-3 md:mt-5 space-y-1 md:space-y-1.5 text-xs md:text-sm text-slate-200">
+                      {sellingPoints.map((point, index) => (
+                        <li
+                          key={`${activity.id}-point-${index}`}
+                          className="flex items-start gap-1.5 md:gap-2"
+                        >
+                          <CheckCircle2 className="mt-0.5 h-3.5 md:h-4 w-3.5 md:w-4 flex-shrink-0 text-amber-300" />
+                          <span className="leading-snug">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : !isSurf && descriptive ? (
+                    <div className="mt-3 md:mt-4 space-y-2 md:space-y-4">
+                      <p className="text-xs md:text-sm leading-relaxed text-slate-300">
+                        {descriptive.description}
+                      </p>
+                      <div className="flex flex-wrap gap-x-3 md:gap-x-4 gap-y-1.5 md:gap-y-2">
+                        {descriptive.features.map((feature, index) => {
+                          const Icon = feature.icon;
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-slate-300"
+                            >
+                              <Icon className="h-3.5 md:h-4 w-3.5 md:w-4 flex-shrink-0 text-amber-300" />
+                              <span>{feature.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
-                {trustMessage && (
-                  <div className="flex items-center gap-2 text-xs text-slate-300">
-                    <Globe className="h-3.5 w-3.5 text-amber-300" />
-                    <span>{trustMessage}</span>
+                {isSelected && (
+                  <CheckCircle2 className="h-6 md:h-8 w-6 md:w-8 text-amber-300" aria-hidden="true" />
+                )}
+              </div>
+
+              {(renderYogaPackages() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
+                <div className="space-y-3 md:space-y-4">
+                  {renderYogaPackages()}
+                  {renderSurfSelector()}
+                  {renderQuantityControl()}
+                  {renderTimeSlot()}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col justify-center items-center gap-3 md:gap-4 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-8 py-4 md:py-0 md:min-w-[280px]">
+              <div className="text-center w-full">
+                <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-1 md:mb-2">Total</span>
+                <div className="text-2xl md:text-3xl font-bold text-slate-100">
+                  {formatPrice(price)}
+                </div>
+                {participants > 1 && typeof pricePerPerson === "number" && (
+                  <div className="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">
+                    {formatPrice(pricePerPerson)} {copy.perPerson}
                   </div>
                 )}
               </div>
-            )}
-
-            {isSurf && sellingPoints && sellingPoints.length > 0 ? (
-              <ul className="mt-5 space-y-1.5 text-sm text-slate-200">
-                {sellingPoints.map((point, index) => (
-                  <li
-                    key={`${activity.id}-point-${index}`}
-                    className="flex items-start gap-2"
-                  >
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-300" />
-                    <span className="leading-snug">{point}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : !isSurf && descriptive ? (
-              <div className="mt-4 space-y-4">
-                <p className="text-sm leading-relaxed text-slate-300">
-                  {descriptive.description}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  {descriptive.features.map((feature, index) => {
-                    const Icon = feature.icon;
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1.5 text-xs text-slate-300"
-                      >
-                        <Icon className="h-4 w-4 flex-shrink-0 text-amber-300" />
-                        <span>{feature.text}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-          {isSelected && (
-            <CheckCircle2 className="h-8 w-8 text-amber-300" aria-hidden="true" />
-          )}
-        </div>
-
-        <div className="space-y-5">
-          {renderYogaPackages()}
-          {renderSurfSelector()}
-          {renderQuantityControl()}
-          {renderTimeSlot()}
-        </div>
-      </div>
-
-      <div className="mt-7 flex items-end justify-between">
-        <div>
-          <span className="text-sm font-medium uppercase tracking-wide text-slate-400">Total</span>
-          <div className="mt-1 text-2xl font-bold text-slate-100">
-            {formatPrice(price)}
-          </div>
-          {participants > 1 && typeof pricePerPerson === "number" && (
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {formatPrice(pricePerPerson)} {copy.perPerson}
+              <button
+                type="button"
+                onClick={onToggle}
+                className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition ${
+                  isSelected
+                    ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800"
+                    : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300"
+                }`}
+              >
+                {isSelected ? copy.remove : copy.add}
+              </button>
+              <button
+                type="button"
+                onClick={handleFlip}
+                className="w-full rounded-2xl px-4 md:px-6 py-2 text-xs md:text-sm font-medium bg-slate-700/50 text-slate-200 hover:bg-slate-700 transition"
+              >
+                ← {locale === "es" ? "Volver" : "Back"}
+              </button>
             </div>
-          )}
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`rounded-2xl px-5 py-3 text-sm font-semibold transition ${
-            isSelected
-              ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800"
-              : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300"
-          }`}
-        >
-          {isSelected ? copy.remove : copy.add}
-        </button>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
