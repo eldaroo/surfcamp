@@ -7,13 +7,37 @@ import { useI18n } from '@/lib/i18n';
 import PriceSummary from '@/components/PriceSummary';
 import CustomDatePicker from '@/components/CustomDatePicker';
 import BackButton from './BackButton';
+import AccommodationCard from './AccommodationCard';
+
+// Tipo para las habitaciones que vienen de la API
+type RoomFromAPI = {
+  roomTypeId: string;
+  roomTypeName: string;
+  availableRooms: number;
+  pricePerNight: number;
+  maxGuests: number;
+  totalCapacity?: number;
+  canAccommodateRequestedGuests?: boolean;
+  isSharedRoom?: boolean;
+};
 
 export default function DateSelector() {
   const { t, locale } = useI18n();
-  const { bookingData, setBookingData, setCurrentStep } = useBookingStore();
+  const {
+    bookingData,
+    setBookingData,
+    setCurrentStep,
+    availableRooms,
+    setAvailableRooms,
+    selectedRoom,
+    setSelectedRoom,
+    setError: setGlobalError,
+    error: globalError
+  } = useBookingStore();
   const [guests, setGuests] = useState(bookingData.guests || 1);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
   // Usar fechas del store global para mantener sincronización
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
@@ -26,50 +50,80 @@ export default function DateSelector() {
     }
   }, [bookingData.guests, guests]);
 
+  // Fetch rooms when dates change
+  useEffect(() => {
+    if (bookingData.checkIn && bookingData.checkOut) {
+      setAvailableRooms(null);
+      setSelectedRoom(null);
+      fetchAvailableRooms();
+    }
+  }, [bookingData.checkIn, bookingData.checkOut, bookingData.guests]);
+
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    // Validaciones
-    if (!checkInDate || !checkOutDate) {
-      setError(t('dates.error.selectDates'));
-      setIsLoading(false);
+  const fetchAvailableRooms = async () => {
+    if (!bookingData.checkIn || !bookingData.checkOut || !bookingData.guests) {
       return;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (checkInDate < today) {
-      setError(t('dates.error.pastDate'));
-      setIsLoading(false);
-      return;
-    }
-
-    if (checkOutDate <= checkInDate) {
-      setError(t('dates.error.invalidRange'));
-      setIsLoading(false);
-      return;
-    }
+    setLoadingRooms(true);
+    setGlobalError(null);
 
     try {
-      // Actualizar solo los huéspedes en el store (las fechas ya se actualizaron en onChange)
-      setBookingData({
-        ...bookingData,
-        guests
+      const response = await fetch('/api/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkIn: bookingData.checkIn,
+          checkOut: bookingData.checkOut,
+          guests: bookingData.guests,
+        }),
       });
-      
-      // Avanzar directamente al paso de alojamiento
-      // La verificación de disponibilidad se hará en el AccommodationSelector
-      setCurrentStep('accommodation');
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404 && data.error && data.error.includes('suficientes camas')) {
+          setAvailableRooms([]);
+          setGlobalError(null);
+          return;
+        }
+        throw new Error(data.error || 'Error getting available rooms');
+      }
+
+      if (!data.available || !data.availableRooms?.length) {
+        setAvailableRooms([]);
+        setGlobalError(null);
+        return;
+      }
+
+      setAvailableRooms(data.availableRooms);
+      setGlobalError(null);
     } catch (error) {
-      setError(t('dates.error.general'));
-      setIsLoading(false);
+      console.error('Error fetching rooms:', error);
+      setGlobalError('Error getting available rooms. Please try again.');
+      setAvailableRooms([]);
+    } finally {
+      setLoadingRooms(false);
     }
+  };
+
+  const handleRoomSelect = (room: RoomFromAPI) => {
+    if (room.availableRooms > 0) {
+      setSelectedRoom(room);
+      setBookingData({ roomTypeId: room.roomTypeId });
+    }
+  };
+
+  const handleContinue = () => {
+    if (!selectedRoom) {
+      setGlobalError(t('accommodation.selectAccommodation'));
+      return;
+    }
+
+    setGlobalError(null);
+    setCurrentStep('contact');
   };
 
   const calculateNights = () => {
@@ -80,30 +134,75 @@ export default function DateSelector() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  const getRoomFeatures = (roomTypeId: string) => {
+    const features: { label: string; color: 'aqua' | 'gold' | 'orange' }[] = [];
+
+    if (roomTypeId === 'casa-playa') {
+      features.push(
+        { label: t('accommodation.features.sharedRoom'), color: 'orange' },
+        { label: t('accommodation.features.oceanView'), color: 'aqua' },
+        { label: t('accommodation.features.socialEnvironment'), color: 'gold' }
+      );
+    } else if (roomTypeId === 'casitas-privadas') {
+      features.push(
+        { label: t('accommodation.features.totalPrivacy'), color: 'aqua' },
+        { label: t('accommodation.features.privateGarden'), color: 'gold' },
+        { label: t('accommodation.features.intimateEnvironment'), color: 'orange' },
+        { label: t('accommodation.features.independentHouse'), color: 'aqua' }
+      );
+    } else if (roomTypeId === 'casas-deluxe') {
+      features.push(
+        { label: t('accommodation.features.beachStudio'), color: 'gold' },
+        { label: t('accommodation.features.privateKitchen'), color: 'orange' },
+        { label: t('accommodation.features.hotWaterBathroom'), color: 'aqua' },
+        { label: t('accommodation.features.wifiAC'), color: 'aqua' }
+      );
+    }
+
+    return features;
+  };
+
+  const getFeatureChipStyle = (color: 'aqua' | 'gold' | 'orange') => {
+    const baseClasses = "px-2 py-1 rounded-full text-xs font-medium text-white";
+
+    switch (color) {
+      case 'aqua':
+        return `${baseClasses} bg-[color-mix(in_srgb,var(--brand-aqua)_25%,transparent)] border border-[color-mix(in_srgb,var(--brand-aqua)_40%,transparent)]`;
+      case 'gold':
+        return `${baseClasses} bg-[color-mix(in_srgb,var(--brand-gold)_25%,transparent)] border border-[color-mix(in_srgb,var(--brand-gold)_40%,transparent)]`;
+      case 'orange':
+        return `${baseClasses} bg-[color-mix(in_srgb,var(--brand-orange)_25%,transparent)] border border-[color-mix(in_srgb,var(--brand-orange)_40%,transparent)]`;
+    }
+  };
+
   const nights = calculateNights();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
-      {/* Columna izquierda - Selector de fechas */}
+    <div className="min-h-screen py-6 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-7xl mx-auto"
       >
-              <div className="mb-6">
-          {/* Back Button */}
-          <div className="mb-4">
-            <BackButton variant="minimal" />
-          </div>
-
+        {/* Header */}
+        <div className="flex items-center space-x-4 mb-8">
+          <BackButton variant="minimal" />
           <div>
-            <h2 className="text-2xl font-bold text-white font-heading">{t('dates.title')}</h2>
-            <p className="text-yellow-300">{t('dates.subtitle')}</p>
+            <h1 className="text-[28px] font-bold text-white font-heading">{t('dates.title')}</h1>
+            <p className="text-[15px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
           </div>
         </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+          {/* Columna izquierda - Selector de fechas */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="card"
+          >
+            <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Check-in Date */}
           <div>
@@ -223,25 +322,126 @@ export default function DateSelector() {
           </div>
         )}
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isLoading || !checkInDate || !checkOutDate}
-          className="w-32 py-2 px-4 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mx-auto"
-        >
-          {isLoading ? t('common.loading') : t('common.continue')}
-        </button>
-        </form>
-      </motion.div>
+            </div>
+          </motion.div>
 
-      {/* Columna derecha - Price Summary */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="card"
-      >
-        <PriceSummary />
+          {/* Columna derecha - Price Summary */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="card"
+          >
+            <PriceSummary />
+          </motion.div>
+        </div>
+
+        {/* Accommodation Section - Below date selector */}
+        {checkInDate && checkOutDate && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <div className="mb-6">
+              <h2 className="text-[24px] font-bold text-white font-heading mb-2">
+                {t('accommodation.title')}
+              </h2>
+              <p className="text-[15px] text-[var(--brand-text-dim)]">
+                {t('accommodation.subtitle')}
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {globalError && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-6 p-4 rounded-lg border"
+                style={{ backgroundColor: '#7f1d1d', borderColor: '#dc2626' }}
+              >
+                <p className="text-red-300 text-[15px]">{globalError}</p>
+              </motion.div>
+            )}
+
+            {/* Loading State */}
+            {loadingRooms && (
+              <div className="flex flex-col items-center justify-center py-24">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: 'var(--brand-gold)' }}></div>
+                <p className="text-[var(--brand-text)] text-[15px]">{t('accommodation.searchingRooms')}</p>
+              </div>
+            )}
+
+            {/* Room Cards */}
+            {!loadingRooms && availableRooms && availableRooms.length > 0 && (
+              <div className="space-y-6 mb-8">
+                {availableRooms.map((room: RoomFromAPI) => {
+                  const features = getRoomFeatures(room.roomTypeId);
+                  const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
+                  const isUnavailable = room.availableRooms === 0;
+                  const roomPrice = room.isSharedRoom ? room.pricePerNight * (bookingData.guests || 1) : room.pricePerNight;
+                  const totalPrice = room.isSharedRoom
+                    ? room.pricePerNight * nights * (bookingData.guests || 1)
+                    : room.pricePerNight * nights;
+
+                  return (
+                    <AccommodationCard
+                      key={room.roomTypeId}
+                      room={room}
+                      isSelected={isSelected}
+                      isUnavailable={isUnavailable}
+                      nights={nights}
+                      guests={bookingData.guests || 1}
+                      roomPrice={roomPrice}
+                      totalPrice={totalPrice}
+                      features={features}
+                      description={t(`accommodation.roomDescriptions.${room.roomTypeId}`)}
+                      locale={locale}
+                      onSelect={() => handleRoomSelect(room)}
+                      getFeatureChipStyle={getFeatureChipStyle}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {/* No rooms available */}
+            {!loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🏠</div>
+                <h3 className="text-[22px] font-bold text-white mb-3 font-heading">
+                  {t('accommodation.noRoomsAvailable')}
+                </h3>
+                <p className="text-[15px] text-[var(--brand-text-dim)] mb-6 max-w-md mx-auto">
+                  {t('accommodation.noAvailableMessage')}
+                </p>
+              </div>
+            )}
+
+            {/* Continue Button */}
+            {!loadingRooms && availableRooms && availableRooms.length > 0 && (
+              <div className="flex justify-center">
+                <motion.button
+                  onClick={handleContinue}
+                  disabled={!selectedRoom}
+                  whileHover={selectedRoom ? { scale: 1.02 } : {}}
+                  whileTap={selectedRoom ? { scale: 0.98 } : {}}
+                  className={`
+                    max-w-md w-full md:w-auto px-8 py-4 rounded-full text-[18px] font-semibold
+                    transition-all duration-300
+                    ${!selectedRoom && 'cursor-not-allowed'}
+                  `}
+                  style={{
+                    backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
+                    color: selectedRoom ? 'black' : 'white'
+                  }}
+                >
+                  {selectedRoom ? 'Continue to Book' : 'Select an Accommodation'}
+                </motion.button>
+              </div>
+            )}
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );

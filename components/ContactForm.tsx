@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
+import { getActivityTotalPrice } from '@/lib/prices';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
@@ -18,6 +19,12 @@ export default function ContactForm() {
     setCurrentStep,
     setPersonalizationName,
     personalizationName,
+    selectedRoom,
+    selectedActivities,
+    selectedYogaPackages,
+    selectedSurfPackages,
+    selectedSurfClasses,
+    setPriceBreakdown
   } = useBookingStore();
   const [formData, setFormData] = useState({
     firstName: bookingData.contactInfo?.firstName || '',
@@ -28,6 +35,12 @@ export default function ContactForm() {
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
+  const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
+  const [wetravelResponse, setWetravelResponse] = useState<any>(null);
+  const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
+  const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const leadGuestName = buildLeadGuestName(
@@ -63,6 +76,105 @@ export default function ContactForm() {
     setPersonalizationName,
   ]);
 
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (paymentStatusInterval.current) {
+        clearInterval(paymentStatusInterval.current);
+      }
+    };
+  }, []);
+
+  // Calculate prices
+  const calculateNights = () => {
+    if (!bookingData.checkIn || !bookingData.checkOut) return 0;
+    const checkInDate = new Date(bookingData.checkIn);
+    const checkOutDate = new Date(bookingData.checkOut);
+    return Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const nights = calculateNights();
+
+  const accommodationTotal = selectedRoom ? (
+    selectedRoom.isSharedRoom
+      ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)
+      : selectedRoom.pricePerNight * nights
+  ) : 0;
+
+  const activitiesTotal = selectedActivities.reduce((sum: number, activity: any) => {
+    if (activity.category === 'yoga') {
+      const yogaPackage = selectedYogaPackages[activity.id];
+      if (!yogaPackage) return sum;
+      return sum + getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
+    } else if (activity.category === 'surf') {
+      const surfClasses = selectedSurfClasses[activity.id];
+      if (!surfClasses) return sum;
+      return sum + getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
+    } else {
+      return sum + ((activity.price || 0) * (bookingData.guests || 1));
+    }
+  }, 0);
+
+  const total = accommodationTotal + activitiesTotal;
+
+  // Payment status checking
+  const checkPaymentStatus = async (orderId?: string, tripId?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (orderId) params.append('order_id', orderId);
+      if (tripId) params.append('trip_id', tripId);
+
+      const response = await fetch(`/api/payment-status?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.show_success && (data.is_booking_created || data.is_completed)) {
+        const prices = {
+          accommodation: accommodationTotal,
+          activities: activitiesTotal,
+          subtotal: total,
+          tax: 0,
+          total,
+          currency: 'USD'
+        };
+        setPriceBreakdown(prices);
+
+        if (paymentStatusInterval.current) {
+          clearInterval(paymentStatusInterval.current);
+          paymentStatusInterval.current = null;
+        }
+        setIsWaitingForPayment(false);
+        setIsCheckingPaymentStatus(false);
+        setCurrentStep('success');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      return null;
+    }
+  };
+
+  const startPaymentStatusPolling = (orderId?: string, tripId?: string) => {
+    if (paymentStatusInterval.current) {
+      clearInterval(paymentStatusInterval.current);
+    }
+
+    setIsCheckingPaymentStatus(true);
+    checkPaymentStatus(orderId, tripId);
+
+    paymentStatusInterval.current = setInterval(() => {
+      checkPaymentStatus(orderId, tripId);
+    }, 3000);
+
+    setTimeout(() => {
+      if (paymentStatusInterval.current) {
+        clearInterval(paymentStatusInterval.current);
+        paymentStatusInterval.current = null;
+        setIsCheckingPaymentStatus(false);
+      }
+    }, 10 * 60 * 1000);
+  };
+
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
 
@@ -94,7 +206,7 @@ export default function ContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       setIsSubmitting(true);
       setBookingData({
@@ -103,14 +215,184 @@ export default function ContactForm() {
       });
 
       const leadGuestName = buildLeadGuestName(formData.firstName, formData.lastName);
-      console.log('[ContactForm] Submit lead guest name computed.', {
-        leadGuestName,
-        formData,
-      });
       setPersonalizationName(leadGuestName);
 
-      setCurrentStep('payment');
-      setTimeout(() => setIsSubmitting(false), 1000); // Simulate loading
+      setTimeout(() => setIsSubmitting(false), 500);
+    }
+  };
+
+  const handlePayment = async () => {
+    // First validate and save contact info
+    if (!validateForm()) {
+      return;
+    }
+
+    // Save contact info
+    setBookingData({
+      ...bookingData,
+      contactInfo: formData
+    });
+
+    const leadGuestName = buildLeadGuestName(formData.firstName, formData.lastName);
+    setPersonalizationName(leadGuestName);
+
+    setIsProcessingPayment(true);
+    setPaymentError('');
+
+    try {
+      const paymentWindow = window.open('', '_blank');
+      if (paymentWindow) {
+        const loadingTitle = t('payment.generatingLink');
+        const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
+
+        paymentWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${loadingTitle}</title>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  min-height: 100vh;
+                  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                  color: white;
+                }
+                .loader {
+                  text-align: center;
+                }
+                .spinner {
+                  border: 4px solid rgba(255, 255, 255, 0.1);
+                  border-top: 4px solid #fbbf24;
+                  border-radius: 50%;
+                  width: 50px;
+                  height: 50px;
+                  animation: spin 1s linear infinite;
+                  margin: 0 auto 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                h2 { margin: 0 0 10px; }
+                p { margin: 0; opacity: 0.8; }
+              </style>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <h2>${loadingTitle}</h2>
+                <p>${loadingMessage}</p>
+              </div>
+            </body>
+          </html>
+        `);
+      }
+
+      const formatDateForAPI = (date: Date | string) => {
+        if (typeof date === 'string') return date;
+        return date.toISOString().split('T')[0];
+      };
+
+      const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
+      const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
+
+      const today = new Date();
+      const checkInDate = new Date(checkInFormatted);
+      const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
+
+      const paymentPayload = {
+        checkIn: checkInFormatted,
+        checkOut: checkOutFormatted,
+        guests: bookingData.guests,
+        roomTypeId: selectedRoom?.roomTypeId,
+        contactInfo: formData,
+        selectedActivities: selectedActivities.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          category: a.category,
+          price: a.price,
+          package:
+            a.category === 'yoga'
+              ? selectedYogaPackages[a.id]
+              : a.category === 'surf'
+                ? selectedSurfPackages[a.id]
+                : undefined,
+          classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
+        })),
+        wetravelData: {
+          trip: {
+            title: "Surf & Yoga Retreat – Santa Teresa",
+            start_date: checkInFormatted,
+            end_date: checkOutFormatted,
+            currency: "USD",
+            participant_fees: "all"
+          },
+          pricing: {
+            price: Math.round(total),
+            payment_plan: {
+              allow_auto_payment: false,
+              allow_partial_payment: false,
+              deposit: 0,
+              installments: [
+                {
+                  price: Math.round(total),
+                  days_before_departure: daysBeforeDeparture
+                }
+              ]
+            }
+          }
+        }
+      };
+
+      const wetravelResponse = await fetch('/api/wetravel-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentPayload),
+      });
+
+      const wetravelData = await wetravelResponse.json();
+
+      if (!wetravelResponse.ok) {
+        throw new Error(wetravelData.error || 'Error generating payment link');
+      }
+
+      setWetravelResponse(wetravelData);
+
+      if (wetravelData.payment_url) {
+        if (paymentWindow) {
+          paymentWindow.location.href = wetravelData.payment_url;
+          paymentWindow.focus();
+        } else {
+          window.open(wetravelData.payment_url, '_blank');
+        }
+
+        setPaymentError('');
+        setIsWaitingForPayment(true);
+
+        const orderId = wetravelData.order_id;
+        const tripId = wetravelData.trip_id;
+
+        startPaymentStatusPolling(orderId, tripId);
+      } else {
+        if (paymentWindow) {
+          paymentWindow.close();
+        }
+        throw new Error('No payment URL received from WeTravel');
+      }
+
+    } catch (error) {
+      console.error('Payment error:', error);
+      setPaymentError(error instanceof Error ? error.message : t('payment.error.processing'));
+      if (paymentWindow && !paymentWindow.closed) {
+        paymentWindow.close();
+      }
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -289,38 +571,163 @@ export default function ContactForm() {
               )}
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-4">
+          </form>
+        </div>
+
+        {/* Payment Section */}
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl mt-8">
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-white mb-2 font-heading">{t('payment.title')}</h2>
+            <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Payment Summary */}
+            <div className="space-y-6">
+              <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
+                <h3 className="text-lg font-semibold text-white mb-4 font-heading">{t('payment.summary.title')}</h3>
+                <div className="space-y-3">
+                  {selectedRoom && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">{selectedRoom.roomTypeName}</span>
+                      <span className="font-medium text-yellow-400">${accommodationTotal}</span>
+                    </div>
+                  )}
+                  {selectedActivities.map((activity: any) => {
+                    let activityPrice: number;
+                    let activityDetails: string = '';
+
+                    if (activity.category === 'yoga') {
+                      const selectedYogaPackage = selectedYogaPackages[activity.id];
+                      if (!selectedYogaPackage) return null;
+                      activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, bookingData.guests || 1);
+                      activityDetails = `(${selectedYogaPackage})`;
+                    } else if (activity.category === 'surf') {
+                      const surfClasses = selectedSurfClasses[activity.id];
+                      if (!surfClasses) return null;
+                      activityPrice = getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
+                      activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
+                    } else {
+                      activityPrice = (activity.price || 0) * (bookingData.guests || 1);
+                    }
+
+                    return (
+                      <div key={activity.id} className="flex justify-between">
+                        <span className="text-gray-300">
+                          {activity.name}
+                          {activityDetails && (
+                            <span className="text-sm text-gray-400 ml-2">
+                              {activityDetails}
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-medium text-yellow-400">${activityPrice}</span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t border-gray-600 pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-white">{t('payment.summary.total')}</span>
+                      <span className="text-2xl font-bold text-yellow-300">${total}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Notice */}
+              <div className="bg-gray-700/50 border border-gray-600 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-green-400">✅</span>
+                  <span className="font-semibold text-white">{t('payment.secure.title')}</span>
+                </div>
+                <p className="text-gray-300 text-sm">{t('payment.secure.description')}</p>
+              </div>
+            </div>
+
+            {/* Payment Button */}
+            <div className="flex flex-col justify-center space-y-6">
               <motion.button
-                type="submit"
-                disabled={isSubmitting}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={handlePayment}
+                disabled={isProcessingPayment || !validateForm()}
+                whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
+                whileTap={{ scale: isProcessingPayment ? 1 : 0.98 }}
                 className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 ${
-                  isSubmitting
+                  isProcessingPayment
                     ? 'bg-gray-600 cursor-not-allowed text-gray-400'
                     : 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 shadow-lg hover:shadow-yellow-500/25'
                 }`}
               >
-                {isSubmitting ? (
+                {isProcessingPayment ? (
                   <div className="flex items-center justify-center">
                     <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {t('common.loading')}
+                    {t('payment.generatingLink')}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
-                    <span>{t('common.continue')}</span>
-                    <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    <span>💳 {t('payment.generateLink')}</span>
                   </div>
                 )}
               </motion.button>
+
+              {/* Waiting for Payment */}
+              {isWaitingForPayment && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="bg-yellow-500/10 border border-yellow-300/50 rounded-lg p-6 text-center"
+                >
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300"></div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-yellow-300 mb-2 font-heading">
+                        {t('payment.waitingForPayment.title')}
+                      </h3>
+                      <p className="text-gray-300 text-sm">
+                        {t('payment.waitingForPayment.description')}
+                      </p>
+                      {isCheckingPaymentStatus && (
+                        <p className="text-green-300 text-xs mt-2">
+                          ✅ Verificando estado del pago automáticamente...
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      <button
+                        onClick={() => window.open(wetravelResponse?.payment_url, '_blank')}
+                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+                      >
+                        {t('payment.waitingForPayment.openLinkButton')}
+                      </button>
+                      <button
+                        onClick={() => setIsWaitingForPayment(false)}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors duration-200"
+                      >
+                        {t('payment.waitingForPayment.hideMessageButton')}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Payment Error */}
+              {paymentError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="bg-red-500/10 border border-red-400/50 rounded-lg p-4"
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <span className="text-red-400">⚠️</span>
+                    <span className="font-semibold text-white">{t('common.error')}</span>
+                  </div>
+                  <p className="text-red-300 text-sm">{paymentError}</p>
+                </motion.div>
+              )}
             </div>
-          </form>
+          </div>
         </div>
       </motion.div>
     </div>

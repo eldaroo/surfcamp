@@ -13,27 +13,15 @@ export const steps = [
   },
   {
     id: 'dates',
-    icon: '📅',
+    icon: '📅🏠',
     name: 'dates',
     description: 'dates'
   },
   {
-    id: 'accommodation',
-    icon: '🏠',
-    name: 'accommodation',
-    description: 'accommodation'
-  },
-  {
     id: 'contact',
-    icon: '👤',
+    icon: '👤💳',
     name: 'contact',
     description: 'contact'
-  },
-  {
-    id: 'payment',
-    icon: '💳',
-    name: 'payment',
-    description: 'payment'
   }
 ];
 

@@ -47,7 +47,8 @@
       "Bash(npx eslint:*)",
       "Bash(node:*)",
       "Bash(del temp_function.tsx)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npx claude-code doctor)"
     ],
     "deny": [],
     "ask": []
