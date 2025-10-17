@@ -48,19 +48,8 @@ export default function ContactForm() {
       bookingData.contactInfo?.lastName || ''
     );
 
-    if (!leadGuestName) {
-      if (personalizationName) {
-        setPersonalizationName('');
-      }
-      console.log('[ContactForm] No lead guest name found. Clearing personalization name.');
-      return;
-    }
-
-    if (
-      !personalizationName ||
-      personalizationName === leadGuestName ||
-      personalizationName === leadGuestName.charAt(0)
-    ) {
+    // Only update if both firstName and lastName exist and personalization name is different
+    if (leadGuestName && leadGuestName !== personalizationName) {
       console.log('[ContactForm] Syncing personalization name from booking data.', {
         firstName: bookingData.contactInfo?.firstName,
         lastName: bookingData.contactInfo?.lastName,
@@ -68,12 +57,15 @@ export default function ContactForm() {
         existingPersonalizationName: personalizationName,
       });
       setPersonalizationName(leadGuestName);
+    } else if (!leadGuestName && personalizationName) {
+      // Clear personalization name if contact info is cleared
+      console.log('[ContactForm] No lead guest name found. Clearing personalization name.');
+      setPersonalizationName('');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bookingData.contactInfo?.firstName,
     bookingData.contactInfo?.lastName,
-    personalizationName,
-    setPersonalizationName,
   ]);
 
   // Cleanup interval on unmount
@@ -648,7 +640,7 @@ export default function ContactForm() {
             <div className="flex flex-col justify-center space-y-6">
               <motion.button
                 onClick={handlePayment}
-                disabled={isProcessingPayment || !validateForm()}
+                disabled={isProcessingPayment}
                 whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
                 whileTap={{ scale: isProcessingPayment ? 1 : 0.98 }}
                 className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 ${

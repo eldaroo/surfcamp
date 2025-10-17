@@ -64,9 +64,9 @@ const AccommodationCard = ({
   const hasImage = accommodationImages[room.roomTypeId];
 
   return (
-    <div className="flip-card w-full h-full min-h-[280px] md:min-h-[320px]" style={{ perspective: '1000px' }}>
+    <div className="flip-card w-full h-full min-h-[480px]" style={{ perspective: '1000px' }}>
       <motion.div
-        className="flip-card-inner w-full h-full min-h-[280px] md:min-h-[320px] relative"
+        className="flip-card-inner w-full h-full min-h-[480px] relative"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{
           duration: 0.5,
@@ -84,7 +84,7 @@ const AccommodationCard = ({
           style={{ backfaceVisibility: 'hidden' }}
           onClick={handleFlip}
         >
-          <div className="w-full h-full relative min-h-[280px]">
+          <div className="w-full h-full relative min-h-[480px]">
             {hasImage ? (
               <>
                 <Image
@@ -139,7 +139,7 @@ const AccommodationCard = ({
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           onClick={handleFlip}
         >
-          <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-y-auto md:overflow-visible">
+          <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
             <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1">

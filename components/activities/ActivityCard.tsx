@@ -57,6 +57,8 @@ const localeCopy = {
   es: {
     add: "Agregar",
     remove: "Quitar",
+    included: "Incluido",
+    mandatory: "Obligatorio",
     perPerson: "/ persona",
     classTrack: "Clases",
     quantity: "Sesiones",
@@ -66,6 +68,8 @@ const localeCopy = {
   en: {
     add: "Add",
     remove: "Remove",
+    included: "Included",
+    mandatory: "Mandatory",
     perPerson: "/ person",
     classTrack: "Classes",
     quantity: "Sessions",
@@ -499,15 +503,35 @@ const ActivityCard = ({
             {imageData.hasImage && 'image' in imageData ? (
               <>
                 <div
-                  className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-300 group-hover/card:scale-105"
+                  className="activity-card-bg absolute inset-0 bg-no-repeat transition-transform duration-300 group-hover/card:scale-105"
                   style={{
                     backgroundImage: `url(${imageData.image})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: isSurf ? 'center 35%' : 'center 65%',
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20 transition-opacity duration-300 group-hover/card:opacity-80"></div>
                 <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
+                <style jsx>{`
+                  .activity-card-bg {
+                    background-size: cover;
+                    background-position: center 65%;
+                  }
+
+                  /* Mobile responsive positioning for better framing */
+                  @media (max-width: 768px) {
+                    .activity-card-bg {
+                      background-size: cover;
+                      background-position: ${isSurf ? 'center 40%' : activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
+                    }
+                  }
+
+                  /* Desktop - keep current behavior */
+                  @media (min-width: 769px) {
+                    .activity-card-bg {
+                      background-size: cover;
+                      background-position: ${isSurf ? 'center 60%' : 'center 65%'};
+                    }
+                  }
+                `}</style>
               </>
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
@@ -662,26 +686,33 @@ const ActivityCard = ({
                   )}
                 </div>
 
-                <motion.button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggle();
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  animate={isSelected ? {
-                    boxShadow: ["0 0 0 0 rgba(251, 191, 36, 0)", "0 0 0 6px rgba(251, 191, 36, 0.3)", "0 0 0 0 rgba(251, 191, 36, 0)"]
-                  } : {}}
-                  transition={{ duration: 0.6 }}
-                  className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all ${
-                    isSelected
-                      ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800 ring-2 ring-amber-300/50"
-                      : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 hover:shadow-amber-300/60"
-                  }`}
-                >
-                  {isSelected ? copy.remove : copy.add}
-                </motion.button>
+                {isSurf ? (
+                  <div className="w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-2 border-green-400/50 flex items-center justify-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>{copy.included}</span>
+                  </div>
+                ) : (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggle();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    animate={isSelected ? {
+                      boxShadow: ["0 0 0 0 rgba(251, 191, 36, 0)", "0 0 0 6px rgba(251, 191, 36, 0.3)", "0 0 0 0 rgba(251, 191, 36, 0)"]
+                    } : {}}
+                    transition={{ duration: 0.6 }}
+                    className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all ${
+                      isSelected
+                        ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800 ring-2 ring-amber-300/50"
+                        : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 hover:shadow-amber-300/60"
+                    }`}
+                  >
+                    {isSelected ? copy.remove : copy.add}
+                  </motion.button>
+                )}
               </div>
             </div>
           </div>

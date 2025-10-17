@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import PriceSummary from '@/components/PriceSummary';
@@ -37,6 +37,19 @@ export default function DateSelector() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [showPriceSummary, setShowPriceSummary] = useState(false);
+
+  // Prevent body scroll when bottom sheet is open
+  useEffect(() => {
+    if (showPriceSummary) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showPriceSummary]);
 
   // Usar fechas del store global para mantener sincronización
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
@@ -319,16 +332,86 @@ export default function DateSelector() {
             </div>
           </motion.div>
 
-          {/* Columna derecha - Price Summary */}
+          {/* Columna derecha - Price Summary (hidden on mobile) */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="card"
+            className="hidden lg:block card"
           >
             <PriceSummary />
           </motion.div>
         </div>
+
+        {/* Mobile: Floating "View Summary" Button */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Button clicked!');
+            setShowPriceSummary(true);
+          }}
+          className="lg:hidden fixed bottom-6 right-6 z-[60] flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl transition-transform active:scale-95"
+          style={{
+            backgroundColor: '#FCD34D',
+            color: 'black',
+            boxShadow: '0 10px 25px rgba(252, 211, 77, 0.5)'
+          }}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <span className="font-semibold text-sm">{locale === 'es' ? 'Ver resumen' : 'View Summary'}</span>
+        </button>
+
+        {/* Mobile: Price Summary Bottom Sheet */}
+        <AnimatePresence>
+          {showPriceSummary && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPriceSummary(false)}
+                className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              />
+
+              {/* Bottom Sheet */}
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl shadow-2xl"
+                style={{
+                  backgroundColor: 'var(--brand-surface)',
+                  borderTopColor: 'var(--brand-border)'
+                }}
+              >
+                {/* Handle */}
+                <div className="sticky top-0 pt-3 pb-2 flex justify-center" style={{ backgroundColor: 'var(--brand-surface)' }}>
+                  <div className="w-12 h-1 rounded-full bg-white/30" />
+                </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowPriceSummary(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                {/* Content */}
+                <div className="px-4 pb-6">
+                  <PriceSummary />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Accommodation Section - Below date selector */}
         {checkInDate && checkOutDate && (
@@ -368,7 +451,19 @@ export default function DateSelector() {
 
             {/* Room Cards */}
             {!loadingRooms && availableRooms && availableRooms.length > 0 && (
-              <div className="space-y-6 mb-8">
+              <>
+                <style jsx>{`
+                  .accommodation-cards-grid {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1.5rem;
+                  }
+                  .accommodation-cards-grid > * {
+                    height: 480px;
+                    min-height: 480px;
+                  }
+                `}</style>
+                <div className="accommodation-cards-grid mb-8">
                 {availableRooms.map((room: RoomFromAPI) => {
                   const features = getRoomFeatures(room.roomTypeId);
                   const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
@@ -396,7 +491,8 @@ export default function DateSelector() {
                     />
                   );
                 })}
-              </div>
+                </div>
+              </>
             )}
 
             {/* No rooms available */}

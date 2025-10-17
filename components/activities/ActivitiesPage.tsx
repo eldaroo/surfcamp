@@ -68,25 +68,42 @@ const ActivitiesPage = () => {
     } else {
       syncParticipantsWithGuests(bookingData.guests);
     }
-  }, [bookingData.guests, setBookingData, syncParticipantsWithGuests]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingData.guests]);
 
+  // Initialize surf for the active participant
   useEffect(() => {
     const surfActivity = localizedActivities.find((activity) => activity.category === "surf");
     if (!surfActivity) return;
 
-    if (!selectedSurfClasses[surfActivity.id]) {
+    const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
+    if (!activeParticipant) return;
+
+    // Check if the active participant has surf configured
+    const hasSurfClasses = activeParticipant.selectedSurfClasses[surfActivity.id] !== undefined;
+    const hasSurfPackage = activeParticipant.selectedSurfPackages[surfActivity.id] !== undefined;
+    const hasSurfActivity = activeParticipant.selectedActivities.some(a => a.id === surfActivity.id);
+
+    // Initialize surf for this participant if not already done
+    if (!hasSurfClasses) {
       setSelectedSurfClasses(surfActivity.id, DEFAULT_SURF_CLASSES);
     }
-    if (!selectedSurfPackages[surfActivity.id]) {
+    if (!hasSurfPackage) {
       setSelectedSurfPackage(surfActivity.id, DEFAULT_SURF_PACKAGE);
     }
-    if (!selectedActivities.some((activity) => activity.id === surfActivity.id)) {
+    if (!hasSurfActivity) {
       setSelectedActivities([...selectedActivities, surfActivity]);
     }
-  }, [localizedActivities, selectedActivities, selectedSurfClasses, selectedSurfPackages, setSelectedActivities, setSelectedSurfClasses, setSelectedSurfPackage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localizedActivities, activeParticipantId]);
 
   const handleToggleActivity = useCallback(
     (activity: Activity) => {
+      // Surf is mandatory and cannot be removed
+      if (activity.category === "surf") {
+        return;
+      }
+
       const isAlreadySelected = selectedActivities.some((item) => item.id === activity.id);
 
       if (isAlreadySelected) {
@@ -98,14 +115,6 @@ const ActivitiesPage = () => {
       // Ensure default configs
       if (activity.category === "yoga" && !selectedYogaPackages[activity.id]) {
         setSelectedYogaPackage(activity.id, DEFAULT_YOGA_PACKAGE);
-      }
-      if (activity.category === "surf") {
-        if (!selectedSurfClasses[activity.id]) {
-          setSelectedSurfClasses(activity.id, DEFAULT_SURF_CLASSES);
-        }
-        if (!selectedSurfPackages[activity.id]) {
-          setSelectedSurfPackage(activity.id, DEFAULT_SURF_PACKAGE);
-        }
       }
       if (quantityCategories.has(activity.category) && !activityQuantities[activity.id]) {
         setActivityQuantity(activity.id, 1);
