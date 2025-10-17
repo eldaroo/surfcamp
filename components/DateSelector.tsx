@@ -34,7 +34,6 @@ export default function DateSelector() {
     setError: setGlobalError,
     error: globalError
   } = useBookingStore();
-  const [guests, setGuests] = useState(bookingData.guests || 1);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -43,21 +42,8 @@ export default function DateSelector() {
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
   const checkOutDate = bookingData.checkOut ? new Date(bookingData.checkOut) : null;
 
-  // Sincronizar guests con el store global
-  useEffect(() => {
-    if (bookingData.guests && bookingData.guests !== guests) {
-      setGuests(bookingData.guests);
-    }
-  }, [bookingData.guests, guests]);
-
-  // Fetch rooms when dates change
-  useEffect(() => {
-    if (bookingData.checkIn && bookingData.checkOut) {
-      setAvailableRooms(null);
-      setSelectedRoom(null);
-      fetchAvailableRooms();
-    }
-  }, [bookingData.checkIn, bookingData.checkOut, bookingData.guests]);
+  // Usar guests directamente del store en lugar de estado local
+  const guests = bookingData.guests || 1;
 
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
@@ -108,6 +94,16 @@ export default function DateSelector() {
       setLoadingRooms(false);
     }
   };
+
+  // Fetch rooms when dates or guests change
+  useEffect(() => {
+    if (bookingData.checkIn && bookingData.checkOut && bookingData.guests) {
+      setAvailableRooms(null);
+      setSelectedRoom(null);
+      fetchAvailableRooms();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingData.checkIn, bookingData.checkOut, bookingData.guests]);
 
   const handleRoomSelect = (room: RoomFromAPI) => {
     if (room.availableRooms > 0) {
@@ -246,10 +242,9 @@ export default function DateSelector() {
               type="button"
               onClick={() => {
                 const newGuests = Math.max(1, guests - 1);
-                setGuests(newGuests);
-                setBookingData({ ...bookingData, guests: newGuests });
+                setBookingData({ guests: newGuests });
               }}
-              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
+              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
               <span className="text-white">-</span>
             </button>
@@ -259,11 +254,10 @@ export default function DateSelector() {
             <button
               type="button"
               onClick={() => {
-                const newGuests = guests + 1;
-                setGuests(newGuests);
-                setBookingData({ ...bookingData, guests: newGuests });
+                const newGuests = Math.min(5, guests + 1);
+                setBookingData({ guests: newGuests });
               }}
-              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10"
+              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
             >
               <span className="text-white">+</span>
             </button>

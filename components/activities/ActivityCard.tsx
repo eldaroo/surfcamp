@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Activity } from "@/types";
@@ -23,7 +23,9 @@ import {
   Shield,
   HeadphonesIcon,
   MapPin,
+  Info,
 } from "lucide-react";
+import InfoPopup from "./InfoPopup";
 
 const YOGA_PACKAGES = ["1-class", "3-classes", "10-classes"] as const;
 const SURF_CLASSES_RANGE = { min: 3, max: 10 } as const;
@@ -167,17 +169,19 @@ const sellingPointsContent = {
   },
 } as const;
 
+const CACHE_VERSION = '20251017-1900';
+
 const activityImages = {
   surf: {
-    image: "/assets/Surf.jpg",
+    image: `/assets/Surf.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   yoga: {
-    image: "/assets/Yoga.jpg",
+    image: `/assets/Yoga.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   ice_bath: {
-    image: "/assets/Icebath.jpg",
+    image: `/assets/Icebath.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   transport: {
@@ -185,8 +189,8 @@ const activityImages = {
     hasImage: false,
   },
   hosting: {
-    gradient: "from-green-500 via-emerald-400 to-teal-500",
-    hasImage: false,
+    image: `/assets/Host.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
   },
 } as const;
 
@@ -296,6 +300,10 @@ const ActivityCard = ({
 
   const isSurf = activity.category === "surf";
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [isHoveringRating, setIsHoveringRating] = useState(false);
+  const [isHoveringPopup, setIsHoveringPopup] = useState(false);
+  const ratingRef = useRef<HTMLDivElement | null>(null);
   const imageData = activityImages[activity.category as keyof typeof activityImages] || {
     gradient: "from-slate-600 to-slate-800",
     hasImage: false,
@@ -303,6 +311,47 @@ const ActivityCard = ({
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
+  };
+
+  const handleInfoClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowInfoPopup(true);
+  };
+
+  const handleRatingMouseEnter = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsHoveringRating(true);
+    setShowInfoPopup(true);
+  };
+
+  const handleRatingMouseLeave = () => {
+    setIsHoveringRating(false);
+    // Close popup after a short delay if not hovering popup
+    setTimeout(() => {
+      if (!isHoveringPopup) {
+        setShowInfoPopup(false);
+      }
+    }, 100);
+  };
+
+  const handlePopupMouseEnter = () => {
+    setIsHoveringPopup(true);
+  };
+
+  const handlePopupMouseLeave = () => {
+    setIsHoveringPopup(false);
+    // Close popup after a short delay if not hovering rating
+    setTimeout(() => {
+      if (!isHoveringRating) {
+        setShowInfoPopup(false);
+      }
+    }, 100);
+  };
+
+  const handleClosePopup = () => {
+    setShowInfoPopup(false);
+    setIsHoveringRating(false);
+    setIsHoveringPopup(false);
   };
 
   const renderYogaPackages = () => {
@@ -344,10 +393,6 @@ const ActivityCard = ({
         <div className="flex items-center justify-between text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400">
           <span>
             {surfClasses} {copy.classTrack}
-          </span>
-          <span className="flex items-center gap-1 text-amber-200">
-            <Users className="h-3 w-3" aria-hidden="true" />
-            {participants}
           </span>
         </div>
         <div className="px-1">
@@ -432,9 +477,9 @@ const ActivityCard = ({
   };
 
   return (
-    <div className="flip-card w-full h-full min-h-[280px] md:min-h-[320px]" style={{ perspective: '1000px' }}>
+    <div className="flip-card w-full h-full min-h-[420px] md:min-h-[340px]" style={{ perspective: '1000px' }}>
       <motion.div
-        className="flip-card-inner w-full h-full min-h-[280px] md:min-h-[320px] relative"
+        className="flip-card-inner w-full h-full min-h-[420px] md:min-h-[340px] relative"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{
           duration: 0.5,
@@ -446,20 +491,20 @@ const ActivityCard = ({
       >
         {/* Front Face - Image */}
         <div
-          className="flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden cursor-pointer group/card"
+          className="flip-card-face flip-card-front absolute w-full h-full rounded-[28px] md:rounded-3xl overflow-hidden cursor-pointer group/card"
           style={{ backfaceVisibility: 'hidden' }}
           onClick={handleFlip}
         >
-          <div className="w-full h-full relative min-h-[280px]">
+          <div className="w-full h-full relative min-h-[420px] md:min-h-[340px]">
             {imageData.hasImage && 'image' in imageData ? (
               <>
-                <Image
-                  src={imageData.image}
-                  alt={activity.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover/card:scale-105"
-                  style={{ objectPosition: 'center 65%' }}
-                  priority
+                <div
+                  className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-300 group-hover/card:scale-105"
+                  style={{
+                    backgroundImage: `url(${imageData.image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: isSurf ? 'center 35%' : 'center 65%',
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20 transition-opacity duration-300 group-hover/card:opacity-80"></div>
                 <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
@@ -482,7 +527,7 @@ const ActivityCard = ({
               </div>
             </div>
 
-            <div className="absolute bottom-4 md:bottom-6 right-4 md:right-6 bg-white/20 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-semibold">
+            <div className="absolute bottom-6 md:bottom-6 right-4 md:right-6 bg-white/20 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-semibold">
               {locale === "es" ? "Toca para ver detalles" : "Tap to see details"}
             </div>
           </div>
@@ -490,11 +535,11 @@ const ActivityCard = ({
 
         {/* Back Face - Details */}
         <div
-          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl cursor-pointer"
+          className="flip-card-face flip-card-back absolute w-full h-full rounded-[28px] md:rounded-3xl cursor-pointer"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           onClick={handleFlip}
         >
-          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-y-auto md:overflow-visible">
+          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-[28px] md:rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 md:backdrop-blur transition md:hover:border-amber-300/70 md:hover:shadow-amber-300/20 overflow-hidden">
             <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1">
@@ -502,31 +547,19 @@ const ActivityCard = ({
                     <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
                     {activity.category.replace("_", " ")}
                   </span>
-                  <h3 className="mt-3 md:mt-4 text-xl md:text-2xl font-bold text-slate-100">{activity.name}</h3>
-
-                  {/* Rating for mobile only */}
-                  {isSurf && ratingValue && (
-                    <div className="mt-3 space-y-1.5 md:hidden">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="h-3 w-3 fill-amber-300 text-amber-300"
-                          />
-                        ))}
-                        <span className="ml-1 text-xs font-bold text-slate-100">
-                          {ratingValue}
-                        </span>
-                        <span className="text-[10px] text-slate-400">({reviewsText})</span>
-                      </div>
-                      {trustMessage && (
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-300">
-                          <Globe className="h-3 w-3 text-amber-300" />
-                          <span>{trustMessage}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="mt-3 md:mt-4 flex items-center gap-2">
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-100">{activity.name}</h3>
+                    {/* Info icon for mobile - only show if has rating */}
+                    {isSurf && ratingValue && (
+                      <button
+                        onClick={handleInfoClick}
+                        className="md:hidden flex items-center justify-center w-7 h-7 rounded-full bg-amber-300/20 border border-amber-300/30 text-amber-300 hover:bg-amber-300/30 transition-colors"
+                        aria-label="Ver calificación"
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
 
                   {isSurf && sellingPoints && sellingPoints.length > 0 ? (
                     <ul className="mt-3 md:mt-5 space-y-1 md:space-y-1.5 text-xs md:text-sm text-slate-200">
@@ -577,17 +610,22 @@ const ActivityCard = ({
               )}
             </div>
 
-            <div className="flex flex-col justify-between items-center gap-3 md:gap-4 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-6 py-4 md:py-6 md:min-w-[280px]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-6 py-5 md:py-8 md:min-w-[280px]" onClick={(e) => e.stopPropagation()}>
 
-              {/* Rating section for desktop only */}
+              {/* Rating section for desktop - hover to show popup */}
               {isSurf && ratingValue && (
-                <div className="hidden md:block w-full pb-4 border-b border-slate-700/40">
+                <div
+                  ref={ratingRef}
+                  onMouseEnter={handleRatingMouseEnter}
+                  onMouseLeave={handleRatingMouseLeave}
+                  className="hidden md:block w-full pb-4 mb-4 border-b border-slate-700/40 cursor-pointer hover:bg-slate-800/30 rounded-lg transition-colors p-2 -m-2 flex-shrink-0"
+                >
                   <div className="space-y-2">
                     <div className="flex items-center justify-center gap-1">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className="h-4 w-4 fill-amber-300 text-amber-300"
+                          className="h-4 w-4 fill-amber-300 text-amber-300 transition-transform hover:scale-110"
                         />
                       ))}
                       <span className="ml-1.5 text-sm font-bold text-slate-100">
@@ -603,39 +641,67 @@ const ActivityCard = ({
                         <span className="text-center leading-tight">{trustMessage}</span>
                       </div>
                     )}
+                    <p className="text-[9px] text-center text-amber-300/60 uppercase tracking-wider mt-1">
+                      {locale === "es" ? "Pasa el mouse para ver reseñas" : "Hover to see reviews"}
+                    </p>
                   </div>
                 </div>
               )}
 
-              <div className="text-center w-full">
-                <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-1 md:mb-2">Total</span>
-                <div className="text-2xl md:text-3xl font-bold text-slate-100">
-                  {formatPrice(price)}
-                </div>
-                {participants > 1 && typeof pricePerPerson === "number" && (
-                  <div className="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">
-                    {formatPrice(pricePerPerson)} {copy.perPerson}
+              {/* Middle section - grows to center Total and button */}
+              <div className="flex-1 flex flex-col items-center justify-center w-full gap-4 md:gap-5">
+                <div className="text-center w-full">
+                  <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-2 md:mb-3">Total</span>
+                  <div className="text-2xl md:text-3xl font-bold text-slate-100">
+                    {formatPrice(price)}
                   </div>
-                )}
+                  {participants > 1 && typeof pricePerPerson === "number" && (
+                    <div className="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">
+                      {formatPrice(pricePerPerson)} {copy.perPerson}
+                    </div>
+                  )}
+                </div>
+
+                <motion.button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle();
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  animate={isSelected ? {
+                    boxShadow: ["0 0 0 0 rgba(251, 191, 36, 0)", "0 0 0 6px rgba(251, 191, 36, 0.3)", "0 0 0 0 rgba(251, 191, 36, 0)"]
+                  } : {}}
+                  transition={{ duration: 0.6 }}
+                  className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all ${
+                    isSelected
+                      ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800 ring-2 ring-amber-300/50"
+                      : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 hover:shadow-amber-300/60"
+                  }`}
+                >
+                  {isSelected ? copy.remove : copy.add}
+                </motion.button>
               </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle();
-                }}
-                className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition ${
-                  isSelected
-                    ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800"
-                    : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300"
-                }`}
-              >
-                {isSelected ? copy.remove : copy.add}
-              </button>
             </div>
           </div>
         </div>
       </motion.div>
+
+      {/* Info Popup - Only for activities with rating */}
+      {ratingValue && (
+        <InfoPopup
+          isOpen={showInfoPopup}
+          onClose={handleClosePopup}
+          rating={ratingValue}
+          reviewsText={reviewsText}
+          trustMessage={trustMessage}
+          locale={locale}
+          onMouseEnter={handlePopupMouseEnter}
+          onMouseLeave={handlePopupMouseLeave}
+          anchorElement={ratingRef.current}
+        />
+      )}
     </div>
   );
 };
