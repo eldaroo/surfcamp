@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Activity } from "@/types";
 import {
   CheckCircle2,
@@ -168,24 +169,24 @@ const sellingPointsContent = {
 
 const activityImages = {
   surf: {
-    gradient: "from-blue-500 via-cyan-400 to-teal-500",
-    emoji: "🏄",
+    image: "/assets/Surf.jpg",
+    hasImage: true,
   },
   yoga: {
-    gradient: "from-purple-500 via-pink-400 to-rose-500",
-    emoji: "🧘",
+    image: "/assets/Yoga.jpg",
+    hasImage: true,
   },
   ice_bath: {
-    gradient: "from-cyan-500 via-blue-400 to-indigo-500",
-    emoji: "❄️",
+    image: "/assets/Icebath.jpg",
+    hasImage: true,
   },
   transport: {
     gradient: "from-orange-500 via-amber-400 to-yellow-500",
-    emoji: "🚐",
+    hasImage: false,
   },
   hosting: {
     gradient: "from-green-500 via-emerald-400 to-teal-500",
-    emoji: "🏠",
+    hasImage: false,
   },
 } as const;
 
@@ -295,7 +296,10 @@ const ActivityCard = ({
 
   const isSurf = activity.category === "surf";
   const [isFlipped, setIsFlipped] = useState(false);
-  const imageData = activityImages[activity.category as keyof typeof activityImages] || activityImages.surf;
+  const imageData = activityImages[activity.category as keyof typeof activityImages] || {
+    gradient: "from-slate-600 to-slate-800",
+    hasImage: false,
+  };
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -305,7 +309,7 @@ const ActivityCard = ({
     if (!onYogaPackageChange) return null;
 
     return (
-      <div>
+      <div onClick={(e) => e.stopPropagation()}>
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           {copy.selectPackage}
         </span>
@@ -336,8 +340,8 @@ const ActivityCard = ({
     if (!onSurfClassesChange || typeof surfClasses !== "number") return null;
 
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="relative space-y-2 md:space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400">
           <span>
             {surfClasses} {copy.classTrack}
           </span>
@@ -346,15 +350,17 @@ const ActivityCard = ({
             {participants}
           </span>
         </div>
-        <input
-          type="range"
-          min={SURF_CLASSES_RANGE.min}
-          max={SURF_CLASSES_RANGE.max}
-          value={surfClasses}
-          onChange={(event) => onSurfClassesChange(Number(event.target.value))}
-          className="h-2 w-full cursor-pointer rounded-full bg-slate-700 accent-amber-300"
-        />
-        <div className="flex justify-between text-[11px] uppercase tracking-wider text-slate-500">
+        <div className="px-1">
+          <input
+            type="range"
+            min={SURF_CLASSES_RANGE.min}
+            max={SURF_CLASSES_RANGE.max}
+            value={surfClasses}
+            onChange={(event) => onSurfClassesChange(Number(event.target.value))}
+            className="h-2 w-full cursor-pointer rounded-full bg-slate-700 accent-amber-300"
+          />
+        </div>
+        <div className="flex justify-between text-[10px] md:text-[11px] uppercase tracking-wider text-slate-500 px-1">
           <span>{SURF_CLASSES_RANGE.min}</span>
           <span>{SURF_CLASSES_RANGE.max}</span>
         </div>
@@ -366,7 +372,7 @@ const ActivityCard = ({
     if (!hasQuantitySelector || !onQuantityChange) return null;
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           {copy.quantity}
         </span>
@@ -397,7 +403,7 @@ const ActivityCard = ({
     if (!hasTimeSelector || !onTimeSlotChange) return null;
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           {copy.timeSlot}
         </span>
@@ -430,22 +436,52 @@ const ActivityCard = ({
       <motion.div
         className="flip-card-inner w-full h-full min-h-[280px] md:min-h-[320px] relative"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+        transition={{
+          duration: 0.5,
+          type: "spring",
+          stiffness: 200,
+          damping: 25
+        }}
         style={{ transformStyle: 'preserve-3d' }}
       >
         {/* Front Face - Image */}
         <div
-          className="flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden cursor-pointer"
+          className="flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden cursor-pointer group/card"
           style={{ backfaceVisibility: 'hidden' }}
           onClick={handleFlip}
         >
-          <div className={`w-full h-full bg-gradient-to-br ${imageData.gradient} flex flex-col items-center justify-center relative min-h-[280px]`}>
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative z-10 text-center px-6 py-8">
-              <div className="text-6xl md:text-8xl mb-4 md:mb-6">{imageData.emoji}</div>
-              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2">{activity.name}</h2>
-              <p className="text-base md:text-xl text-white/90 uppercase tracking-wider">{activity.category.replace("_", " ")}</p>
+          <div className="w-full h-full relative min-h-[280px]">
+            {imageData.hasImage && 'image' in imageData ? (
+              <>
+                <Image
+                  src={imageData.image}
+                  alt={activity.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover/card:scale-105"
+                  style={{ objectPosition: 'center 65%' }}
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20 transition-opacity duration-300 group-hover/card:opacity-80"></div>
+                <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
+              </>
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
+                <div className="absolute inset-0 bg-black/20"></div>
+                <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
+              </div>
+            )}
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8">
+              <div className="text-center">
+                <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+                  {activity.name}
+                </h2>
+                <p className="text-base md:text-xl text-white/90 uppercase tracking-wider drop-shadow-md">
+                  {activity.category.replace("_", " ")}
+                </p>
+              </div>
             </div>
+
             <div className="absolute bottom-4 md:bottom-6 right-4 md:right-6 bg-white/20 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-semibold">
               {locale === "es" ? "Toca para ver detalles" : "Tap to see details"}
             </div>
@@ -454,36 +490,38 @@ const ActivityCard = ({
 
         {/* Back Face - Details */}
         <div
-          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl"
+          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl cursor-pointer"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+          onClick={handleFlip}
         >
           <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-y-auto md:overflow-visible">
-            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-6">
+            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1">
                   <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/70 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] md:tracking-[0.3em] text-amber-200">
                     <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
                     {activity.category.replace("_", " ")}
                   </span>
-                  <h3 className="mt-3 md:mt-5 text-lg md:text-xl font-bold text-slate-100">{activity.name}</h3>
+                  <h3 className="mt-3 md:mt-4 text-xl md:text-2xl font-bold text-slate-100">{activity.name}</h3>
 
+                  {/* Rating for mobile only */}
                   {isSurf && ratingValue && (
-                    <div className="mt-3 md:mt-4 space-y-1.5 md:space-y-2">
+                    <div className="mt-3 space-y-1.5 md:hidden">
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className="h-3 md:h-4 w-3 md:w-4 fill-amber-300 text-amber-300"
+                            className="h-3 w-3 fill-amber-300 text-amber-300"
                           />
                         ))}
-                        <span className="ml-1 text-xs md:text-sm font-bold text-slate-100">
+                        <span className="ml-1 text-xs font-bold text-slate-100">
                           {ratingValue}
                         </span>
-                        <span className="text-[10px] md:text-xs text-slate-400">({reviewsText})</span>
+                        <span className="text-[10px] text-slate-400">({reviewsText})</span>
                       </div>
                       {trustMessage && (
-                        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs text-slate-300">
-                          <Globe className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
+                        <div className="flex items-center gap-1.5 text-[10px] text-slate-300">
+                          <Globe className="h-3 w-3 text-amber-300" />
                           <span>{trustMessage}</span>
                         </div>
                       )}
@@ -539,7 +577,36 @@ const ActivityCard = ({
               )}
             </div>
 
-            <div className="flex flex-col justify-center items-center gap-3 md:gap-4 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-8 py-4 md:py-0 md:min-w-[280px]">
+            <div className="flex flex-col justify-between items-center gap-3 md:gap-4 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-6 py-4 md:py-6 md:min-w-[280px]" onClick={(e) => e.stopPropagation()}>
+
+              {/* Rating section for desktop only */}
+              {isSurf && ratingValue && (
+                <div className="hidden md:block w-full pb-4 border-b border-slate-700/40">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className="h-4 w-4 fill-amber-300 text-amber-300"
+                        />
+                      ))}
+                      <span className="ml-1.5 text-sm font-bold text-slate-100">
+                        {ratingValue}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-center text-slate-400 uppercase tracking-wide">
+                      ({reviewsText})
+                    </p>
+                    {trustMessage && (
+                      <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-300 pt-1">
+                        <Globe className="h-3 w-3 text-amber-300 flex-shrink-0" />
+                        <span className="text-center leading-tight">{trustMessage}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="text-center w-full">
                 <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-1 md:mb-2">Total</span>
                 <div className="text-2xl md:text-3xl font-bold text-slate-100">
@@ -553,7 +620,10 @@ const ActivityCard = ({
               </div>
               <button
                 type="button"
-                onClick={onToggle}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
                 className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition ${
                   isSelected
                     ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800"
@@ -561,13 +631,6 @@ const ActivityCard = ({
                 }`}
               >
                 {isSelected ? copy.remove : copy.add}
-              </button>
-              <button
-                type="button"
-                onClick={handleFlip}
-                className="w-full rounded-2xl px-4 md:px-6 py-2 text-xs md:text-sm font-medium bg-slate-700/50 text-slate-200 hover:bg-slate-700 transition"
-              >
-                ← {locale === "es" ? "Volver" : "Back"}
               </button>
             </div>
           </div>
