@@ -3,11 +3,11 @@
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 
 export default function SuccessPage() {
   const { t, locale } = useI18n();
-  const { bookingData, selectedRoom, selectedActivities, priceBreakdown, selectedYogaPackages, selectedSurfPackages } = useBookingStore();
+  const { bookingData, selectedRoom, selectedActivities, priceBreakdown, selectedYogaPackages, selectedSurfPackages, participants } = useBookingStore();
 
   // Calculate basic totals if priceBreakdown is not available
   let displayTotal = 0;
@@ -254,12 +254,35 @@ export default function SuccessPage() {
                   <span className="font-medium text-white">${priceBreakdown?.accommodation || 0}</span>
                 </div>
               )}
-              {selectedActivities.map((activity: any) => (
-                <div key={activity.id} className="flex justify-between items-center">
-                  <span className="text-gray-300">{activity.name}</span>
-                  <span className="font-medium text-white">${getActivityPrice(activity)}</span>
-                </div>
-              ))}
+              {/* Desagregado por participante */}
+              {participants.map((participant) => {
+                return participant.selectedActivities.map((activity: any) => {
+                  let price = activity.price;
+                  let activityLabel = activity.name;
+
+                  // Calcular precio específico para este participante
+                  if (activity.category === 'yoga') {
+                    const yogaPackage = participant.selectedYogaPackages[activity.id];
+                    if (yogaPackage) {
+                      price = getActivityTotalPrice('yoga', yogaPackage, 1);
+                      activityLabel = `${activity.name} - ${participant.name}`;
+                    }
+                  } else if (activity.category === 'surf') {
+                    const surfClasses = participant.selectedSurfClasses[activity.id] || 4;
+                    price = calculateSurfPrice(surfClasses);
+                    activityLabel = `${activity.name} (${surfClasses} classes) - ${participant.name}`;
+                  } else if (activity.category === 'ice_bath') {
+                    activityLabel = `${activity.name} - ${participant.name}`;
+                  }
+
+                  return (
+                    <div key={`${participant.id}-${activity.id}`} className="flex justify-between items-center">
+                      <span className="text-gray-300">{activityLabel}</span>
+                      <span className="font-medium text-white">${price}</span>
+                    </div>
+                  );
+                });
+              })}
               <div className="border-t border-gray-600 pt-4 mt-4">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white text-lg font-heading">{t('prices.total')}</span>

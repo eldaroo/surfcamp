@@ -105,17 +105,17 @@ const HeaderPersonalization = ({
   };
 
   return (
-    <div className="mb-6 md:mb-8 rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur overflow-hidden">
+    <div className="mb-6 md:mb-8 rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden" style={{ boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.25)' }}>
       {/* Header Content */}
-      <div className="p-4 md:p-6">
+      <div className="p-5 md:p-8">
         <div className="flex flex-col gap-4 md:gap-6">
           {/* Title and Summary */}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-6">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
             <div className="flex-1">
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
-                <Sparkles className="h-4 w-4 text-amber-300" />
+              <h2 className="mb-4 flex items-center gap-3 text-xl md:text-2xl font-semibold tracking-wide text-white font-heading">
+                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-amber-300 flex-shrink-0" />
                 <span>{t.title}</span>
-              </div>
+              </h2>
               <AnimatePresence mode="wait">
                 <motion.p
                   key={summary}
@@ -123,7 +123,7 @@ const HeaderPersonalization = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 6 }}
                   transition={{ duration: 0.25 }}
-                  className="text-base md:text-xl font-semibold text-amber-200"
+                  className="text-sm md:text-base font-medium text-slate-300"
                 >
                   {t.summaryPrefix} {summary}
                 </motion.p>

@@ -21,33 +21,34 @@ interface InfoPopupProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
   anchorElement?: HTMLElement | null;
+  activityName?: string;
 }
 
 const REVIEWS: Review[] = [
   {
-    author: 'Luján',
-    location: 'Argentina',
-    text: 'It felt like finding a family, we shared love, connection, and moments that go beyond time and distance.'
-  },
-  {
-    author: 'Catherine',
+    author: 'Catherine Cormier',
     location: 'Canada',
-    text: 'This experience changed my life. It helped me quiet my mind, let go, and rediscover joy in the simple things.'
+    text: 'The surf lessons were exactly what I needed. They changed how I think and helped me find calm in the ocean.'
   },
   {
-    author: 'Taryne',
+    author: 'Taryne Evans',
     location: 'South Africa',
-    text: 'This week opened me up, I learned to connect, to breathe, and to push beyond my own limits.'
+    text: 'Through the surf sessions I learned to push my limits, breathe, and find peace in the waves.'
   },
   {
     author: 'Marcelo',
     location: 'Argentina',
-    text: 'An unforgettable experience! Nature, people, and the team\'s energy make it truly transformative.'
+    text: 'The surf classes were incredible. What once felt impossible became real with just a few steps and great instructors.'
   },
   {
-    author: 'Eilin',
+    author: 'Luján Sánchez',
+    location: 'Argentina',
+    text: 'Each surf session brought a feeling of connection with the sea and with myself.'
+  },
+  {
+    author: 'Eilin Annika Orgland',
     location: 'Switzerland',
-    text: 'I realized I\'m not alone. You can do your inner work surrounded by love, smiles, and connection.'
+    text: 'In the waves I learned to let go, trust the ocean, and open my heart again.'
   }
 ];
 
@@ -60,7 +61,8 @@ const InfoPopup = ({
   locale,
   onMouseEnter,
   onMouseLeave,
-  anchorElement
+  anchorElement,
+  activityName
 }: InfoPopupProps) => {
   const portalRef = useRef<HTMLDivElement | null>(null);
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
@@ -205,8 +207,8 @@ const InfoPopup = ({
               <div className="rounded-2xl border border-slate-700/60 bg-slate-900/98 shadow-2xl shadow-black/60 backdrop-blur-xl">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-700/50 px-5 py-4">
-                  <h3 className="text-lg font-semibold text-white">
-                    {copy.rating}
+                  <h3 className="text-lg font-semibold text-white font-heading">
+                    {activityName || copy.rating}
                   </h3>
                   <button
                     onClick={onClose}

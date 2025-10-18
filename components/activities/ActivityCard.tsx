@@ -178,6 +178,7 @@ const CACHE_VERSION = '20251017-1900';
 const activityImages = {
   surf: {
     image: `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    mobileImage: `/assets/surf-mobile.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   yoga: {
@@ -521,6 +522,7 @@ const ActivityCard = ({
                     .activity-card-bg {
                       background-size: cover;
                       background-position: ${isSurf ? 'center 40%' : activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
+                      ${isSurf && 'mobileImage' in imageData ? `background-image: url(${imageData.mobileImage}) !important;` : ''}
                     }
                   }
 
@@ -540,14 +542,11 @@ const ActivityCard = ({
               </div>
             )}
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8">
-              <div className="text-center">
-                <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 md:px-12 py-8">
+              <div className="text-center max-w-lg">
+                <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
                   {activity.name}
                 </h2>
-                <p className="text-base md:text-xl text-white/90 uppercase tracking-wider drop-shadow-md">
-                  {activity.category.replace("_", " ")}
-                </p>
               </div>
             </div>
 
@@ -563,7 +562,7 @@ const ActivityCard = ({
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           onClick={handleFlip}
         >
-          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-[28px] md:rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 md:backdrop-blur transition md:hover:border-amber-300/70 md:hover:shadow-amber-300/20 overflow-hidden">
+          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-[28px] md:rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-[0_4px_16px_rgba(0,0,0,0.25)] md:backdrop-blur transition md:hover:border-amber-300/70 md:hover:shadow-[0_6px_20px_rgba(251,191,36,0.2)] overflow-hidden">
             <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1">
@@ -572,7 +571,7 @@ const ActivityCard = ({
                     {activity.category.replace("_", " ")}
                   </span>
                   <div className="mt-3 md:mt-4 flex items-center gap-2">
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-100">{activity.name}</h3>
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-100 font-heading">{activity.name}</h3>
                     {/* Info icon for mobile - only show if has rating */}
                     {isSurf && ratingValue && (
                       <button
@@ -731,6 +730,7 @@ const ActivityCard = ({
           onMouseEnter={handlePopupMouseEnter}
           onMouseLeave={handlePopupMouseLeave}
           anchorElement={ratingRef.current}
+          activityName={activity.name}
         />
       )}
     </div>

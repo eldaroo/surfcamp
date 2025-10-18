@@ -253,7 +253,7 @@ export default function AccommodationSelector() {
 
         {/* Room Cards - One per row, full width */}
         <div
-          className="space-y-6 mb-8"
+          className="space-y-4 md:space-y-3 mb-8"
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >

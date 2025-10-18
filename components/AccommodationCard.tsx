@@ -64,9 +64,9 @@ const AccommodationCard = ({
   const hasImage = accommodationImages[room.roomTypeId];
 
   return (
-    <div className="flip-card w-full h-full min-h-[480px]" style={{ perspective: '1000px' }}>
+    <div className="flip-card w-full min-h-[280px]" style={{ perspective: '1000px' }}>
       <motion.div
-        className="flip-card-inner w-full h-full min-h-[480px] relative"
+        className="flip-card-inner w-full h-full relative min-h-[280px]"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{
           duration: 0.5,
@@ -78,13 +78,13 @@ const AccommodationCard = ({
       >
         {/* Front Face - Image */}
         <div
-          className={`flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden group/card ${
+          className={`flip-card-face flip-card-front absolute w-full rounded-3xl overflow-hidden group/card min-h-[280px] ${
             isUnavailable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
           }`}
           style={{ backfaceVisibility: 'hidden' }}
           onClick={handleFlip}
         >
-          <div className="w-full h-full relative min-h-[480px]">
+          <div className="w-full h-full relative min-h-[280px]">
             {hasImage ? (
               <>
                 <Image
@@ -104,13 +104,13 @@ const AccommodationCard = ({
               </div>
             )}
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 py-8">
-              <div className="text-center">
-                <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-8 py-6">
+              <div className="text-center max-w-lg">
+                <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
                   {room.roomTypeName}
                 </h2>
                 <div
-                  className="inline-block rounded-full px-4 py-2 text-lg md:text-xl font-semibold backdrop-blur-sm"
+                  className="inline-block rounded-full px-3 py-1.5 text-sm md:text-base font-semibold backdrop-blur-sm"
                   style={{ backgroundColor: 'rgba(242, 193, 78, 0.9)', color: '#1a1a1a' }}
                 >
                   ${roomPrice}
@@ -135,23 +135,23 @@ const AccommodationCard = ({
 
         {/* Back Face - Details */}
         <div
-          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl cursor-pointer"
+          className="flip-card-face flip-card-back absolute w-full rounded-3xl cursor-pointer min-h-[280px]"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           onClick={handleFlip}
         >
           <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
-            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
+            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 gap-3">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-100">{room.roomTypeName}</h3>
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-xl md:text-2xl font-bold text-slate-100 font-heading">{room.roomTypeName}</h3>
                     {isSelected && (
                       <CheckCircle2 className="h-6 md:h-7 w-6 md:w-7 text-amber-300" aria-hidden="true" />
                     )}
                   </div>
 
                   {/* Availability + Capacity */}
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-2">
                     <div
                       className="rounded-full px-3 py-1 text-white text-xs font-medium border"
                       style={{
@@ -171,7 +171,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Feature Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap gap-2 mb-2">
                     {visibleFeatures.map((feature, index) => (
                       <span
                         key={index}
@@ -195,7 +195,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm md:text-base leading-relaxed text-slate-300">
+                  <p className="text-sm leading-relaxed text-slate-300">
                     {description}
                   </p>
                 </div>
@@ -204,7 +204,7 @@ const AccommodationCard = ({
 
             {/* Right Side - Pricing & Action */}
             <div
-              className="flex flex-col justify-center items-center gap-4 md:gap-5 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-6 py-6 md:py-8 md:min-w-[280px]"
+              className="flex flex-col justify-center items-center gap-3 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-5 py-4 md:min-w-[260px]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Stay Info */}
@@ -218,11 +218,11 @@ const AccommodationCard = ({
               </div>
 
               {/* Total Price - Main Focus */}
-              <div className="text-center w-full py-4 px-4 rounded-xl bg-slate-700/50 border border-slate-600/50">
-                <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-2">
+              <div className="text-center w-full py-3 px-3 rounded-xl bg-slate-700/50 border border-slate-600/50">
+                <span className="text-xs font-medium uppercase tracking-wide text-slate-400 block mb-1.5">
                   Total
                 </span>
-                <div className="text-3xl md:text-4xl font-bold text-amber-300 mb-1">
+                <div className="text-2xl md:text-3xl font-bold text-amber-300 mb-1">
                   ${totalPrice}
                 </div>
                 <p className="text-xs text-slate-400">

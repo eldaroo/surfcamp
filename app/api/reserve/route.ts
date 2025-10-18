@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Activity, LobbyPMSReservationRequest } from '@/types';
 import { generateBookingReference } from '@/lib/utils';
 import { lobbyPMSClient } from '@/lib/lobbypms';
-import { sendBookingConfirmation, sendWhatsAppMessage } from '@/lib/whatsapp';
+import {
+  sendBookingConfirmation,
+  sendWhatsAppMessage,
+  sendDarioWelcomeMessage,
+  sendIceBathReservationNotification,
+  sendSurfClassReservationNotification,
+  getRoomTypeName
+} from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
 
@@ -310,14 +317,67 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Enviar mensaje de confirmación por WhatsApp
+      // Enviar mensajes de WhatsApp (solo si todo salió bien)
       try {
+        // 1. Notificación a Dario (admin)
         const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es). Referencia: ${bookingReference}`;
         const whatsappResult = await sendWhatsAppMessage(
           '+5491162802566',
           waMessage
         );
-        console.log('📱 WhatsApp confirmation sent:', whatsappResult);
+        console.log('📱 WhatsApp confirmation sent to admin:', whatsappResult);
+
+        // 2. Mensaje de bienvenida de Dario al cliente
+        if (contactInfo?.phone) {
+          const activityNames = resolvedActivities.map(act => {
+            const activity = getActivityById(act.id);
+            return activity?.name || act.id;
+          });
+
+          await sendDarioWelcomeMessage(contactInfo.phone, {
+            checkIn,
+            checkOut,
+            guestName: contactInfo.firstName,
+            activities: activityNames,
+            roomTypeName: getRoomTypeName(roomTypeId),
+            guests: guests || 1
+          });
+          console.log('📱 Welcome message sent to client');
+        }
+
+        // 3. Notificaciones de actividades específicas al staff
+        const hasSurf = resolvedActivities.some(act => act.category === 'surf');
+        const hasIceBath = resolvedActivities.some(act => act.category === 'ice_bath');
+
+        if (hasSurf) {
+          const surfActivity = resolvedActivities.find(act => act.category === 'surf');
+          await sendSurfClassReservationNotification({
+            checkIn,
+            checkOut,
+            guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+            phone: contactInfo.phone,
+            dni: contactInfo.dni || 'No informado',
+            total: 0, // Will be calculated from priceBreakdown if needed
+            surfPackage: surfActivity?.package || '4-classes',
+            guests: guests || 1,
+            surfClasses: surfActivity?.classCount
+          });
+          console.log('📱 Surf notification sent to staff');
+        }
+
+        if (hasIceBath) {
+          await sendIceBathReservationNotification({
+            checkIn,
+            checkOut,
+            guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+            phone: contactInfo.phone,
+            dni: contactInfo.dni || 'No informado',
+            total: 0, // Will be calculated from priceBreakdown if needed
+            quantity: 1
+          });
+          console.log('📱 Ice bath notification sent to staff');
+        }
+
       } catch (whatsappError) {
         console.error('❌ WhatsApp error (non-blocking):', whatsappError);
       }
@@ -379,8 +439,7 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          
-          // Enviar mensaje de confirmación por WhatsApp
+          // Enviar mensaje de confirmación por WhatsApp (solo si el retry fue exitoso)
           try {
             const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para 1 huésped (ajustado por capacidad). Referencia: ${bookingReference}`;
             const whatsappResult = await sendWhatsAppMessage(
@@ -391,7 +450,7 @@ export async function POST(request: NextRequest) {
           } catch (whatsappError) {
             console.error('❌ WhatsApp error (non-blocking):', whatsappError);
           }
-          
+
           return NextResponse.json({
             success: true,
             reservationId: retryReservationData.reservation_id || retryReservationData.id,
@@ -413,19 +472,10 @@ export async function POST(request: NextRequest) {
 
       // Solo como ÚLTIMO RECURSO: modo demo con notificación especial
       console.log('🔄 LobbyPMS failed, using emergency fallback mode');
-      
-      // Enviar mensaje de alerta por WhatsApp 
-      try {
-        const alertMessage = `🚨 ALERTA: Fallo en LobbyPMS - Reserva ${bookingReference} requiere procesamiento manual.\n\nDatos:\n- Fechas: ${checkIn} a ${checkOut}\n- Huéspedes: ${guests}\n- Cliente: ${contactInfo.firstName} ${contactInfo.lastName}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Error: ${lobbyError.message}`;
-        const alertResult = await sendWhatsAppMessage(
-          '+5491162802566',
-          alertMessage
-        );
-        console.log('📱 WhatsApp alert sent:', alertResult);
-      } catch (whatsappError) {
-        console.error('❌ WhatsApp alert error:', whatsappError);
-      }
-      
+
+      // NO enviar mensaje de WhatsApp aquí - ya se envió en el retry o en el intento principal
+      // El mensaje de alerta se enviará solo si hay un error crítico general (catch block)
+
       return NextResponse.json({
         success: true,
         reservationId: `EMERGENCY-${bookingReference}`,

@@ -8,10 +8,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'bochan': ['Bochan Serif', 'serif'],
-        'roboto': ['Roboto', 'sans-serif'],
-        'heading': ['Bochan Serif', 'serif'],
-        'body': ['Roboto', 'sans-serif'],
+        'bochan': ['var(--font-bochan)', 'serif'],
+        'roboto': ['var(--font-roboto)', 'sans-serif'],
+        'heading': ['var(--font-bochan)', 'serif'],
+        'body': ['var(--font-roboto)', 'sans-serif'],
       },
       colors: {
         // Brand semantic tokens

@@ -21,6 +21,7 @@ export default function PaymentSection() {
     selectedYogaPackages,
     selectedSurfPackages,
     selectedSurfClasses,
+    activityQuantities,
     setCurrentStep,
     setPriceBreakdown
   } = useBookingStore();
@@ -373,16 +374,25 @@ export default function PaymentSection() {
     try {
       console.log('📱 Enviando notificaciones de WhatsApp...');
       
+      const guestName = `${bookingData.contactInfo?.firstName || ''} ${bookingData.contactInfo?.lastName || ''}`.trim();
+
       // Preparar datos básicos para las notificaciones
       const notificationData = {
         checkIn: typeof bookingData.checkIn === 'string' ? bookingData.checkIn : bookingData.checkIn!.toISOString().split('T')[0],
         checkOut: typeof bookingData.checkOut === 'string' ? bookingData.checkOut : bookingData.checkOut!.toISOString().split('T')[0],
-        guestName: `${bookingData.contactInfo?.firstName} ${bookingData.contactInfo?.lastName}`,
+        guestName,
         phone: bookingData.contactInfo?.phone || '',
         dni: bookingData.contactInfo?.dni || '',
         total: total,
         guests: bookingData.guests || 1
       };
+
+      const rawIceBathQuantity = activityQuantities['ice-bath-session'];
+      const iceBathQuantitySource =
+        typeof rawIceBathQuantity === 'number' && Number.isFinite(rawIceBathQuantity)
+          ? rawIceBathQuantity
+          : bookingData.guests || 1;
+      const iceBathQuantity = Math.max(1, iceBathQuantitySource);
 
       // Enviar notificación de baño de hielo si está reservado
       const iceBathActivity = selectedActivities.find((activity: any) =>
@@ -391,7 +401,10 @@ export default function PaymentSection() {
       
       if (iceBathActivity) {
         console.log('🧊 Enviando notificación de baño de hielo...');
-        await sendIceBathReservationNotification(notificationData);
+        await sendIceBathReservationNotification({
+          ...notificationData,
+          quantity: iceBathQuantity
+        });
         console.log('✅ Notificación de baño de hielo enviada');
       }
 
@@ -403,10 +416,14 @@ export default function PaymentSection() {
       if (surfActivity) {
         const surfPackage = selectedSurfPackages[surfActivity.id];
         if (surfPackage) {
+          const surfClasses = selectedSurfClasses[surfActivity.id];
           console.log('🏄‍♂️ Enviando notificación de clases de surf...');
           await sendSurfClassReservationNotification({
             ...notificationData,
-            surfPackage: surfPackage
+            surfPackage: surfPackage,
+            surfClasses: typeof surfClasses === 'number' && Number.isFinite(surfClasses)
+              ? surfClasses
+              : undefined
           });
           console.log('✅ Notificación de clases de surf enviada');
         }

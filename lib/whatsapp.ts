@@ -167,20 +167,26 @@ export const sendIceBathReservationNotification = async (
     phone: string;
     dni: string;
     total: number;
+    quantity?: number;
   }
 ) => {
+  const quantity = Math.max(1, bookingData.quantity ?? 1);
+  const quantityLabel = quantity === 1 ? 'sesión' : 'sesiones';
+  const dni = bookingData.dni?.trim() || 'No informado';
+
   const message = `🧊 *NUEVA RESERVA DE BAÑO DE HIELO* 🧊
 
-👤 *Cliente:* ${bookingData.guestName}
-📱 *Teléfono:* ${bookingData.phone}
-🆔 *DNI:* ${bookingData.dni}
-📅 *Check-in:* ${formatDateForWhatsApp(bookingData.checkIn)}
-📅 *Check-out:* ${formatDateForWhatsApp(bookingData.checkOut)}
-💰 *Total:* $${bookingData.total}
+📇 *Cliente:* ${bookingData.guestName}
+📞 *Teléfono:* ${bookingData.phone}
+🪪 *DNI:* ${dni}
+📅 *Llegada:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Salida:* ${formatDateForWhatsApp(bookingData.checkOut)}
+❄️ *Cantidad reservada:* ${quantity} ${quantityLabel}
+💵 *Total abonado:* $${bookingData.total}
 
-❄️ *Actividad:* Sesión de Baño de Hielo
+🧘‍♂️ *Actividad:* Sesión de Baño de Hielo
 ⏱️ *Duración:* 45 minutos
-🎯 *Tipo:* Sesión 1:1 personalizada
+🎯 *Modalidad:* Sesión 1:1 personalizada
 
 ¡Reserva confirmada para terapia de frío!`;
 
@@ -198,18 +204,30 @@ export const sendSurfClassReservationNotification = async (
     total: number;
     surfPackage: string;
     guests: number;
+    surfClasses?: number;
   }
 ) => {
+  const dni = bookingData.dni?.trim() || 'No informado';
+  const participants = Math.max(1, bookingData.guests || 1);
+  const surfClasses =
+    bookingData.surfClasses && bookingData.surfClasses > 0
+      ? bookingData.surfClasses
+      : undefined;
+  const classesLine = surfClasses
+    ? `🏄‍♂️ *Clases reservadas:* ${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'}`
+    : '';
+
   const message = `🏄‍♂️ *NUEVA RESERVA DE CLASES DE SURF* 🏄‍♂️
 
-👤 *Cliente:* ${bookingData.guestName}
-📱 *Teléfono:* ${bookingData.phone}
-🆔 *DNI:* ${bookingData.dni}
-📅 *Check-in:* ${formatDateForWhatsApp(bookingData.checkIn)}
-📅 *Check-out:* ${formatDateForWhatsApp(bookingData.checkOut)}
-👥 *Participantes:* ${bookingData.guests}
-📦 *Plan de Progreso:* ${bookingData.surfPackage}
-💰 *Total:* $${bookingData.total}
+📇 *Cliente:* ${bookingData.guestName}
+📞 *Teléfono:* ${bookingData.phone}
+🪪 *DNI:* ${dni}
+📅 *Llegada:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Salida:* ${formatDateForWhatsApp(bookingData.checkOut)}
+👥 *Participantes:* ${participants}
+📦 *Plan elegido:* ${bookingData.surfPackage}
+${classesLine}
+💵 *Total abonado:* $${bookingData.total}
 
 🌊 *Actividad:* Clases de Surf + Videoanálisis Personalizado
 📹 *Incluye:* Material de video y fotográfico

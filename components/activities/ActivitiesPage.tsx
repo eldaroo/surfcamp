@@ -291,30 +291,6 @@ const ActivitiesPage = () => {
         onCopyChoicesToAll={participantTabsData.length > 1 ? handleCopyChoices : undefined}
       />
 
-      <style jsx>{`
-        .activity-cards-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-        .activity-cards-grid > * {
-          height: 420px;
-          min-height: 420px;
-        }
-        @media (min-width: 768px) {
-          .activity-cards-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            grid-auto-rows: 340px;
-            gap: 1.5rem;
-          }
-          .activity-cards-grid > * {
-            height: 340px;
-            min-height: 340px;
-          }
-        }
-      `}</style>
-
       <AnimatePresence mode="wait">
         <motion.div
           key={activeParticipantId}
@@ -322,7 +298,7 @@ const ActivitiesPage = () => {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="activity-cards-grid"
+          className="space-y-4 md:space-y-3.5"
         >
           {localizedActivities
             .filter((activity) => activity.category !== "transport")

@@ -99,7 +99,7 @@ const OverviewSummary = ({
         <div className="sticky top-0 z-10 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-slate-700 px-6 md:px-8 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 font-heading">
                 {copy.title}
               </h2>
               <p className="text-sm md:text-base text-slate-400">

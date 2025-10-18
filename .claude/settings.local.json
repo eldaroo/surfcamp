@@ -48,7 +48,11 @@
       "Bash(node:*)",
       "Bash(del temp_function.tsx)",
       "Bash(timeout:*)",
-      "Bash(npx claude-code doctor)"
+      "Bash(npx claude-code doctor)",
+      "Bash(powershell -Command \"Stop-Process -Id 13760 -Force\")",
+      "Bash(powershell -Command \"Stop-Process -Id 6452 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Stop-Process -Id 3132 -Force; Stop-Process -Id 23956 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Stop-Process -Id 2604 -Force; Stop-Process -Id 21620 -Force -ErrorAction SilentlyContinue\")"
     ],
     "deny": [],
     "ask": []
