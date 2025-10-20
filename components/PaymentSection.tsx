@@ -175,12 +175,14 @@ export default function PaymentSection() {
     setIsProcessing(true);
     setError('');
 
+    let paymentWindow: Window | null = null;
+
     try {
       console.log('💳 Starting payment process...');
 
       // Abrir ventana inmediatamente para evitar bloqueo de pop-ups
       // y mostrar mensaje de carga
-      const paymentWindow = window.open('', '_blank');
+      paymentWindow = window.open('', '_blank');
       if (paymentWindow) {
         const loadingTitle = t('payment.generatingLink');
         const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import PriceSummary from '@/components/PriceSummary';
+import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 import CustomDatePicker from '@/components/CustomDatePicker';
 import BackButton from './BackButton';
 import AccommodationCard from './AccommodationCard';
@@ -21,6 +21,44 @@ type RoomFromAPI = {
   isSharedRoom?: boolean;
 };
 
+// Helper function for currency formatting
+const formatCurrency = (amount: number, locale: string = 'en-US'): string => {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+// Helper function for pluralization
+const pluralize = (count: number, singular: string, plural: string): string => {
+  return count === 1 ? singular : plural;
+};
+
+// Get activity price with package info for a specific participant
+const getActivityDetailsForParticipant = (activity: any, participant: any) => {
+  let price = 0;
+  let packageInfo = '';
+
+  if (activity.category === 'yoga') {
+    const yogaPackage = participant.selectedYogaPackages[activity.id];
+    if (yogaPackage) {
+      price = getActivityTotalPrice('yoga', yogaPackage);
+      packageInfo = yogaPackage;
+    }
+  } else if (activity.category === 'surf') {
+    const surfClasses = participant.selectedSurfClasses[activity.id];
+    const classes = surfClasses !== undefined ? surfClasses : 4;
+    price = calculateSurfPrice(classes);
+    packageInfo = `${classes} classes`;
+  } else {
+    price = activity.price || 0;
+  }
+
+  return { price, packageInfo };
+};
+
 export default function DateSelector() {
   const { t, locale } = useI18n();
   const {
@@ -32,24 +70,14 @@ export default function DateSelector() {
     selectedRoom,
     setSelectedRoom,
     setError: setGlobalError,
-    error: globalError
+    error: globalError,
+    priceBreakdown,
+    participants
   } = useBookingStore();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [showPriceSummary, setShowPriceSummary] = useState(false);
-
-  // Prevent body scroll when bottom sheet is open
-  useEffect(() => {
-    if (showPriceSummary) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [showPriceSummary]);
+  const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   // Usar fechas del store global para mantener sincronización
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
@@ -186,6 +214,44 @@ export default function DateSelector() {
 
   const nights = calculateNights();
 
+  // Build list of all activity selections grouped by participant
+  const allActivitySelections = useMemo(() => {
+    const selections: Array<{
+      activity: any;
+      participant: any;
+      price: number;
+      packageInfo: string;
+    }> = [];
+
+    participants.forEach(participant => {
+      participant.selectedActivities.forEach((activity: any) => {
+        const details = getActivityDetailsForParticipant(activity, participant);
+        selections.push({
+          activity,
+          participant,
+          ...details
+        });
+      });
+    });
+
+    return selections;
+  }, [participants]);
+
+  // Calculate totals
+  const accommodationTotal = selectedRoom && nights > 0
+    ? (selectedRoom.isSharedRoom
+        ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)
+        : selectedRoom.pricePerNight * nights)
+    : 0;
+
+  const activitiesTotal = allActivitySelections.reduce((sum, selection) => {
+    return sum + selection.price;
+  }, 0);
+
+  const subtotal = accommodationTotal + activitiesTotal;
+  const fees = priceBreakdown?.tax || 0;
+  const total = subtotal + fees;
+
   return (
     <div className="min-h-screen py-6 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
@@ -203,7 +269,7 @@ export default function DateSelector() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 mb-12" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
           {/* Columna izquierda - Selector de fechas */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -332,86 +398,381 @@ export default function DateSelector() {
             </div>
           </motion.div>
 
-          {/* Columna derecha - Price Summary (hidden on mobile) */}
+          {/* Columna derecha - Compact Price Summary (Desktop only) */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden lg:block card"
+            className="hidden lg:block lg:w-80"
           >
-            <PriceSummary />
+            <div
+              className="rounded-xl p-4 border sticky top-6"
+              style={{
+                backgroundColor: 'var(--brand-surface)',
+                borderColor: 'var(--brand-border)',
+                maxHeight: 'calc(100vh - 100px)',
+                overflowY: 'auto'
+              }}
+            >
+              {/* Header */}
+              <h3
+                className="text-[16px] font-semibold mb-4 font-heading"
+                style={{ color: 'var(--brand-text)' }}
+              >
+                {locale === 'es' ? 'Resumen' : 'Price Summary'}
+              </h3>
+
+              {/* Stay Summary - Compact */}
+              {bookingData.checkIn && bookingData.checkOut && (
+                <>
+                  <div className="space-y-2 mb-4 text-[13px]">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--brand-text-dim)' }}>
+                        {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span style={{ color: 'var(--brand-text-dim)' }}>→</span>
+                      <span style={{ color: 'var(--brand-text-dim)' }}>
+                        {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--brand-text-dim)' }}>
+                        {bookingData.guests} {pluralize(bookingData.guests || 1, 'guest', 'guests')}
+                      </span>
+                      <span style={{ color: 'var(--brand-text-dim)' }}>•</span>
+                      <span style={{ color: 'var(--brand-text-dim)' }}>
+                        {nights} {pluralize(nights, 'night', 'nights')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="h-px mb-4"
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
+                  />
+                </>
+              )}
+
+              {/* Line Items */}
+              <div className="space-y-3 mb-4">
+                {/* Accommodation */}
+                {selectedRoom && nights > 0 && (
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 pr-2">
+                        <div
+                          className="text-[13px] font-medium"
+                          style={{ color: 'var(--brand-text)' }}
+                        >
+                          {selectedRoom.roomTypeName}
+                        </div>
+                        <div
+                          className="text-[11px] mt-0.5"
+                          style={{ color: 'var(--brand-text-dim)' }}
+                        >
+                          {nights} × {formatCurrency(selectedRoom.pricePerNight, locale)}
+                        </div>
+                      </div>
+                      <div
+                        className="text-[13px] font-medium"
+                        style={{ color: 'var(--brand-text)' }}
+                      >
+                        {formatCurrency(accommodationTotal, locale)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Activities */}
+                {allActivitySelections.map((selection, index) => {
+                  const { activity, participant, price, packageInfo } = selection;
+                  const showParticipantName = participants.length > 1;
+
+                  return (
+                    <div key={`${participant.id}-${activity.id}-${index}`}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 pr-2">
+                          <div
+                            className="text-[13px] font-medium"
+                            style={{ color: 'var(--brand-text)' }}
+                          >
+                            {activity.name}
+                          </div>
+                          {showParticipantName && (
+                            <div
+                              className="text-[11px] mt-0.5"
+                              style={{ color: 'var(--brand-text-dim)' }}
+                            >
+                              {participant.name}
+                            </div>
+                          )}
+                        </div>
+                        <div
+                          className="text-[13px] font-medium"
+                          style={{ color: 'var(--brand-text)' }}
+                        >
+                          {formatCurrency(price, locale)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Total */}
+              {(accommodationTotal > 0 || activitiesTotal > 0) && (
+                <>
+                  <div
+                    className="h-px mb-3"
+                    style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
+                  />
+                  <div className="flex justify-between items-center mb-4">
+                    <span
+                      className="text-[15px] font-semibold"
+                      style={{ color: 'var(--brand-text)' }}
+                    >
+                      {locale === 'es' ? 'Total' : 'Total'}
+                    </span>
+                    <span
+                      className="text-[20px] font-bold"
+                      style={{ color: 'var(--brand-gold)' }}
+                    >
+                      {formatCurrency(total, locale)}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {/* CTA Button - Compact */}
+              {(accommodationTotal > 0 || activitiesTotal > 0) && (
+                <button
+                  disabled={!selectedRoom}
+                  onClick={() => {
+                    if (selectedRoom) {
+                      setCurrentStep('contact');
+                    }
+                  }}
+                  className={`
+                    w-full px-4 py-2.5 rounded-lg text-[14px] font-semibold
+                    transition-all duration-200
+                    ${selectedRoom
+                      ? 'hover:shadow-lg'
+                      : 'cursor-not-allowed opacity-60'
+                    }
+                  `}
+                  style={{
+                    backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
+                    color: selectedRoom ? 'black' : 'var(--brand-text-dim)'
+                  }}
+                >
+                  {selectedRoom
+                    ? (locale === 'es' ? 'Continuar' : 'Continue')
+                    : (locale === 'es' ? 'Completa la selección' : 'Complete Selection')
+                  }
+                </button>
+              )}
+
+              {/* Empty State */}
+              {!bookingData.checkIn && !bookingData.checkOut && activitiesTotal === 0 && (
+                <div className="text-center py-6">
+                  <div className="text-[28px] mb-2">📅</div>
+                  <p
+                    className="text-[12px]"
+                    style={{ color: 'var(--brand-text-dim)' }}
+                  >
+                    {locale === 'es' ? 'Selecciona fechas para ver precios' : 'Select dates to see pricing'}
+                  </p>
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
 
-        {/* Mobile: Floating "View Summary" Button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Button clicked!');
-            setShowPriceSummary(true);
-          }}
-          className="lg:hidden fixed bottom-6 right-6 z-[60] flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl transition-transform active:scale-95"
-          style={{
-            backgroundColor: '#FCD34D',
-            color: 'black',
-            boxShadow: '0 10px 25px rgba(252, 211, 77, 0.5)'
-          }}
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <span className="font-semibold text-sm">{locale === 'es' ? 'Ver resumen' : 'View Summary'}</span>
-        </button>
-
-        {/* Mobile: Price Summary Bottom Sheet */}
-        <AnimatePresence>
-          {showPriceSummary && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowPriceSummary(false)}
-                className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              />
-
-              {/* Bottom Sheet */}
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                className="lg:hidden fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-3xl shadow-2xl"
-                style={{
-                  backgroundColor: 'var(--brand-surface)',
-                  borderTopColor: 'var(--brand-border)'
-                }}
-              >
-                {/* Handle */}
-                <div className="sticky top-0 pt-3 pb-2 flex justify-center" style={{ backgroundColor: 'var(--brand-surface)' }}>
-                  <div className="w-12 h-1 rounded-full bg-white/30" />
+        {/* Mobile Price Summary - Collapsible */}
+        {(bookingData.checkIn || bookingData.checkOut || activitiesTotal > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="lg:hidden mb-8"
+          >
+            <button
+              onClick={() => setShowMobileSummary(!showMobileSummary)}
+              className="w-full rounded-xl p-4 border flex items-center justify-between"
+              style={{
+                backgroundColor: 'var(--brand-surface)',
+                borderColor: 'var(--brand-border)'
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">💰</span>
+                <div className="text-left">
+                  <div className="text-[14px] font-semibold" style={{ color: 'var(--brand-text)' }}>
+                    {locale === 'es' ? 'Resumen de Precios' : 'Price Summary'}
+                  </div>
+                  {(accommodationTotal > 0 || activitiesTotal > 0) && (
+                    <div className="text-[18px] font-bold" style={{ color: 'var(--brand-gold)' }}>
+                      {formatCurrency(total, locale)}
+                    </div>
+                  )}
                 </div>
+              </div>
+              <svg
+                className={`w-5 h-5 transition-transform ${showMobileSummary ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                style={{ color: 'var(--brand-text-dim)' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-                {/* Close Button */}
-                <button
-                  onClick={() => setShowPriceSummary(false)}
-                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+            {showMobileSummary && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div
+                  className="rounded-b-xl p-4 border border-t-0"
+                  style={{
+                    backgroundColor: 'var(--brand-surface)',
+                    borderColor: 'var(--brand-border)'
+                  }}
                 >
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                  {/* Stay Summary - Compact */}
+                  {bookingData.checkIn && bookingData.checkOut && (
+                    <>
+                      <div className="space-y-2 mb-4 text-[13px]">
+                        <div className="flex justify-between">
+                          <span style={{ color: 'var(--brand-text-dim)' }}>
+                            {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
+                          </span>
+                          <span style={{ color: 'var(--brand-text-dim)' }}>→</span>
+                          <span style={{ color: 'var(--brand-text-dim)' }}>
+                            {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span style={{ color: 'var(--brand-text-dim)' }}>
+                            {bookingData.guests} {pluralize(bookingData.guests || 1, 'guest', 'guests')}
+                          </span>
+                          <span style={{ color: 'var(--brand-text-dim)' }}>•</span>
+                          <span style={{ color: 'var(--brand-text-dim)' }}>
+                            {nights} {pluralize(nights, 'night', 'nights')}
+                          </span>
+                        </div>
+                      </div>
 
-                {/* Content */}
-                <div className="px-4 pb-6">
-                  <PriceSummary />
+                      <div
+                        className="h-px mb-4"
+                        style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
+                      />
+                    </>
+                  )}
+
+                  {/* Line Items */}
+                  <div className="space-y-3 mb-4">
+                    {/* Accommodation */}
+                    {selectedRoom && nights > 0 && (
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 pr-2">
+                            <div
+                              className="text-[13px] font-medium"
+                              style={{ color: 'var(--brand-text)' }}
+                            >
+                              {selectedRoom.roomTypeName}
+                            </div>
+                            <div
+                              className="text-[11px] mt-0.5"
+                              style={{ color: 'var(--brand-text-dim)' }}
+                            >
+                              {nights} × {formatCurrency(selectedRoom.pricePerNight, locale)}
+                            </div>
+                          </div>
+                          <div
+                            className="text-[13px] font-medium"
+                            style={{ color: 'var(--brand-text)' }}
+                          >
+                            {formatCurrency(accommodationTotal, locale)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Activities */}
+                    {allActivitySelections.map((selection, index) => {
+                      const { activity, participant, price, packageInfo } = selection;
+                      const showParticipantName = participants.length > 1;
+
+                      return (
+                        <div key={`mobile-${participant.id}-${activity.id}-${index}`}>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 pr-2">
+                              <div
+                                className="text-[13px] font-medium"
+                                style={{ color: 'var(--brand-text)' }}
+                              >
+                                {activity.name}
+                              </div>
+                              {showParticipantName && (
+                                <div
+                                  className="text-[11px] mt-0.5"
+                                  style={{ color: 'var(--brand-text-dim)' }}
+                                >
+                                  {participant.name}
+                                </div>
+                              )}
+                            </div>
+                            <div
+                              className="text-[13px] font-medium"
+                              style={{ color: 'var(--brand-text)' }}
+                            >
+                              {formatCurrency(price, locale)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* CTA Button */}
+                  {(accommodationTotal > 0 || activitiesTotal > 0) && (
+                    <button
+                      disabled={!selectedRoom}
+                      onClick={() => {
+                        if (selectedRoom) {
+                          setCurrentStep('contact');
+                        }
+                      }}
+                      className={`
+                        w-full px-4 py-2.5 rounded-lg text-[14px] font-semibold
+                        transition-all duration-200
+                        ${selectedRoom
+                          ? 'hover:shadow-lg'
+                          : 'cursor-not-allowed opacity-60'
+                        }
+                      `}
+                      style={{
+                        backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
+                        color: selectedRoom ? 'black' : 'var(--brand-text-dim)'
+                      }}
+                    >
+                      {selectedRoom
+                        ? (locale === 'es' ? 'Continuar' : 'Continue')
+                        : (locale === 'es' ? 'Completa la selección' : 'Complete Selection')
+                      }
+                    </button>
+                  )}
                 </div>
               </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+            )}
+          </motion.div>
+        )}
 
         {/* Accommodation Section - Below date selector */}
         {checkInDate && checkOutDate && (

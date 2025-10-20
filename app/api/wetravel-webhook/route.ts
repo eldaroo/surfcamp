@@ -34,6 +34,7 @@ interface WeTravelWebhookData {
   data: {
     // Payment data
     id?: string; // payment ID
+    payment_id?: string;
     order_id?: string;
     status?: string;
     total_amount?: number;

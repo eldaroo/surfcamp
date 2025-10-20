@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Activity } from "@/types";
@@ -23,9 +23,13 @@ import {
   Shield,
   HeadphonesIcon,
   MapPin,
-  Info,
+  ArrowRight,
+  ArrowLeft,
+  Quote,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import InfoPopup from "./InfoPopup";
 
 const YOGA_PACKAGES = ["1-class", "3-classes", "10-classes"] as const;
 const SURF_CLASSES_RANGE = { min: 3, max: 10 } as const;
@@ -41,6 +45,10 @@ type ActivityCardProps = {
   pricePerPerson?: number;
   formatPrice: (value: number) => string;
   onToggle: () => void;
+  onAutoAdvance?: () => void;
+  onSkip?: () => void;
+  onBack?: () => void;
+  isFirstStep?: boolean;
   selectedYogaPackage?: YogaPackage;
   onYogaPackageChange?: (value: YogaPackage) => void;
   surfClasses?: number;
@@ -59,6 +67,10 @@ const localeCopy = {
     remove: "Quitar",
     included: "Incluido",
     mandatory: "Obligatorio",
+    choose: "Elegir",
+    chosen: "Elegido",
+    skip: "Omitir",
+    back: "Volver",
     perPerson: "/ persona",
     classTrack: "Clases",
     quantity: "Sesiones",
@@ -70,6 +82,10 @@ const localeCopy = {
     remove: "Remove",
     included: "Included",
     mandatory: "Mandatory",
+    choose: "Choose",
+    chosen: "Chosen",
+    skip: "Skip",
+    back: "Back",
     perPerson: "/ person",
     classTrack: "Classes",
     quantity: "Sessions",
@@ -173,6 +189,65 @@ const sellingPointsContent = {
   },
 } as const;
 
+const testimonialsContent = {
+  surf: {
+    es: [
+      {
+        text: "Las clases de surf fueron exactamente lo que necesitaba. Cambiaron mi forma de pensar y me ayudaron a encontrar calma en el océano.",
+        author: "Catherine Cormier",
+        country: "Canadá"
+      },
+      {
+        text: "A través de las sesiones de surf aprendí a superar mis límites, respirar y encontrar paz en las olas.",
+        author: "Taryne Evans",
+        country: "Sudáfrica"
+      },
+      {
+        text: "Las clases de surf fueron increíbles. Lo que antes parecía imposible se volvió realidad con solo unos pasos y grandes instructores.",
+        author: "Marcelo",
+        country: "Argentina"
+      },
+      {
+        text: "Cada sesión de surf me trajo una sensación de conexión con el mar y conmigo misma.",
+        author: "Luján Sánchez",
+        country: "Argentina"
+      },
+      {
+        text: "En las olas aprendí a soltar, confiar en el océano y abrir mi corazón nuevamente.",
+        author: "Eilin Annika Orgland",
+        country: "Suiza"
+      }
+    ],
+    en: [
+      {
+        text: "The surf lessons were exactly what I needed. They changed how I think and helped me find calm in the ocean.",
+        author: "Catherine Cormier",
+        country: "Canada"
+      },
+      {
+        text: "Through the surf sessions I learned to push my limits, breathe, and find peace in the waves.",
+        author: "Taryne Evans",
+        country: "South Africa"
+      },
+      {
+        text: "The surf classes were incredible. What once felt impossible became real with just a few steps and great instructors.",
+        author: "Marcelo",
+        country: "Argentina"
+      },
+      {
+        text: "Each surf session brought a feeling of connection with the sea and with myself.",
+        author: "Luján Sánchez",
+        country: "Argentina"
+      },
+      {
+        text: "In the waves I learned to let go, trust the ocean, and open my heart again.",
+        author: "Eilin Annika Orgland",
+        country: "Switzerland"
+      }
+    ]
+  }
+} as const;
+
 const CACHE_VERSION = '20251017-1900';
 
 const activityImages = {
@@ -200,6 +275,24 @@ const activityImages = {
 } as const;
 
 const descriptiveContent = {
+  surf: {
+    es: {
+      description: "Aprende a surfear o mejora tu técnica con coaches certificados. Cada sesión incluye video análisis personalizado.",
+      features: [
+        { icon: Timer, text: "2 horas" },
+        { icon: Users, text: "4-6 personas" },
+        { icon: Waves, text: "Todos los niveles" },
+      ],
+    },
+    en: {
+      description: "Learn to surf or improve your technique with certified coaches. Each session includes personalized video analysis.",
+      features: [
+        { icon: Timer, text: "2 hours" },
+        { icon: Users, text: "4-6 people" },
+        { icon: Waves, text: "All levels" },
+      ],
+    },
+  },
   yoga: {
     es: {
       description: "Sesiones de yoga al amanecer para comenzar el día con energía y equilibrio.",
@@ -283,6 +376,10 @@ const ActivityCard = ({
   pricePerPerson,
   formatPrice,
   onToggle,
+  onAutoAdvance,
+  onSkip,
+  onBack,
+  isFirstStep = false,
   selectedYogaPackage,
   onYogaPackageChange,
   surfClasses,
@@ -304,85 +401,110 @@ const ActivityCard = ({
   const trustMessage = typeof marketing.trust === "object" ? marketing.trust[locale] : "";
 
   const isSurf = activity.category === "surf";
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [showInfoPopup, setShowInfoPopup] = useState(false);
-  const [isHoveringRating, setIsHoveringRating] = useState(false);
-  const [isHoveringPopup, setIsHoveringPopup] = useState(false);
-  const ratingRef = useRef<HTMLDivElement | null>(null);
+  const [isChoosing, setIsChoosing] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false); // Track if user has modified selectors
+  const [showTestimonialsPopup, setShowTestimonialsPopup] = useState(false);
+  const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const imageData = activityImages[activity.category as keyof typeof activityImages] || {
     gradient: "from-slate-600 to-slate-800",
     hasImage: false,
   };
 
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped);
+  const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
+
+  const handleNextTestimonial = () => {
+    if (testimonials) {
+      setCurrentTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }
   };
 
-  const handleInfoClick = (e: React.MouseEvent) => {
+  const handlePrevTestimonial = () => {
+    if (testimonials) {
+      setCurrentTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    }
+  };
+
+  // Auto-rotate testimonials every 5 seconds
+  useEffect(() => {
+    if (!isSurf || !testimonials) return;
+
+    const interval = setInterval(() => {
+      setCurrentTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isSurf, testimonials]);
+
+  const handleChoose = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowInfoPopup(true);
+
+    if (isChoosing) return;
+
+    setIsChoosing(true);
+
+    // Call onToggle to select the activity (or re-select if already selected)
+    if (!isSelected) {
+      onToggle();
+    }
+
+    // Brief visual feedback before auto-advance (600ms)
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    setIsChoosing(false);
+
+    // Auto-advance to next activity
+    if (onAutoAdvance) {
+      onAutoAdvance();
+    }
   };
 
-  const handleRatingMouseEnter = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsHoveringRating(true);
-    setShowInfoPopup(true);
-  };
 
-  const handleRatingMouseLeave = () => {
-    setIsHoveringRating(false);
-    // Close popup after a short delay if not hovering popup
-    setTimeout(() => {
-      if (!isHoveringPopup) {
-        setShowInfoPopup(false);
-      }
-    }, 100);
-  };
-
-  const handlePopupMouseEnter = () => {
-    setIsHoveringPopup(true);
-  };
-
-  const handlePopupMouseLeave = () => {
-    setIsHoveringPopup(false);
-    // Close popup after a short delay if not hovering rating
-    setTimeout(() => {
-      if (!isHoveringRating) {
-        setShowInfoPopup(false);
-      }
-    }, 100);
-  };
-
-  const handleClosePopup = () => {
-    setShowInfoPopup(false);
-    setIsHoveringRating(false);
-    setIsHoveringPopup(false);
+  const handleYogaPackageSelect = (pkg: YogaPackage) => {
+    if (onYogaPackageChange) {
+      onYogaPackageChange(pkg);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
   };
 
   const renderYogaPackages = () => {
     if (!onYogaPackageChange) return null;
 
+    const getPackageLabel = (pkg: YogaPackage) => {
+      if (locale === "en") {
+        if (pkg === "1-class") return "1 class";
+        if (pkg === "3-classes") return "3-class package";
+        if (pkg === "10-classes") return "10-class package";
+      } else {
+        if (pkg === "1-class") return "1 clase";
+        if (pkg === "3-classes") return "Paquete 3 clases";
+        if (pkg === "10-classes") return "Paquete 10 clases";
+      }
+      return pkg;
+    };
+
     return (
       <div onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block mb-3 md:mb-4">
           {copy.selectPackage}
         </span>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 md:gap-3">
           {YOGA_PACKAGES.map((pkg) => {
             const isActive = selectedYogaPackage === pkg;
             return (
-              <button
+              <motion.button
                 key={pkg}
                 type="button"
-                onClick={() => onYogaPackageChange(pkg)}
-                className={`rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                onClick={() => handleYogaPackageSelect(pkg)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`rounded-xl border px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base font-bold transition-all ${
                   isActive
-                    ? "border-transparent bg-amber-300 text-slate-900 shadow-lg shadow-amber-300/30"
-                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70"
+                    ? "border-transparent bg-gradient-to-br from-amber-300 to-amber-400 text-slate-900 shadow-xl shadow-amber-300/40"
+                    : "border-slate-600/60 bg-slate-800/50 text-slate-200 hover:border-amber-300/60 hover:bg-slate-800/70"
                 }`}
               >
-                {pkg.replace("-classes", "").replace("-class", " clase")}
-              </button>
+                {getPackageLabel(pkg)}
+              </motion.button>
             );
           })}
         </div>
@@ -390,14 +512,24 @@ const ActivityCard = ({
     );
   };
 
+  const handleSurfClassesChange = (newClasses: number) => {
+    if (onSurfClassesChange) {
+      onSurfClassesChange(newClasses);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
+  };
+
   const renderSurfSelector = () => {
     if (!onSurfClassesChange || typeof surfClasses !== "number") return null;
 
     return (
-      <div className="relative space-y-2 md:space-y-3" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400">
-          <span>
-            {surfClasses} {copy.classTrack}
+      <div className="relative space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400">
+            {copy.classTrack}
+          </span>
+          <span className="text-base md:text-lg font-bold text-amber-300">
+            {surfClasses}
           </span>
         </div>
         <div className="px-1">
@@ -406,11 +538,14 @@ const ActivityCard = ({
             min={SURF_CLASSES_RANGE.min}
             max={SURF_CLASSES_RANGE.max}
             value={surfClasses}
-            onChange={(event) => onSurfClassesChange(Number(event.target.value))}
-            className="h-2 w-full cursor-pointer rounded-full bg-slate-700 accent-amber-300"
+            onChange={(event) => handleSurfClassesChange(Number(event.target.value))}
+            className="h-2.5 md:h-3 w-full cursor-pointer rounded-full bg-slate-700/70 accent-amber-400 transition-all hover:accent-amber-300"
+            style={{
+              background: `linear-gradient(to right, rgb(251 191 36) 0%, rgb(251 191 36) ${((surfClasses - SURF_CLASSES_RANGE.min) / (SURF_CLASSES_RANGE.max - SURF_CLASSES_RANGE.min)) * 100}%, rgb(51 65 85 / 0.7) ${((surfClasses - SURF_CLASSES_RANGE.min) / (SURF_CLASSES_RANGE.max - SURF_CLASSES_RANGE.min)) * 100}%, rgb(51 65 85 / 0.7) 100%)`
+            }}
           />
         </div>
-        <div className="flex justify-between text-[10px] md:text-[11px] uppercase tracking-wider text-slate-500 px-1">
+        <div className="flex justify-between text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-500 px-1">
           <span>{SURF_CLASSES_RANGE.min}</span>
           <span>{SURF_CLASSES_RANGE.max}</span>
         </div>
@@ -418,62 +553,82 @@ const ActivityCard = ({
     );
   };
 
+  const handleQuantityChange = (newQuantity: number) => {
+    if (onQuantityChange) {
+      onQuantityChange(newQuantity);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
+  };
+
   const renderQuantityControl = () => {
     if (!hasQuantitySelector || !onQuantityChange) return null;
 
     return (
-      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
           {copy.quantity}
         </span>
-        <div className="flex items-center gap-3">
-          <button
+        <div className="flex items-center justify-center gap-4 md:gap-5">
+          <motion.button
             type="button"
-            onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-600 bg-slate-800/80 text-slate-200 transition hover:border-amber-300/70"
+            onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
           >
-            <Minus className="h-4 w-4" />
-          </button>
-          <span className="min-w-[2rem] text-center text-lg font-semibold text-slate-100">
+            <Minus className="h-4 w-4 md:h-5 md:w-5" />
+          </motion.button>
+          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-slate-50">
             {quantity}
           </span>
-          <button
+          <motion.button
             type="button"
-            onClick={() => onQuantityChange(quantity + 1)}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-600 bg-slate-800/80 text-slate-200 transition hover:border-amber-300/70"
+            onClick={() => handleQuantityChange(quantity + 1)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
           >
-            <Plus className="h-4 w-4" />
-          </button>
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+          </motion.button>
         </div>
       </div>
     );
+  };
+
+  const handleTimeSlotSelect = (slot: "7:00 AM" | "3:00 PM") => {
+    if (onTimeSlotChange) {
+      onTimeSlotChange(slot);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
   };
 
   const renderTimeSlot = () => {
     if (!hasTimeSelector || !onTimeSlotChange) return null;
 
     return (
-      <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+      <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
           {copy.timeSlot}
         </span>
-        <div className="flex gap-2">
+        <div className="flex gap-2 md:gap-3">
           {["7:00 AM", "3:00 PM"].map((slot) => {
             const active = timeSlot === slot;
             return (
-              <button
+              <motion.button
                 key={slot}
                 type="button"
-                onClick={() => onTimeSlotChange(slot as "7:00 AM" | "3:00 PM")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                onClick={() => handleTimeSlotSelect(slot as "7:00 AM" | "3:00 PM")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex flex-1 items-center justify-center gap-2 md:gap-2.5 rounded-xl border px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base font-bold transition-all ${
                   active
-                    ? "border-transparent bg-amber-300 text-slate-900 shadow-lg shadow-amber-300/30"
-                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70"
+                    ? "border-transparent bg-gradient-to-br from-amber-300 to-amber-400 text-slate-900 shadow-xl shadow-amber-300/40"
+                    : "border-slate-600/60 bg-slate-800/50 text-slate-200 hover:border-amber-300/60 hover:bg-slate-800/70"
                 }`}
               >
-                <Clock className="h-4 w-4" />
+                <Clock className="h-4 w-4 md:h-5 md:w-5" />
                 {slot}
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -482,258 +637,481 @@ const ActivityCard = ({
   };
 
   return (
-    <div className="flip-card w-full h-full min-h-[420px] md:min-h-[340px]" style={{ perspective: '1000px' }}>
-      <motion.div
-        className="flip-card-inner w-full h-full min-h-[420px] md:min-h-[340px] relative"
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{
-          duration: 0.5,
-          type: "spring",
-          stiffness: 200,
-          damping: 25
-        }}
-        style={{ transformStyle: 'preserve-3d' }}
-      >
-        {/* Front Face - Image */}
-        <div
-          className="flip-card-face flip-card-front absolute w-full h-full rounded-[28px] md:rounded-3xl overflow-hidden cursor-pointer group/card"
-          style={{ backfaceVisibility: 'hidden' }}
-          onClick={handleFlip}
+    <motion.div
+      className="w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-slate-700/50 bg-slate-900/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)] hover:scale-[1.01]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      {/* Hero Visual Section - Top */}
+      <div className="relative w-full h-[180px] md:h-[275px] overflow-hidden group/hero">
+        {imageData.hasImage && 'image' in imageData ? (
+          <>
+            <div
+              className="activity-card-bg absolute inset-0 bg-no-repeat transition-all duration-500 ease-out group-hover/hero:scale-110"
+              style={{
+                backgroundImage: `url(${imageData.image})`,
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+            <style jsx>{`
+              .activity-card-bg {
+                background-size: cover;
+                background-position: center 65%;
+              }
+
+              /* Mobile responsive positioning for better framing */
+              @media (max-width: 768px) {
+                .activity-card-bg {
+                  background-size: cover;
+                  background-position: ${isSurf ? 'center 40%' : activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
+                  ${isSurf && 'mobileImage' in imageData ? `background-image: url(${imageData.mobileImage}) !important;` : ''}
+                }
+              }
+
+              /* Desktop - keep current behavior */
+              @media (min-width: 769px) {
+                .activity-card-bg {
+                  background-size: cover;
+                  background-position: ${isSurf ? 'center 60%' : 'center 65%'};
+                }
+              }
+            `}</style>
+          </>
+        ) : (
+          <>
+            <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
+              <div className="absolute inset-0 bg-black/20"></div>
+            </div>
+          </>
+        )}
+
+        {/* Category Badge - Top Left */}
+        <motion.div
+          className="absolute top-4 left-4 md:top-5 md:left-5"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
         >
-          <div className="w-full h-full relative min-h-[420px] md:min-h-[340px]">
-            {imageData.hasImage && 'image' in imageData ? (
-              <>
-                <div
-                  className="activity-card-bg absolute inset-0 bg-no-repeat transition-transform duration-300 group-hover/card:scale-105"
-                  style={{
-                    backgroundImage: `url(${imageData.image})`,
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20 transition-opacity duration-300 group-hover/card:opacity-80"></div>
-                <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
-                <style jsx>{`
-                  .activity-card-bg {
-                    background-size: cover;
-                    background-position: center 65%;
-                  }
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-amber-200 border border-amber-300/30 shadow-lg">
+            <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
+            {activity.category.replace("_", " ")}
+          </span>
+        </motion.div>
 
-                  /* Mobile responsive positioning for better framing */
-                  @media (max-width: 768px) {
-                    .activity-card-bg {
-                      background-size: cover;
-                      background-position: ${isSurf ? 'center 40%' : activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
-                      ${isSurf && 'mobileImage' in imageData ? `background-image: url(${imageData.mobileImage}) !important;` : ''}
-                    }
-                  }
+        {/* Title Overlay - Centered */}
+        <div className="absolute inset-0 flex items-center justify-center px-6 md:px-8">
+          <motion.h2
+            className="text-[1.5rem] md:text-[2rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
+            {activity.name}
+          </motion.h2>
+        </div>
 
-                  /* Desktop - keep current behavior */
-                  @media (min-width: 769px) {
-                    .activity-card-bg {
-                      background-size: cover;
-                      background-position: ${isSurf ? 'center 60%' : 'center 65%'};
-                    }
-                  }
-                `}</style>
-              </>
-            ) : (
-              <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
-                <div className="absolute inset-0 bg-black/20"></div>
-                <div className="absolute inset-0 bg-white/0 transition-all duration-300 group-hover/card:bg-white/10"></div>
+      </div>
+
+      {/* Information Section - Two Column Layout */}
+      <div className="flex flex-col md:flex-row md:items-start">
+
+        {/* Left Column (65-70%) - Information */}
+        <div className="flex flex-col flex-1 md:flex-[7] px-6 md:px-10 py-6 md:py-8 gap-6 md:gap-7">
+
+          {/* 1. Description (1-2 lines) */}
+          {descriptive && (
+            <p className="text-sm md:text-base leading-relaxed text-slate-300/90 font-light">
+              {descriptive.description}
+            </p>
+          )}
+
+          {/* 2. Info Tags */}
+          {descriptive && (
+            <div className="flex flex-wrap items-center gap-3">
+              {descriptive.features.map((feature, index) => {
+                const Icon = feature.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 text-xs md:text-sm text-slate-300 bg-slate-800/30 px-3 md:px-4 py-2 md:py-2.5 rounded-full border border-slate-700/40"
+                  >
+                    <Icon className="h-4 w-4 flex-shrink-0 text-amber-300/70" />
+                    <span className="font-medium">{feature.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 3. Class/Session Selector */}
+          {(renderYogaPackages() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
+            <div>
+              {renderYogaPackages()}
+              {renderSurfSelector()}
+              {renderQuantityControl()}
+              {renderTimeSlot()}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column (30-35%) - Action Block */}
+        <div className="md:flex-[3] md:border-l border-slate-700/40 px-6 md:px-8 py-6 md:py-8 bg-slate-800/10 md:bg-transparent">
+          <div className="flex flex-col items-center gap-5 md:gap-6 md:sticky md:top-8">
+
+            {/* Price */}
+            <div className="w-full text-center space-y-2">
+              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total</p>
+              <motion.div
+                className="text-3xl md:text-4xl font-bold text-slate-50"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                {formatPrice(price)}
+              </motion.div>
+              {participants > 1 && typeof pricePerPerson === "number" && (
+                <p className="text-xs text-slate-400 font-medium">
+                  {formatPrice(pricePerPerson)} {copy.perPerson}
+                </p>
+              )}
+            </div>
+
+            {/* Choose Button */}
+            <motion.button
+              type="button"
+              onClick={handleChoose}
+              disabled={isChoosing}
+              whileHover={!isChoosing ? { scale: 1.02 } : {}}
+              whileTap={!isChoosing ? { scale: 0.98 } : {}}
+              animate={isChoosing ? {
+                scale: [1, 1.05, 1],
+              } : {}}
+              transition={{ duration: 0.15 }}
+              className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                isChoosing
+                  ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
+                  : hasInteracted
+                    ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
+                    : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
+              }`}
+            >
+              {isChoosing ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span>{copy.chosen}</span>
+                </>
+              ) : (
+                <>
+                  <span>{copy.choose}</span>
+                  <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                </>
+              )}
+            </motion.button>
+
+            {/* Selected indicator */}
+            {isSelected && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-300 font-medium">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{copy.chosen}</span>
               </div>
             )}
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-8 md:px-12 py-8">
-              <div className="text-center max-w-lg">
-                <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
-                  {activity.name}
-                </h2>
-              </div>
-            </div>
-
-            <div className="absolute bottom-6 md:bottom-6 right-4 md:right-6 bg-white/20 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full text-white text-xs md:text-sm font-semibold">
-              {locale === "es" ? "Toca para ver detalles" : "Tap to see details"}
-            </div>
-          </div>
-        </div>
-
-        {/* Back Face - Details */}
-        <div
-          className="flip-card-face flip-card-back absolute w-full h-full rounded-[28px] md:rounded-3xl cursor-pointer"
-          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-          onClick={handleFlip}
-        >
-          <div className="group flex w-full h-full flex-col md:flex-row items-stretch rounded-[28px] md:rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-[0_4px_16px_rgba(0,0,0,0.25)] md:backdrop-blur transition md:hover:border-amber-300/70 md:hover:shadow-[0_6px_20px_rgba(251,191,36,0.2)] overflow-hidden">
-            <div className="flex flex-1 flex-col px-4 md:px-6 py-4 md:py-7 gap-4 md:gap-5">
-              <div className="flex items-start justify-between flex-shrink-0">
-                <div className="flex-1">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-800/70 px-2.5 md:px-3 py-1 text-[10px] md:text-xs font-semibold uppercase tracking-[0.2em] md:tracking-[0.3em] text-amber-200">
-                    <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
-                    {activity.category.replace("_", " ")}
-                  </span>
-                  <div className="mt-3 md:mt-4 flex items-center gap-2">
-                    <h3 className="text-xl md:text-2xl font-bold text-slate-100 font-heading">{activity.name}</h3>
-                    {/* Info icon for mobile - only show if has rating */}
-                    {isSurf && ratingValue && (
-                      <button
-                        onClick={handleInfoClick}
-                        className="md:hidden flex items-center justify-center w-7 h-7 rounded-full bg-amber-300/20 border border-amber-300/30 text-amber-300 hover:bg-amber-300/30 transition-colors"
-                        aria-label="Ver calificación"
-                      >
-                        <Info className="h-4 w-4" />
-                      </button>
-                    )}
+            {/* Social Proof (Surf only) - Moved here, below Choose button */}
+            {isSurf && ratingValue && (
+              <div className="w-full pt-4 md:pt-5 border-t border-slate-700/30 space-y-3 md:space-y-4">
+                {/* Rating */}
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-3.5 md:h-4 w-3.5 md:w-4 fill-amber-300 text-amber-300"
+                      />
+                    ))}
                   </div>
-
-                  {isSurf && sellingPoints && sellingPoints.length > 0 ? (
-                    <ul className="mt-3 md:mt-5 space-y-1 md:space-y-1.5 text-xs md:text-sm text-slate-200">
-                      {sellingPoints.map((point, index) => (
-                        <li
-                          key={`${activity.id}-point-${index}`}
-                          className="flex items-start gap-1.5 md:gap-2"
-                        >
-                          <CheckCircle2 className="mt-0.5 h-3.5 md:h-4 w-3.5 md:w-4 flex-shrink-0 text-amber-300" />
-                          <span className="leading-snug">{point}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : !isSurf && descriptive ? (
-                    <div className="mt-3 md:mt-4 space-y-2 md:space-y-4">
-                      <p className="text-xs md:text-sm leading-relaxed text-slate-300">
-                        {descriptive.description}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 md:gap-x-4 gap-y-1.5 md:gap-y-2">
-                        {descriptive.features.map((feature, index) => {
-                          const Icon = feature.icon;
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center gap-1 md:gap-1.5 text-[10px] md:text-xs text-slate-300"
-                            >
-                              <Icon className="h-3.5 md:h-4 w-3.5 md:w-4 flex-shrink-0 text-amber-300" />
-                              <span>{feature.text}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : null}
+                  <span className="text-xs md:text-sm font-semibold text-slate-100">{ratingValue}</span>
+                  <span className="text-[10px] md:text-xs text-slate-400">({reviewsText})</span>
                 </div>
-                {isSelected && (
-                  <CheckCircle2 className="h-6 md:h-8 w-6 md:w-8 text-amber-300" aria-hidden="true" />
-                )}
-              </div>
 
-              {(renderYogaPackages() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
-                <div className="space-y-3 md:space-y-4">
-                  {renderYogaPackages()}
-                  {renderSurfSelector()}
-                  {renderQuantityControl()}
-                  {renderTimeSlot()}
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col items-center border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-4 md:px-6 py-5 md:py-8 md:min-w-[280px]" onClick={(e) => e.stopPropagation()}>
-
-              {/* Rating section for desktop - hover to show popup */}
-              {isSurf && ratingValue && (
-                <div
-                  ref={ratingRef}
-                  onMouseEnter={handleRatingMouseEnter}
-                  onMouseLeave={handleRatingMouseLeave}
-                  className="hidden md:block w-full pb-4 mb-4 border-b border-slate-700/40 cursor-pointer hover:bg-slate-800/30 rounded-lg transition-colors p-2 -m-2 flex-shrink-0"
-                >
+                {/* Testimonial */}
+                {testimonials && (
                   <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className="h-4 w-4 fill-amber-300 text-amber-300 transition-transform hover:scale-110"
+                    <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center line-clamp-2">
+                      "{testimonials[currentTestimonialIndex].text}"
+                    </p>
+                    {/* Dots */}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {testimonials.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentTestimonialIndex(idx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all ${
+                            idx === currentTestimonialIndex
+                              ? "bg-amber-300 w-4"
+                              : "bg-slate-600 w-1.5 hover:bg-slate-500"
+                          }`}
+                          aria-label={`Go to testimonial ${idx + 1}`}
                         />
                       ))}
-                      <span className="ml-1.5 text-sm font-bold text-slate-100">
-                        {ratingValue}
-                      </span>
                     </div>
-                    <p className="text-[10px] text-center text-slate-400 uppercase tracking-wide">
-                      ({reviewsText})
-                    </p>
-                    {trustMessage && (
-                      <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-300 pt-1">
-                        <Globe className="h-3 w-3 text-amber-300 flex-shrink-0" />
-                        <span className="text-center leading-tight">{trustMessage}</span>
-                      </div>
-                    )}
-                    <p className="text-[9px] text-center text-amber-300/60 uppercase tracking-wider mt-1">
-                      {locale === "es" ? "Pasa el mouse para ver reseñas" : "Hover to see reviews"}
-                    </p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Middle section - grows to center Total and button */}
-              <div className="flex-1 flex flex-col items-center justify-center w-full gap-4 md:gap-5">
-                <div className="text-center w-full">
-                  <span className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400 block mb-2 md:mb-3">Total</span>
-                  <div className="text-2xl md:text-3xl font-bold text-slate-100">
-                    {formatPrice(price)}
-                  </div>
-                  {participants > 1 && typeof pricePerPerson === "number" && (
-                    <div className="text-[10px] md:text-xs font-semibold uppercase tracking-wide text-slate-500 mt-1">
-                      {formatPrice(pricePerPerson)} {copy.perPerson}
-                    </div>
-                  )}
-                </div>
+                {/* Trust message */}
+                {trustMessage && (
+                  <p className="text-[10px] md:text-xs text-slate-400/60 font-light text-center">
+                    {trustMessage}
+                  </p>
+                )}
+              </div>
+            )}
 
-                {isSurf ? (
-                  <div className="w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-2 border-green-400/50 flex items-center justify-center gap-2">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>{copy.included}</span>
-                  </div>
-                ) : (
+            {/* Navigation Buttons (Skip/Back) - Hidden on mobile */}
+            {(onSkip || onBack) && (
+              <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-slate-700/30 flex-col gap-3">
+                {/* Back Button */}
+                {!isFirstStep && onBack && (
                   <motion.button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onToggle();
+                      if (onBack) onBack();
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    animate={isSelected ? {
-                      boxShadow: ["0 0 0 0 rgba(251, 191, 36, 0)", "0 0 0 6px rgba(251, 191, 36, 0.3)", "0 0 0 0 rgba(251, 191, 36, 0)"]
-                    } : {}}
-                    transition={{ duration: 0.6 }}
-                    className={`w-full rounded-2xl px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-semibold transition-all ${
-                      isSelected
-                        ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800 ring-2 ring-amber-300/50"
-                        : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 hover:shadow-amber-300/60"
-                    }`}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
                   >
-                    {isSelected ? copy.remove : copy.add}
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>{copy.back}</span>
+                  </motion.button>
+                )}
+
+                {/* Skip Button - Only for non-mandatory activities */}
+                {!isSurf && onSkip && (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSkip) onSkip();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    {copy.skip}
                   </motion.button>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Info Popup - Only for activities with rating */}
-      {ratingValue && (
-        <InfoPopup
-          isOpen={showInfoPopup}
-          onClose={handleClosePopup}
-          rating={ratingValue}
-          reviewsText={reviewsText}
-          trustMessage={trustMessage}
-          locale={locale}
-          onMouseEnter={handlePopupMouseEnter}
-          onMouseLeave={handlePopupMouseLeave}
-          anchorElement={ratingRef.current}
-          activityName={activity.name}
-        />
+      {/* Mobile Sticky Bottom Bar (Price + CTA) */}
+      <div className="md:hidden sticky bottom-0 left-0 right-0 border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-md px-6 py-4 flex items-center justify-between gap-4 shadow-2xl z-10">
+        {/* Price */}
+        <div className="flex flex-col">
+          <span className="text-xs text-slate-400 uppercase tracking-wide font-medium">Total</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-50">
+              {formatPrice(price)}
+            </span>
+            {participants > 1 && typeof pricePerPerson === "number" && (
+              <span className="text-xs text-slate-400 font-medium">
+                {formatPrice(pricePerPerson)} {copy.perPerson}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Choose Button */}
+        <motion.button
+          type="button"
+          onClick={handleChoose}
+          disabled={isChoosing}
+          whileHover={!isChoosing ? { scale: 1.02 } : {}}
+          whileTap={!isChoosing ? { scale: 0.98 } : {}}
+          animate={isChoosing ? {
+            scale: [1, 1.05, 1],
+          } : {}}
+          transition={{ duration: 0.15 }}
+          className={`rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 whitespace-nowrap ${
+            isChoosing
+              ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
+              : hasInteracted
+                ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60"
+                : "bg-[#FDCB2E] text-slate-900 shadow-md"
+          }`}
+        >
+          {isChoosing ? (
+            copy.chosen
+          ) : (
+            <>
+              {copy.choose}
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
+        </motion.button>
+      </div>
+
+      {/* Navigation Buttons (Skip/Back) - Mobile only, below bottom bar */}
+      {(onSkip || onBack) && (
+        <div className="md:hidden border-t border-slate-700/40 bg-slate-800/10 px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Back Button */}
+            {!isFirstStep && onBack ? (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onBack) onBack();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>{copy.back}</span>
+              </motion.button>
+            ) : (
+              <div />
+            )}
+
+            {/* Skip Button - Only for non-mandatory activities */}
+            {!isSurf && onSkip && (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onSkip) onSkip();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                {copy.skip}
+              </motion.button>
+            )}
+          </div>
+        </div>
       )}
-    </div>
+
+      {/* Mobile Testimonials Popup */}
+      {showTestimonialsPopup && testimonials && (
+        <motion.div
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowTestimonialsPopup(false)}
+        >
+          <motion.div
+            className="w-full max-w-lg bg-slate-900 rounded-t-3xl border-t border-x border-slate-700/50 shadow-2xl"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="relative flex items-center justify-between px-6 py-5 border-b border-slate-700/50">
+              <h3 className="text-lg font-bold text-slate-100 uppercase tracking-wide">
+                {locale === "es" ? "Testimonios" : "Testimonials"}
+              </h3>
+              <motion.button
+                type="button"
+                onClick={() => setShowTestimonialsPopup(false)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors"
+              >
+                <X className="h-5 w-5 text-slate-300" />
+              </motion.button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-8">
+              <div className="relative bg-slate-800/40 rounded-2xl p-6 border border-slate-700/40">
+                <Quote className="absolute top-4 left-4 h-8 w-8 text-amber-300/20" />
+
+                <div className="space-y-5 pt-3">
+                  {/* Stars */}
+                  <div className="flex items-center justify-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-5 w-5 fill-amber-300 text-amber-300"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Testimonial Text */}
+                  <p className="text-sm leading-relaxed text-slate-200 italic text-center min-h-[100px] flex items-center justify-center">
+                    "{testimonials[currentTestimonialIndex].text}"
+                  </p>
+
+                  {/* Author */}
+                  <div className="text-center pt-3 border-t border-slate-700/30">
+                    <p className="text-sm font-bold text-amber-300">
+                      {testimonials[currentTestimonialIndex].author}
+                    </p>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">
+                      {testimonials[currentTestimonialIndex].country}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <motion.button
+                  type="button"
+                  onClick={handlePrevTestimonial}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors border border-slate-700/40"
+                >
+                  <ChevronLeft className="h-5 w-5 text-slate-300" />
+                </motion.button>
+
+                <div className="flex gap-2">
+                  {testimonials.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === currentTestimonialIndex
+                          ? "bg-amber-300 w-6"
+                          : "bg-slate-600 w-2"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <motion.button
+                  type="button"
+                  onClick={handleNextTestimonial}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors border border-slate-700/40"
+                >
+                  <ChevronRight className="h-5 w-5 text-slate-300" />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+    </motion.div>
   );
 };
 

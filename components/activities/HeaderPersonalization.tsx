@@ -106,88 +106,52 @@ const HeaderPersonalization = ({
 
   return (
     <div className="mb-6 md:mb-8 rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden" style={{ boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.25)' }}>
-      {/* Header Content */}
-      <div className="p-5 md:p-8">
-        <div className="flex flex-col gap-4 md:gap-6">
-          {/* Title and Summary */}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
-            <div className="flex-1">
-              <h2 className="mb-4 flex items-center gap-3 text-xl md:text-2xl font-semibold tracking-wide text-white font-heading">
-                <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-amber-300 flex-shrink-0" />
-                <span>{t.title}</span>
-              </h2>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={summary}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 6 }}
-                  transition={{ duration: 0.25 }}
-                  className="text-sm md:text-base font-medium text-slate-300"
-                >
-                  {t.summaryPrefix} {summary}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-
-            {/* Copy to All Button - Desktop Only */}
-            {onCopyChoicesToAll && participantTabs.length > 1 && (
-              <motion.button
-                onClick={onCopyChoicesToAll}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 border border-slate-600 text-slate-300 hover:bg-slate-700/80 hover:border-cyan-400/50 hover:text-white transition-all text-sm font-medium shadow-md"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <span className="hidden lg:inline">{t.copyToAll}</span>
-              </motion.button>
-            )}
+      {/* Inspirational Header */}
+      <div className="p-6 md:p-10 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center gap-4 md:gap-5"
+        >
+          {/* Icon */}
+          <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30">
+            <Sparkles className="h-6 w-6 md:h-7 md:w-7 text-amber-300" />
           </div>
 
-          {/* Inputs Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-            <label className="flex-1">
-              <span className="text-xs font-semibold uppercase text-slate-400 tracking-wide">
-                {t.nameLabel}
-              </span>
-              <input
-                value={name}
-                onChange={(event) => onNameChange(event.target.value)}
-                placeholder={t.namePlaceholder}
-                className="mt-2 w-full rounded-xl border border-slate-600 bg-slate-800/80 px-4 py-2.5 md:py-3 text-sm md:text-base text-slate-100 shadow-inner shadow-black/20 outline-none transition focus:border-amber-300 focus:ring-2 focus:ring-amber-300/40"
-                aria-label={t.nameLabel}
-              />
-            </label>
-            <label className="sm:max-w-[200px]">
-              <span className="text-xs font-semibold uppercase text-slate-400 tracking-wide">
-                {t.participantLabel}
-              </span>
-              <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-600 bg-slate-800/80 px-4 py-2.5 md:py-3 text-slate-100 shadow-inner shadow-black/20">
-                <Users className="h-4 w-4 text-amber-300" aria-hidden="true" />
-                <select
-                  value={participants}
-                  onChange={handleParticipantChange}
-                  className="w-full bg-transparent text-sm md:text-base font-medium outline-none"
-                  aria-label={t.participantLabel}
-                >
-                  {PARTICIPANT_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="bg-slate-900 text-slate-100">
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
-          </div>
-        </div>
+          {/* Main Title */}
+          <h1 className="text-2xl md:text-4xl font-heading text-white tracking-tight">
+            {t.title}
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-sm md:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            {locale === 'es'
+              ? 'Elige las actividades que darán forma a tu experiencia perfecta.'
+              : 'Choose the activities that will shape your perfect experience.'}
+          </p>
+        </motion.div>
+
+        {/* Copy to All Button - Desktop Only */}
+        {onCopyChoicesToAll && participantTabs.length > 1 && (
+          <motion.button
+            onClick={onCopyChoicesToAll}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-600 text-slate-300 hover:bg-slate-700/80 hover:border-cyan-400/50 hover:text-white transition-all text-sm font-medium shadow-md mt-6"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>{t.copyToAll}</span>
+          </motion.button>
+        )}
       </div>
 
-      {/* Participant Tabs - Integrated */}
-      {participantTabs.length > 0 && onParticipantChange && (
+      {/* Participant Tabs - Integrated (only show when multiple participants) */}
+      {participantTabs.length > 1 && onParticipantChange && (
         <>
           {/* Subtle Divider */}
           <div className="h-px bg-gradient-to-r from-transparent via-slate-700/50 to-transparent" />

@@ -53,6 +53,10 @@ interface BookingStore {
   currentStep: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success';
   isLoading: boolean;
   error: string | null;
+
+  // Activity flow state (sequential guided experience)
+  activityFlowStep: 'surf' | 'yoga' | 'ice-bath' | 'complete';
+  activityFlowDirection: 'forward' | 'backward';
   
   // Actions
   setBookingData: (data: Partial<BookingRequest>) => void;
@@ -85,6 +89,13 @@ interface BookingStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   reset: () => void;
+
+  // Activity flow actions
+  nextActivityStep: () => void;
+  previousActivityStep: () => void;
+  skipCurrentActivity: () => void;
+  goToActivityStep: (step: 'surf' | 'yoga' | 'ice-bath' | 'complete') => void;
+  resetActivityFlow: () => void;
 }
 
 const createEmptyParticipant = (id: string, name: string, isYou: boolean): ParticipantData => ({
@@ -117,6 +128,8 @@ const initialState = {
   currentStep: 'activities' as const,
   isLoading: false,
   error: null,
+  activityFlowStep: 'surf' as const,
+  activityFlowDirection: 'forward' as const,
 };
 
 export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<BookingStore>((set) => ({
@@ -376,4 +389,51 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
     set({ error }),
 
   reset: () => set(initialState),
+
+  // Activity flow implementations
+  nextActivityStep: () =>
+    set((state) => {
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      const currentIndex = stepOrder.indexOf(state.activityFlowStep);
+      const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
+      return {
+        activityFlowStep: stepOrder[nextIndex],
+        activityFlowDirection: 'forward',
+      };
+    }),
+
+  previousActivityStep: () =>
+    set((state) => {
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      const currentIndex = stepOrder.indexOf(state.activityFlowStep);
+      const prevIndex = Math.max(currentIndex - 1, 0);
+      return {
+        activityFlowStep: stepOrder[prevIndex],
+        activityFlowDirection: 'backward',
+      };
+    }),
+
+  skipCurrentActivity: () =>
+    set((state) => {
+      // Same as nextActivityStep, just skip without selection
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      const currentIndex = stepOrder.indexOf(state.activityFlowStep);
+      const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
+      return {
+        activityFlowStep: stepOrder[nextIndex],
+        activityFlowDirection: 'forward',
+      };
+    }),
+
+  goToActivityStep: (step) =>
+    set((state) => ({
+      activityFlowStep: step,
+      activityFlowDirection: 'forward',
+    })),
+
+  resetActivityFlow: () =>
+    set(() => ({
+      activityFlowStep: 'surf',
+      activityFlowDirection: 'forward',
+    })),
 })); 

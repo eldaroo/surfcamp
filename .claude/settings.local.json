@@ -52,7 +52,16 @@
       "Bash(powershell -Command \"Stop-Process -Id 13760 -Force\")",
       "Bash(powershell -Command \"Stop-Process -Id 6452 -Force -ErrorAction SilentlyContinue\")",
       "Bash(powershell -Command \"Stop-Process -Id 3132 -Force; Stop-Process -Id 23956 -Force -ErrorAction SilentlyContinue\")",
-      "Bash(powershell -Command \"Stop-Process -Id 2604 -Force; Stop-Process -Id 21620 -Force -ErrorAction SilentlyContinue\")"
+      "Bash(powershell -Command \"Stop-Process -Id 2604 -Force; Stop-Process -Id 21620 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(git push origin rediseño_front --force)",
+      "Bash(powershell -Command \"Stop-Process -Id 16216 -Force; Stop-Process -Id 9752 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"(Get-Content ''C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\activities\\ActivityCard.tsx'').Count\")",
+      "Bash(powershell -Command \"Get-Process | Where-Object {$_ProcessName -eq ''node''} | Stop-Process -Force -ErrorAction SilentlyContinue\")",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(del \"C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\activities\\ActivityCardNew.tsx\")",
+      "Bash(powershell -Command \"Stop-Process -Id 2200 -Force -ErrorAction SilentlyContinue; Stop-Process -Id 20876 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(del \"C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\PriceSummaryModal.tsx\")",
+      "Bash(npx tsc --noEmit --pretty)"
     ],
     "deny": [],
     "ask": []

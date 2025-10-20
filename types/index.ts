@@ -44,6 +44,12 @@ export interface LobbyPMSBooking {
   status?: string;
   message?: string;
   demoMode?: boolean;
+  booking?: {
+    booking_id?: string;
+    reservation_id?: string;
+    id?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface LobbyPMSReservationRequest {

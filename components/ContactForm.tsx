@@ -231,8 +231,9 @@ export default function ContactForm() {
     setIsProcessingPayment(true);
     setPaymentError('');
 
+    let paymentWindow: Window | null = null;
     try {
-      const paymentWindow = window.open('', '_blank');
+      paymentWindow = window.open('', '_blank');
       if (paymentWindow) {
         const loadingTitle = t('payment.generatingLink');
         const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
@@ -419,7 +420,7 @@ export default function ContactForm() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-2xl mx-auto"
+        className="max-w-7xl mx-auto"
       >
         {/* Back Button */}
         <div className="mb-8">
@@ -437,8 +438,10 @@ export default function ContactForm() {
           <p className="text-xl text-yellow-400 font-heading">{t('contact.subtitle')}</p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl">
+        {/* Two Column Layout - Desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+          {/* Left Column - Personal Information */}
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl h-full">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-white mb-2 font-heading">Personal Information</h2>
             <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
@@ -564,18 +567,18 @@ export default function ContactForm() {
             </div>
 
           </form>
-        </div>
+          </div>
 
-        {/* Payment Section */}
-        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl mt-8">
+          {/* Right Column - Payment Section */}
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl h-full">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-white mb-2 font-heading">{t('payment.title')}</h2>
             <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
             {/* Payment Summary */}
-            <div className="space-y-6">
+            <div>
               <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
                 <h3 className="text-lg font-semibold text-white mb-4 font-heading">{t('payment.summary.title')}</h3>
                 <div className="space-y-3">
@@ -637,8 +640,7 @@ export default function ContactForm() {
             </div>
 
             {/* Payment Button */}
-            <div className="flex flex-col justify-center space-y-6">
-              <motion.button
+            <motion.button
                 onClick={handlePayment}
                 disabled={isProcessingPayment}
                 whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
@@ -718,7 +720,7 @@ export default function ContactForm() {
                   <p className="text-red-300 text-sm">{paymentError}</p>
                 </motion.div>
               )}
-            </div>
+          </div>
           </div>
         </div>
       </motion.div>
