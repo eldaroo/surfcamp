@@ -143,8 +143,21 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
   // Multi-participant action implementations
   setActiveParticipant: (participantId) =>
     set((state) => {
+      console.log('[STORE] setActiveParticipant called', { participantId });
       const participant = state.participants.find(p => p.id === participantId);
-      if (!participant) return state;
+      if (!participant) {
+        console.log('[STORE] setActiveParticipant - participant not found');
+        return state;
+      }
+
+      console.log('[STORE] setActiveParticipant - switching to participant', {
+        participantId,
+        name: participant.name,
+        selectedActivities: participant.selectedActivities,
+        activityQuantities: participant.activityQuantities,
+        selectedYogaPackages: participant.selectedYogaPackages,
+        selectedSurfClasses: participant.selectedSurfClasses,
+      });
 
       return {
         activeParticipantId: participantId,
@@ -183,6 +196,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       );
       return {
         participants: [...state.participants, newParticipant],
+        activeParticipantId: newId, // Set the new participant as active
       };
     }),
 
@@ -219,12 +233,28 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   syncParticipantsWithGuests: (guestCount) =>
     set((state) => {
+      console.log('[STORE] syncParticipantsWithGuests called', {
+        guestCount,
+        currentCount: state.participants.length,
+        currentParticipants: state.participants.map(p => ({
+          id: p.id,
+          name: p.name,
+          activitiesCount: p.selectedActivities.length,
+        })),
+      });
+
       const currentCount = state.participants.length;
 
-      if (guestCount === currentCount) return state;
+      if (guestCount === currentCount) {
+        console.log('[STORE] syncParticipantsWithGuests - counts match, no change');
+        return state;
+      }
 
       if (guestCount > currentCount) {
         // Add new participants
+        console.log('[STORE] syncParticipantsWithGuests - adding participants', {
+          adding: guestCount - currentCount,
+        });
         const newParticipants = Array.from(
           { length: guestCount - currentCount },
           (_, i) => createEmptyParticipant(
@@ -233,15 +263,33 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
             false
           )
         );
+        const updatedParticipants = [...state.participants, ...newParticipants];
+        console.log('[STORE] syncParticipantsWithGuests - after adding',
+          updatedParticipants.map(p => ({
+            id: p.id,
+            name: p.name,
+            activitiesCount: p.selectedActivities.length,
+          }))
+        );
         return {
-          participants: [...state.participants, ...newParticipants],
+          participants: updatedParticipants,
         };
       } else {
         // Remove excess participants (keep first guestCount)
+        console.log('[STORE] syncParticipantsWithGuests - removing participants', {
+          removing: currentCount - guestCount,
+        });
         const kept = state.participants.slice(0, guestCount);
         const newActiveId = kept.find(p => p.id === state.activeParticipantId)
           ? state.activeParticipantId
           : kept[0].id;
+        console.log('[STORE] syncParticipantsWithGuests - after removing',
+          kept.map(p => ({
+            id: p.id,
+            name: p.name,
+            activitiesCount: p.selectedActivities.length,
+          }))
+        );
         return {
           participants: kept,
           activeParticipantId: newActiveId,
@@ -256,31 +304,84 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   // Updated legacy actions to work with active participant
   setSelectedActivities: (activities) =>
-    set((state) => ({
-      selectedActivities: activities,
-      participants: state.participants.map(p =>
+    set((state) => {
+      console.log('[STORE] setSelectedActivities called', {
+        activeParticipantId: state.activeParticipantId,
+        activities: activities.map(a => ({ id: a.id, name: a.name })),
+      });
+
+      const updatedParticipants = state.participants.map(p =>
         p.id === state.activeParticipantId
           ? { ...p, selectedActivities: activities }
           : p
-      ),
-    })),
+      );
+
+      console.log('[STORE] setSelectedActivities - updated participants',
+        updatedParticipants.map(p => ({
+          id: p.id,
+          name: p.name,
+          activitiesCount: p.selectedActivities.length,
+          activities: p.selectedActivities.map(a => a.name),
+        }))
+      );
+
+      return {
+        selectedActivities: activities,
+        participants: updatedParticipants,
+      };
+    }),
   
   setActivityQuantity: (activityId, quantity) =>
     set((state) => {
-      const newQuantities = { ...state.activityQuantities, [activityId]: quantity };
+      console.log('[STORE] setActivityQuantity called', {
+        activeParticipantId: state.activeParticipantId,
+        activityId,
+        quantity,
+      });
+
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.log('[STORE] setActivityQuantity - active participant not found');
+        return state;
+      }
+
+      console.log('[STORE] setActivityQuantity - before', {
+        participantName: activeParticipant.name,
+        currentQuantities: activeParticipant.activityQuantities,
+      });
+
+      const newQuantities = { ...activeParticipant.activityQuantities, [activityId]: quantity };
+
+      console.log('[STORE] setActivityQuantity - after', {
+        newQuantities,
+      });
+
+      const updatedParticipants = state.participants.map(p =>
+        p.id === state.activeParticipantId
+          ? { ...p, activityQuantities: newQuantities }
+          : p
+      );
+
+      console.log('[STORE] setActivityQuantity - all participants',
+        updatedParticipants.map(p => ({
+          id: p.id,
+          name: p.name,
+          quantities: p.activityQuantities,
+        }))
+      );
+
       return {
         activityQuantities: newQuantities,
-        participants: state.participants.map(p =>
-          p.id === state.activeParticipantId
-            ? { ...p, activityQuantities: newQuantities }
-            : p
-        ),
+        participants: updatedParticipants,
       };
     }),
 
   setSelectedTimeSlot: (activityId, timeSlot) =>
     set((state) => {
-      const newTimeSlots = { ...state.selectedTimeSlots, [activityId]: timeSlot };
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) return state;
+
+      const newTimeSlots = { ...activeParticipant.selectedTimeSlots, [activityId]: timeSlot };
       return {
         selectedTimeSlots: newTimeSlots,
         participants: state.participants.map(p =>
@@ -293,20 +394,55 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   setSelectedYogaPackage: (activityId, yogaPackage) =>
     set((state) => {
-      const newSelectedYogaPackages = { ...state.selectedYogaPackages, [activityId]: yogaPackage };
+      console.log('[STORE] setSelectedYogaPackage called', {
+        activeParticipantId: state.activeParticipantId,
+        activityId,
+        yogaPackage,
+      });
+
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.log('[STORE] setSelectedYogaPackage - active participant not found');
+        return state;
+      }
+
+      console.log('[STORE] setSelectedYogaPackage - before', {
+        participantName: activeParticipant.name,
+        currentPackages: activeParticipant.selectedYogaPackages,
+      });
+
+      const newSelectedYogaPackages = { ...activeParticipant.selectedYogaPackages, [activityId]: yogaPackage };
+
+      console.log('[STORE] setSelectedYogaPackage - after', {
+        newSelectedYogaPackages,
+      });
+
+      const updatedParticipants = state.participants.map(p =>
+        p.id === state.activeParticipantId
+          ? { ...p, selectedYogaPackages: newSelectedYogaPackages }
+          : p
+      );
+
+      console.log('[STORE] setSelectedYogaPackage - all participants',
+        updatedParticipants.map(p => ({
+          id: p.id,
+          name: p.name,
+          yogaPackages: p.selectedYogaPackages,
+        }))
+      );
+
       return {
         selectedYogaPackages: newSelectedYogaPackages,
-        participants: state.participants.map(p =>
-          p.id === state.activeParticipantId
-            ? { ...p, selectedYogaPackages: newSelectedYogaPackages }
-            : p
-        ),
+        participants: updatedParticipants,
       };
     }),
 
   setSelectedSurfPackage: (activityId, surfPackage) =>
     set((state) => {
-      const newSelectedSurfPackages = { ...state.selectedSurfPackages, [activityId]: surfPackage };
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) return state;
+
+      const newSelectedSurfPackages = { ...activeParticipant.selectedSurfPackages, [activityId]: surfPackage };
       return {
         selectedSurfPackages: newSelectedSurfPackages,
         participants: state.participants.map(p =>
@@ -319,14 +455,46 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   setSelectedSurfClasses: (activityId, classes) =>
     set((state) => {
-      const newSelectedSurfClasses = { ...state.selectedSurfClasses, [activityId]: classes };
+      console.log('[STORE] setSelectedSurfClasses called', {
+        activeParticipantId: state.activeParticipantId,
+        activityId,
+        classes,
+      });
+
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.log('[STORE] setSelectedSurfClasses - active participant not found');
+        return state;
+      }
+
+      console.log('[STORE] setSelectedSurfClasses - before', {
+        participantName: activeParticipant.name,
+        currentClasses: activeParticipant.selectedSurfClasses,
+      });
+
+      const newSelectedSurfClasses = { ...activeParticipant.selectedSurfClasses, [activityId]: classes };
+
+      console.log('[STORE] setSelectedSurfClasses - after', {
+        newSelectedSurfClasses,
+      });
+
+      const updatedParticipants = state.participants.map(p =>
+        p.id === state.activeParticipantId
+          ? { ...p, selectedSurfClasses: newSelectedSurfClasses }
+          : p
+      );
+
+      console.log('[STORE] setSelectedSurfClasses - all participants',
+        updatedParticipants.map(p => ({
+          id: p.id,
+          name: p.name,
+          surfClasses: p.selectedSurfClasses,
+        }))
+      );
+
       return {
         selectedSurfClasses: newSelectedSurfClasses,
-        participants: state.participants.map(p =>
-          p.id === state.activeParticipantId
-            ? { ...p, selectedSurfClasses: newSelectedSurfClasses }
-            : p
-        ),
+        participants: updatedParticipants,
       };
     }),
   

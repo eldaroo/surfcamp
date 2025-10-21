@@ -30,17 +30,11 @@ const ActivitiesPage = () => {
     setBookingData,
     personalizationName,
     setPersonalizationName,
-    selectedActivities,
     setSelectedActivities,
-    selectedYogaPackages,
     setSelectedYogaPackage,
-    selectedSurfPackages,
     setSelectedSurfPackage,
-    selectedSurfClasses,
     setSelectedSurfClasses,
-    activityQuantities,
     setActivityQuantity,
-    selectedTimeSlots,
     setSelectedTimeSlot,
     setCurrentStep,
     // Multi-participant state
@@ -49,6 +43,7 @@ const ActivitiesPage = () => {
     setActiveParticipant,
     updateParticipantName,
     addParticipant,
+    removeParticipant,
     copyChoicesToAll,
     syncParticipantsWithGuests,
     // Activity flow state
@@ -59,6 +54,29 @@ const ActivitiesPage = () => {
     skipCurrentActivity,
     resetActivityFlow,
   } = useBookingStore();
+
+  const { selectedActivities, selectedYogaPackages, selectedSurfPackages, selectedSurfClasses, activityQuantities, selectedTimeSlots } = useMemo(() => {
+    const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
+    return {
+      selectedActivities: activeParticipant?.selectedActivities ?? [],
+      selectedYogaPackages: activeParticipant?.selectedYogaPackages ?? {},
+      selectedSurfPackages: activeParticipant?.selectedSurfPackages ?? {},
+      selectedSurfClasses: activeParticipant?.selectedSurfClasses ?? {},
+      activityQuantities: activeParticipant?.activityQuantities ?? {},
+      selectedTimeSlots: activeParticipant?.selectedTimeSlots ?? {},
+    };
+  }, [storeParticipants, activeParticipantId]);
+
+  console.log('[ActivitiesPage] Component rendered', {
+    activeParticipantId,
+    participantsCount: storeParticipants.length,
+    selectedActivitiesCount: selectedActivities.length,
+    storeParticipants: storeParticipants.map(p => ({
+      id: p.id,
+      name: p.name,
+      activitiesCount: p.selectedActivities.length,
+    })),
+  });
 
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
@@ -142,31 +160,49 @@ const ActivitiesPage = () => {
 
   const handleToggleActivity = useCallback(
     (activity: Activity) => {
+      console.log('[ActivitiesPage] handleToggleActivity called', {
+        activityId: activity.id,
+        activityName: activity.name,
+        activeParticipantId,
+        currentSelectedActivities: selectedActivities.map(a => a.name),
+      });
+
       const isAlreadySelected = selectedActivities.some((item) => item.id === activity.id);
 
       // Surf is mandatory - can be selected but not deselected
       if (activity.category === "surf" && isAlreadySelected) {
+        console.log('[ActivitiesPage] handleToggleActivity - surf is mandatory, cannot deselect');
         return;
       }
 
       if (isAlreadySelected) {
         const updated = selectedActivities.filter((item) => item.id !== activity.id);
+        console.log('[ActivitiesPage] handleToggleActivity - deselecting', {
+          updated: updated.map(a => a.name),
+        });
         setSelectedActivities(updated);
         return;
       }
 
       // Ensure default configs
       if (activity.category === "yoga" && !selectedYogaPackages[activity.id]) {
+        console.log('[ActivitiesPage] handleToggleActivity - setting default yoga package');
         setSelectedYogaPackage(activity.id, DEFAULT_YOGA_PACKAGE);
       }
       if (quantityCategories.has(activity.category) && !activityQuantities[activity.id]) {
+        console.log('[ActivitiesPage] handleToggleActivity - setting default quantity');
         setActivityQuantity(activity.id, 1);
       }
       if (timeSlotCategories.has(activity.category) && !selectedTimeSlots[activity.id]) {
+        console.log('[ActivitiesPage] handleToggleActivity - setting default time slot');
         setSelectedTimeSlot(activity.id, "7:00 AM");
       }
 
-      setSelectedActivities([...selectedActivities, activity]);
+      const updatedActivities = [...selectedActivities, activity];
+      console.log('[ActivitiesPage] handleToggleActivity - selecting activity', {
+        updatedActivities: updatedActivities.map(a => a.name),
+      });
+      setSelectedActivities(updatedActivities);
     },
     [
       selectedActivities,
@@ -259,12 +295,20 @@ const ActivitiesPage = () => {
   );
 
   // Prepare participants data for tabs
-  const participantTabsData: Participant[] = storeParticipants.map((p) => ({
-    id: p.id,
-    name: p.name,
-    isYou: p.isYou,
-    activitiesCount: p.selectedActivities.length,
-  }));
+  const participantTabsData: Participant[] = storeParticipants.map((p) => {
+    console.log('[ActivitiesPage] Building participant tab data', {
+      id: p.id,
+      name: p.name,
+      selectedActivities: p.selectedActivities,
+      activitiesCount: p.selectedActivities.length,
+    });
+    return {
+      id: p.id,
+      name: p.name,
+      isYou: p.isYou,
+      activitiesCount: p.selectedActivities.length,
+    };
+  });
 
   const handleParticipantChange = (participantId: string) => {
     setActiveParticipant(participantId);
@@ -336,6 +380,10 @@ const ActivitiesPage = () => {
   const currentActivity = getCurrentStepActivity();
 
   const handleAddPerson = () => {
+    // Save the participant name if provided
+    if (completionName.trim() && activeParticipantId) {
+      updateParticipantName(activeParticipantId, completionName.trim());
+    }
     addParticipant();
     resetActivityFlow();
   };
@@ -419,6 +467,7 @@ const ActivitiesPage = () => {
         activeParticipantId={activeParticipantId}
         onParticipantChange={handleParticipantChange}
         onParticipantNameChange={updateParticipantName}
+        onRemoveParticipant={removeParticipant}
         onCopyChoicesToAll={participantTabsData.length > 1 ? handleCopyChoices : undefined}
       />
 

@@ -207,9 +207,9 @@ export default function AccommodationSelector() {
           </div>
         </div>
 
-        {/* Summary Bar - Single hue family */}
+        {/* Summary Bar - Hidden on Mobile, Desktop only */}
         <div
-          className="flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border"
+          className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border"
           style={{
             backgroundColor: 'var(--brand-surface)',
             borderColor: 'var(--brand-border)'
@@ -251,9 +251,9 @@ export default function AccommodationSelector() {
           </motion.div>
         )}
 
-        {/* Room Cards - One per row, full width */}
+        {/* Room Cards - One per row, full width - Optimized Mobile Spacing */}
         <div
-          className="space-y-4 md:space-y-3 mb-8"
+          className="space-y-6 md:space-y-4 mb-8"
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >

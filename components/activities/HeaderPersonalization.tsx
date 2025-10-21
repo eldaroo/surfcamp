@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Users, Sparkles, Edit2 } from "lucide-react";
+import { Users, Sparkles, Edit2, X } from "lucide-react";
 
 export interface Participant {
   id: string;
@@ -22,6 +22,7 @@ interface HeaderPersonalizationProps {
   activeParticipantId?: string;
   onParticipantChange?: (participantId: string) => void;
   onParticipantNameChange?: (participantId: string, name: string) => void;
+  onRemoveParticipant?: (participantId: string) => void;
   onCopyChoicesToAll?: () => void;
 }
 
@@ -40,6 +41,11 @@ const translations = {
     copyToAll: "Copiar a todos",
     you: "Tú",
     editName: "Editar nombre",
+    removeParticipant: "Eliminar participante",
+    confirmDelete: "¿Estás seguro?",
+    confirmDeleteMessage: "¿Deseas eliminar a este participante? Esta acción no se puede deshacer.",
+    cancel: "Cancelar",
+    delete: "Eliminar",
   },
   en: {
     title: "Personalize your experience",
@@ -53,6 +59,11 @@ const translations = {
     copyToAll: "Copy to all",
     you: "You",
     editName: "Edit name",
+    removeParticipant: "Remove participant",
+    confirmDelete: "Are you sure?",
+    confirmDeleteMessage: "Do you want to remove this participant? This action cannot be undone.",
+    cancel: "Cancel",
+    delete: "Delete",
   },
 };
 
@@ -66,11 +77,13 @@ const HeaderPersonalization = ({
   activeParticipantId,
   onParticipantChange,
   onParticipantNameChange,
+  onRemoveParticipant,
   onCopyChoicesToAll,
 }: HeaderPersonalizationProps) => {
   const t = translations[locale] ?? translations.es;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const summary = useMemo(() => {
     const count = participants;
@@ -102,6 +115,22 @@ const HeaderPersonalization = ({
       setEditingId(null);
       setEditingName("");
     }
+  };
+
+  const handleDeleteClick = (participantId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteConfirmId(participantId);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmId && onRemoveParticipant) {
+      onRemoveParticipant(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   return (
@@ -199,15 +228,26 @@ const HeaderPersonalization = ({
                           {participant.isYou && (
                             <span className="text-xs text-cyan-400">({t.you})</span>
                           )}
-                          {onParticipantNameChange && !participant.isYou && (
-                            <button
-                              onClick={(e) => handleStartEdit(participant, e)}
-                              className="p-1 hover:bg-white/10 rounded transition-colors"
-                              title={t.editName}
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {onParticipantNameChange && !participant.isYou && (
+                              <button
+                                onClick={(e) => handleStartEdit(participant, e)}
+                                className="p-1 hover:bg-white/10 rounded transition-colors"
+                                title={t.editName}
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                            )}
+                            {participantTabs.length > 1 && onRemoveParticipant && (
+                              <button
+                                onClick={(e) => handleDeleteClick(participant.id, e)}
+                                className="p-1 hover:bg-red-500/20 rounded transition-colors group"
+                                title={t.removeParticipant}
+                              >
+                                <X className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-400" />
+                              </button>
+                            )}
+                          </div>
                         </>
                       )}
                       {!isEditing && participant.activitiesCount > 0 && (
@@ -244,6 +284,17 @@ const HeaderPersonalization = ({
                       }
                     `}
                   >
+                    {/* Delete button - top right corner for mobile */}
+                    {participantTabs.length > 1 && onRemoveParticipant && !isEditing && (
+                      <button
+                        onClick={(e) => handleDeleteClick(participant.id, e)}
+                        className="absolute -top-1 -right-1 p-1 bg-slate-800 hover:bg-red-500/20 rounded-full transition-colors group border border-slate-700 z-10"
+                        title={t.removeParticipant}
+                      >
+                        <X className="w-3 h-3 text-slate-400 group-hover:text-red-400" />
+                      </button>
+                    )}
+
                     {isEditing && !participant.isYou ? (
                       <input
                         type="text"
@@ -284,6 +335,68 @@ const HeaderPersonalization = ({
           </div>
         </>
       )}
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCancelDelete}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+            >
+              <div className="flex flex-col gap-4">
+                {/* Title */}
+                <h3 className="text-xl md:text-2xl font-bold text-white">
+                  {t.confirmDelete}
+                </h3>
+
+                {/* Message */}
+                <p className="text-slate-300 text-sm md:text-base">
+                  {t.confirmDeleteMessage}
+                </p>
+
+                {/* Participant name */}
+                {deleteConfirmId && (
+                  <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700/50">
+                    <p className="text-cyan-400 font-semibold">
+                      {participantTabs.find(p => p.id === deleteConfirmId)?.name}
+                    </p>
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex gap-3 mt-2">
+                  <motion.button
+                    onClick={handleCancelDelete}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:border-slate-600 transition-all font-semibold"
+                  >
+                    {t.cancel}
+                  </motion.button>
+                  <motion.button
+                    onClick={handleConfirmDelete}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 hover:border-red-500/70 transition-all font-semibold"
+                  >
+                    {t.delete}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {

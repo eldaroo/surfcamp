@@ -279,17 +279,21 @@ const descriptiveContent = {
     es: {
       description: "Aprende a surfear o mejora tu técnica con coaches certificados. Cada sesión incluye video análisis personalizado.",
       features: [
-        { icon: Timer, text: "2 horas" },
-        { icon: Users, text: "4-6 personas" },
-        { icon: Waves, text: "Todos los niveles" },
+        { icon: Users, text: "Análisis de video personalizado" },
+        { icon: Users, text: "Todo el equipo incluido - tablas, rashguards y transporte" },
+        { icon: Users, text: "Surfea los mejores points locales con tu coach" },
+        { icon: Users, text: "Grupos pequeños (máx. 2 por instructor) para un progreso rápido" },
+        { icon: Users, text: "Coaches de surf certificados enfocados en tu técnica" },
       ],
     },
     en: {
       description: "Learn to surf or improve your technique with certified coaches. Each session includes personalized video analysis.",
       features: [
-        { icon: Timer, text: "2 hours" },
-        { icon: Users, text: "4-6 people" },
-        { icon: Waves, text: "All levels" },
+        { icon: Users, text: "Personalized video analysis" },
+        { icon: Users, text: "All gear included - boards, rashguards & transport" },
+        { icon: Users, text: "Surf top local breaks with your coach" },
+        { icon: Users, text: "Small groups (max 2 per instructor) for fast progress" },
+        { icon: Users, text: "Certified surf coaches focused on your technique" },
       ],
     },
   },
@@ -714,33 +718,36 @@ const ActivityCard = ({
       </div>
 
       {/* Information Section - Two Column Layout */}
-      <div className="flex flex-col md:flex-row md:items-start">
+      <div className="flex flex-col md:flex-row md:items-start md:flex-1">
 
         {/* Left Column (65-70%) - Information */}
-        <div className="flex flex-col flex-1 md:flex-[7] px-6 md:px-10 py-6 md:py-8 gap-6 md:gap-7">
+        <div className="flex flex-col flex-1 md:flex-[7] px-6 md:px-10 py-5 md:py-8 gap-5 md:gap-7">
 
-          {/* 1. Description (1-2 lines) */}
+          {/* 1. Description */}
           {descriptive && (
             <p className="text-sm md:text-base leading-relaxed text-slate-300/90 font-light">
               {descriptive.description}
             </p>
           )}
 
-          {/* 2. Info Tags */}
+          {/* 2. Features - Bullet Points with Golden Checkmarks */}
           {descriptive && (
-            <div className="flex flex-wrap items-center gap-3">
-              {descriptive.features.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 text-xs md:text-sm text-slate-300 bg-slate-800/30 px-3 md:px-4 py-2 md:py-2.5 rounded-full border border-slate-700/40"
-                  >
-                    <Icon className="h-4 w-4 flex-shrink-0 text-amber-300/70" />
-                    <span className="font-medium">{feature.text}</span>
+            <div className="space-y-1.5 md:space-y-2.5">
+              {descriptive.features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-2 md:gap-3"
+                >
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
                   </div>
-                );
-              })}
+                  <span className="text-sm md:text-base text-slate-200 font-light leading-snug md:leading-relaxed">
+                    {feature.text}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
 
@@ -756,66 +763,69 @@ const ActivityCard = ({
         </div>
 
         {/* Right Column (30-35%) - Action Block */}
-        <div className="md:flex-[3] md:border-l border-slate-700/40 px-6 md:px-8 py-6 md:py-8 bg-slate-800/10 md:bg-transparent">
-          <div className="flex flex-col items-center gap-5 md:gap-6 md:sticky md:top-8">
+        <div className="md:flex-[3] md:border-l border-slate-700/40 px-6 md:px-8 py-5 md:py-8 bg-slate-800/10 md:bg-transparent">
+          <div className="flex flex-col gap-4 md:gap-6 md:sticky md:top-8 h-full">
 
-            {/* Price */}
-            <div className="w-full text-center space-y-2">
-              <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total</p>
-              <motion.div
-                className="text-3xl md:text-4xl font-bold text-slate-50"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3 }}
+            {/* Top Section - Price and Choose Button */}
+            <div className="flex flex-col items-center gap-4 md:gap-6">
+              {/* Price */}
+              <div className="w-full text-center space-y-2">
+                <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total</p>
+                <motion.div
+                  className="text-3xl md:text-4xl font-bold text-slate-50"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {formatPrice(price)}
+                </motion.div>
+                {participants > 1 && typeof pricePerPerson === "number" && (
+                  <p className="text-xs text-slate-400 font-medium">
+                    {formatPrice(pricePerPerson)} {copy.perPerson}
+                  </p>
+                )}
+              </div>
+
+              {/* Choose Button */}
+              <motion.button
+                type="button"
+                onClick={handleChoose}
+                disabled={isChoosing}
+                whileHover={!isChoosing ? { scale: 1.02 } : {}}
+                whileTap={!isChoosing ? { scale: 0.98 } : {}}
+                animate={isChoosing ? {
+                  scale: [1, 1.05, 1],
+                } : {}}
+                transition={{ duration: 0.15 }}
+                className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                  isChoosing
+                    ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
+                    : hasInteracted
+                      ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
+                      : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
+                }`}
               >
-                {formatPrice(price)}
-              </motion.div>
-              {participants > 1 && typeof pricePerPerson === "number" && (
-                <p className="text-xs text-slate-400 font-medium">
-                  {formatPrice(pricePerPerson)} {copy.perPerson}
-                </p>
+                {isChoosing ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span>{copy.chosen}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{copy.choose}</span>
+                    <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                  </>
+                )}
+              </motion.button>
+
+              {/* Selected indicator */}
+              {isSelected && (
+                <div className="flex items-center gap-1.5 text-xs text-amber-300 font-medium">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{copy.chosen}</span>
+                </div>
               )}
             </div>
-
-            {/* Choose Button */}
-            <motion.button
-              type="button"
-              onClick={handleChoose}
-              disabled={isChoosing}
-              whileHover={!isChoosing ? { scale: 1.02 } : {}}
-              whileTap={!isChoosing ? { scale: 0.98 } : {}}
-              animate={isChoosing ? {
-                scale: [1, 1.05, 1],
-              } : {}}
-              transition={{ duration: 0.15 }}
-              className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
-                isChoosing
-                  ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
-                  : hasInteracted
-                    ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
-                    : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
-              }`}
-            >
-              {isChoosing ? (
-                <>
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span>{copy.chosen}</span>
-                </>
-              ) : (
-                <>
-                  <span>{copy.choose}</span>
-                  <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
-                </>
-              )}
-            </motion.button>
-
-            {/* Selected indicator */}
-            {isSelected && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-300 font-medium">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>{copy.chosen}</span>
-              </div>
-            )}
 
             {/* Social Proof (Surf only) - Moved here, below Choose button */}
             {isSurf && ratingValue && (
@@ -836,10 +846,19 @@ const ActivityCard = ({
 
                 {/* Testimonial */}
                 {testimonials && (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center line-clamp-2">
                       "{testimonials[currentTestimonialIndex].text}"
                     </p>
+                    {/* Author & Country */}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <p className="text-[11px] md:text-xs font-semibold text-amber-300/90">
+                        {testimonials[currentTestimonialIndex].author}
+                      </p>
+                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-500 font-medium">
+                        {testimonials[currentTestimonialIndex].country}
+                      </p>
+                    </div>
                     {/* Dots */}
                     <div className="flex items-center justify-center gap-1.5">
                       {testimonials.map((_, idx) => (
@@ -864,15 +883,16 @@ const ActivityCard = ({
 
                 {/* Trust message */}
                 {trustMessage && (
-                  <p className="text-[10px] md:text-xs text-slate-400/60 font-light text-center">
+                  <p className="text-xs md:text-sm text-slate-300/80 font-medium text-center">
                     {trustMessage}
                   </p>
                 )}
               </div>
             )}
 
-            {/* Navigation Buttons (Skip/Back) - Hidden on mobile */}
-            {(onSkip || onBack) && (
+
+            {/* Navigation Buttons for Surf (maintains original vertical layout) */}
+            {isSurf && (onSkip || onBack) && (
               <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-slate-700/30 flex-col gap-3">
                 {/* Back Button */}
                 {!isFirstStep && onBack && (
@@ -914,54 +934,55 @@ const ActivityCard = ({
         </div>
       </div>
 
-      {/* Mobile Sticky Bottom Bar (Price + CTA) */}
-      <div className="md:hidden sticky bottom-0 left-0 right-0 border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-md px-6 py-4 flex items-center justify-between gap-4 shadow-2xl z-10">
-        {/* Price */}
-        <div className="flex flex-col">
-          <span className="text-xs text-slate-400 uppercase tracking-wide font-medium">Total</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-50">
-              {formatPrice(price)}
-            </span>
-            {participants > 1 && typeof pricePerPerson === "number" && (
-              <span className="text-xs text-slate-400 font-medium">
-                {formatPrice(pricePerPerson)} {copy.perPerson}
-              </span>
-            )}
+      {/* Desktop Footer - Navigation for non-Surf cards */}
+      {!isSurf && (onSkip || onBack) && (
+        <div className="hidden md:block border-t border-slate-700/40 px-6 md:px-10 py-5 md:py-6">
+          <div className="flex items-center justify-between">
+            {/* Left Side - Back and Skip */}
+            <div className="flex items-center gap-6">
+              {/* Back Button */}
+              {!isFirstStep && onBack && (
+                <motion.button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onBack) onBack();
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>{copy.back}</span>
+                </motion.button>
+              )}
+
+              {/* Skip Button */}
+              {onSkip && (
+                <motion.button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSkip) onSkip();
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  {copy.skip}
+                </motion.button>
+              )}
+            </div>
+
+            {/* Right Side - Spacer (Choose button is in the right column above) */}
+            <div />
           </div>
         </div>
+      )}
 
-        {/* Choose Button */}
-        <motion.button
-          type="button"
-          onClick={handleChoose}
-          disabled={isChoosing}
-          whileHover={!isChoosing ? { scale: 1.02 } : {}}
-          whileTap={!isChoosing ? { scale: 0.98 } : {}}
-          animate={isChoosing ? {
-            scale: [1, 1.05, 1],
-          } : {}}
-          transition={{ duration: 0.15 }}
-          className={`rounded-2xl px-6 py-3 text-sm font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 whitespace-nowrap ${
-            isChoosing
-              ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
-              : hasInteracted
-                ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60"
-                : "bg-[#FDCB2E] text-slate-900 shadow-md"
-          }`}
-        >
-          {isChoosing ? (
-            copy.chosen
-          ) : (
-            <>
-              {copy.choose}
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </motion.button>
-      </div>
-
-      {/* Navigation Buttons (Skip/Back) - Mobile only, below bottom bar */}
+      {/* Navigation Buttons (Skip/Back) - Mobile only */}
       {(onSkip || onBack) && (
         <div className="md:hidden border-t border-slate-700/40 bg-slate-800/10 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
