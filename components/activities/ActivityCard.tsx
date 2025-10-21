@@ -575,8 +575,7 @@ const ActivityCard = ({
         <div className="flex items-center justify-center gap-4 md:gap-5">
           <motion.button
             type="button"
-            onClick={() => handleQuantityChange(Math.max(1, quantity - 1))}
-            whileHover={{ scale: 1.1 }}
+whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
             className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
           >

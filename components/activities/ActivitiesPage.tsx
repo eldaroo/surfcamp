@@ -627,7 +627,7 @@ const ActivitiesPage = () => {
             data-activity-card-container
             initial={{
               opacity: 0,
-              x: activityFlowDirection === 'forward' ? 120 : -120,
+              x: activityFlowDirection === 'forward' ? 30 : -30,
             }}
             animate={{
               opacity: 1,

@@ -152,22 +152,16 @@ export default function HomePage() {
     <div className="min-h-screen">
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-8"
-          />
+
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.25 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
             className="w-full"
           >
             <motion.div
               className="organic-hover"
-              whileHover={{ y: -5 }}
               transition={{ duration: 0.3 }}
             >
               {content}

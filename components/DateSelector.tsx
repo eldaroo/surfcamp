@@ -150,6 +150,7 @@ export default function DateSelector() {
     if (room.availableRooms > 0) {
       setSelectedRoom(room);
       setBookingData({ roomTypeId: room.roomTypeId });
+      setCurrentStep('contact');
     }
   };
 
@@ -278,73 +279,98 @@ export default function DateSelector() {
             className="card"
           >
             <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Check-in Date */}
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              {t('dates.checkIn')} *
-            </label>
-            <CustomDatePicker
-              selected={checkInDate}
-              onChange={(date) => {
-                setBookingData({ ...bookingData, checkIn: date || undefined });
-              }}
-              placeholderText={t('dates.checkIn')}
-              minDate={new Date()}
-              maxDate={checkOutDate || undefined}
-            />
-          </div>
-
-          {/* Check-out Date */}
-          <div>
-            <label className="block text-sm font-medium text-white mb-2">
-              {t('dates.checkOut')} *
-            </label>
-            <CustomDatePicker
-              selected={checkOutDate}
-              onChange={(date) => {
-                setBookingData({ ...bookingData, checkOut: date || undefined });
-              }}
-              placeholderText={t('dates.checkOut')}
-              minDate={checkInDate || new Date()}
-            />
-          </div>
-        </div>
-
-        {/* Guests Counter */}
-        <div>
-          <label className="block text-sm font-medium text-white mb-2">
-            {t('dates.guests')}
-          </label>
-          <div className="flex items-center space-x-4">
-            <button
-              type="button"
-              onClick={() => {
-                const newGuests = Math.max(1, guests - 1);
-                setBookingData({ guests: newGuests });
-              }}
-              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-            >
-              <span className="text-white">-</span>
-            </button>
-            <span className="text-2xl font-bold text-blue-400 w-12 text-center">
-              {guests}
+        {(bookingData.checkIn && bookingData.checkOut) ? (
+          <div className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border border-slate-700/50 bg-slate-800/50">
+            <span className="text-sm font-medium text-slate-300">
+              {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
+            </span>
+            <span className="text-sm text-slate-500">→</span>
+            <span className="text-sm font-medium text-slate-300">
+              {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
+            </span>
+            <span className="text-sm text-slate-500">•</span>
+            <span className="text-sm font-medium text-slate-300">
+              {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests')}
             </span>
             <button
               type="button"
-              onClick={() => {
-                const newGuests = Math.min(5, guests + 1);
-                setBookingData({ guests: newGuests });
-              }}
-              className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+              onClick={() => setBookingData({ checkIn: undefined, checkOut: undefined, guests: 1 })}
+              className="ml-auto px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
             >
-              <span className="text-white">+</span>
+              {t('common.edit')}
             </button>
-            <span className="text-yellow-300">
-              {guests === 1 ? t('dates.guest') : t('dates.guests')}
-            </span>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Check-in Date */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  {t('dates.checkIn')} *
+                </label>
+                <CustomDatePicker
+                  selected={checkInDate}
+                  onChange={(date) => {
+                    setBookingData({ ...bookingData, checkIn: date || undefined });
+                  }}
+                  placeholderText={t('dates.checkIn')}
+                  minDate={new Date()}
+                  maxDate={checkOutDate || undefined}
+                />
+              </div>
+
+              {/* Check-out Date */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  {t('dates.checkOut')} *
+                </label>
+                <CustomDatePicker
+                  selected={checkOutDate}
+                  onChange={(date) => {
+                    setBookingData({ ...bookingData, checkOut: date || undefined });
+                  }}
+                  placeholderText={t('dates.checkOut')}
+                  minDate={checkInDate || new Date()}
+                />
+              </div>
+            </div>
+
+            {/* Guests Counter */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                {t('dates.guests')}
+              </label>
+              <div className="flex items-center space-x-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newGuests = Math.max(1, guests - 1);
+                    setBookingData({ guests: newGuests });
+                  }}
+                  className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+                >
+                  <span className="text-white">-</span>
+                </button>
+                <span className="text-2xl font-bold text-blue-400 w-12 text-center">
+                  {guests}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newGuests = Math.min(5, guests + 1);
+                    setBookingData({ guests: newGuests });
+                  }}
+                  className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+                >
+                  <span className="text-white">+</span>
+                </button>
+                <span className="text-yellow-300">
+                  {guests === 1 ? t('dates.guest') : t('dates.guests')}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Summary */}
         {(bookingData.checkIn || bookingData.checkOut) && (
@@ -542,34 +568,7 @@ export default function DateSelector() {
                 </>
               )}
 
-              {/* CTA Button - Compact */}
-              {(accommodationTotal > 0 || activitiesTotal > 0) && (
-                <button
-                  disabled={!selectedRoom}
-                  onClick={() => {
-                    if (selectedRoom) {
-                      setCurrentStep('contact');
-                    }
-                  }}
-                  className={`
-                    w-full px-4 py-2.5 rounded-lg text-[14px] font-semibold
-                    transition-all duration-200
-                    ${selectedRoom
-                      ? 'hover:shadow-lg'
-                      : 'cursor-not-allowed opacity-60'
-                    }
-                  `}
-                  style={{
-                    backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
-                    color: selectedRoom ? 'black' : 'var(--brand-text-dim)'
-                  }}
-                >
-                  {selectedRoom
-                    ? (locale === 'es' ? 'Continuar' : 'Continue')
-                    : (locale === 'es' ? 'Completa la selección' : 'Complete Selection')
-                  }
-                </button>
-              )}
+
 
               {/* Empty State */}
               {!bookingData.checkIn && !bookingData.checkOut && activitiesTotal === 0 && (
@@ -739,34 +738,7 @@ export default function DateSelector() {
                     })}
                   </div>
 
-                  {/* CTA Button */}
-                  {(accommodationTotal > 0 || activitiesTotal > 0) && (
-                    <button
-                      disabled={!selectedRoom}
-                      onClick={() => {
-                        if (selectedRoom) {
-                          setCurrentStep('contact');
-                        }
-                      }}
-                      className={`
-                        w-full px-4 py-2.5 rounded-lg text-[14px] font-semibold
-                        transition-all duration-200
-                        ${selectedRoom
-                          ? 'hover:shadow-lg'
-                          : 'cursor-not-allowed opacity-60'
-                        }
-                      `}
-                      style={{
-                        backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
-                        color: selectedRoom ? 'black' : 'var(--brand-text-dim)'
-                      }}
-                    >
-                      {selectedRoom
-                        ? (locale === 'es' ? 'Continuar' : 'Continue')
-                        : (locale === 'es' ? 'Completa la selección' : 'Complete Selection')
-                      }
-                    </button>
-                  )}
+
                 </div>
               </motion.div>
             )}
