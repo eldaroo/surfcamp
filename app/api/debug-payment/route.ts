@@ -15,7 +15,7 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const tripId = searchParams.get('trip_id');
     const orderId = searchParams.get('order_id');
 
