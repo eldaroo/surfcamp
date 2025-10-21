@@ -1,14 +1,7 @@
-/* Importar solo las fuentes Roboto y Bochan Serif local */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-/* Definir fuente local Bochan Serif */
-@font-face {
-  font-family: 'Bochan Serif';
-  src: url('/fonts/BochanSerif.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* Fonts are loaded via next/font in layout.tsx and available as CSS variables:
+   --font-roboto (Google Font)
+   --font-bochan (Local font: BochanSerif.ttf)
+*/
 
 @tailwind base;
 @tailwind components;
@@ -34,7 +27,7 @@
   /* Fuente base para todo el body */
   body {
     @apply antialiased;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-roboto), sans-serif;
     font-weight: 400;
     color: white;
     background-color: var(--brand-bg);
@@ -42,26 +35,26 @@
 
   /* Fuente para todos los headings */
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Bochan Serif', serif;
+    font-family: var(--font-bochan), serif;
     font-weight: 600;
     color: white;
   }
 
   /* Asegurar que los párrafos usen Roboto */
   p, div, button, input, label, a {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-roboto), sans-serif;
     color: white;
   }
 
   /* Los span usan Roboto por defecto, pero pueden ser sobrescritos por clases específicas */
   span {
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-roboto), sans-serif;
     color: white;
   }
 
   /* Clases de utilidad para fuentes */
   .font-heading {
-    font-family: 'Bochan Serif', serif !important;
+    font-family: var(--font-bochan), serif !important;
     font-weight: 600;
     color: white;
   }
@@ -76,22 +69,22 @@
   h5.font-heading,
   h6.font-heading,
   span.font-heading {
-    font-family: 'Bochan Serif', serif !important;
+    font-family: var(--font-bochan), serif !important;
   }
 
   .font-body {
-    font-family: 'Roboto', sans-serif !important;
+    font-family: var(--font-roboto), sans-serif !important;
     font-weight: 400;
     color: white;
   }
 
   .font-roboto {
-    font-family: 'Roboto', sans-serif !important;
+    font-family: var(--font-roboto), sans-serif !important;
     color: white;
   }
 
   .font-bochan {
-    font-family: 'Bochan Serif', serif !important;
+    font-family: var(--font-bochan), serif !important;
     color: white;
   }
 }
@@ -201,21 +194,21 @@
   }
 
   .font-heading {
-    font-family: 'Bochan Serif', serif !important;
+    font-family: var(--font-bochan), serif !important;
     font-weight: 600;
   }
 
   .font-body {
-    font-family: 'Roboto', sans-serif !important;
+    font-family: var(--font-roboto), sans-serif !important;
     font-weight: 400;
   }
 
   .font-roboto {
-    font-family: 'Roboto', sans-serif !important;
+    font-family: var(--font-roboto), sans-serif !important;
   }
 
   .font-bochan {
-    font-family: 'Bochan Serif', serif !important;
+    font-family: var(--font-bochan), serif !important;
   }
 
   /* Estilos para tarjetas en tema oscuro */
@@ -389,4 +382,151 @@ input[type="date"]::-webkit-datetime-edit {
 
 input[type="date"]::-webkit-datetime-edit-text {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-} 
+}
+
+/* Activity Card Enhancements - Range Input Styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Range slider track - WebKit */
+input[type="range"]::-webkit-slider-track {
+  height: 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+/* Range slider track - Firefox */
+input[type="range"]::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb - WebKit */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(251 191 36) 0%, rgb(245 158 11) 100%);
+  border: 3px solid rgb(15 23 42);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4), 0 0 0 2px rgba(251, 191, 36, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb - Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(251 191 36) 0%, rgb(245 158 11) 100%);
+  border: 3px solid rgb(15 23 42);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4), 0 0 0 2px rgba(251, 191, 36, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb hover effects - WebKit */
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.6), 0 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Range slider thumb hover effects - Firefox */
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.6), 0 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Range slider thumb active effects - WebKit */
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.5), 0 0 0 3px rgba(251, 191, 36, 0.25);
+}
+
+/* Range slider thumb active effects - Firefox */
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.5), 0 0 0 3px rgba(251, 191, 36, 0.25);
+}
+
+/* Activity Card flip animations */
+@media (prefers-reduced-motion: reduce) {
+  .flip-card-inner {
+    transition: none !important;
+  }
+}
+
+/* Smooth scroll for mobile cards */
+@media (max-width: 768px) {
+  .activity-card-container {
+    scroll-snap-type: y mandatory;
+    scroll-padding: 24px;
+  }
+
+  .activity-card-item {
+    scroll-snap-align: start;
+  }
+}
+
+/* Enhanced shadow effects for cards */
+.card-shadow-enhanced {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.card-shadow-enhanced:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.15),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(251, 191, 36, 0.1);
+}
+
+/* Typography scale improvements */
+@media (max-width: 640px) {
+  .text-responsive-sm {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+  }
+
+  .text-responsive-base {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  }
+
+  .text-responsive-2xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+}
+
+/* Touch target improvements for mobile */
+@media (max-width: 768px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Backdrop blur support fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .md\:backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-md {
+    background-color: rgba(15, 23, 42, 0.95);
+  }
+}

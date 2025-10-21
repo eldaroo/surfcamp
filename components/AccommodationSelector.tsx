@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import BackButton from './BackButton';
+import AccommodationCard from './AccommodationCard';
 
 export default function AccommodationSelector() {
   const { t, locale } = useI18n();
@@ -206,9 +207,9 @@ export default function AccommodationSelector() {
           </div>
         </div>
 
-        {/* Summary Bar - Single hue family */}
+        {/* Summary Bar - Hidden on Mobile, Desktop only */}
         <div
-          className="flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border"
+          className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border"
           style={{
             backgroundColor: 'var(--brand-surface)',
             borderColor: 'var(--brand-border)'
@@ -250,16 +251,14 @@ export default function AccommodationSelector() {
           </motion.div>
         )}
 
-        {/* Room Cards Grid - Radio Group */}
+        {/* Room Cards - One per row, full width - Optimized Mobile Spacing */}
         <div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+          className="space-y-6 md:space-y-4 mb-8"
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >
           {availableRooms?.map((room: RoomFromAPI) => {
             const features = getRoomFeatures(room.roomTypeId);
-            const visibleFeatures = features.slice(0, 3);
-            const hiddenCount = features.length - 3;
             const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
             const isUnavailable = room.availableRooms === 0;
             const roomPrice = room.isSharedRoom ? room.pricePerNight * (bookingData.guests || 1) : room.pricePerNight;
@@ -268,187 +267,21 @@ export default function AccommodationSelector() {
               : room.pricePerNight * nights;
 
             return (
-              <article
+              <AccommodationCard
                 key={room.roomTypeId}
-                role="radio"
-                aria-checked={isSelected}
-                tabIndex={isUnavailable ? -1 : 0}
-                onKeyDown={(e) => !isUnavailable && handleKeyDown(e, room)}
-                onClick={() => !isUnavailable && handleRoomSelect(room)}
-                className={`
-                  rounded-2xl p-6 border shadow-none transition-all duration-200
-                  grid grid-rows-[auto,1fr,auto] h-full
-                  focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--brand-aqua)_40%,transparent)] focus-visible:outline-none
-                  ${isUnavailable
-                    ? 'opacity-50 cursor-not-allowed'
-                    : isSelected
-                      ? 'cursor-pointer'
-                      : 'cursor-pointer hover:-translate-y-0.5 hover:ring-1 hover:ring-[color-mix(in_srgb,var(--brand-gold)_25%,transparent)]'
-                  }
-                `}
-                style={{
-                  backgroundColor: 'var(--brand-surface)',
-                  borderColor: 'var(--brand-border)',
-                  boxShadow: isSelected
-                    ? '0 14px 36px -14px rgba(242,193,78,0.32)'
-                    : !isUnavailable
-                      ? undefined
-                      : 'none',
-                  ...(isSelected && {
-                    '--tw-ring-width': '2px',
-                    '--tw-ring-color': 'color-mix(in srgb, var(--brand-gold) 50%, transparent)',
-                    boxShadow: '0 0 0 var(--tw-ring-width) var(--tw-ring-color), 0 14px 36px -14px rgba(242,193,78,0.32)',
-                  }),
-                  ...((!isUnavailable && !isSelected) && {
-                    ':hover': {
-                      boxShadow: '0 10px 28px -12px rgba(242,193,78,0.25)'
-                    }
-                  })
-                }}
-                onMouseEnter={(e) => {
-                  if (!isUnavailable && !isSelected) {
-                    e.currentTarget.style.boxShadow = '0 10px 28px -12px rgba(242,193,78,0.25)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isUnavailable && !isSelected) {
-                    e.currentTarget.style.boxShadow = 'none';
-                  }
-                }}
-              >
-                {/* Header Row - Title + Price Badge */}
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-[22px] font-bold text-white font-heading pr-3">
-                    {room.roomTypeName}
-                  </h3>
-                  <div
-                    className="rounded-full px-3 py-1 text-sm font-semibold whitespace-nowrap"
-                    style={{ backgroundColor: 'var(--brand-gold)', color: '#1a1a1a' }}
-                  >
-                    ${roomPrice}
-                    <span className="font-medium" style={{ color: '#1f1f1f' }}> / night</span>
-                  </div>
-                </div>
-
-                {/* Content Area */}
-                <div className="space-y-4">
-                  {/* Availability + Capacity Row */}
-                  <div className="flex items-center justify-between">
-                    <div
-                      className="rounded-full px-3 py-1 text-white text-xs font-medium border"
-                      style={{
-                        backgroundColor: 'color-mix(in srgb, var(--brand-aqua) 18%, transparent)',
-                        borderColor: 'color-mix(in srgb, var(--brand-aqua) 40%, transparent)'
-                      }}
-                    >
-                      {room.availableRooms} {room.availableRooms === 1 ? 'available' : 'available'}
-                    </div>
-
-                    <div className="flex items-center text-[var(--brand-text-dim)] text-[12px] font-medium">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {room.maxGuests} {room.maxGuests === 1 ? t('accommodation.guest') : t('accommodation.guestsPlural')}
-                    </div>
-                  </div>
-
-                  {/* Feature Tags - Max 3 visible */}
-                  <div className="flex flex-wrap gap-2">
-                    {visibleFeatures.map((feature, index) => (
-                      <span
-                        key={index}
-                        className={getFeatureChipStyle(feature.color)}
-                      >
-                        {feature.label}
-                      </span>
-                    ))}
-                    {hiddenCount > 0 && (
-                      <span
-                        className="px-2 py-1 rounded-full text-xs font-medium border"
-                        style={{
-                          backgroundColor: 'color-mix(in srgb, white 5%, transparent)',
-                          borderColor: 'color-mix(in srgb, var(--brand-border) 60%, transparent)',
-                          color: 'color-mix(in srgb, white 80%, transparent)'
-                        }}
-                      >
-                        +{hiddenCount}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Room Description - Clamped to 2 lines */}
-                  <p
-                    className="text-[15px] leading-relaxed overflow-hidden"
-                    style={{
-                      color: 'var(--brand-text-dim)',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical'
-                    }}
-                  >
-                    {t(`accommodation.roomDescriptions.${room.roomTypeId}`)}
-                  </p>
-                </div>
-
-                {/* Price Block - Aligned Bottom */}
-                <div className="mt-5">
-                  {/* Meta Row */}
-                  <div className="flex justify-between text-[12px] text-[var(--brand-text-dim)] mb-2">
-                    <span>per night</span>
-                    <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
-                  </div>
-
-                  {/* Total Row */}
-                  <div
-                    className="border-t pt-3 flex justify-between items-center"
-                    style={{ borderColor: 'color-mix(in srgb, var(--brand-border) 60%, transparent)' }}
-                  >
-                    <span className="text-sm text-[var(--brand-text-dim)]">Total</span>
-                    <span className="text-[20px] font-bold text-[var(--brand-gold)]">
-                      ${totalPrice}
-                    </span>
-                  </div>
-
-                  {/* In-card Action Button */}
-                  <div className="mt-3">
-                    {isSelected ? (
-                      <button
-                        className="w-full rounded-full px-5 py-2 font-semibold hover:shadow-lg transition-all"
-                        style={{
-                          backgroundColor: 'var(--brand-gold)',
-                          color: 'black'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                        }}
-                      >
-                        ✓ Selected
-                      </button>
-                    ) : (
-                      <button
-                        className="w-full rounded-full px-5 py-2 font-semibold border bg-transparent transition-all"
-                        style={{
-                          borderColor: 'var(--brand-gold)',
-                          color: 'var(--brand-gold)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--brand-gold) 10%, transparent)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          !isUnavailable && handleRoomSelect(room);
-                        }}
-                        disabled={isUnavailable}
-                      >
-                        {isUnavailable ? 'Unavailable' : 'Select Room'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
+                room={room}
+                isSelected={isSelected}
+                isUnavailable={isUnavailable}
+                nights={nights}
+                guests={bookingData.guests || 1}
+                roomPrice={roomPrice}
+                totalPrice={totalPrice}
+                features={features}
+                description={t(`accommodation.roomDescriptions.${room.roomTypeId}`)}
+                locale={locale}
+                onSelect={() => handleRoomSelect(room)}
+                getFeatureChipStyle={getFeatureChipStyle}
+              />
             );
           })}
         </div>

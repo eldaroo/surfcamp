@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
@@ -19,6 +20,36 @@ const pluralize = (count: number, singular: string, plural: string): string => {
   return count === 1 ? singular : plural;
 };
 
+// Get activity price with package info for a specific participant
+const getActivityDetailsForParticipant = (activity: any, participant: any) => {
+  let price = 0;
+  let packageInfo = '';
+  let unitLabel = '';
+
+  if (activity.category === 'yoga') {
+    const yogaPackage = participant.selectedYogaPackages[activity.id];
+    if (yogaPackage) {
+      price = getActivityTotalPrice('yoga', yogaPackage);
+      packageInfo = yogaPackage;
+      // Extract number from package (e.g., "4-classes" -> "4 classes")
+      const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
+      unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
+    }
+  } else if (activity.category === 'surf') {
+    const surfClasses = participant.selectedSurfClasses[activity.id];
+    // If surfClasses is not defined for this participant, default to 4
+    const classes = surfClasses !== undefined ? surfClasses : 4;
+    price = calculateSurfPrice(classes);
+    packageInfo = `${classes} classes`;
+    unitLabel = `${classes} × ${formatCurrency(calculateSurfPrice(classes) / classes)} / class`;
+  } else {
+    price = activity.price || 0;
+    unitLabel = `1 × ${formatCurrency(price)} / activity`;
+  }
+
+  return { price, packageInfo, unitLabel };
+};
+
 export default function PriceSummary() {
   const { t, locale } = useI18n();
   const {
@@ -28,7 +59,8 @@ export default function PriceSummary() {
     priceBreakdown,
     selectedYogaPackages,
     selectedSurfPackages,
-    selectedSurfClasses
+    selectedSurfClasses,
+    participants
   } = useBookingStore();
 
   // Default translations with fallbacks
@@ -47,33 +79,29 @@ export default function PriceSummary() {
     ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
-  // Get activity price with package info
-  const getActivityDetails = (activity: any) => {
-    let price = 0;
-    let packageInfo = '';
-    let unitLabel = '';
+  // Build list of all activity selections grouped by participant
+  const allActivitySelections = useMemo(() => {
+    const selections: Array<{
+      activity: any;
+      participant: any;
+      price: number;
+      packageInfo: string;
+      unitLabel: string;
+    }> = [];
 
-    if (activity.category === 'yoga') {
-      const yogaPackage = selectedYogaPackages[activity.id];
-      if (yogaPackage) {
-        price = getActivityTotalPrice('yoga', yogaPackage);
-        packageInfo = yogaPackage;
-        // Extract number from package (e.g., "4-classes" -> "4 classes")
-        const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
-        unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
-      }
-    } else if (activity.category === 'surf') {
-      const surfClasses = selectedSurfClasses[activity.id] || 4;
-      price = calculateSurfPrice(surfClasses) * (bookingData.guests || 1);
-      packageInfo = `${surfClasses}-classes`;
-      unitLabel = `${surfClasses} × ${formatCurrency(calculateSurfPrice(surfClasses) / surfClasses)} / class`;
-    } else {
-      price = activity.price || 0;
-      unitLabel = `1 × ${formatCurrency(price)} / activity`;
-    }
+    participants.forEach(participant => {
+      participant.selectedActivities.forEach(activity => {
+        const details = getActivityDetailsForParticipant(activity, participant);
+        selections.push({
+          activity,
+          participant,
+          ...details
+        });
+      });
+    });
 
-    return { price, packageInfo, unitLabel };
-  };
+    return selections;
+  }, [participants]);
 
   // Calculate totals
   const accommodationTotal = selectedRoom && nights > 0
@@ -82,9 +110,8 @@ export default function PriceSummary() {
         : selectedRoom.pricePerNight * nights)
     : 0;
 
-  const activitiesTotal = selectedActivities.reduce((sum: number, activity: any) => {
-    const { price } = getActivityDetails(activity);
-    return sum + price;
+  const activitiesTotal = allActivitySelections.reduce((sum, selection) => {
+    return sum + selection.price;
   }, 0);
 
   const subtotal = accommodationTotal + activitiesTotal;
@@ -225,12 +252,13 @@ export default function PriceSummary() {
           </li>
         )}
 
-        {/* Activities */}
-        {selectedActivities.map((activity: any) => {
-          const { price, packageInfo, unitLabel } = getActivityDetails(activity);
+        {/* Activities - showing each participant's selections */}
+        {allActivitySelections.map((selection, index) => {
+          const { activity, participant, price, packageInfo } = selection;
+          const showParticipantName = participants.length > 1;
 
           return (
-            <li key={activity.id}>
+            <li key={`${participant.id}-${activity.id}-${index}`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1 pr-4">
                   <div
@@ -250,12 +278,12 @@ export default function PriceSummary() {
                       </span>
                     )}
                   </div>
-                  {unitLabel && (
+                  {showParticipantName && (
                     <div
                       className="text-[12px] mt-1"
                       style={{ color: 'var(--brand-text-dim)' }}
                     >
-                      {unitLabel}
+                      {participant.name}
                     </div>
                   )}
                 </div>
