@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Activity, LobbyPMSReservationRequest } from '@/types';
 import { generateBookingReference } from '@/lib/utils';
-import { lobbyPMSClient } from '@/lib/lobbypms';
+import { lobbyPMSClient, LobbyPMSCustomerPayload } from '@/lib/lobbypms';
 import {
   sendBookingConfirmation,
   sendWhatsAppMessage,
@@ -309,7 +309,7 @@ export async function POST(request: NextRequest) {
           email: contactInfo.email
         });
 
-        const customerPayload: Record<string, any> = {
+        const customerPayload: LobbyPMSCustomerPayload = {
           customer_document: contactInfo.dni,
           customer_nationality: contactInfo?.nationality || 'ES',
           name: contactInfo.firstName,

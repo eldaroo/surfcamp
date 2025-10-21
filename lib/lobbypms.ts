@@ -293,21 +293,23 @@ export class LobbyPMSClient {
   /**
    * Create or ensure a customer exists in LobbyPMS
    */
-  async createCustomer(customer: {
-    customer_document: string;
-    customer_nationality: string;
-    name: string;
-    surname?: string;
-    second_surname?: string;
-    phone?: string;
-    email?: string;
-    note?: string;
-    gender?: 'male' | 'female';
-    birthdate?: string;
-    document_id?: string;
-    address?: string;
-    activities?: string;
-  }): Promise<any> {
+export interface LobbyPMSCustomerPayload {
+  customer_document: string;
+  customer_nationality: string;
+  name: string;
+  surname?: string;
+  second_surname?: string;
+  phone?: string;
+  email?: string;
+  note?: string;
+  gender?: 'male' | 'female';
+  birthdate?: string;
+  document_id?: string;
+  address?: string;
+  activities?: string;
+}
+
+  async createCustomer(customer: LobbyPMSCustomerPayload): Promise<any> {
     const endpoint = '/customer/1'; // 1 => Persona
 
     try {
