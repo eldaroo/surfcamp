@@ -464,8 +464,7 @@ export default function DateSelector() {
                           className="text-[13px] font-medium"
                           style={{ color: 'var(--brand-text)' }}
                         >
-                          {selectedRoom.roomTypeName}
-                        </div>
+                                                        {t(`accommodation.roomTypes.${selectedRoom.roomTypeId}.name`)}                        </div>
                         <div
                           className="text-[11px] mt-0.5"
                           style={{ color: 'var(--brand-text-dim)' }}
@@ -685,7 +684,7 @@ export default function DateSelector() {
                               className="text-[13px] font-medium"
                               style={{ color: 'var(--brand-text)' }}
                             >
-                              {selectedRoom.roomTypeName}
+                            {t(`accommodation.roomTypes.${selectedRoom.roomTypeId}.name`)}
                             </div>
                             <div
                               className="text-[11px] mt-0.5"
@@ -811,20 +810,11 @@ export default function DateSelector() {
             )}
 
             {/* Room Cards */}
+            {console.log('DEBUG: loadingRooms', loadingRooms, 'availableRooms', availableRooms?.length)}
             {!loadingRooms && availableRooms && availableRooms.length > 0 && (
               <>
-                <style jsx>{`
-                  .accommodation-cards-grid {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1.5rem;
-                  }
-                  .accommodation-cards-grid > * {
-                    height: 480px;
-                    min-height: 480px;
-                  }
-                `}</style>
-                <div className="accommodation-cards-grid mb-8">
+
+                <div className="accommodation-cards-grid mb-8 flex flex-col gap-8">
                 {availableRooms.map((room: RoomFromAPI) => {
                   const features = getRoomFeatures(room.roomTypeId);
                   const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
@@ -870,27 +860,7 @@ export default function DateSelector() {
             )}
 
             {/* Continue Button */}
-            {!loadingRooms && availableRooms && availableRooms.length > 0 && (
-              <div className="flex justify-center">
-                <motion.button
-                  onClick={handleContinue}
-                  disabled={!selectedRoom}
-                  whileHover={selectedRoom ? { scale: 1.02 } : {}}
-                  whileTap={selectedRoom ? { scale: 0.98 } : {}}
-                  className={`
-                    max-w-md w-full md:w-auto px-8 py-4 rounded-full text-[18px] font-semibold
-                    transition-all duration-300
-                    ${!selectedRoom && 'cursor-not-allowed'}
-                  `}
-                  style={{
-                    backgroundColor: selectedRoom ? 'var(--brand-gold)' : 'var(--brand-border)',
-                    color: selectedRoom ? 'black' : 'white'
-                  }}
-                >
-                  {selectedRoom ? 'Continue to Book' : 'Select an Accommodation'}
-                </motion.button>
-              </div>
-            )}
+
           </motion.div>
         )}
       </motion.div>

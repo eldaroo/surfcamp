@@ -394,8 +394,8 @@ const translations = {
       guests: "Guests",
       nights: "nights",
       night: "night",
-      guest: "person",
-      guests_plural: "people",
+      guest: "guest",
+      guests_plural: "guests",
       placeholder: {
         selectDate: "Select date"
       },
@@ -546,8 +546,8 @@ const translations = {
         firstName: "Your first name",
         lastName: "Your last name",
         email: "your@email.com",
-        phone: "+1 234 567 890",
-        dni: "12345678"
+        phone: "your phone number",
+        dni: "Your ID number" // Changed from "12345678" to "Your ID number" for generality
       },
       validation: {
         firstNameRequired: "First name is required",

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { CheckCircle2, X, ZoomIn } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 type RoomFromAPI = {
   roomTypeId: string;
@@ -76,6 +77,7 @@ const AccommodationCard = ({
   onSelect,
   getFeatureChipStyle,
 }: AccommodationCardProps) => {
+  const { t } = useI18n();
   const [isFlipped, setIsFlipped] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
@@ -111,7 +113,7 @@ const AccommodationCard = ({
 
   return (
     <>
-      <div className="flip-card w-full h-[420px] md:h-[300px]" style={{ perspective: '1000px' }}>
+      <div className="flip-card w-full h-[400px] md:h-[300px]" style={{ perspective: '1000px' }}>
         <motion.div
           className="flip-card-inner w-full h-full relative"
           animate={{ rotateY: isFlipped ? 180 : 0 }}
@@ -154,7 +156,7 @@ const AccommodationCard = ({
             <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-8 py-6">
               <div className="text-center max-w-lg">
                 <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
-                  {room.roomTypeName}
+                  {t(`accommodation.roomTypes.${room.roomTypeId}.name`)}
                 </h2>
                 <div
                   className="inline-block rounded-full px-3 py-1.5 text-sm md:text-base font-semibold backdrop-blur-sm"
@@ -187,11 +189,11 @@ const AccommodationCard = ({
           onClick={handleFlip}
         >
           <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
-            <div className="flex flex-1 flex-col px-3 md:px-6 py-3 md:py-4 gap-2 md:gap-3 overflow-y-auto">
+            <div className="flex flex-1 flex-col px-3 md:px-6 py-3 md:py-4 gap-2 md:gap-3">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2">
-                    <h3 className="text-lg md:text-2xl font-bold text-slate-100 font-heading">{room.roomTypeName}</h3>
+                    <h3 className="text-lg md:text-2xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
                     {isSelected && (
                       <CheckCircle2 className="h-5 md:h-7 w-5 md:w-7 text-amber-300" aria-hidden="true" />
                     )}
@@ -257,7 +259,7 @@ const AccommodationCard = ({
                         key={idx}
                         type="button"
                         onClick={(e) => openLightbox(idx, e)}
-                        whileHover={{ scale: 1.1, y: -4 }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-md md:rounded-lg overflow-hidden border-2 border-slate-600/60 hover:border-amber-300/80 transition-all group/thumb"
                       >
