@@ -37,6 +37,22 @@ export interface LobbyPMSBookingResponse {
   demoMode?: boolean;
 }
 
+export interface LobbyPMSGuestsInfo {
+  registered?: number;
+  registered_guests?: number;
+  [key: string]: unknown;
+}
+
+export interface LobbyPMSBookingDetails {
+  booking_id?: string;
+  reservation_id?: string;
+  id?: string;
+  guests?: LobbyPMSGuestsInfo;
+  registeredGuests?: number;
+  registered_guests?: number;
+  [key: string]: unknown;
+}
+
 export interface LobbyPMSBooking {
   id?: string;
   booking_id?: string;
@@ -44,12 +60,11 @@ export interface LobbyPMSBooking {
   status?: string;
   message?: string;
   demoMode?: boolean;
-  booking?: {
-    booking_id?: string;
-    reservation_id?: string;
-    id?: string;
-    [key: string]: unknown;
-  };
+  booking?: LobbyPMSBookingDetails;
+  guests?: LobbyPMSGuestsInfo;
+  registeredGuests?: number;
+  registered_guests?: number;
+  [key: string]: unknown;
 }
 
 export interface LobbyPMSReservationRequest {
