@@ -113,7 +113,7 @@ const AccommodationCard = ({
 
   return (
     <>
-      <div className="flip-card w-full h-[400px] md:h-[300px]" style={{ perspective: '1000px' }}>
+      <div className="flip-card w-full h-[340px] md:h-[260px]" style={{ perspective: '1000px' }}>
         <motion.div
           className="flip-card-inner w-full h-full relative"
           animate={{ rotateY: isFlipped ? 180 : 0 }}

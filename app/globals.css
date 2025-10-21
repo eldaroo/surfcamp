@@ -24,6 +24,12 @@
     scroll-behavior: smooth;
   }
 
+  @media (min-width: 1024px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
   /* Fuente base para todo el body */
   body {
     @apply antialiased;

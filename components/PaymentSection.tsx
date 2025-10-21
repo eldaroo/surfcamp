@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -31,6 +31,14 @@ export default function PaymentSection() {
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
+  const paymentWindowRef = useRef<Window | null>(null);
+
+  const closePaymentWindow = useCallback(() => {
+    if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
+      paymentWindowRef.current.close();
+    }
+    paymentWindowRef.current = null;
+  }, []);
 
   const isReadyForPayment =
     bookingData.checkIn &&
@@ -120,6 +128,8 @@ export default function PaymentSection() {
         setIsCheckingPaymentStatus(false);
         // Redirect to success page
         setCurrentStep('success');
+        closePaymentWindow();
+        window.focus();
       }
 
       return data;
@@ -163,8 +173,9 @@ export default function PaymentSection() {
       if (paymentStatusInterval.current) {
         clearInterval(paymentStatusInterval.current);
       }
+      closePaymentWindow();
     };
-  }, []);
+  }, [closePaymentWindow]);
 
   const handlePayment = async () => {
     if (!isReadyForPayment) {
@@ -175,14 +186,14 @@ export default function PaymentSection() {
     setIsProcessing(true);
     setError('');
 
-    let paymentWindow: Window | null = null;
-
     try {
       console.log('💳 Starting payment process...');
 
       // Abrir ventana inmediatamente para evitar bloqueo de pop-ups
       // y mostrar mensaje de carga
-      paymentWindow = window.open('', '_blank');
+      closePaymentWindow();
+      paymentWindowRef.current = window.open('', '_blank');
+      const paymentWindow = paymentWindowRef.current;
       if (paymentWindow) {
         const loadingTitle = t('payment.generatingLink');
         const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
@@ -265,6 +276,7 @@ export default function PaymentSection() {
         checkOut: checkOutFormatted,
         guests: bookingData.guests,
         roomTypeId: selectedRoom?.roomTypeId,
+        isSharedRoom: selectedRoom?.isSharedRoom, // Add isSharedRoom to payload
         contactInfo: bookingData.contactInfo,
         selectedActivities: selectedActivities.map((a: any) => ({
           id: a.id,
@@ -353,9 +365,7 @@ export default function PaymentSection() {
         startPaymentStatusPolling(orderId, tripId);
       } else {
         // Cerrar la ventana si no hay URL
-        if (paymentWindow) {
-          paymentWindow.close();
-        }
+        closePaymentWindow();
         throw new Error('No payment URL received from WeTravel');
       }
       
@@ -363,9 +373,7 @@ export default function PaymentSection() {
       console.error('❌ Payment/WeTravel error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
       // Cerrar la ventana de pago si ocurrió un error
-      if (paymentWindow && !paymentWindow.closed) {
-        paymentWindow.close();
-      }
+      closePaymentWindow();
     } finally {
       setIsProcessing(false);
     }

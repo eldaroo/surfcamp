@@ -50,7 +50,7 @@ const getActivityDetailsForParticipant = (activity: any, participant: any) => {
   return { price, packageInfo, unitLabel };
 };
 
-export default function PriceSummary() {
+export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const { t, locale } = useI18n();
   const {
     bookingData,
@@ -121,6 +121,25 @@ export default function PriceSummary() {
 
   // Form validation
   const isFormValid = !!(bookingData.checkIn && bookingData.checkOut && selectedRoom);
+
+  if (isCollapsed) {
+    return (
+      <div
+        className="flex items-center justify-between p-4 rounded-xl border"
+        style={{
+          backgroundColor: 'var(--brand-surface)',
+          borderColor: 'var(--brand-border)'
+        }}
+      >
+        <span className="text-[15px] font-semibold" style={{ color: 'var(--brand-text)' }}>
+          {getText('prices.total', 'Total')}
+        </span>
+        <span className="text-[20px] font-bold" style={{ color: 'var(--brand-gold)' }}>
+          {formatCurrency(total, locale)}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -379,51 +398,6 @@ export default function PriceSummary() {
               {formatCurrency(total, locale)}
             </span>
           </div>
-        </div>
-      )}
-
-      {/* CTA Button */}
-      {(accommodationTotal > 0 || activitiesTotal > 0) && (
-        <div className="flex justify-center mt-6">
-          <button
-            disabled={!isFormValid}
-            onClick={() => {
-              const { currentStep, setCurrentStep } = useBookingStore.getState();
-
-              if (isFormValid) {
-                // If form is complete, proceed to next logical step
-                if (currentStep === 'dates' && selectedRoom) {
-                  setCurrentStep('contact');
-                } else if (currentStep === 'accommodation') {
-                  setCurrentStep('contact');
-                }
-              } else {
-                // Navigate to next required step
-                if (!bookingData.checkIn || !bookingData.checkOut) {
-                  setCurrentStep('dates');
-                } else if (!selectedRoom) {
-                  setCurrentStep('accommodation');
-                }
-              }
-            }}
-            className={`
-              max-w-sm w-full px-6 py-3 rounded-full text-[16px] font-semibold
-              transition-all duration-200
-              ${isFormValid
-                ? 'hover:shadow-lg hover:-translate-y-0.5'
-                : 'cursor-not-allowed opacity-60'
-              }
-            `}
-            style={{
-              backgroundColor: isFormValid ? 'var(--brand-gold)' : 'var(--brand-border)',
-              color: isFormValid ? 'black' : 'var(--brand-text-dim)'
-            }}
-          >
-            {isFormValid
-              ? getText('prices.proceedToBook', 'Proceed to Book')
-              : getText('prices.completeSelection', 'Complete Selection')
-            }
-          </button>
         </div>
       )}
 

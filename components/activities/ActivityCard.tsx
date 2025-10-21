@@ -785,45 +785,57 @@ whileHover={{ scale: 1.05 }}
                 )}
               </div>
 
-              {/* Choose Button */}
-              <motion.button
-                type="button"
-                onClick={handleChoose}
-                disabled={isChoosing}
-                whileHover={!isChoosing ? { scale: 1.02 } : {}}
-                whileTap={!isChoosing ? { scale: 0.98 } : {}}
-                animate={isChoosing ? {
-                  scale: [1, 1.05, 1],
-                } : {}}
-                transition={{ duration: 0.15 }}
-                className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
-                  isChoosing
-                    ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
-                    : hasInteracted
-                      ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
-                      : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
-                }`}
-              >
-                {isChoosing ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span>{copy.chosen}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{copy.choose}</span>
-                    <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
-                  </>
-                )}
-              </motion.button>
+              <div className="w-full flex flex-col gap-1.5">
+                {/* Choose Button */}
+                <motion.button
+                  type="button"
+                  onClick={handleChoose}
+                  disabled={isChoosing}
+                  whileHover={!isChoosing ? { scale: 1.02 } : {}}
+                  whileTap={!isChoosing ? { scale: 0.98 } : {}}
+                  animate={isChoosing ? {
+                    scale: [1, 1.05, 1],
+                  } : {}}
+                  transition={{ duration: 0.15 }}
+                  className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                    isChoosing
+                      ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
+                      : hasInteracted
+                        ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
+                        : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
+                  }`}
+                >
+                  {isChoosing ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span>{copy.chosen}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{copy.choose}</span>
+                      <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                    </>
+                  )}
+                </motion.button>
 
-              {/* Selected indicator */}
-              {isSelected && (
-                <div className="flex items-center gap-1.5 text-xs text-amber-300 font-medium">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>{copy.chosen}</span>
-                </div>
-              )}
+                {/* Skip Button - Only for non-mandatory activities */}
+                {!isSurf && onSkip && (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSkip) onSkip();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-slate-700/50 text-slate-200 shadow-md hover:bg-slate-600/70 hover:shadow-lg"
+                  >
+                    <span>{copy.skip}</span>
+                    <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                  </motion.button>
+                )}
+              </div>
             </div>
 
             {/* Social Proof (Surf only) - Moved here, below Choose button */}
@@ -937,43 +949,23 @@ whileHover={{ scale: 1.05 }}
       {!isSurf && (onSkip || onBack) && (
         <div className="hidden md:block border-t border-slate-700/40 px-6 md:px-10 py-5 md:py-6">
           <div className="flex items-center justify-between">
-            {/* Left Side - Back and Skip */}
-            <div className="flex items-center gap-6">
-              {/* Back Button */}
-              {!isFirstStep && onBack && (
-                <motion.button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onBack) onBack();
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>{copy.back}</span>
-                </motion.button>
-              )}
-
-              {/* Skip Button */}
-              {onSkip && (
-                <motion.button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onSkip) onSkip();
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
-                  className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
-                >
-                  {copy.skip}
-                </motion.button>
-              )}
-            </div>
+            {/* Left Side - Back Button */}
+            {!isFirstStep && onBack && (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onBack) onBack();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>{copy.back}</span>
+              </motion.button>
+            )}
 
             {/* Right Side - Spacer (Choose button is in the right column above) */}
             <div />

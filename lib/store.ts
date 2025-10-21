@@ -136,9 +136,20 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
   ...initialState,
   
   setBookingData: (data) =>
-    set((state) => ({
-      bookingData: { ...state.bookingData, ...data },
-    })),
+    set((state) => {
+      const minGuests = Math.max(1, state.participants.length);
+      const updatedBookingData = { ...state.bookingData, ...data };
+
+      if (typeof data.guests === 'number' && Number.isFinite(data.guests)) {
+        updatedBookingData.guests = Math.max(minGuests, Math.round(data.guests));
+      } else if (typeof updatedBookingData.guests === 'number' && Number.isFinite(updatedBookingData.guests)) {
+        updatedBookingData.guests = Math.max(minGuests, Math.round(updatedBookingData.guests));
+      }
+
+      return {
+        bookingData: updatedBookingData,
+      };
+    }),
 
   // Multi-participant action implementations
   setActiveParticipant: (participantId) =>
@@ -188,15 +199,27 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   addParticipant: () =>
     set((state) => {
-      const newId = `participant-${state.participants.length + 1}`;
+      const nextCount = state.participants.length + 1;
+      const newId = `participant-${nextCount}`;
       const newParticipant = createEmptyParticipant(
         newId,
-        `Participant ${state.participants.length + 1}`,
+        `Participant ${nextCount}`,
         false
       );
+      const updatedParticipants = [...state.participants, newParticipant];
+      const enforcedGuests = Math.max(
+        nextCount,
+        typeof state.bookingData.guests === 'number' && Number.isFinite(state.bookingData.guests)
+          ? Math.round(state.bookingData.guests)
+          : nextCount
+      );
       return {
-        participants: [...state.participants, newParticipant],
+        participants: updatedParticipants,
         activeParticipantId: newId, // Set the new participant as active
+        bookingData: {
+          ...state.bookingData,
+          guests: enforcedGuests,
+        },
       };
     }),
 

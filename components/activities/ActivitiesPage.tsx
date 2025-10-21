@@ -91,7 +91,10 @@ const ActivitiesPage = () => {
     }
   }, [activityFlowStep, activeParticipantId, storeParticipants]);
 
-  const participants = bookingData.guests && bookingData.guests > 0 ? bookingData.guests : 1;
+  const participantCount = Math.max(
+    storeParticipants.length,
+    bookingData.guests && bookingData.guests > 0 ? bookingData.guests : 1
+  );
   const localizedActivities = useMemo(
     () => getLocalizedActivities((locale as "es" | "en") || "es"),
     [locale]
@@ -99,13 +102,14 @@ const ActivitiesPage = () => {
 
   // Sync participants with guest count
   useEffect(() => {
-    if (!bookingData.guests || bookingData.guests < 1) {
-      setBookingData({ guests: 1 });
-    } else {
-      syncParticipantsWithGuests(bookingData.guests);
+    const enforcedGuests = Math.max(participantCount, bookingData.guests || 0);
+    if (!bookingData.guests || bookingData.guests !== enforcedGuests) {
+      setBookingData({ guests: enforcedGuests });
+      return;
     }
+    syncParticipantsWithGuests(enforcedGuests);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingData.guests]);
+  }, [bookingData.guests, participantCount]);
 
   // Scroll to top when activity changes (with better timing for animations)
   useEffect(() => {
@@ -459,7 +463,7 @@ const ActivitiesPage = () => {
     <div className="mx-auto max-w-7xl px-3 md:px-4 py-6 md:py-8">
       <HeaderPersonalization
         name={personalizationName}
-        participants={participants}
+        participants={participantCount}
         locale={(locale as "es" | "en") || "es"}
         onNameChange={setPersonalizationName}
         onParticipantsChange={(value) => setBookingData({ guests: value })}

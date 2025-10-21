@@ -84,6 +84,9 @@ interface ResolvedActivityConsumption {
   category?: Activity['category'];
   package?: string;
   classCount?: number;
+  quantity?: number;
+  participantId?: string;
+  participantName?: string;
 }
 
 const resolveActivitiesForConsumption = (
@@ -97,12 +100,68 @@ const resolveActivitiesForConsumption = (
       const normalizedClassCount = rawClassCount && Number.isFinite(rawClassCount)
         ? Math.max(1, Math.round(rawClassCount))
         : undefined;
+      const rawQuantity = activity?.quantity;
+      let normalizedQuantity: number | undefined;
+      if (typeof rawQuantity === 'number' && Number.isFinite(rawQuantity)) {
+        normalizedQuantity = Math.max(1, Math.round(rawQuantity));
+      } else if (typeof rawQuantity === 'string') {
+        const parsedQuantity = parseInt(rawQuantity, 10);
+        if (Number.isFinite(parsedQuantity)) {
+          normalizedQuantity = Math.max(1, parsedQuantity);
+        }
+      }
+      const baseCategory = (activity.category || baseActivity?.category) as Activity['category'] | undefined;
+
+      let effectiveClassCount =
+        normalizedClassCount ??
+        (activity.package ? parsePackageMultiplier(activity.package) : undefined);
+
+      if (!effectiveClassCount && typeof activity.name === 'string') {
+        const classMatch = activity.name.match(/(\d+)\s*class/i);
+        if (classMatch) {
+          const parsed = parseInt(classMatch[1], 10);
+          if (Number.isFinite(parsed)) {
+            effectiveClassCount = parsed;
+          }
+        }
+      }
+
+      if (baseCategory === 'surf' && effectiveClassCount) {
+        effectiveClassCount = Math.min(10, Math.max(3, effectiveClassCount));
+      } else if (baseCategory === 'yoga' && effectiveClassCount) {
+        if (![1, 3, 10].includes(effectiveClassCount)) {
+          effectiveClassCount = undefined;
+        }
+      }
+
+      let effectivePackage = activity.package;
+      if (!effectivePackage) {
+        if (baseCategory === 'surf' && effectiveClassCount) {
+          effectivePackage = `${effectiveClassCount}-classes`;
+        } else if (baseCategory === 'yoga') {
+          if (effectiveClassCount === 3) {
+            effectivePackage = '3-classes';
+          } else if (effectiveClassCount === 10) {
+            effectivePackage = '10-classes';
+          } else if (effectiveClassCount === 1) {
+            effectivePackage = '1-class';
+          }
+        }
+      }
+
+      if (baseCategory === 'yoga' && !effectivePackage) {
+        effectivePackage = '1-class';
+        effectiveClassCount = effectiveClassCount ?? 1;
+      }
 
       return {
         id: activity.id,
-        category: activity.category || baseActivity?.category,
-        package: activity.package,
-        classCount: normalizedClassCount ?? (activity.package ? parsePackageMultiplier(activity.package) : undefined)
+        category: baseCategory,
+        package: effectivePackage,
+        classCount: effectiveClassCount,
+        quantity: normalizedQuantity,
+        participantId: typeof activity.participantId === 'string' ? activity.participantId : undefined,
+        participantName: typeof activity.participantName === 'string' ? activity.participantName : undefined,
       };
     });
   }
@@ -114,15 +173,18 @@ const resolveActivitiesForConsumption = (
       id,
       category: baseActivity?.category,
       package: isSurf ? '4-classes' : undefined,
-      classCount: isSurf ? 4 : undefined
+      classCount: isSurf ? 4 : undefined,
+      quantity: undefined,
     };
   });
 };
 
 const buildConsumptionItems = (
   activities: ResolvedActivityConsumption[],
-  guests: number
+  guests: number,
+  options: { hasDetailedSelections: boolean }
 ) => {
+  const { hasDetailedSelections } = options;
   const itemsMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
 
   activities.forEach((activity) => {
@@ -143,15 +205,18 @@ const buildConsumptionItems = (
       return;
     }
 
-    const baseQuantityCategories: Activity['category'][] = ['yoga', 'ice_bath'];
-    const baseGuests = guests && baseQuantityCategories.includes(activity.category as Activity['category'])
-      ? guests
-      : 1;
+    let quantity =
+      typeof activity.quantity === 'number' && Number.isFinite(activity.quantity)
+        ? Math.max(1, Math.round(activity.quantity))
+        : 1;
 
-    const packageMultiplier = activity.category === 'surf'
-      ? 1
-      : normalizedClassCount ?? (activity.package ? parsePackageMultiplier(activity.package) : 1);
-    const quantity = Math.max(1, baseGuests) * Math.max(1, packageMultiplier);
+    if (
+      quantity === 1 &&
+      !hasDetailedSelections &&
+      (activity.category === 'yoga' || activity.category === 'ice_bath')
+    ) {
+      quantity = Math.max(1, guests);
+    }
 
     if (!itemsMap[productId]) {
       const inventoryCenterId = getEnvInventoryCenterId(activity.id, activity.package) || undefined;
@@ -180,6 +245,7 @@ export async function POST(request: NextRequest) {
       guests,
       contactInfo,
       roomTypeId = 'casa-playa', // Default room type
+      isSharedRoom = false, // Added to request body
       activities = [],
       selectedActivities: selectedActivitiesPayload = [],
       activityIds = [],
@@ -258,8 +324,8 @@ export async function POST(request: NextRequest) {
     const bookingData = {
       start_date: formattedCheckIn,     // Y-m-d format as required by LobbyPMS
       end_date: formattedCheckOut,      // Y-m-d format as required by LobbyPMS
-      guest_count: guests,
-      total_adults: guests,             // Required field by LobbyPMS
+      guest_count: isSharedRoom ? guests : 1,
+      total_adults: isSharedRoom ? guests : 1,             // Required field by LobbyPMS
       total_children: 0,                // Default to 0 children
       guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
       holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`, // Required when customer document is not present
@@ -295,6 +361,8 @@ export async function POST(request: NextRequest) {
       Array.isArray(selectedActivitiesPayload) ? selectedActivitiesPayload : [],
       fallbackActivityIds
     );
+    const hasDetailedActivityPayload =
+      Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
     // Ensure customer exists in LobbyPMS before booking
     try {
@@ -373,7 +441,11 @@ export async function POST(request: NextRequest) {
         console.warn('⚠️ [RESERVE] Could not determine booking_id from LobbyPMS response. Skipping add-product-service.');
       } else {
         try {
-          const consumptionItems = buildConsumptionItems(resolvedActivities, guests || 1);
+          const consumptionItems = buildConsumptionItems(
+            resolvedActivities,
+            guests || 1,
+            { hasDetailedSelections: hasDetailedActivityPayload }
+          );
           if (consumptionItems.length > 0) {
             await lobbyPMSClient.addProductsToBooking(bookingId, consumptionItems);
           } else {
@@ -426,7 +498,7 @@ export async function POST(request: NextRequest) {
             dni: contactInfo.dni || 'No informado',
             total: 0, // Will be calculated from priceBreakdown if needed
             surfPackage: surfActivity?.package || '4-classes',
-            guests: guests || 1,
+            guests: surfActivity?.quantity || 1, // Use quantity from surfActivity
             surfClasses: surfActivity?.classCount
           });
           console.log('📱 Surf notification sent to staff');
@@ -495,7 +567,11 @@ export async function POST(request: NextRequest) {
             console.warn('?s??,? [RESERVE] Could not determine booking_id from adjusted LobbyPMS response. Skipping add-product-service.');
           } else {
             try {
-              const consumptionItems = buildConsumptionItems(resolvedActivities, guests || 1);
+              const consumptionItems = buildConsumptionItems(
+                resolvedActivities,
+                guests || 1,
+                { hasDetailedSelections: hasDetailedActivityPayload }
+              );
               if (consumptionItems.length > 0) {
                 await lobbyPMSClient.addProductsToBooking(adjustedBookingId, consumptionItems);
               } else {

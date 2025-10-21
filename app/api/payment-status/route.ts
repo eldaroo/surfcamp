@@ -149,7 +149,8 @@ export async function GET(request: NextRequest) {
             guests: booking.guests,
             roomTypeId: booking.roomTypeId,
             contactInfo: booking.contactInfo,
-            activityIds: booking.selectedActivities?.map((a: any) => a.id) || []
+            activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
+            selectedActivities: booking.selectedActivities || []
           };
 
           console.log('🔵 [LOBBYPMS-DEBUG] 🔗 Reserve URL:', reserveUrl);

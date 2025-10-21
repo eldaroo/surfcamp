@@ -8,6 +8,9 @@ import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 import CustomDatePicker from '@/components/CustomDatePicker';
 import BackButton from './BackButton';
 import AccommodationCard from './AccommodationCard';
+import PriceSummary from './PriceSummary'; // Import PriceSummary
+import Modal from './Modal'; // Import Modal
+import { DollarSign, ReceiptText } from 'lucide-react'; // Import icons
 
 // Tipo para las habitaciones que vienen de la API
 type RoomFromAPI = {
@@ -72,22 +75,34 @@ export default function DateSelector() {
     setError: setGlobalError,
     error: globalError,
     priceBreakdown,
-    participants
+    participants: participantList
   } = useBookingStore();
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [showMobileSummary, setShowMobileSummary] = useState(false);
+  const [showPriceSummaryModal, setShowPriceSummaryModal] = useState(false);
+  const [isPriceSummaryCollapsed, setIsPriceSummaryCollapsed] = useState(false);
 
   // Usar fechas del store global para mantener sincronización
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
   const checkOutDate = bookingData.checkOut ? new Date(bookingData.checkOut) : null;
 
-  // Usar guests directamente del store en lugar de estado local
-  const guests = bookingData.guests || 1;
+  // Guests are constrained by the number of participants selected in activities
+  const participantCount = Math.max(1, participantList.length);
+  const guests = Math.max(participantCount, bookingData.guests ?? participantCount);
 
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
+
+  // Effect to collapse price summary after dates are confirmed
+  useEffect(() => {
+    if (bookingData.checkIn && bookingData.checkOut) {
+      setIsPriceSummaryCollapsed(true);
+    } else {
+      setIsPriceSummaryCollapsed(false);
+      setShowPriceSummaryModal(false);
+    }
+  }, [bookingData.checkIn, bookingData.checkOut]);
 
   const fetchAvailableRooms = async () => {
     if (!bookingData.checkIn || !bookingData.checkOut || !bookingData.guests) {
@@ -224,7 +239,7 @@ export default function DateSelector() {
       packageInfo: string;
     }> = [];
 
-    participants.forEach(participant => {
+    participantList.forEach(participant => {
       participant.selectedActivities.forEach((activity: any) => {
         const details = getActivityDetailsForParticipant(activity, participant);
         selections.push({
@@ -236,7 +251,7 @@ export default function DateSelector() {
     });
 
     return selections;
-  }, [participants]);
+  }, [participantList]);
 
   // Calculate totals
   const accommodationTotal = selectedRoom && nights > 0
@@ -270,7 +285,7 @@ export default function DateSelector() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 mb-12" lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+        <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-[1fr_auto]'} gap-8 mb-12 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
           {/* Columna izquierda - Selector de fechas */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -279,471 +294,165 @@ export default function DateSelector() {
             className="card"
           >
             <div className="space-y-6">
-        {(bookingData.checkIn && bookingData.checkOut) ? (
-          <div className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border border-slate-700/50 bg-slate-800/50">
-            <span className="text-sm font-medium text-slate-300">
-              {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
-            </span>
-            <span className="text-sm text-slate-500">→</span>
-            <span className="text-sm font-medium text-slate-300">
-              {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
-            </span>
-            <span className="text-sm text-slate-500">•</span>
-            <span className="text-sm font-medium text-slate-300">
-              {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests')}
-            </span>
-            <button
-              type="button"
-              onClick={() => setBookingData({ checkIn: undefined, checkOut: undefined, guests: 1 })}
-              className="ml-auto px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
-            >
-              {t('common.edit')}
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Check-in Date */}
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  {t('dates.checkIn')} *
-                </label>
-                <CustomDatePicker
-                  selected={checkInDate}
-                  onChange={(date) => {
-                    setBookingData({ ...bookingData, checkIn: date || undefined });
-                  }}
-                  placeholderText={t('dates.checkIn')}
-                  minDate={new Date()}
-                  maxDate={checkOutDate || undefined}
-                />
-              </div>
-
-              {/* Check-out Date */}
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  {t('dates.checkOut')} *
-                </label>
-                <CustomDatePicker
-                  selected={checkOutDate}
-                  onChange={(date) => {
-                    setBookingData({ ...bookingData, checkOut: date || undefined });
-                  }}
-                  placeholderText={t('dates.checkOut')}
-                  minDate={checkInDate || new Date()}
-                />
-              </div>
-            </div>
-
-            {/* Guests Counter */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                {t('dates.guests')}
-              </label>
-              <div className="flex items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newGuests = Math.max(1, guests - 1);
-                    setBookingData({ guests: newGuests });
-                  }}
-                  className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-                >
-                  <span className="text-white">-</span>
-                </button>
-                <span className="text-2xl font-bold text-blue-400 w-12 text-center">
-                  {guests}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newGuests = Math.min(5, guests + 1);
-                    setBookingData({ guests: newGuests });
-                  }}
-                  className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
-                >
-                  <span className="text-white">+</span>
-                </button>
-                <span className="text-yellow-300">
-                  {guests === 1 ? t('dates.guest') : t('dates.guests')}
-                </span>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Summary */}
-        {(bookingData.checkIn || bookingData.checkOut) && (
-          <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-            <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
-            <div className="space-y-1 text-sm">
-              {bookingData.checkIn && (
-                <div>
-                  <span className="text-white">{t('dates.summary.checkIn')}:</span>
-                  <span className="ml-2 font-medium text-blue-300">
-                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    })}
+              {(bookingData.checkIn && bookingData.checkOut) ? (
+                <div className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border border-slate-700/50 bg-slate-800/50">
+                  <span className="text-sm font-medium text-slate-300">
+                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
                   </span>
-                </div>
-              )}
-              {bookingData.checkOut && (
-                <div>
-                  <span className="text-white">{t('dates.summary.checkOut')}:</span>
-                  <span className="ml-2 font-medium text-blue-300">
-                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric'
-                    })}
+                  <span className="text-sm text-slate-500">→</span>
+                  <span className="text-sm font-medium text-slate-300">
+                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
                   </span>
-                </div>
-              )}
-              <div>
-                <span className="text-white">{t('dates.summary.guests')}:</span>
-                <span className="ml-2 font-medium text-blue-300">{bookingData.guests || guests}</span>
-              </div>
-              {nights > 0 && (
-                <div className="mt-2 text-sm text-yellow-300">
-                  {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4">
-            <p className="text-red-300 text-sm">{error}</p>
-          </div>
-        )}
-
-            </div>
-          </motion.div>
-
-          {/* Columna derecha - Compact Price Summary (Desktop only) */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden lg:block lg:w-80"
-          >
-            <div
-              className="rounded-xl p-4 border sticky top-6"
-              style={{
-                backgroundColor: 'var(--brand-surface)',
-                borderColor: 'var(--brand-border)',
-                maxHeight: 'calc(100vh - 100px)',
-                overflowY: 'auto'
-              }}
-            >
-              {/* Header */}
-              <h3
-                className="text-[16px] font-semibold mb-4 font-heading"
-                style={{ color: 'var(--brand-text)' }}
-              >
-                {locale === 'es' ? 'Resumen' : 'Price Summary'}
-              </h3>
-
-              {/* Stay Summary - Compact */}
-              {bookingData.checkIn && bookingData.checkOut && (
-                <>
-                  <div className="space-y-2 mb-4 text-[13px]">
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--brand-text-dim)' }}>
-                        {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
-                      </span>
-                      <span style={{ color: 'var(--brand-text-dim)' }}>→</span>
-                      <span style={{ color: 'var(--brand-text-dim)' }}>
-                        {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--brand-text-dim)' }}>
-                        {bookingData.guests} {pluralize(bookingData.guests || 1, 'guest', 'guests')}
-                      </span>
-                      <span style={{ color: 'var(--brand-text-dim)' }}>•</span>
-                      <span style={{ color: 'var(--brand-text-dim)' }}>
-                        {nights} {pluralize(nights, 'night', 'nights')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    className="h-px mb-4"
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
-                  />
-                </>
-              )}
-
-              {/* Line Items */}
-              <div className="space-y-3 mb-4">
-                {/* Accommodation */}
-                {selectedRoom && nights > 0 && (
-                  <div>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 pr-2">
-                        <div
-                          className="text-[13px] font-medium"
-                          style={{ color: 'var(--brand-text)' }}
-                        >
-                                                        {t(`accommodation.roomTypes.${selectedRoom.roomTypeId}.name`)}                        </div>
-                        <div
-                          className="text-[11px] mt-0.5"
-                          style={{ color: 'var(--brand-text-dim)' }}
-                        >
-                          {nights} × {formatCurrency(selectedRoom.pricePerNight, locale)}
-                        </div>
-                      </div>
-                      <div
-                        className="text-[13px] font-medium"
-                        style={{ color: 'var(--brand-text)' }}
-                      >
-                        {formatCurrency(accommodationTotal, locale)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Activities */}
-                {allActivitySelections.map((selection, index) => {
-                  const { activity, participant, price, packageInfo } = selection;
-                  const showParticipantName = participants.length > 1;
-
-                  return (
-                    <div key={`${participant.id}-${activity.id}-${index}`}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 pr-2">
-                          <div
-                            className="text-[13px] font-medium"
-                            style={{ color: 'var(--brand-text)' }}
-                          >
-                            {activity.name}
-                          </div>
-                          {showParticipantName && (
-                            <div
-                              className="text-[11px] mt-0.5"
-                              style={{ color: 'var(--brand-text-dim)' }}
-                            >
-                              {participant.name}
-                            </div>
-                          )}
-                        </div>
-                        <div
-                          className="text-[13px] font-medium"
-                          style={{ color: 'var(--brand-text)' }}
-                        >
-                          {formatCurrency(price, locale)}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Total */}
-              {(accommodationTotal > 0 || activitiesTotal > 0) && (
-                <>
-                  <div
-                    className="h-px mb-3"
-                    style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
-                  />
-                  <div className="flex justify-between items-center mb-4">
-                    <span
-                      className="text-[15px] font-semibold"
-                      style={{ color: 'var(--brand-text)' }}
-                    >
-                      {locale === 'es' ? 'Total' : 'Total'}
-                    </span>
-                    <span
-                      className="text-[20px] font-bold"
-                      style={{ color: 'var(--brand-gold)' }}
-                    >
-                      {formatCurrency(total, locale)}
-                    </span>
-                  </div>
-                </>
-              )}
-
-
-
-              {/* Empty State */}
-              {!bookingData.checkIn && !bookingData.checkOut && activitiesTotal === 0 && (
-                <div className="text-center py-6">
-                  <div className="text-[28px] mb-2">📅</div>
-                  <p
-                    className="text-[12px]"
-                    style={{ color: 'var(--brand-text-dim)' }}
+                  <span className="text-sm text-slate-500">•</span>
+                  <span className="text-sm font-medium text-slate-300">
+                    {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount })}
+                    className="ml-auto px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
                   >
-                    {locale === 'es' ? 'Selecciona fechas para ver precios' : 'Select dates to see pricing'}
-                  </p>
+                    {t('common.edit')}
+                  </button>
                 </div>
-              )}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Mobile Price Summary - Collapsible */}
-        {(bookingData.checkIn || bookingData.checkOut || activitiesTotal > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="lg:hidden mb-8"
-          >
-            <button
-              onClick={() => setShowMobileSummary(!showMobileSummary)}
-              className="w-full rounded-xl p-4 border flex items-center justify-between"
-              style={{
-                backgroundColor: 'var(--brand-surface)',
-                borderColor: 'var(--brand-border)'
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">💰</span>
-                <div className="text-left">
-                  <div className="text-[14px] font-semibold" style={{ color: 'var(--brand-text)' }}>
-                    {locale === 'es' ? 'Resumen de Precios' : 'Price Summary'}
-                  </div>
-                  {(accommodationTotal > 0 || activitiesTotal > 0) && (
-                    <div className="text-[18px] font-bold" style={{ color: 'var(--brand-gold)' }}>
-                      {formatCurrency(total, locale)}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <svg
-                className={`w-5 h-5 transition-transform ${showMobileSummary ? 'rotate-180' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                style={{ color: 'var(--brand-text-dim)' }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {showMobileSummary && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <div
-                  className="rounded-b-xl p-4 border border-t-0"
-                  style={{
-                    backgroundColor: 'var(--brand-surface)',
-                    borderColor: 'var(--brand-border)'
-                  }}
-                >
-                  {/* Stay Summary - Compact */}
-                  {bookingData.checkIn && bookingData.checkOut && (
-                    <>
-                      <div className="space-y-2 mb-4 text-[13px]">
-                        <div className="flex justify-between">
-                          <span style={{ color: 'var(--brand-text-dim)' }}>
-                            {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
-                          </span>
-                          <span style={{ color: 'var(--brand-text-dim)' }}>→</span>
-                          <span style={{ color: 'var(--brand-text-dim)' }}>
-                            {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', { month: 'short', day: 'numeric' })}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span style={{ color: 'var(--brand-text-dim)' }}>
-                            {bookingData.guests} {pluralize(bookingData.guests || 1, 'guest', 'guests')}
-                          </span>
-                          <span style={{ color: 'var(--brand-text-dim)' }}>•</span>
-                          <span style={{ color: 'var(--brand-text-dim)' }}>
-                            {nights} {pluralize(nights, 'night', 'nights')}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        className="h-px mb-4"
-                        style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Check-in Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        {t('dates.checkIn')} *
+                      </label>
+                      <CustomDatePicker
+                        selected={checkInDate}
+                        onChange={(date) => {
+                          setBookingData({ ...bookingData, checkIn: date || undefined });
+                        }}
+                        placeholderText={t('dates.checkIn')}
+                        minDate={new Date()}
+                        maxDate={checkOutDate || undefined}
                       />
-                    </>
-                  )}
+                    </div>
 
-                  {/* Line Items */}
-                  <div className="space-y-3 mb-4">
-                    {/* Accommodation */}
-                    {selectedRoom && nights > 0 && (
+                    {/* Check-out Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-white mb-2">
+                        {t('dates.checkOut')} *
+                      </label>
+                      <CustomDatePicker
+                        selected={checkOutDate}
+                        onChange={(date) => {
+                          setBookingData({ ...bookingData, checkOut: date || undefined });
+                        }}
+                        placeholderText={t('dates.checkOut')}
+                        minDate={checkInDate || new Date()}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Guests Counter */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      {t('dates.guests')}
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      <button
+                        type="button"
+                        disabled={guests <= participantCount}
+                        onClick={() => {
+                          const newGuests = Math.max(participantCount, guests - 1);
+                          setBookingData({ guests: newGuests });
+                        }}
+                        className={`w-10 h-10 rounded-full border border-white/30 flex items-center justify-center transition-colors ${
+                          guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
+                        }`}
+                      >
+                        <span className="text-white">-</span>
+                      </button>
+                      <span className="text-2xl font-bold text-blue-400 w-12 text-center">
+                        {guests}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newGuests = Math.min(5, guests + 1);
+                          setBookingData({ guests: newGuests });
+                        }}
+                        className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-white">+</span>
+                      </button>
+                      <span className="text-yellow-300">
+                        {guests === 1 ? t('dates.guest') : t('dates.guests')}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Summary */}
+              {(bookingData.checkIn || bookingData.checkOut) && (
+                <div className="bg-white/10 rounded-lg p-4 border border-white/20">
+                  <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
+                  <div className="space-y-1 text-sm">
+                    {bookingData.checkIn && (
                       <div>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1 pr-2">
-                            <div
-                              className="text-[13px] font-medium"
-                              style={{ color: 'var(--brand-text)' }}
-                            >
-                            {t(`accommodation.roomTypes.${selectedRoom.roomTypeId}.name`)}
-                            </div>
-                            <div
-                              className="text-[11px] mt-0.5"
-                              style={{ color: 'var(--brand-text-dim)' }}
-                            >
-                              {nights} × {formatCurrency(selectedRoom.pricePerNight, locale)}
-                            </div>
-                          </div>
-                          <div
-                            className="text-[13px] font-medium"
-                            style={{ color: 'var(--brand-text)' }}
-                          >
-                            {formatCurrency(accommodationTotal, locale)}
-                          </div>
-                        </div>
+                        <span className="text-white">{t('dates.summary.checkIn')}:</span>
+                        <span className="ml-2 font-medium text-blue-300">
+                          {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
                       </div>
                     )}
-
-                    {/* Activities */}
-                    {allActivitySelections.map((selection, index) => {
-                      const { activity, participant, price, packageInfo } = selection;
-                      const showParticipantName = participants.length > 1;
-
-                      return (
-                        <div key={`mobile-${participant.id}-${activity.id}-${index}`}>
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1 pr-2">
-                              <div
-                                className="text-[13px] font-medium"
-                                style={{ color: 'var(--brand-text)' }}
-                              >
-                                {activity.name}
-                              </div>
-                              {showParticipantName && (
-                                <div
-                                  className="text-[11px] mt-0.5"
-                                  style={{ color: 'var(--brand-text-dim)' }}
-                                >
-                                  {participant.name}
-                                </div>
-                              )}
-                            </div>
-                            <div
-                              className="text-[13px] font-medium"
-                              style={{ color: 'var(--brand-text)' }}
-                            >
-                              {formatCurrency(price, locale)}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {bookingData.checkOut && (
+                      <div>
+                        <span className="text-white">{t('dates.summary.checkOut')}:</span>
+                        <span className="ml-2 font-medium text-blue-300">
+                          {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-white">{t('dates.summary.guests')}:</span>
+                      <span className="ml-2 font-medium text-blue-300">{guests}</span>
+                    </div>
+                    {nights > 0 && (
+                      <div className="mt-2 text-sm text-yellow-300">
+                        {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                      </div>
+                    )}
                   </div>
-
-
                 </div>
-              </motion.div>
-            )}
+              )}
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4">
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              )}
+            </div>
           </motion.div>
-        )}
+
+          {/* Right Column - Full Price Summary (Desktop only, when not collapsed) */}
+          {!isPriceSummaryCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="hidden lg:block lg:w-80"
+            >
+              <PriceSummary />
+            </motion.div>
+          )}
+        </div>
 
         {/* Accommodation Section - Below date selector */}
         {checkInDate && checkOutDate && (
@@ -836,6 +545,44 @@ export default function DateSelector() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Collapsed Price Summary (Desktop) */}
+      {isPriceSummaryCollapsed && (bookingData.checkIn && bookingData.checkOut) && (
+        <motion.button
+          type="button"
+          onClick={() => setShowPriceSummaryModal(true)}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-slate-800/90 backdrop-blur-md px-4 py-2 text-sm font-bold text-white shadow-lg border border-slate-700/50 hover:bg-slate-700/90 transition-all duration-300 ease-in-out"
+        >
+          <ReceiptText className="h-5 w-5 text-amber-300" />
+          <span>{t('prices.total')}: {formatCurrency(total, locale)}</span>
+        </motion.button>
+      )}
+
+      {/* Collapsed Price Summary (Mobile) */}
+      {isPriceSummaryCollapsed && (bookingData.checkIn && bookingData.checkOut) && (
+        <motion.button
+          type="button"
+          onClick={() => setShowPriceSummaryModal(true)}
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-slate-800/90 backdrop-blur-md px-5 py-3 text-base font-bold text-white shadow-lg border border-slate-700/50 hover:bg-slate-700/90 transition-all duration-300 ease-in-out"
+        >
+          <div className="flex items-center gap-3">
+            <ReceiptText className="h-6 w-6 text-amber-300" />
+            <span>{t('prices.summary')}</span>
+          </div>
+          <span>{formatCurrency(total, locale)}</span>
+        </motion.button>
+      )}
+
+      {/* Price Summary Modal */}
+      <Modal isOpen={showPriceSummaryModal} onClose={() => setShowPriceSummaryModal(false)} title={t('prices.summary')}>
+        <PriceSummary isCollapsed={false} />
+      </Modal>
     </div>
   );
 } 

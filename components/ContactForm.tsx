@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -53,6 +53,14 @@ export default function ContactForm() {
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
+  const paymentWindowRef = useRef<Window | null>(null);
+
+  const closePaymentWindow = useCallback(() => {
+    if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
+      paymentWindowRef.current.close();
+    }
+    paymentWindowRef.current = null;
+  }, []);
 
   useEffect(() => {
     const leadGuestName = buildLeadGuestName(
@@ -86,8 +94,9 @@ export default function ContactForm() {
       if (paymentStatusInterval.current) {
         clearInterval(paymentStatusInterval.current);
       }
+      closePaymentWindow();
     };
-  }, []);
+  }, [closePaymentWindow]);
 
   // Calculate prices
   const calculateNights = () => {
@@ -149,6 +158,8 @@ export default function ContactForm() {
         setIsWaitingForPayment(false);
         setIsCheckingPaymentStatus(false);
         setCurrentStep('success');
+        closePaymentWindow();
+        window.focus();
       }
 
       return data;
@@ -250,9 +261,11 @@ export default function ContactForm() {
     setIsProcessingPayment(true);
     setPaymentError('');
 
-    let paymentWindow: Window | null = null;
     try {
-      paymentWindow = window.open('', '_blank');
+      closePaymentWindow();
+      paymentWindowRef.current = window.open('', '_blank');
+      const paymentWindow = paymentWindowRef.current;
+
       if (paymentWindow) {
         const loadingTitle = t('payment.generatingLink');
         const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
@@ -376,9 +389,9 @@ export default function ContactForm() {
       setWetravelResponse(wetravelData);
 
       if (wetravelData.payment_url) {
-        if (paymentWindow) {
-          paymentWindow.location.href = wetravelData.payment_url;
-          paymentWindow.focus();
+        if (paymentWindowRef.current) {
+          paymentWindowRef.current.location.href = wetravelData.payment_url;
+          paymentWindowRef.current.focus();
         } else {
           window.open(wetravelData.payment_url, '_blank');
         }
@@ -391,18 +404,14 @@ export default function ContactForm() {
 
         startPaymentStatusPolling(orderId, tripId);
       } else {
-        if (paymentWindow) {
-          paymentWindow.close();
-        }
+        closePaymentWindow();
         throw new Error('No payment URL received from WeTravel');
       }
 
     } catch (error) {
       console.error('Payment error:', error);
       setPaymentError(error instanceof Error ? error.message : t('payment.error.processing'));
-      if (paymentWindow && !paymentWindow.closed) {
-        paymentWindow.close();
-      }
+      closePaymentWindow();
     } finally {
       setIsProcessingPayment(false);
     }
