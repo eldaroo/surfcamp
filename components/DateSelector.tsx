@@ -491,7 +491,6 @@ export default function DateSelector() {
             )}
 
             {/* Room Cards */}
-            {console.log('DEBUG: loadingRooms', loadingRooms, 'availableRooms', availableRooms?.length)}
             {!loadingRooms && availableRooms && availableRooms.length > 0 && (
               <>
 
