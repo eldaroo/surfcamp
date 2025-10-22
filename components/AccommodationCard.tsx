@@ -113,7 +113,7 @@ const AccommodationCard = ({
 
   return (
     <>
-      <div className="flip-card w-full h-[340px] md:h-[260px]" style={{ perspective: '1000px' }}>
+      <div className="flip-card w-full h-[300px] md:h-[220px]" style={{ perspective: '1000px' }}>
         <motion.div
           className="flip-card-inner w-full h-full relative"
           animate={{ rotateY: isFlipped ? 180 : 0 }}
@@ -153,7 +153,7 @@ const AccommodationCard = ({
               </div>
             )}
 
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-8 py-6">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-8 py-4">
               <div className="text-center max-w-lg">
                 <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
                   {t(`accommodation.roomTypes.${room.roomTypeId}.name`)}
@@ -189,10 +189,10 @@ const AccommodationCard = ({
           onClick={handleFlip}
         >
           <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
-            <div className="flex flex-1 flex-col px-3 md:px-6 py-3 md:py-4 gap-2 md:gap-3">
+            <div className="flex flex-1 flex-col px-3 md:px-5 py-2 md:py-3 gap-1.5 md:gap-2">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2">
+                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
                     <h3 className="text-lg md:text-2xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
                     {isSelected && (
                       <CheckCircle2 className="h-5 md:h-7 w-5 md:w-7 text-amber-300" aria-hidden="true" />
@@ -200,7 +200,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Availability + Capacity */}
-                  <div className="flex items-center gap-2 md:gap-3 mb-1.5 md:mb-2">
+                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
                     <div
                       className="rounded-full px-2 md:px-3 py-0.5 md:py-1 text-white text-[10px] md:text-xs font-medium border"
                       style={{
@@ -220,7 +220,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Feature Tags */}
-                  <div className="flex flex-wrap gap-1.5 md:gap-2 mb-1.5 md:mb-2">
+                  <div className="flex flex-wrap gap-1.5 md:gap-2 mb-1 md:mb-1.5">
                     {visibleFeatures.map((feature, index) => (
                       <span
                         key={index}
@@ -252,7 +252,7 @@ const AccommodationCard = ({
 
               {/* Mini Photo Carousel - Bottom of left section */}
               {gallery.length > 0 && (
-                <div className="mt-auto pt-2 md:pt-3 border-t border-slate-700/40">
+                <div className="mt-auto pt-1.5 md:pt-2 border-t border-slate-700/40">
                   <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide pb-1">
                     {gallery.map((img, idx) => (
                       <motion.button
@@ -282,7 +282,7 @@ const AccommodationCard = ({
 
             {/* Right Side - Pricing & Action - Optimized for Mobile */}
             <div
-              className="flex flex-col justify-center items-center gap-2 md:gap-3 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-3 md:px-5 py-3 md:py-4 md:min-w-[260px] flex-shrink-0"
+              className="flex flex-col justify-center items-center gap-2 md:gap-1.5 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-3 md:px-3 py-2 md:py-2 md:min-w-[240px] flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Mobile: Compact Price + Button Layout */}
@@ -326,31 +326,45 @@ const AccommodationCard = ({
                 </button>
               </div>
 
-              {/* Desktop: Original Vertical Layout */}
-              <div className="hidden md:flex md:flex-col md:items-center md:gap-3 w-full">
-                {/* Stay Info */}
-                <div className="text-center w-full">
-                  <p className="text-sm text-slate-400 mb-1">
-                    {locale === 'es' ? 'Estadía' : 'Stay'}
-                  </p>
-                  <p className="text-lg font-semibold text-slate-200">
-                    {nights} {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
-                  </p>
-                </div>
+              {/* Desktop: Horizontal Layout - 3 columns */}
+              <div className="hidden md:flex md:flex-col md:items-center md:gap-2 w-full">
+                {/* Unified Price Container - 3 Column Horizontal Layout */}
+                <div className="w-full py-2 px-2 rounded-xl bg-slate-700/50 border border-slate-600/50">
+                  <div className="flex items-center justify-center gap-2">
+                    {/* Nights */}
+                    <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
+                      <p className="text-[10px] text-slate-400 mb-0.5">
+                        {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
+                      </p>
+                      <p className="text-xl font-bold text-slate-200">
+                        {nights}
+                      </p>
+                    </div>
 
-                {/* Total Price */}
-                <div className="text-center w-full py-3 px-3 rounded-xl bg-slate-700/50 border border-slate-600/50">
-                  <span className="text-xs font-medium uppercase tracking-wide text-slate-400 block mb-1.5">
-                    Total
-                  </span>
-                  <div className="text-3xl font-bold text-amber-300 mb-1">
-                    ${totalPrice}
+                    {/* Guests */}
+                    <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
+                      <p className="text-[10px] text-slate-400 mb-0.5">
+                        {guests === 1 ? (locale === 'es' ? 'huésped' : 'guest') : (locale === 'es' ? 'huéspedes' : 'guests')}
+                      </p>
+                      <p className="text-xl font-bold text-slate-200">
+                        {guests}
+                      </p>
+                    </div>
+
+                    {/* Total Price */}
+                    <div className="flex flex-col items-center flex-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-0.5">
+                        Total
+                      </span>
+                      <div className="text-xl font-bold text-amber-300">
+                        ${totalPrice}
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400">
+
+                  {/* Price per night info */}
+                  <p className="text-[10px] text-slate-400 text-center mt-1.5 pt-1.5 border-t border-slate-600/30">
                     {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
-                    {room.isSharedRoom && guests > 1 && (
-                      <span className="text-slate-500"> · {guests} {guests === 1 ? (locale === 'es' ? 'huésped' : 'guest') : (locale === 'es' ? 'huéspedes' : 'guests')}</span>
-                    )}
                   </p>
                 </div>
 

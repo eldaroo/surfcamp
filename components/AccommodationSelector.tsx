@@ -219,9 +219,9 @@ export default function AccommodationSelector() {
           </motion.div>
         )}
 
-        {/* Room Cards - One per row, full width - Optimized Mobile Spacing */}
+        {/* Room Cards - One per row, centered with reduced width */}
         <div
-          className="space-y-4 md:space-y-3 mb-8"
+          className="space-y-2 mb-8 flex flex-col items-center"
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >
@@ -235,6 +235,7 @@ export default function AccommodationSelector() {
               : room.pricePerNight * nights;
 
             return (
+              <div key={room.roomTypeId} className="w-[92%] mx-auto">
               <AccommodationCard
                 key={room.roomTypeId}
                 room={room}
@@ -250,6 +251,7 @@ export default function AccommodationSelector() {
                 onSelect={() => handleRoomSelect(room)}
                 getFeatureChipStyle={getFeatureChipStyle}
               />
+              </div>
             );
           })}
         </div>

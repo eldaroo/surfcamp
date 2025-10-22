@@ -484,7 +484,7 @@ export default function DateSelector() {
             {!loadingRooms && availableRooms && availableRooms.length > 0 && (
               <>
 
-                <div className="accommodation-cards-grid mb-8 flex flex-col gap-8">
+                <div className="accommodation-cards-grid mb-6 flex flex-col gap-4">
                 {availableRooms.map((room: RoomFromAPI) => {
                   const features = getRoomFeatures(room.roomTypeId);
                   const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
