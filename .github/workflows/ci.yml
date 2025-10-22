@@ -30,3 +30,11 @@ jobs:
 
       - name: Build application
         run: npm run build
+
+      # 🔔 NUEVO: notifica a Vercel cuando todo pasó correctamente
+      - name: Notify Vercel
+        if: ${{ success() }}
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: lint-and-build
+          token: ${{ secrets.GITHUB_TOKEN }}
