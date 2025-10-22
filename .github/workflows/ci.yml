@@ -5,6 +5,10 @@ on:
     branches: [main, dev]
   pull_request:
 
+permissions:
+  contents: read
+  statuses: write
+
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
@@ -37,4 +41,4 @@ jobs:
         uses: vercel/repository-dispatch/actions/status@v1
         with:
           name: lint-and-build
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
