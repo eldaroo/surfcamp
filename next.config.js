@@ -2,13 +2,15 @@
 const nextConfig = {
   experimental: {
     esmExternals: 'loose',
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/@swc/core-linux-x64-gnu',
+        'node_modules/@swc/core-linux-x64-musl',
+        'node_modules/@esbuild/linux-x64',
+      ],
+    },
   },
   transpilePackages: ['framer-motion'],
-  outputFileTracingIgnores: [
-    '**/node_modules/**',
-    '**/.git/**',
-    '**/.next/cache/**',
-  ],
   async headers() {
     return [
       {
