@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -35,17 +35,10 @@ export default function AccommodationSelector() {
   };
 
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const { checkIn, checkOut, guests } = bookingData;
 
-  useEffect(() => {
-    if (bookingData.checkIn && bookingData.checkOut) {
-      setAvailableRooms(null);
-      setSelectedRoom(null);
-      fetchAvailableRooms();
-    }
-  }, [bookingData.checkIn, bookingData.checkOut, bookingData.guests]);
-
-  const fetchAvailableRooms = async () => {
-    if (!bookingData.checkIn || !bookingData.checkOut || !bookingData.guests) {
+  const fetchAvailableRooms = useCallback(async () => {
+    if (!checkIn || !checkOut || !guests) {
       return;
     }
 
@@ -57,9 +50,9 @@ export default function AccommodationSelector() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          checkIn: bookingData.checkIn,
-          checkOut: bookingData.checkOut,
-          guests: bookingData.guests,
+          checkIn,
+          checkOut,
+          guests,
         }),
       });
 
@@ -89,7 +82,15 @@ export default function AccommodationSelector() {
     } finally {
       setLoadingRooms(false);
     }
-  };
+  }, [checkIn, checkOut, guests, setAvailableRooms, setError]);
+
+  useEffect(() => {
+    if (checkIn && checkOut) {
+      setAvailableRooms(null);
+      setSelectedRoom(null);
+      fetchAvailableRooms();
+    }
+  }, [checkIn, checkOut, fetchAvailableRooms, setAvailableRooms, setSelectedRoom]);
 
   const handleRoomSelect = (room: RoomFromAPI) => {
     if (room.availableRooms > 0) {

@@ -207,14 +207,11 @@ const ActivitiesPage = () => {
       setSelectedActivities,
       selectedYogaPackages,
       setSelectedYogaPackage,
-      selectedSurfClasses,
-      setSelectedSurfClasses,
-      selectedSurfPackages,
-      setSelectedSurfPackage,
       activityQuantities,
       setActivityQuantity,
       selectedTimeSlots,
       setSelectedTimeSlot,
+      activeParticipantId,
     ]
   );
 

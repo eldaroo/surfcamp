@@ -267,7 +267,7 @@ const InfoPopup = ({
                         >
                           <div className="text-center space-y-3">
                             <p className="text-sm md:text-base italic leading-relaxed text-slate-200">
-                              "{REVIEWS[currentReviewIndex].text}"
+                              &ldquo;{REVIEWS[currentReviewIndex].text}&rdquo;
                             </p>
                             <div className="flex flex-col items-center gap-1">
                               <p className="text-xs font-semibold text-amber-300">

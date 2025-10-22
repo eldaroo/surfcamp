@@ -859,7 +859,7 @@ whileHover={{ scale: 1.05 }}
                 {testimonials && (
                   <div className="space-y-2.5">
                     <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center line-clamp-2">
-                      "{testimonials[currentTestimonialIndex].text}"
+                      &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                     </p>
                     {/* Author & Country */}
                     <div className="flex flex-col items-center gap-0.5">
@@ -1068,7 +1068,7 @@ whileHover={{ scale: 1.05 }}
 
                   {/* Testimonial Text */}
                   <p className="text-sm leading-relaxed text-slate-200 italic text-center min-h-[100px] flex items-center justify-center">
-                    "{testimonials[currentTestimonialIndex].text}"
+                    &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                   </p>
 
                   {/* Author */}
