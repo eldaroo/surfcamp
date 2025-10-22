@@ -30,53 +30,45 @@ export default function BookingSteps() {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Centrar el paso activo en móvil
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Auto-scroll disabled per user request
+  // useEffect(() => {
+  //   const container = containerRef.current;
+  //   if (!container) return;
+  //   const timeoutId = setTimeout(() => {
+  //     const activeStep = container.querySelector(`[data-step="${currentStep}"]`) as HTMLElement;
+  //     if (activeStep && window.innerWidth <= 768) {
+  //       const containerWidth = container.offsetWidth;
+  //       const stepLeft = activeStep.offsetLeft;
+  //       const stepWidth = activeStep.offsetWidth;
+  //       const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2);
+  //       container.scrollTo({
+  //         left: Math.max(0, scrollLeft),
+  //         behavior: 'smooth'
+  //       });
+  //     }
+  //   }, 100);
+  //   return () => clearTimeout(timeoutId);
+  // }, [currentStep]);
 
-    // Delay para asegurar que el DOM esté completamente renderizado
-    const timeoutId = setTimeout(() => {
-      const activeStep = container.querySelector(`[data-step="${currentStep}"]`) as HTMLElement;
-      if (activeStep && window.innerWidth <= 768) {
-        const containerWidth = container.offsetWidth;
-        const stepLeft = activeStep.offsetLeft;
-        const stepWidth = activeStep.offsetWidth;
-        const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2);
-        
-        container.scrollTo({
-          left: Math.max(0, scrollLeft),
-          behavior: 'smooth'
-        });
-      }
-    }, 100); // Pequeño delay para asegurar renderizado
-
-    return () => clearTimeout(timeoutId);
-  }, [currentStep]);
-
-  // También centrar cuando cambie el tamaño de la ventana
-  useEffect(() => {
-    const handleResize = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const activeStep = container.querySelector(`[data-step="${currentStep}"]`) as HTMLElement;
-      if (activeStep && window.innerWidth <= 768) {
-        const containerWidth = container.offsetWidth;
-        const stepLeft = activeStep.offsetLeft;
-        const stepWidth = activeStep.offsetWidth;
-        const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2);
-        
-        container.scrollTo({
-          left: Math.max(0, scrollLeft),
-          behavior: 'smooth'
-        });
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [currentStep]);
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     const container = containerRef.current;
+  //     if (!container) return;
+  //     const activeStep = container.querySelector(`[data-step="${currentStep}"]`) as HTMLElement;
+  //     if (activeStep && window.innerWidth <= 768) {
+  //       const containerWidth = container.offsetWidth;
+  //       const stepLeft = activeStep.offsetLeft;
+  //       const stepWidth = activeStep.offsetWidth;
+  //       const scrollLeft = stepLeft - (containerWidth / 2) + (stepWidth / 2);
+  //       container.scrollTo({
+  //         left: Math.max(0, scrollLeft),
+  //         behavior: 'smooth'
+  //       });
+  //     }
+  //   };
+  //   window.addEventListener('resize', handleResize);
+  //   return () => window.removeEventListener('resize', handleResize);
+  // }, [currentStep]);
 
   return (
     <div className="mb-8">

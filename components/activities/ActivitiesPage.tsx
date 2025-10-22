@@ -111,31 +111,25 @@ const ActivitiesPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingData.guests, participantCount]);
 
-  // Scroll to top when activity changes (with better timing for animations)
-  useEffect(() => {
-    const scrollToTop = () => {
-      // Try to scroll to the activity card container first
-      const activityContainer = document.querySelector('[data-activity-card-container]');
-
-      if (activityContainer) {
-        activityContainer.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      } else {
-        // Fallback to window scroll
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }
-    };
-
-    // Delay to allow animation to start smoothly
-    const timeoutId = setTimeout(scrollToTop, 100);
-
-    return () => clearTimeout(timeoutId);
-  }, [activityFlowStep, activeParticipantId]);
+  // Auto-scroll disabled per user request
+  // useEffect(() => {
+  //   const scrollToTop = () => {
+  //     const activityContainer = document.querySelector('[data-activity-card-container]');
+  //     if (activityContainer) {
+  //       activityContainer.scrollIntoView({
+  //         behavior: 'smooth',
+  //         block: 'start',
+  //       });
+  //     } else {
+  //       window.scrollTo({
+  //         top: 0,
+  //         behavior: 'smooth'
+  //       });
+  //     }
+  //   };
+  //   const timeoutId = setTimeout(scrollToTop, 100);
+  //   return () => clearTimeout(timeoutId);
+  // }, [activityFlowStep, activeParticipantId]);
 
   // Initialize surf for the active participant
   useEffect(() => {
