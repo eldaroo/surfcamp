@@ -4,6 +4,11 @@ const nextConfig = {
     esmExternals: 'loose',
   },
   transpilePackages: ['framer-motion'],
+  outputFileTracingIgnores: [
+    '**/node_modules/**',
+    '**/.git/**',
+    '**/.next/cache/**',
+  ],
   async headers() {
     return [
       {
