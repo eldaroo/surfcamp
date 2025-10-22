@@ -294,28 +294,7 @@ export default function DateSelector() {
             className="card"
           >
             <div className="space-y-6">
-              {(bookingData.checkIn && bookingData.checkOut) ? (
-                <div className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border border-slate-700/50 bg-slate-800/50">
-                  <span className="text-sm font-medium text-slate-300">
-                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
-                  </span>
-                  <span className="text-sm text-slate-500">→</span>
-                  <span className="text-sm font-medium text-slate-300">
-                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', { day: '2-digit', month: 'short' })}
-                  </span>
-                  <span className="text-sm text-slate-500">•</span>
-                  <span className="text-sm font-medium text-slate-300">
-                    {bookingData.guests} {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests')}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount })}
-                    className="ml-auto px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
-                  >
-                    {t('common.edit')}
-                  </button>
-                </div>
-              ) : (
+              {!(bookingData.checkIn && bookingData.checkOut) && (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Check-in Date */}
@@ -392,42 +371,53 @@ export default function DateSelector() {
 
               {/* Summary */}
               {(bookingData.checkIn || bookingData.checkOut) && (
-                <div className="bg-white/10 rounded-lg p-4 border border-white/20">
-                  <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
-                  <div className="space-y-1 text-sm">
-                    {bookingData.checkIn && (
-                      <div>
-                        <span className="text-white">{t('dates.summary.checkIn')}:</span>
-                        <span className="ml-2 font-medium text-blue-300">
-                          {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
-                        </span>
+                <div className="bg-white/10 rounded-lg p-4 border border-white/20 relative">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
+                      <div className="space-y-1 text-sm">
+                        {bookingData.checkIn && (
+                          <div>
+                            <span className="text-white">{t('dates.summary.checkIn')}:</span>
+                            <span className="ml-2 font-medium text-blue-300">
+                              {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        {bookingData.checkOut && (
+                          <div>
+                            <span className="text-white">{t('dates.summary.checkOut')}:</span>
+                            <span className="ml-2 font-medium text-blue-300">
+                              {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-white">{t('dates.summary.guests')}:</span>
+                          <span className="ml-2 font-medium text-blue-300">{guests}</span>
+                        </div>
+                        {nights > 0 && (
+                          <div className="mt-2 text-sm text-yellow-300">
+                            {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {bookingData.checkOut && (
-                      <div>
-                        <span className="text-white">{t('dates.summary.checkOut')}:</span>
-                        <span className="ml-2 font-medium text-blue-300">
-                          {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-white">{t('dates.summary.guests')}:</span>
-                      <span className="ml-2 font-medium text-blue-300">{guests}</span>
                     </div>
-                    {nights > 0 && (
-                      <div className="mt-2 text-sm text-yellow-300">
-                        {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                      </div>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount })}
+                      className="px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
+                    >
+                      {t('common.edit')}
+                    </button>
                   </div>
                 </div>
               )}
@@ -585,3 +575,4 @@ export default function DateSelector() {
     </div>
   );
 } 
+

@@ -207,38 +207,6 @@ export default function AccommodationSelector() {
           </div>
         </div>
 
-        {/* Summary Bar - Hidden on Mobile, Desktop only */}
-        <div
-          className="hidden md:flex flex-wrap items-center gap-3 mb-8 px-4 py-3 rounded-lg border"
-          style={{
-            backgroundColor: 'var(--brand-surface)',
-            borderColor: 'var(--brand-border)'
-          }}
-        >
-          <div className="text-[var(--brand-text)] text-[15px]">
-            <strong>{bookingData.checkIn ? new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES') : '-'}</strong> →
-            <strong className="ml-2">{bookingData.checkOut ? new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES') : '-'}</strong>
-          </div>
-          <div className="w-px h-4" style={{ backgroundColor: 'var(--brand-border)' }}></div>
-          <div className="text-[var(--brand-text)] text-[15px]">
-            <strong>{bookingData.guests}</strong> {bookingData.guests === 1 ? t('dates.guest') : t('dates.guests_plural')}
-          </div>
-          <div className="w-px h-4" style={{ backgroundColor: 'var(--brand-border)' }}></div>
-          <div className="text-[var(--brand-text)] text-[15px]">
-            <strong>{nights}</strong> {nights === 1 ? 'night' : 'nights'}
-          </div>
-          <button
-            onClick={() => setCurrentStep('dates')}
-            className="ml-auto text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
-            style={{
-              color: 'var(--brand-gold)',
-              borderColor: 'var(--brand-gold)'
-            }}
-          >
-            {t('accommodation.changeDates')}
-          </button>
-        </div>
-
         {/* Error Message */}
         {error && (
           <motion.div

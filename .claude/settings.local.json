@@ -64,7 +64,16 @@
       "Bash(npx tsc --noEmit --pretty)",
       "Bash(powershell -Command \"(Get-Content ''C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\AccommodationCard.tsx'').Count\")",
       "Bash(powershell -Command \"(Get-Content ''C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\AccommodationSelector.tsx'').Count\")",
-      "Bash(powershell -Command \"(Get-Content ''C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\activities\\HeaderPersonalization.tsx'').Count\")"
+      "Bash(powershell -Command \"(Get-Content ''C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\components\\activities\\HeaderPersonalization.tsx'').Count\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(powershell -Command \"$input | Measure-Object -Line | Select-Object -ExpandProperty Lines\")",
+      "Bash(powershell -Command:*)",
+      "WebSearch",
+      "Bash(mkdir:*)",
+      "Bash(del package-lock.json)",
+      "Bash(npm ci:*)"
     ],
     "deny": [],
     "ask": []

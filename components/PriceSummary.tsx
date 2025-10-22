@@ -60,7 +60,8 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
     selectedYogaPackages,
     selectedSurfPackages,
     selectedSurfClasses,
-    participants
+    participants,
+    setCurrentStep
   } = useBookingStore();
 
   // Default translations with fallbacks
@@ -229,6 +230,20 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
               {nights} {pluralize(nights, 'night', 'nights')}
             </dd>
           </dl>
+
+          {/* Edit Button */}
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={() => setCurrentStep('dates')}
+              className="text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
+              style={{
+                color: 'var(--brand-gold)',
+                borderColor: 'var(--brand-gold)'
+              }}
+            >
+              {getText('accommodation.changeDates', 'Edit')}
+            </button>
+          </div>
 
           {/* Separator */}
           <div
