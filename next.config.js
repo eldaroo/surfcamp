@@ -1,9 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  experimental: {
-    esmExternals: 'loose',
-  },
   transpilePackages: ['framer-motion'],
   async headers() {
     return [
