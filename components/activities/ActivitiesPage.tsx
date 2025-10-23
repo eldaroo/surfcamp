@@ -10,7 +10,7 @@ import { Activity } from "@/types";
 import ActivityCard from "./ActivityCard";
 import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
-import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type SurfPackage = '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes';
@@ -503,10 +503,17 @@ const ActivitiesPage = () => {
               transition={{ delay: 0.3, duration: 0.4 }}
               className="rounded-3xl border border-slate-700/50 bg-slate-900/70 shadow-xl overflow-hidden mb-6"
             >
-              <div className="px-6 py-4 border-b border-slate-700/50 bg-slate-800/30">
+              <div className="px-6 py-4 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-200">
                   {locale === "es" ? "Actividades seleccionadas" : "Selected activities"}
                 </h3>
+                <button
+                  onClick={() => resetActivityFlow()}
+                  className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-amber-300"
+                  title={locale === "es" ? "Editar actividades" : "Edit activities"}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="p-6 space-y-3">

@@ -73,7 +73,8 @@
       "WebSearch",
       "Bash(mkdir:*)",
       "Bash(del package-lock.json)",
-      "Bash(npm ci:*)"
+      "Bash(npm ci:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

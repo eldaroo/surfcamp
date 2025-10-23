@@ -8,6 +8,7 @@ import {
   sendDarioWelcomeMessage,
   sendIceBathReservationNotification,
   sendSurfClassReservationNotification,
+  sendUnifiedActivitiesNotification,
   getRoomTypeName
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
@@ -234,6 +235,115 @@ const buildConsumptionItems = (
 };
 
 
+
+const buildParticipantConsumptionItems = (participant: any) => {
+  console.log(`🔍 [buildParticipantConsumptionItems] Processing participant:`, participant.name);
+  console.log(`🔍 [buildParticipantConsumptionItems] selectedActivities:`, JSON.stringify(participant?.selectedActivities, null, 2));
+  console.log(`🔍 [buildParticipantConsumptionItems] selectedSurfClasses:`, JSON.stringify(participant?.selectedSurfClasses, null, 2));
+  console.log(`🔍 [buildParticipantConsumptionItems] selectedYogaPackages:`, JSON.stringify(participant?.selectedYogaPackages, null, 2));
+  console.log(`🔍 [buildParticipantConsumptionItems] activityQuantities:`, JSON.stringify(participant?.activityQuantities, null, 2));
+
+  const itemsMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
+
+  const participantActivities = participant?.selectedActivities || [];
+
+  participantActivities.forEach((activity: any) => {
+    if (!activity?.id) {
+      return;
+    }
+
+    const baseActivity = getActivityById(activity.id);
+    const category = (activity.category || baseActivity?.category) as Activity['category'] | undefined;
+
+    let packageName = activity.package;
+    let classCount = activity.classCount;
+
+    if (category === 'surf') {
+      if (participant.selectedSurfPackages) {
+        const participantPackage = participant.selectedSurfPackages[activity.id];
+        if (participantPackage) {
+          packageName = participantPackage;
+        }
+      }
+
+      if (participant.selectedSurfClasses) {
+        const participantClasses = participant.selectedSurfClasses[activity.id];
+        if (participantClasses !== undefined) {
+          classCount = participantClasses;
+        }
+      }
+
+      if (classCount === undefined && typeof packageName === 'string') {
+        const match = packageName.match(/(\d+)/);
+        if (match) {
+          classCount = parseInt(match[1], 10);
+        }
+      }
+
+      if (classCount === undefined) {
+        classCount = 4;
+      }
+
+      classCount = Math.min(10, Math.max(3, classCount));
+      packageName = `${classCount}-classes`;
+    } else if (category === 'yoga') {
+      if (participant.selectedYogaPackages) {
+        const participantPackage = participant.selectedYogaPackages[activity.id];
+        if (participantPackage) {
+          packageName = participantPackage;
+        }
+      }
+
+      if (classCount === undefined && typeof packageName === 'string') {
+        const match = packageName.match(/(\d+)/);
+        if (match) {
+          classCount = parseInt(match[1], 10);
+        }
+      }
+
+      if (classCount && ![1, 3, 10].includes(classCount)) {
+        classCount = undefined;
+      }
+    }
+
+    let quantity: number | undefined = activity.quantity;
+    if (typeof quantity !== 'number' || !Number.isFinite(quantity)) {
+      quantity = participant.activityQuantities?.[activity.id];
+    }
+    if (typeof quantity !== 'number' || !Number.isFinite(quantity)) {
+      quantity = 1;
+    }
+    quantity = Math.max(1, Math.round(quantity));
+
+    const productId = getEnvProductId(activity.id, packageName, classCount);
+
+    if (!productId) {
+      console.warn('[RESERVE] [ParticipantConsumption] No product mapping found for activity', {
+        participant: participant.name,
+        activityId: activity.id,
+        packageName,
+        classCount,
+      });
+      return;
+    }
+
+    if (!itemsMap[productId]) {
+      const inventoryCenterId = getEnvInventoryCenterId(activity.id, packageName) || undefined;
+      itemsMap[productId] = {
+        product_id: productId,
+        cant: quantity,
+        ...(inventoryCenterId ? { inventory_center_id: inventoryCenterId } : {}),
+      };
+    } else {
+      itemsMap[productId].cant += quantity;
+    }
+  });
+
+  return Object.values(itemsMap);
+};
+
+
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🏨 [RESERVE] Incoming reservation request');
@@ -249,7 +359,8 @@ export async function POST(request: NextRequest) {
       activities = [],
       selectedActivities: selectedActivitiesPayload = [],
       activityIds = [],
-      paymentIntentId
+      paymentIntentId,
+      participants = [] // Array of participants with their info and activities
     } = body;
 
     const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
@@ -364,6 +475,21 @@ export async function POST(request: NextRequest) {
     const hasDetailedActivityPayload =
       Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
+    // Check if we need to create multiple reservations (casa-playa with multiple participants)
+    const shouldCreateMultipleReservations =
+      roomTypeId === 'casa-playa' &&
+      isSharedRoom &&
+      Array.isArray(participants) &&
+      participants.length > 1;
+
+    console.log('🏨 [RESERVE] Reservation strategy:', {
+      shouldCreateMultipleReservations,
+      roomTypeId,
+      isSharedRoom,
+      participantCount: participants.length,
+      guests
+    });
+
     // Ensure customer exists in LobbyPMS before booking
     try {
       if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
@@ -407,6 +533,199 @@ export async function POST(request: NextRequest) {
 
     console.log('📡 Sending to LobbyPMS:', bookingData);
 
+    // If we need to create multiple reservations (one per participant in shared room)
+    if (shouldCreateMultipleReservations) {
+      console.log('🏨 [RESERVE] Creating multiple reservations for shared room participants');
+
+      const createdReservations: any[] = [];
+      const bookingIds: string[] = [];
+
+      for (let i = 0; i < participants.length; i++) {
+        const participant = participants[i];
+        console.log(`🏨 [RESERVE] ========== PARTICIPANT ${i + 1}/${participants.length} ==========`);
+        console.log(`🏨 [RESERVE] Participant name:`, participant.name);
+        console.log(`🏨 [RESERVE] Participant data:`, JSON.stringify(participant, null, 2));
+
+        // Build participant-specific booking data
+        const participantBookingData = {
+          ...bookingData,
+          guest_count: 1,
+          total_adults: 1,
+          guest_name: participant.name || `${contactInfo.firstName} ${contactInfo.lastName}`,
+          holder_name: participant.name || `${contactInfo.firstName} ${contactInfo.lastName}`,
+          notes: `${baseNotes}\n- Participante ${i + 1}/${participants.length}: ${participant.name}\n- Nota Surfcamp: Surfcamp`,
+        };
+
+        try {
+          const participantReservation = await lobbyPMSClient.createBooking(participantBookingData);
+          const participantBookingId =
+            participantReservation?.booking?.booking_id ||
+            participantReservation?.booking_id ||
+            participantReservation?.id;
+
+          if (participantBookingId) {
+            bookingIds.push(participantBookingId);
+            createdReservations.push(participantReservation);
+
+            // Add participant-specific activities
+            const participantActivities = participant.selectedActivities || [];
+            if (participantActivities.length > 0) {
+              // Enrich activities with participant-specific data (classes, packages, quantities)
+              const enrichedActivities = participantActivities.map((activity: any) => {
+                const baseActivity = getActivityById(activity.id);
+                const enriched: any = {
+                  id: activity.id,
+                  name: activity.name || baseActivity?.name,
+                  category: activity.category || baseActivity?.category,
+                };
+
+                // Add surf classes if applicable
+                if (enriched.category === 'surf' && participant.selectedSurfClasses) {
+                  const surfClasses = participant.selectedSurfClasses[activity.id];
+                  if (surfClasses !== undefined) {
+                    enriched.classCount = surfClasses;
+                    enriched.package = `${surfClasses}-classes`;
+                  }
+                }
+
+                // Add yoga package if applicable
+                if (enriched.category === 'yoga' && participant.selectedYogaPackages) {
+                  const yogaPackage = participant.selectedYogaPackages[activity.id];
+                  if (yogaPackage) {
+                    enriched.package = yogaPackage;
+                    const classMatch = yogaPackage.match(/(\d+)/);
+                    if (classMatch) {
+                      enriched.classCount = parseInt(classMatch[1], 10);
+                    }
+                  }
+                }
+
+                // Add quantity if applicable (ice_bath, transport, etc.)
+                if (participant.activityQuantities && participant.activityQuantities[activity.id]) {
+                  enriched.quantity = participant.activityQuantities[activity.id];
+                }
+
+                return enriched;
+              });
+
+              console.log(`📋 [RESERVE] Enriched activities for ${participant.name}:`, JSON.stringify(enrichedActivities, null, 2));
+
+              const participantConsumptionItems = buildParticipantConsumptionItems(participant);
+              console.log(`📦 [RESERVE] Consumption items for ${participant.name}:`, JSON.stringify(participantConsumptionItems, null, 2));
+
+              if (participantConsumptionItems.length > 0) {
+                await lobbyPMSClient.addProductsToBooking(participantBookingId, participantConsumptionItems);
+                console.log(`✅ Added ${participantConsumptionItems.length} activities to reservation for ${participant.name}`);
+              }
+            }
+          }
+        } catch (participantError) {
+          console.error(`❌ Failed to create reservation for participant ${participant.name}:`, participantError);
+          // Continue with other participants even if one fails
+        }
+      }
+
+      console.log(`✅ Created ${createdReservations.length}/${participants.length} reservations for shared room`);
+
+      // Send WhatsApp notifications
+      try {
+        // Send unified activities notification with all participants
+        const participantsForNotification = participants.map((p: any) => ({
+          name: p.name,
+          activities: (p.selectedActivities || []).map((act: any) => {
+            const activity = getActivityById(act.id);
+            const category = activity?.category || 'other';
+
+            let classes: number | undefined;
+            let packageName: string | undefined;
+            let quantity: number | undefined;
+
+            // Get surf-specific data
+            if (category === 'surf' && p.selectedSurfClasses) {
+              classes = p.selectedSurfClasses[act.id];
+              if (classes) {
+                packageName = `${classes}-classes`;
+              }
+            }
+
+            // Get yoga-specific data
+            if (category === 'yoga' && p.selectedYogaPackages) {
+              packageName = p.selectedYogaPackages[act.id];
+              if (packageName) {
+                const match = packageName.match(/(\d+)/);
+                if (match) {
+                  classes = parseInt(match[1], 10);
+                }
+              }
+            }
+
+            // Get quantity for other activities (ice_bath, etc.)
+            if (p.activityQuantities) {
+              quantity = p.activityQuantities[act.id];
+            }
+
+            return {
+              type: category,
+              classes,
+              package: packageName,
+              quantity
+            };
+          })
+        }));
+
+        await sendUnifiedActivitiesNotification({
+          checkIn,
+          checkOut,
+          guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          phone: contactInfo.phone,
+          dni: contactInfo.dni || 'No informado',
+          total: 0, // Will be calculated if needed
+          participants: participantsForNotification
+        });
+        console.log('📱 Unified activities notification sent to staff');
+
+        // Send admin notification
+        const waMessage = `¡Hola! Se confirmaron ${createdReservations.length} reservas en SurfCamp (Casa Playa compartida) para las fechas ${checkIn} a ${checkOut}. Referencia: ${bookingReference}\nParticipantes: ${participants.map((p: any) => p.name).join(', ')}`;
+        await sendWhatsAppMessage('+5491162802566', waMessage);
+        console.log('📱 WhatsApp confirmation sent to admin');
+
+        // Send welcome message to main contact
+        if (contactInfo?.phone) {
+          const allActivityNames = participants.flatMap((p: any) =>
+            (p.selectedActivities || []).map((act: any) => {
+              const activity = getActivityById(act.id);
+              return activity?.name || act.id;
+            })
+          );
+
+          await sendDarioWelcomeMessage(contactInfo.phone, {
+            checkIn,
+            checkOut,
+            guestName: contactInfo.firstName,
+            activities: Array.from(new Set(allActivityNames)), // Remove duplicates
+            roomTypeName: getRoomTypeName(roomTypeId),
+            guests: participants.length
+          });
+          console.log('📱 Welcome message sent to main contact');
+        }
+      } catch (whatsappError) {
+        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        reservationIds: bookingIds,
+        bookingReference,
+        status: 'confirmed',
+        message: `${createdReservations.length} reservas confirmadas exitosamente en LobbyPMS`,
+        demoMode: false,
+        multipleReservations: true,
+        participantCount: participants.length,
+        lobbyPMSResponses: createdReservations
+      });
+    }
+
+    // Single reservation flow (original logic)
     try {
       console.log('🚀 Attempting to create booking in LobbyPMS...');
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
@@ -441,15 +760,44 @@ export async function POST(request: NextRequest) {
         console.warn('⚠️ [RESERVE] Could not determine booking_id from LobbyPMS response. Skipping add-product-service.');
       } else {
         try {
-          const consumptionItems = buildConsumptionItems(
-            resolvedActivities,
-            guests || 1,
-            { hasDetailedSelections: hasDetailedActivityPayload }
-          );
+          let consumptionItems;
+
+          if (Array.isArray(participants) && participants.length > 0) {
+            console.log('[RESERVE] Aggregating participant consumption items for single reservation', {
+              participants: participants.map((p: any) => p.name),
+            });
+
+            const aggregatedMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
+
+            participants.forEach((participant: any) => {
+              const participantItems = buildParticipantConsumptionItems(participant);
+              console.log(`[RESERVE] Participant consumption items (single reservation) for ${participant.name}:`, participantItems);
+
+              participantItems.forEach((item) => {
+                const key = `${item.product_id}-${item.inventory_center_id ?? ''}`;
+                if (!aggregatedMap[key]) {
+                  aggregatedMap[key] = { ...item };
+                } else {
+                  aggregatedMap[key].cant += item.cant;
+                }
+              });
+            });
+
+            consumptionItems = Object.values(aggregatedMap);
+          } else {
+            consumptionItems = buildConsumptionItems(
+              resolvedActivities,
+              guests || 1,
+              { hasDetailedSelections: hasDetailedActivityPayload }
+            );
+          }
+
+          console.log('[RESERVE] Final consumption items for booking:', consumptionItems);
+
           if (consumptionItems.length > 0) {
             await lobbyPMSClient.addProductsToBooking(bookingId, consumptionItems);
           } else {
-            console.warn('?s??,? [RESERVE] No consumption items resolved for booking. Skipping addProductsToBooking call.');
+            console.warn('[RESERVE] No consumption items resolved for booking. Skipping addProductsToBooking call.');
           }
         } catch (consumptionError) {
           console.error('❌ [RESERVE] Failed to add products/services to booking:', consumptionError);
@@ -485,36 +833,100 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Notificaciones de actividades específicas al staff
-        const hasSurf = resolvedActivities.some(act => act.category === 'surf');
-        const hasIceBath = resolvedActivities.some(act => act.category === 'ice_bath');
+        // Check if we have multiple participants with different activities
+        const hasMultipleParticipantsWithActivities =
+          Array.isArray(participants) &&
+          participants.length > 1 &&
+          participants.some((p: any) => p.selectedActivities && p.selectedActivities.length > 0);
 
-        if (hasSurf) {
-          const surfActivity = resolvedActivities.find(act => act.category === 'surf');
-          await sendSurfClassReservationNotification({
+        if (hasMultipleParticipantsWithActivities) {
+          // Use unified notification for multiple participants
+          const participantsForNotification = participants.map((p: any) => ({
+            name: p.name,
+            activities: (p.selectedActivities || []).map((act: any) => {
+              const activity = getActivityById(act.id);
+              const category = activity?.category || 'other';
+
+              let classes: number | undefined;
+              let packageName: string | undefined;
+              let quantity: number | undefined;
+
+              // Get surf-specific data
+              if (category === 'surf' && p.selectedSurfClasses) {
+                classes = p.selectedSurfClasses[act.id];
+                if (classes) {
+                  packageName = `${classes}-classes`;
+                }
+              }
+
+              // Get yoga-specific data
+              if (category === 'yoga' && p.selectedYogaPackages) {
+                packageName = p.selectedYogaPackages[act.id];
+                if (packageName) {
+                  const match = packageName.match(/(\d+)/);
+                  if (match) {
+                    classes = parseInt(match[1], 10);
+                  }
+                }
+              }
+
+              // Get quantity for other activities (ice_bath, etc.)
+              if (p.activityQuantities) {
+                quantity = p.activityQuantities[act.id];
+              }
+
+              return {
+                type: category,
+                classes,
+                package: packageName,
+                quantity
+              };
+            })
+          }));
+
+          await sendUnifiedActivitiesNotification({
             checkIn,
             checkOut,
             guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
             phone: contactInfo.phone,
             dni: contactInfo.dni || 'No informado',
-            total: 0, // Will be calculated from priceBreakdown if needed
-            surfPackage: surfActivity?.package || '4-classes',
-            guests: surfActivity?.quantity || 1, // Use quantity from surfActivity
-            surfClasses: surfActivity?.classCount
+            total: 0,
+            participants: participantsForNotification
           });
-          console.log('📱 Surf notification sent to staff');
-        }
+          console.log('📱 Unified activities notification sent to staff');
+        } else {
+          // Use individual notifications for single participant or no participants data
+          const hasSurf = resolvedActivities.some(act => act.category === 'surf');
+          const hasIceBath = resolvedActivities.some(act => act.category === 'ice_bath');
 
-        if (hasIceBath) {
-          await sendIceBathReservationNotification({
-            checkIn,
-            checkOut,
-            guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-            phone: contactInfo.phone,
-            dni: contactInfo.dni || 'No informado',
-            total: 0, // Will be calculated from priceBreakdown if needed
-            quantity: 1
-          });
-          console.log('📱 Ice bath notification sent to staff');
+          if (hasSurf) {
+            const surfActivity = resolvedActivities.find(act => act.category === 'surf');
+            await sendSurfClassReservationNotification({
+              checkIn,
+              checkOut,
+              guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+              phone: contactInfo.phone,
+              dni: contactInfo.dni || 'No informado',
+              total: 0, // Will be calculated from priceBreakdown if needed
+              surfPackage: surfActivity?.package || '4-classes',
+              guests: surfActivity?.quantity || 1, // Use quantity from surfActivity
+              surfClasses: surfActivity?.classCount
+            });
+            console.log('📱 Surf notification sent to staff');
+          }
+
+          if (hasIceBath) {
+            await sendIceBathReservationNotification({
+              checkIn,
+              checkOut,
+              guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+              phone: contactInfo.phone,
+              dni: contactInfo.dni || 'No informado',
+              total: 0, // Will be calculated from priceBreakdown if needed
+              quantity: 1
+            });
+            console.log('📱 Ice bath notification sent to staff');
+          }
         }
 
       } catch (whatsappError) {

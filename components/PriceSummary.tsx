@@ -333,6 +333,22 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         })}
       </ul>
 
+      {/* Edit Activities Button */}
+      {allActivitySelections.length > 0 && (
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={() => setCurrentStep('activities')}
+            className="text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
+            style={{
+              color: 'var(--brand-gold)',
+              borderColor: 'var(--brand-gold)'
+            }}
+          >
+            {getText('activities.edit', 'Edit Activities')}
+          </button>
+        </div>
+      )}
+
       {/* Subtotal (only show if we have multiple items) */}
       {((accommodationTotal > 0) && (activitiesTotal > 0)) && (
         <>

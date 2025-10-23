@@ -7,7 +7,15 @@ import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 
 export default function SuccessPage() {
   const { t, locale } = useI18n();
-  const { bookingData, selectedRoom, selectedActivities, priceBreakdown, selectedYogaPackages, selectedSurfPackages, participants } = useBookingStore();
+  const { bookingData, selectedRoom, priceBreakdown, participants } = useBookingStore();
+
+  // Collect all activities from all participants
+  const allActivities: Array<{ activity: any; participant: any }> = [];
+  participants.forEach(participant => {
+    participant.selectedActivities.forEach(activity => {
+      allActivities.push({ activity, participant });
+    });
+  });
 
   // Calculate basic totals if priceBreakdown is not available
   let displayTotal = 0;
@@ -16,19 +24,18 @@ export default function SuccessPage() {
   } else {
     // Fallback calculation with proper pricing
     let activitiesTotal = 0;
-    selectedActivities.forEach((activity: any) => {
+    allActivities.forEach(({ activity, participant }) => {
       if (activity.category === 'yoga') {
-        const yogaPackage = selectedYogaPackages[activity.id];
+        const yogaPackage = participant.selectedYogaPackages[activity.id];
         if (yogaPackage) {
           activitiesTotal += getActivityTotalPrice('yoga', yogaPackage);
         }
       } else if (activity.category === 'surf') {
-        const surfPackage = selectedSurfPackages[activity.id];
-        if (surfPackage) {
-          activitiesTotal += getActivityTotalPrice('surf', surfPackage);
-        }
+        const surfClasses = participant.selectedSurfClasses[activity.id] || 4;
+        activitiesTotal += calculateSurfPrice(surfClasses);
       } else {
-        activitiesTotal += activity.price;
+        const quantity = participant.activityQuantities[activity.id] || 1;
+        activitiesTotal += activity.price * quantity;
       }
     });
 
@@ -36,7 +43,9 @@ export default function SuccessPage() {
     let accommodationTotal = 0;
     if (selectedRoom && bookingData.checkIn && bookingData.checkOut) {
       const nights = Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24));
-      accommodationTotal = selectedRoom.pricePerNight * nights;
+      accommodationTotal = selectedRoom.isSharedRoom
+        ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)
+        : selectedRoom.pricePerNight * nights;
     }
 
     displayTotal = activitiesTotal + accommodationTotal;
@@ -57,19 +66,18 @@ export default function SuccessPage() {
   const nights = Math.ceil((new Date(bookingData.checkOut!).getTime() - new Date(bookingData.checkIn!).getTime()) / (1000 * 60 * 60 * 24));
 
   // Function to get the correct activity price based on selected packages
-  const getActivityPrice = (activity: any) => {
+  const getActivityPrice = (activity: any, participant: any) => {
     if (activity.category === 'yoga') {
-      const yogaPackage = selectedYogaPackages[activity.id];
+      const yogaPackage = participant.selectedYogaPackages[activity.id];
       if (yogaPackage) {
         return getActivityTotalPrice('yoga', yogaPackage);
       }
     } else if (activity.category === 'surf') {
-      const surfPackage = selectedSurfPackages[activity.id];
-      if (surfPackage) {
-        return getActivityTotalPrice('surf', surfPackage);
-      }
+      const surfClasses = participant.selectedSurfClasses[activity.id] || 4;
+      return calculateSurfPrice(surfClasses);
     }
-    return activity.price;
+    const quantity = participant.activityQuantities[activity.id] || 1;
+    return activity.price * quantity;
   };
 
   return (
@@ -162,22 +170,6 @@ export default function SuccessPage() {
               </div>
             )}
 
-            {/* Activities */}
-            {selectedActivities.length > 0 && (
-              <div>
-                <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
-                  <h3 className="font-semibold text-white font-heading mb-4">{t('prices.activities')}</h3>
-                  <div className="space-y-3 text-sm">
-                    {selectedActivities.map((activity: any) => (
-                      <div key={activity.id} className="flex justify-between items-center">
-                        <span className="text-gray-400">{activity.name}:</span>
-                        <span className="font-medium text-yellow-400">${getActivityPrice(activity)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right Column */}
@@ -253,6 +245,28 @@ export default function SuccessPage() {
                   <span className="text-gray-300">{selectedRoom.roomTypeName}</span>
                   <span className="font-medium text-white">${priceBreakdown?.accommodation || 0}</span>
                 </div>
+              )}
+
+              {/* Activities Breakdown */}
+              {allActivities.length > 0 && (
+                <>
+                  {allActivities.map(({ activity, participant }, index) => {
+                    const showParticipantName = participants.length > 1;
+                    return (
+                      <div key={`${participant.id}-${activity.id}-${index}`}>
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <span className="text-gray-300">{activity.name}</span>
+                            {showParticipantName && (
+                              <span className="text-gray-500 text-sm ml-2">({participant.name})</span>
+                            )}
+                          </div>
+                          <span className="font-medium text-white">${getActivityPrice(activity, participant)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
               )}
 
               <div className="border-t border-gray-600 pt-4 mt-4">

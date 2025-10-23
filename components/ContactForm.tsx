@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
@@ -36,6 +36,7 @@ export default function ContactForm() {
     selectedYogaPackages,
     selectedSurfPackages,
     selectedSurfClasses,
+    participants,
     setPriceBreakdown
   } = useBookingStore();
   const [formData, setFormData] = useState({
@@ -114,21 +115,138 @@ export default function ContactForm() {
       : selectedRoom.pricePerNight * nights
   ) : 0;
 
-  const activitiesTotal = selectedActivities.reduce((sum: number, activity: any) => {
-    if (activity.category === 'yoga') {
-      const yogaPackage = selectedYogaPackages[activity.id];
-      if (!yogaPackage) return sum;
-      return sum + getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
-    } else if (activity.category === 'surf') {
-      const surfClasses = selectedSurfClasses[activity.id];
-      if (!surfClasses) return sum;
-      return sum + getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
-    } else {
-      return sum + ((activity.price || 0) * (bookingData.guests || 1));
-    }
-  }, 0);
+const buildParticipantActivitySummary = useCallback((activity: any, participant: any) => {
+  const detailParts: string[] = [];
+  let price = 0;
 
-  const total = accommodationTotal + activitiesTotal;
+  if (activity.category === 'yoga') {
+    const yogaPackage = participant.selectedYogaPackages?.[activity.id];
+    if (!yogaPackage) {
+      return null;
+    }
+    price = getActivityTotalPrice('yoga', yogaPackage);
+    detailParts.push(yogaPackage);
+  } else if (activity.category === 'surf') {
+    const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
+    price = calculateSurfPrice(surfClasses);
+    detailParts.push(`${surfClasses} ${surfClasses === 1 ? 'class' : 'classes'}`);
+  } else {
+    const quantity = participant.activityQuantities?.[activity.id] ?? 1;
+    const basePrice = activity.price || 0;
+    price = basePrice * quantity;
+    if (quantity > 1) {
+      detailParts.push(`x${quantity}`);
+    }
+  }
+
+  if (price <= 0) {
+    return null;
+  }
+
+  return {
+    price,
+    details: detailParts.length ? `(${detailParts.join(' · ')})` : '',
+  };
+}, []);
+
+const allActivitySelections = useMemo(() => {
+  const selections: Array<{
+    key: string;
+    activity: any;
+    participantName: string;
+    price: number;
+    details: string;
+  }> = [];
+
+  participants.forEach((participant, index) => {
+    const participantName = participant.name?.trim() || `Participant ${index + 1}`;
+
+    participant.selectedActivities.forEach((activity: any) => {
+      const summary = buildParticipantActivitySummary(activity, participant);
+      if (!summary) {
+        return;
+      }
+
+      selections.push({
+        key: `${participant.id}-${activity.id}-${summary.details}`,
+        activity,
+        participantName,
+        price: summary.price,
+        details: summary.details,
+      });
+    });
+  });
+
+  return selections;
+}, [participants, buildParticipantActivitySummary]);
+
+const activitiesTotal = allActivitySelections.reduce((sum, selection) => sum + selection.price, 0);
+
+const total = accommodationTotal + activitiesTotal;
+
+  const serializedParticipants = useMemo(
+    () =>
+      participants.map((participant, index) => {
+        // Only include activity-specific data for activities this participant has selected
+        const participantActivityIds = new Set(
+          (participant.selectedActivities || []).map((a: any) => a.id)
+        );
+
+        // Filter activity quantities to only include this participant's activities
+        const filteredActivityQuantities: Record<string, number> = {};
+        if (participant.activityQuantities) {
+          Object.entries(participant.activityQuantities).forEach(([activityId, quantity]) => {
+            if (participantActivityIds.has(activityId)) {
+              filteredActivityQuantities[activityId] = quantity as number;
+            }
+          });
+        }
+
+        // Filter yoga packages to only include this participant's activities
+        const filteredYogaPackages: Record<string, string> = {};
+        if (participant.selectedYogaPackages) {
+          Object.entries(participant.selectedYogaPackages).forEach(([activityId, pkg]) => {
+            if (participantActivityIds.has(activityId)) {
+              filteredYogaPackages[activityId] = pkg as string;
+            }
+          });
+        }
+
+        // Filter surf classes to only include this participant's activities
+        const filteredSurfClasses: Record<string, number> = {};
+        if (participant.selectedSurfClasses) {
+          Object.entries(participant.selectedSurfClasses).forEach(([activityId, classes]) => {
+            if (participantActivityIds.has(activityId)) {
+              filteredSurfClasses[activityId] = classes as number;
+            }
+          });
+        }
+
+        return {
+          id: participant.id,
+          name: participant.name || `Participant ${index + 1}`,
+          selectedActivities: (participant.selectedActivities || []).map((activity: any) => ({
+            id: activity.id,
+            name: activity.name,
+            category: activity.category,
+            package:
+              participant.selectedYogaPackages?.[activity.id] ??
+              (participant.selectedSurfClasses?.[activity.id] !== undefined
+                ? `${participant.selectedSurfClasses?.[activity.id]}-classes`
+                : activity.package),
+            classCount:
+              participant.selectedSurfClasses?.[activity.id] ?? activity.classCount,
+            quantity:
+              participant.activityQuantities?.[activity.id] ??
+              (typeof activity.quantity === 'number' ? activity.quantity : undefined),
+          })),
+          activityQuantities: filteredActivityQuantities,
+          selectedYogaPackages: filteredYogaPackages,
+          selectedSurfClasses: filteredSurfClasses,
+        };
+      }),
+    [participants]
+  );
 
   // Payment status checking
   const checkPaymentStatus = async (orderId?: string, tripId?: string) => {
@@ -349,6 +467,7 @@ export default function ContactForm() {
                 : undefined,
           classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
         })),
+        participants: serializedParticipants,
         wetravelData: {
           trip: {
             title: "Surf & Yoga Retreat – Santa Teresa",
@@ -616,38 +735,22 @@ export default function ContactForm() {
                       <span className="font-medium text-yellow-400">${accommodationTotal}</span>
                     </div>
                   )}
-                  {selectedActivities.map((activity: any) => {
-                    let activityPrice: number;
-                    let activityDetails: string = '';
-
-                    if (activity.category === 'yoga') {
-                      const selectedYogaPackage = selectedYogaPackages[activity.id];
-                      if (!selectedYogaPackage) return null;
-                      activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, bookingData.guests || 1);
-                      activityDetails = `(${selectedYogaPackage})`;
-                    } else if (activity.category === 'surf') {
-                      const surfClasses = selectedSurfClasses[activity.id];
-                      if (!surfClasses) return null;
-                      activityPrice = getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
-                      activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
-                    } else {
-                      activityPrice = (activity.price || 0) * (bookingData.guests || 1);
-                    }
-
-                    return (
-                      <div key={activity.id} className="flex justify-between">
+                  {allActivitySelections.map(({ key, activity, participantName, price, details }) => (
+                    <div key={key} className="flex justify-between">
+                      <div className="flex flex-col">
                         <span className="text-gray-300">
                           {activity.name}
-                          {activityDetails && (
+                          {details && (
                             <span className="text-sm text-gray-400 ml-2">
-                              {activityDetails}
+                              {details}
                             </span>
                           )}
                         </span>
-                        <span className="font-medium text-yellow-400">${activityPrice}</span>
+                        <span className="text-xs text-gray-400">{participantName}</span>
                       </div>
-                    );
-                  })}
+                      <span className="font-medium text-yellow-400">${price}</span>
+                    </div>
+                  ))}
                   <div className="border-t border-gray-600 pt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-white">{t('payment.summary.total')}</span>

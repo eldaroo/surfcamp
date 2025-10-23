@@ -48,7 +48,11 @@ export const getRoomTypeName = (roomTypeId: string): string => {
 
 // Función para formatear fechas para WhatsApp
 export const formatDateForWhatsApp = (dateString: string): string => {
-  const date = new Date(dateString);
+  // Parse the date string correctly to avoid timezone issues
+  // If the date is in YYYY-MM-DD format, parse it as local time
+  const parts = dateString.split('T')[0].split('-');
+  const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+
   return date.toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
@@ -184,10 +188,6 @@ export const sendIceBathReservationNotification = async (
 ❄️ *Cantidad reservada:* ${quantity} ${quantityLabel}
 💵 *Total abonado:* $${bookingData.total}
 
-🧘‍♂️ *Actividad:* Sesión de Baño de Hielo
-⏱️ *Duración:* 45 minutos
-🎯 *Modalidad:* Sesión 1:1 personalizada
-
 ¡Reserva confirmada para terapia de frío!`;
 
   return sendWhatsAppMessage('+541153695627', message);
@@ -229,12 +229,66 @@ export const sendSurfClassReservationNotification = async (
 ${classesLine}
 💵 *Total abonado:* $${bookingData.total}
 
-🌊 *Actividad:* Clases de Surf + Videoanálisis Personalizado
-📹 *Incluye:* Material de video y fotográfico
-🏄 *Equipamiento:* Tabla y lycra incluidas
-🎯 *Enfoque:* Plan de progreso personalizado para desarrollo técnico
-
 ¡Reserva confirmada para plan de progreso en surf!`;
+
+  return sendWhatsAppMessage('+541153695627', message);
+};
+
+// Función para enviar notificación unificada de actividades (múltiples participantes)
+export const sendUnifiedActivitiesNotification = async (
+  bookingData: {
+    checkIn: string;
+    checkOut: string;
+    guestName: string;
+    phone: string;
+    dni: string;
+    total: number;
+    participants: Array<{
+      name: string;
+      activities: Array<{
+        type: 'surf' | 'yoga' | 'ice_bath' | string;
+        classes?: number;
+        package?: string;
+        quantity?: number;
+      }>;
+    }>;
+  }
+) => {
+  const dni = bookingData.dni?.trim() || 'No informado';
+
+  // Build activity details for each participant
+  let activitiesDetails = '';
+  bookingData.participants.forEach((participant, index) => {
+    // Only show participant section if they have activities
+    const validActivities = participant.activities.filter(
+      activity => activity.type && (activity.classes || activity.quantity)
+    );
+
+    if (validActivities.length > 0) {
+      activitiesDetails += `\n👤 *${participant.name}:*\n`;
+      validActivities.forEach(activity => {
+        if (activity.type === 'surf' && activity.classes) {
+          activitiesDetails += `   🏄‍♂️ Surf: ${activity.classes} ${activity.classes === 1 ? 'clase' : 'clases'}\n`;
+        } else if (activity.type === 'yoga' && activity.classes) {
+          activitiesDetails += `   🧘‍♀️ Yoga: ${activity.classes} ${activity.classes === 1 ? 'clase' : 'clases'}\n`;
+        } else if (activity.type === 'ice_bath' && activity.quantity) {
+          activitiesDetails += `   🧊 Baño de Hielo: ${activity.quantity} ${activity.quantity === 1 ? 'sesión' : 'sesiones'}\n`;
+        }
+      });
+    }
+  });
+
+  const message = `🎯 *NUEVA RESERVA DE ACTIVIDADES* 🎯
+
+📇 *Cliente:* ${bookingData.guestName}
+📞 *Teléfono:* ${bookingData.phone}
+🪪 *DNI:* ${dni}
+📅 *Llegada:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Salida:* ${formatDateForWhatsApp(bookingData.checkOut)}
+${activitiesDetails}
+💵 *Total abonado:* $${bookingData.total}
+
+¡Reserva confirmada!`;
 
   return sendWhatsAppMessage('+541153695627', message);
 };

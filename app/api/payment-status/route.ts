@@ -150,9 +150,11 @@ export async function GET(request: NextRequest) {
             checkOut: booking.checkOut,
             guests: booking.guests,
             roomTypeId: booking.roomTypeId,
+            isSharedRoom: booking.isSharedRoom || false,
             contactInfo: booking.contactInfo,
             activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
-            selectedActivities: booking.selectedActivities || []
+            selectedActivities: booking.selectedActivities || [],
+            participants: booking.participants || []
           };
 
           console.log('🔵 [LOBBYPMS-DEBUG] 🔗 Reserve URL:', reserveUrl);

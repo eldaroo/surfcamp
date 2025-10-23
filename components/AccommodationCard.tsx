@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { CheckCircle2, X, ZoomIn } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
@@ -81,6 +81,8 @@ const AccommodationCard = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
+  const lightboxWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [lightboxDimensions, setLightboxDimensions] = useState<{ width: number; height: number } | null>(null);
   const visibleFeatures = features.slice(0, 3);
   const hiddenCount = features.length - 3;
 
@@ -110,6 +112,71 @@ const AccommodationCard = ({
   const prevLightboxImage = () => {
     setLightboxImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
   };
+
+  useEffect(() => {
+    if (!lightboxOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const aspectRatio = 16 / 10;
+
+    const computeDimensions = () => {
+      const maxWidth = Math.min(window.innerWidth - 64, 1280);
+      const maxHeight = window.innerHeight - 120;
+
+      let width = maxWidth;
+      let height = width / aspectRatio;
+
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = height * aspectRatio;
+      }
+
+      setLightboxDimensions({ width, height });
+
+      const rect = lightboxWrapperRef.current?.getBoundingClientRect();
+      if (rect) {
+        console.log('[Lightbox] opened', {
+          width: rect.width,
+          height: rect.height,
+          windowWidth: window.innerWidth,
+          windowHeight: window.innerHeight,
+          imageIndex: lightboxImageIndex,
+        });
+      }
+    };
+
+    computeDimensions();
+    window.addEventListener('resize', computeDimensions);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('resize', computeDimensions);
+    };
+  }, [lightboxOpen, lightboxImageIndex]);
+
+  const logBounds = useCallback((label: string) => {
+    const rect = lightboxWrapperRef.current?.getBoundingClientRect();
+    if (rect) {
+      console.log(`[Lightbox] ${label}`, {
+        width: rect.width,
+        height: rect.height,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        imageIndex: lightboxImageIndex,
+        timestamp: Date.now(),
+      });
+    }
+  }, [lightboxImageIndex]);
+
+  const handleLightboxMouseEnter = useCallback(() => {
+    logBounds('mouse enter');
+  }, [logBounds]);
+
+  const handleLightboxMouseLeave = useCallback(() => {
+    logBounds('mouse leave');
+  }, [logBounds]);
 
   return (
     <>
@@ -397,17 +464,21 @@ const AccommodationCard = ({
       </div>
 
       {/* Lightbox Modal - Refined Compact View */}
-      <AnimatePresence>
-        {lightboxOpen && gallery.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+              {lightboxOpen && gallery.length > 0 && (
+          <div
             className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:p-8"
             onClick={closeLightbox}
+            onMouseEnter={() => logBounds('overlay enter')}
+            onMouseLeave={() => logBounds('overlay leave')}
           >
             {/* Compact Container - Auto-adjusts to image */}
-            <div className="relative max-w-6xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div
+              ref={lightboxWrapperRef}
+              className="relative w-full"
+              style={{ maxWidth: "1280px", width: lightboxDimensions ? `${lightboxDimensions.width}px` : "100%" }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseEnter={handleLightboxMouseEnter}
+              onMouseLeave={handleLightboxMouseLeave}>
               {/* Close Button - Outside top-right */}
               <button
                 onClick={closeLightbox}
@@ -431,7 +502,7 @@ const AccommodationCard = ({
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/60 bg-slate-900/50"
               >
-                <div className="relative w-full" style={{ aspectRatio: '16/10' }}>
+                <div className="relative w-full" style={{ aspectRatio: "16/10", height: lightboxDimensions ? `${lightboxDimensions.height}px` : undefined }}>
                   <Image
                     src={gallery[lightboxImageIndex]}
                     alt={`${room.roomTypeName} - Image ${lightboxImageIndex + 1}`}
@@ -501,9 +572,9 @@ const AccommodationCard = ({
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+
     </>
   );
 };

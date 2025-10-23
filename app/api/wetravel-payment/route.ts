@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (body.checkIn && body.checkOut && body.contactInfo) {
       console.log('📝 New format detected - will save to DB and create payment');
 
-      const { checkIn, checkOut, guests, roomTypeId, contactInfo, selectedActivities, wetravelData } = body;
+      const { checkIn, checkOut, guests, roomTypeId, contactInfo, selectedActivities, participants = [], wetravelData } = body;
 
       // Get price from wetravelData if provided, otherwise use $1 for testing
       const price = wetravelData?.pricing?.price || 1;
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
         roomTypeId,
         contactInfo,
         selectedActivities,
+        participants,
         nights,
         totalAmountCents
       };

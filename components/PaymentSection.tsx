@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -23,7 +23,8 @@ export default function PaymentSection() {
     selectedSurfClasses,
     activityQuantities,
     setCurrentStep,
-    setPriceBreakdown
+    setPriceBreakdown,
+    participants
   } = useBookingStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -59,24 +60,29 @@ export default function PaymentSection() {
     const nights = Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // Calculate accommodation cost
-    const accommodation = selectedRoom.pricePerNight * nights;
+    const accommodation = selectedRoom.isSharedRoom
+      ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)
+      : selectedRoom.pricePerNight * nights;
 
-    // Calculate activities cost
+    // Calculate activities cost from all participants
     let activitiesTotal = 0;
-    selectedActivities.forEach((activity: any) => {
-      if (activity.category === 'yoga') {
-        const yogaPackage = selectedYogaPackages[activity.id];
-        if (yogaPackage) {
-          activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
+    participants.forEach(participant => {
+      participant.selectedActivities.forEach((activity: any) => {
+        if (activity.category === 'yoga') {
+          const yogaPackage = participant.selectedYogaPackages[activity.id];
+          if (yogaPackage) {
+            activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, 1);
+          }
+        } else if (activity.category === 'surf') {
+          const surfClasses = participant.selectedSurfClasses[activity.id];
+          if (surfClasses) {
+            activitiesTotal += getActivityTotalPrice('surf', undefined, 1, surfClasses);
+          }
+        } else {
+          const quantity = participant.activityQuantities[activity.id] || 1;
+          activitiesTotal += activity.price * quantity;
         }
-      } else if (activity.category === 'surf') {
-        const surfClasses = selectedSurfClasses[activity.id];
-        if (surfClasses) {
-          activitiesTotal += getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
-        }
-      } else {
-        activitiesTotal += activity.price * (bookingData.guests || 1);
-      }
+      });
     });
 
     const subtotal = accommodation + activitiesTotal;
@@ -92,6 +98,69 @@ export default function PaymentSection() {
       currency: 'USD'
     };
   };
+
+  const serializedParticipants = useMemo(() =>
+    participants.map((participant, index) => {
+      // Only include activity-specific data for activities this participant has selected
+      const participantActivityIds = new Set(
+        (participant.selectedActivities || []).map((a: any) => a.id)
+      );
+
+      // Filter activity quantities to only include this participant's activities
+      const filteredActivityQuantities: Record<string, number> = {};
+      if (participant.activityQuantities) {
+        Object.entries(participant.activityQuantities).forEach(([activityId, quantity]) => {
+          if (participantActivityIds.has(activityId)) {
+            filteredActivityQuantities[activityId] = quantity as number;
+          }
+        });
+      }
+
+      // Filter yoga packages to only include this participant's activities
+      const filteredYogaPackages: Record<string, string> = {};
+      if (participant.selectedYogaPackages) {
+        Object.entries(participant.selectedYogaPackages).forEach(([activityId, pkg]) => {
+          if (participantActivityIds.has(activityId)) {
+            filteredYogaPackages[activityId] = pkg as string;
+          }
+        });
+      }
+
+      // Filter surf classes to only include this participant's activities
+      const filteredSurfClasses: Record<string, number> = {};
+      if (participant.selectedSurfClasses) {
+        Object.entries(participant.selectedSurfClasses).forEach(([activityId, classes]) => {
+          if (participantActivityIds.has(activityId)) {
+            filteredSurfClasses[activityId] = classes as number;
+          }
+        });
+      }
+
+      return {
+        id: participant.id,
+        name: participant.name || `Participant ${index + 1}`,
+        selectedActivities: (participant.selectedActivities || []).map((activity: any) => ({
+          id: activity.id,
+          name: activity.name,
+          category: activity.category,
+          package:
+            participant.selectedYogaPackages?.[activity.id] ??
+            (participant.selectedSurfClasses?.[activity.id] !== undefined
+              ? `${participant.selectedSurfClasses?.[activity.id]}-classes`
+              : activity.package),
+          classCount:
+            participant.selectedSurfClasses?.[activity.id] ?? activity.classCount,
+          quantity:
+            participant.activityQuantities?.[activity.id] ??
+            (typeof activity.quantity === 'number' ? activity.quantity : undefined),
+        })),
+        activityQuantities: filteredActivityQuantities,
+        selectedYogaPackages: filteredYogaPackages,
+        selectedSurfClasses: filteredSurfClasses,
+      };
+    }),
+  [participants]
+  );
 
   // Function to check payment status
   const checkPaymentStatus = async (orderId?: string, tripId?: string) => {
@@ -291,6 +360,7 @@ export default function PaymentSection() {
                 : undefined,
           classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
         })),
+        participants: serializedParticipants,
         // WeTravel specific data
         wetravelData: {
           trip: {
@@ -319,6 +389,12 @@ export default function PaymentSection() {
 
       console.log('💰 Total price being sent:', total);
       console.log('📤 Sending request to payment API with full booking data');
+      console.log('👥 [PaymentSection] Serialized participants being sent:', JSON.stringify(serializedParticipants, null, 2));
+      console.log('🏠 [PaymentSection] selectedRoom data:', {
+        roomTypeId: selectedRoom?.roomTypeId,
+        isSharedRoom: selectedRoom?.isSharedRoom,
+        maxGuests: selectedRoom?.maxGuests
+      });
 
       const wetravelResponse = await fetch('/api/wetravel-payment', {
         method: 'POST',
@@ -472,27 +548,53 @@ export default function PaymentSection() {
   ) : 0;
 
   const accommodationTotal = selectedRoom ? (
-    selectedRoom.isSharedRoom 
+    selectedRoom.isSharedRoom
       ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
       : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
   ) : 0;
 
-  const activitiesTotal = selectedActivities.reduce((sum: number, activity: any) => {
-    // Calcular precio según el paquete seleccionado
-    if (activity.category === 'yoga') {
-      const yogaPackage = selectedYogaPackages[activity.id];
-      if (!yogaPackage) return sum; // No hay paquete seleccionado
-      return sum + getActivityTotalPrice('yoga', yogaPackage, bookingData.guests || 1);
-    } else if (activity.category === 'surf') {
-      const surfClasses = selectedSurfClasses[activity.id];
-      if (!surfClasses) return sum; // No hay clases seleccionadas
-      return sum + getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
-    } else {
-      return sum + ((activity.price || 0) * (bookingData.guests || 1));
-    }
-  }, 0);
+  // Calculate activities total from all participants
+  let activitiesTotal = 0;
+  participants.forEach(participant => {
+    participant.selectedActivities.forEach((activity: any) => {
+      if (activity.category === 'yoga') {
+        const yogaPackage = participant.selectedYogaPackages[activity.id];
+        if (yogaPackage) {
+          activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, 1);
+        }
+      } else if (activity.category === 'surf') {
+        const surfClasses = participant.selectedSurfClasses[activity.id];
+        if (surfClasses) {
+          activitiesTotal += getActivityTotalPrice('surf', undefined, 1, surfClasses);
+        }
+      } else {
+        const quantity = participant.activityQuantities[activity.id] || 1;
+        activitiesTotal += activity.price * quantity;
+      }
+    });
+  });
 
   const total = accommodationTotal + activitiesTotal;
+
+  // Debug log to check participants data
+  console.log('🔍 [PaymentSection] Participants data:', {
+    participantsCount: participants.length,
+    participants: participants.map(p => ({
+      id: p.id,
+      name: p.name,
+      activitiesCount: p.selectedActivities.length,
+      activities: p.selectedActivities.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        category: a.category,
+        surfClasses: p.selectedSurfClasses[a.id],
+        yogaPackage: p.selectedYogaPackages[a.id],
+        quantity: p.activityQuantities[a.id]
+      }))
+    })),
+    activitiesTotal,
+    total
+  });
 
   return (
     <motion.div
@@ -591,38 +693,49 @@ export default function PaymentSection() {
                   <span className="font-medium text-blue-400">${accommodationTotal}</span>
                 </div>
               )}
-              {selectedActivities.map((activity: any) => {
-                let activityPrice: number;
-                let activityDetails: string = '';
+              {participants.flatMap((participant, pIndex) =>
+                participant.selectedActivities.map((activity: any, aIndex) => {
+                  let activityPrice: number;
+                  let activityDetails: string = '';
+                  const showParticipantName = participants.length > 1;
 
-                if (activity.category === 'yoga') {
-                  const selectedYogaPackage = selectedYogaPackages[activity.id];
-                  if (!selectedYogaPackage) return null; // No hay paquete seleccionado
-                  activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, bookingData.guests || 1);
-                  activityDetails = `(${selectedYogaPackage})`;
-                } else if (activity.category === 'surf') {
-                  const surfClasses = selectedSurfClasses[activity.id];
-                  if (!surfClasses) return null; // No hay clases seleccionadas
-                  activityPrice = getActivityTotalPrice('surf', undefined, bookingData.guests || 1, surfClasses);
-                  activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
-                } else {
-                  activityPrice = (activity.price || 0) * (bookingData.guests || 1);
-                }
+                  if (activity.category === 'yoga') {
+                    const selectedYogaPackage = participant.selectedYogaPackages[activity.id];
+                    if (!selectedYogaPackage) return null; // No hay paquete seleccionado
+                    activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, 1);
+                    activityDetails = `(${selectedYogaPackage})`;
+                  } else if (activity.category === 'surf') {
+                    const surfClasses = participant.selectedSurfClasses[activity.id];
+                    if (!surfClasses) return null; // No hay clases seleccionadas
+                    activityPrice = getActivityTotalPrice('surf', undefined, 1, surfClasses);
+                    activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
+                  } else {
+                    const quantity = participant.activityQuantities[activity.id] || 1;
+                    activityPrice = (activity.price || 0) * quantity;
+                  }
 
-                return (
-                  <div key={activity.id} className="flex justify-between">
-                    <span className="text-white">
-                      {activity.name}
-                      {activityDetails && (
-                        <span className="text-sm text-blue-300 ml-2">
-                          {activityDetails}
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-medium text-blue-400">${activityPrice}</span>
-                  </div>
-                );
-              })}
+                  return (
+                    <div key={`${participant.id}-${activity.id}-${pIndex}-${aIndex}`} className="flex justify-between items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white">
+                          {activity.name}
+                          {activityDetails && (
+                            <span className="text-sm text-blue-300 ml-2">
+                              {activityDetails}
+                            </span>
+                          )}
+                        </div>
+                        {showParticipantName && (
+                          <div className="text-xs text-gray-400 mt-0.5">
+                            {participant.name}
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-medium text-blue-400 whitespace-nowrap">${activityPrice}</span>
+                    </div>
+                  );
+                })
+              )}
               <div className="border-t border-white/20 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white">{t('payment.summary.total')}</span>
