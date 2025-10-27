@@ -83,10 +83,17 @@
       "value": "890.00",
       "infinite_inventory": 1,
       "stock": null
+    },
+    {
+      "service_id": 494398,
+      "name": "Hosting Service",
+      "value": "100.00",
+      "infinite_inventory": 1,
+      "stock": null
     }
   ],
   "meta": {
-    "total_records": 12,
+    "total_records": 13,
     "current_page": 1,
     "records_per_page": 100,
     "total_pages": 1

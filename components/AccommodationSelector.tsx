@@ -8,7 +8,7 @@ import BackButton from './BackButton';
 import AccommodationCard from './AccommodationCard';
 
 export default function AccommodationSelector() {
-  const { t, locale } = useI18n();
+  const { t, locale, raw } = useI18n();
   const {
     bookingData,
     setBookingData,
@@ -36,6 +36,14 @@ export default function AccommodationSelector() {
 
   const [loadingRooms, setLoadingRooms] = useState(false);
   const { checkIn, checkOut, guests } = bookingData;
+
+  // Redirect to dates if no dates are selected
+  useEffect(() => {
+    if (!checkIn || !checkOut) {
+      console.log('[AccommodationSelector] No dates selected, redirecting to dates');
+      setCurrentStep('dates');
+    }
+  }, [checkIn, checkOut, setCurrentStep]);
 
   const fetchAvailableRooms = useCallback(async () => {
     if (!checkIn || !checkOut || !guests) {
@@ -235,6 +243,13 @@ export default function AccommodationSelector() {
               ? room.pricePerNight * nights * (bookingData.guests || 1)
               : room.pricePerNight * nights;
 
+            // Get room descriptions directly from translations
+            const roomDescriptions = raw<Record<string, { desktop: string; mobile: string }>>('accommodation.roomDescriptions') || {};
+            const description = roomDescriptions[room.roomTypeId] ?? {
+              desktop: room.roomTypeName,
+              mobile: room.roomTypeName
+            };
+
             return (
               <div key={room.roomTypeId} className="w-[92%] mx-auto">
               <AccommodationCard
@@ -247,7 +262,7 @@ export default function AccommodationSelector() {
                 roomPrice={roomPrice}
                 totalPrice={totalPrice}
                 features={features}
-                description={t(`accommodation.roomDescriptions.${room.roomTypeId}`)}
+                description={description}
                 locale={locale}
                 onSelect={() => handleRoomSelect(room)}
                 getFeatureChipStyle={getFeatureChipStyle}

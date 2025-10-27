@@ -20,7 +20,9 @@ interface ParticipantData {
   selectedActivities: Activity[];
   activityQuantities: Record<string, number>;
   selectedTimeSlots: Record<string, '7:00 AM' | '3:00 PM'>;
-  selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>;
+  yogaClasses: Record<string, number>; // activityId -> number of yoga classes
+  yogaUsePackDiscount: Record<string, boolean>; // activityId -> whether using 10-class pack discount
+  selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // deprecated - for backwards compatibility
   selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>;
   selectedSurfClasses: Record<string, number>;
 }
@@ -37,7 +39,9 @@ interface BookingStore {
   selectedActivities: Activity[];
   activityQuantities: Record<string, number>; // activityId -> quantity
   selectedTimeSlots: Record<string, '7:00 AM' | '3:00 PM'>; // activityId -> timeSlot
-  selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // activityId -> yogaPackage
+  yogaClasses: Record<string, number>; // activityId -> number of yoga classes
+  yogaUsePackDiscount: Record<string, boolean>; // activityId -> whether using 10-class pack discount
+  selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // deprecated - for backwards compatibility
   selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>; // activityId -> surfPackage
   selectedSurfClasses: Record<string, number>; // activityId -> number of classes
 
@@ -55,7 +59,7 @@ interface BookingStore {
   error: string | null;
 
   // Activity flow state (sequential guided experience)
-  activityFlowStep: 'surf' | 'yoga' | 'ice-bath' | 'complete';
+  activityFlowStep: 'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete';
   activityFlowDirection: 'forward' | 'backward';
   
   // Actions
@@ -67,6 +71,7 @@ interface BookingStore {
   addParticipant: () => void;
   removeParticipant: (participantId: string) => void;
   copyChoicesToAll: (fromParticipantId: string) => void;
+  copyChoicesToParticipant: (fromParticipantId: string, toParticipantId: string) => void;
   syncParticipantsWithGuests: (guestCount: number) => void;
   getActiveParticipant: () => ParticipantData | undefined;
 
@@ -74,7 +79,9 @@ interface BookingStore {
   setSelectedActivities: (activities: Activity[]) => void;
   setActivityQuantity: (activityId: string, quantity: number) => void;
   setSelectedTimeSlot: (activityId: string, timeSlot: '7:00 AM' | '3:00 PM') => void;
-  setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void;
+  setYogaClasses: (activityId: string, classes: number) => void;
+  setYogaUsePackDiscount: (activityId: string, useDiscount: boolean) => void;
+  setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void; // deprecated
   setSelectedSurfPackage: (activityId: string, surfPackage: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => void;
   setSelectedSurfClasses: (activityId: string, classes: number) => void;
   setPersonalizationName: (name: string) => void;
@@ -94,7 +101,7 @@ interface BookingStore {
   nextActivityStep: () => void;
   previousActivityStep: () => void;
   skipCurrentActivity: () => void;
-  goToActivityStep: (step: 'surf' | 'yoga' | 'ice-bath' | 'complete') => void;
+  goToActivityStep: (step: 'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete') => void;
   resetActivityFlow: () => void;
 }
 
@@ -105,6 +112,8 @@ const createEmptyParticipant = (id: string, name: string, isYou: boolean): Parti
   selectedActivities: [],
   activityQuantities: {},
   selectedTimeSlots: {},
+  yogaClasses: {},
+  yogaUsePackDiscount: {},
   selectedYogaPackages: {},
   selectedSurfPackages: {},
   selectedSurfClasses: {},
@@ -117,6 +126,8 @@ const initialState = {
   selectedActivities: [],
   activityQuantities: {},
   selectedTimeSlots: {},
+  yogaClasses: {},
+  yogaUsePackDiscount: {},
   selectedYogaPackages: {},
   selectedSurfPackages: {},
   selectedSurfClasses: {},
@@ -247,10 +258,44 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
           selectedActivities: [...sourceParticipant.selectedActivities],
           activityQuantities: { ...sourceParticipant.activityQuantities },
           selectedTimeSlots: { ...sourceParticipant.selectedTimeSlots },
+          yogaClasses: { ...sourceParticipant.yogaClasses },
+          yogaUsePackDiscount: { ...sourceParticipant.yogaUsePackDiscount },
           selectedYogaPackages: { ...sourceParticipant.selectedYogaPackages },
           selectedSurfPackages: { ...sourceParticipant.selectedSurfPackages },
           selectedSurfClasses: { ...sourceParticipant.selectedSurfClasses },
         })),
+      };
+    }),
+
+  copyChoicesToParticipant: (fromParticipantId, toParticipantId) =>
+    set((state) => {
+      const sourceParticipant = state.participants.find(p => p.id === fromParticipantId);
+      const targetParticipant = state.participants.find(p => p.id === toParticipantId);
+
+      if (!sourceParticipant || !targetParticipant) return state;
+
+      console.log('[STORE] copyChoicesToParticipant', {
+        from: sourceParticipant.name,
+        to: targetParticipant.name,
+        activities: sourceParticipant.selectedActivities.map(a => a.name),
+      });
+
+      return {
+        participants: state.participants.map(p =>
+          p.id === toParticipantId
+            ? {
+                ...p,
+                selectedActivities: [...sourceParticipant.selectedActivities],
+                activityQuantities: { ...sourceParticipant.activityQuantities },
+                selectedTimeSlots: { ...sourceParticipant.selectedTimeSlots },
+                yogaClasses: { ...sourceParticipant.yogaClasses },
+                yogaUsePackDiscount: { ...sourceParticipant.yogaUsePackDiscount },
+                selectedYogaPackages: { ...sourceParticipant.selectedYogaPackages },
+                selectedSurfPackages: { ...sourceParticipant.selectedSurfPackages },
+                selectedSurfClasses: { ...sourceParticipant.selectedSurfClasses },
+              }
+            : p
+        ),
       };
     }),
 
@@ -333,9 +378,37 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         activities: activities.map(a => ({ id: a.id, name: a.name })),
       });
 
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.warn('[STORE] setSelectedActivities - active participant not found');
+        return state;
+      }
+
+      // Initialize yogaClasses for any new yoga activities
+      const newYogaClasses = { ...activeParticipant.yogaClasses };
+      const newSurfClasses = { ...activeParticipant.selectedSurfClasses };
+
+      activities.forEach(activity => {
+        // Initialize yoga classes to 1 if not already set
+        if (activity.category === 'yoga' && !(activity.id in newYogaClasses)) {
+          newYogaClasses[activity.id] = 1;
+          console.log(`[STORE] Initialized yogaClasses for ${activity.id} to 1`);
+        }
+        // Initialize surf classes to 4 if not already set
+        if (activity.category === 'surf' && !(activity.id in newSurfClasses)) {
+          newSurfClasses[activity.id] = 4;
+          console.log(`[STORE] Initialized surfClasses for ${activity.id} to 4`);
+        }
+      });
+
       const updatedParticipants = state.participants.map(p =>
         p.id === state.activeParticipantId
-          ? { ...p, selectedActivities: activities }
+          ? {
+              ...p,
+              selectedActivities: activities,
+              yogaClasses: newYogaClasses,
+              selectedSurfClasses: newSurfClasses
+            }
           : p
       );
 
@@ -345,11 +418,15 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
           name: p.name,
           activitiesCount: p.selectedActivities.length,
           activities: p.selectedActivities.map(a => a.name),
+          yogaClasses: p.yogaClasses,
+          surfClasses: p.selectedSurfClasses
         }))
       );
 
       return {
         selectedActivities: activities,
+        yogaClasses: newYogaClasses,
+        selectedSurfClasses: newSurfClasses,
         participants: updatedParticipants,
       };
     }),
@@ -410,6 +487,58 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         participants: state.participants.map(p =>
           p.id === state.activeParticipantId
             ? { ...p, selectedTimeSlots: newTimeSlots }
+            : p
+        ),
+      };
+    }),
+
+  setYogaClasses: (activityId, classes) =>
+    set((state) => {
+      console.log('[STORE] setYogaClasses called', {
+        activeParticipantId: state.activeParticipantId,
+        activityId,
+        classes,
+      });
+
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.log('[STORE] setYogaClasses - active participant not found');
+        return state;
+      }
+
+      const newYogaClasses = { ...activeParticipant.yogaClasses, [activityId]: classes };
+
+      return {
+        yogaClasses: newYogaClasses,
+        participants: state.participants.map(p =>
+          p.id === state.activeParticipantId
+            ? { ...p, yogaClasses: newYogaClasses }
+            : p
+        ),
+      };
+    }),
+
+  setYogaUsePackDiscount: (activityId, useDiscount) =>
+    set((state) => {
+      console.log('[STORE] setYogaUsePackDiscount called', {
+        activeParticipantId: state.activeParticipantId,
+        activityId,
+        useDiscount,
+      });
+
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (!activeParticipant) {
+        console.log('[STORE] setYogaUsePackDiscount - active participant not found');
+        return state;
+      }
+
+      const newYogaUsePackDiscount = { ...activeParticipant.yogaUsePackDiscount, [activityId]: useDiscount };
+
+      return {
+        yogaUsePackDiscount: newYogaUsePackDiscount,
+        participants: state.participants.map(p =>
+          p.id === state.activeParticipantId
+            ? { ...p, yogaUsePackDiscount: newYogaUsePackDiscount }
             : p
         ),
       };
@@ -554,17 +683,58 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
     set({ selectedRoom: room }),
   
   setCurrentStep: (step) =>
-    set({ currentStep: step }),
+    set((state) => {
+      console.log('[STORE] setCurrentStep called', {
+        from: state.currentStep,
+        to: step,
+        checkIn: state.bookingData.checkIn,
+        checkOut: state.bookingData.checkOut,
+        selectedRoom: state.selectedRoom,
+      });
+
+      // Reset dates and accommodation when coming from activities OR when going back to dates/accommodation
+      const shouldReset =
+        // Going to dates from activities (fresh start)
+        (step === 'dates' && state.currentStep === 'activities') ||
+        // Going to accommodation from activities (bypassing dates)
+        (step === 'accommodation' && state.currentStep === 'activities') ||
+        // Going back to dates from any other step
+        (step === 'dates' && state.currentStep !== 'activities');
+
+      if (shouldReset) {
+        console.log('[STORE] setCurrentStep - RESETTING dates and accommodation');
+        return {
+          currentStep: step,
+          bookingData: {
+            ...state.bookingData,
+            checkIn: undefined,
+            checkOut: undefined,
+          },
+          availableRooms: null,
+          selectedRoom: null,
+        };
+      }
+
+      console.log('[STORE] setCurrentStep - NOT resetting (normal step change)');
+      return { currentStep: step };
+    }),
 
   goBack: () =>
     set((state) => {
+      console.log('[STORE] goBack called', {
+        currentStep: state.currentStep,
+      });
+
       const stepOrder: Array<'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success'> = [
         'activities', 'dates', 'accommodation', 'contact', 'confirmation', 'payment', 'success'
       ];
       const currentIndex = stepOrder.indexOf(state.currentStep);
       if (currentIndex > 0) {
-        return { currentStep: stepOrder[currentIndex - 1] };
+        const previousStep = stepOrder[currentIndex - 1];
+        console.log('[STORE] goBack - going to step:', previousStep);
+        return { currentStep: previousStep };
       }
+      console.log('[STORE] goBack - cannot go back');
       return state;
     }),
 
@@ -584,7 +754,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
   // Activity flow implementations
   nextActivityStep: () =>
     set((state) => {
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
       return {
@@ -595,7 +765,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   previousActivityStep: () =>
     set((state) => {
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const prevIndex = Math.max(currentIndex - 1, 0);
       return {
@@ -606,8 +776,97 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   skipCurrentActivity: () =>
     set((state) => {
-      // Same as nextActivityStep, just skip without selection
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'complete'];
+      console.log('[STORE] skipCurrentActivity called', {
+        currentStep: state.activityFlowStep,
+        activeParticipantId: state.activeParticipantId,
+      });
+
+      // Map activity flow step to activity ID
+      const activityIdMap: Record<string, string> = {
+        'surf': 'surf-package',
+        'yoga': 'yoga-package',
+        'ice-bath': 'ice-bath-session',
+        'hosting': 'hosting-service',
+      };
+
+      const activityIdToRemove = activityIdMap[state.activityFlowStep];
+
+      // Remove this activity from the active participant's selections
+      const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
+      if (activeParticipant && activityIdToRemove) {
+        console.log('[STORE] skipCurrentActivity - removing activity', {
+          activityId: activityIdToRemove,
+          currentActivities: activeParticipant.selectedActivities.map(a => a.id),
+        });
+
+        const updatedActivities = activeParticipant.selectedActivities.filter(
+          activity => activity.id !== activityIdToRemove
+        );
+
+        // Clean up related data for this activity
+        const newActivityQuantities = { ...activeParticipant.activityQuantities };
+        delete newActivityQuantities[activityIdToRemove];
+
+        const newSelectedTimeSlots = { ...activeParticipant.selectedTimeSlots };
+        delete newSelectedTimeSlots[activityIdToRemove];
+
+        const newYogaClasses = { ...activeParticipant.yogaClasses };
+        delete newYogaClasses[activityIdToRemove];
+
+        const newYogaUsePackDiscount = { ...activeParticipant.yogaUsePackDiscount };
+        delete newYogaUsePackDiscount[activityIdToRemove];
+
+        const newSelectedYogaPackages = { ...activeParticipant.selectedYogaPackages };
+        delete newSelectedYogaPackages[activityIdToRemove];
+
+        const newSelectedSurfPackages = { ...activeParticipant.selectedSurfPackages };
+        delete newSelectedSurfPackages[activityIdToRemove];
+
+        const newSelectedSurfClasses = { ...activeParticipant.selectedSurfClasses };
+        delete newSelectedSurfClasses[activityIdToRemove];
+
+        const updatedParticipants = state.participants.map(p =>
+          p.id === state.activeParticipantId
+            ? {
+                ...p,
+                selectedActivities: updatedActivities,
+                activityQuantities: newActivityQuantities,
+                selectedTimeSlots: newSelectedTimeSlots,
+                yogaClasses: newYogaClasses,
+                yogaUsePackDiscount: newYogaUsePackDiscount,
+                selectedYogaPackages: newSelectedYogaPackages,
+                selectedSurfPackages: newSelectedSurfPackages,
+                selectedSurfClasses: newSelectedSurfClasses,
+              }
+            : p
+        );
+
+        console.log('[STORE] skipCurrentActivity - after removal', {
+          updatedActivities: updatedActivities.map(a => a.id),
+        });
+
+        // Move to next step
+        const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
+        const currentIndex = stepOrder.indexOf(state.activityFlowStep);
+        const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
+
+        return {
+          participants: updatedParticipants,
+          selectedActivities: updatedActivities,
+          activityQuantities: newActivityQuantities,
+          selectedTimeSlots: newSelectedTimeSlots,
+          yogaClasses: newYogaClasses,
+          yogaUsePackDiscount: newYogaUsePackDiscount,
+          selectedYogaPackages: newSelectedYogaPackages,
+          selectedSurfPackages: newSelectedSurfPackages,
+          selectedSurfClasses: newSelectedSurfClasses,
+          activityFlowStep: stepOrder[nextIndex],
+          activityFlowDirection: 'forward',
+        };
+      }
+
+      // If no activity to remove, just move to next step
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
       return {

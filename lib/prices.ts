@@ -4,11 +4,9 @@
 export const ACTIVITY_PRICES = {
   // Precios base por clase/sesión
   yoga: {
-    basePrice: 12, // Precio por clase individual
+    basePrice: 10, // Precio por clase individual
     packages: {
-      '1-class': 12,   // 1 clase = $12
-      '3-classes': 30, // 3 clases = $30
-      '10-classes': 80 // 10 clases = $80
+      '10-classes': 80 // 10 clases = $80 (save $20)
     }
   },
   
@@ -43,9 +41,21 @@ export const ACTIVITY_PRICES = {
   }
 };
 
-// Función para calcular el precio de un paquete de yoga
+// Función para calcular el precio de yoga según cantidad de clases
+export const calculateYogaPrice = (classes: number, usePackDiscount: boolean = false): number => {
+  // Si se selecciona el pack de 10 clases con descuento
+  if (usePackDiscount && classes === 10) {
+    return ACTIVITY_PRICES.yoga.packages['10-classes'];
+  }
+  // Precio por clases individuales
+  return classes * ACTIVITY_PRICES.yoga.basePrice;
+};
+
+// Función legacy para compatibilidad (deprecated)
 export const getYogaPackagePrice = (packageType: '1-class' | '3-classes' | '10-classes'): number => {
-  return ACTIVITY_PRICES.yoga.packages[packageType];
+  if (packageType === '10-classes') return ACTIVITY_PRICES.yoga.packages['10-classes'];
+  if (packageType === '3-classes') return 3 * ACTIVITY_PRICES.yoga.basePrice;
+  return ACTIVITY_PRICES.yoga.basePrice;
 };
 
 // Función para calcular el precio de un paquete de surf

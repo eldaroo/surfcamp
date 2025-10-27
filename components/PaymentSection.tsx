@@ -5,10 +5,6 @@ import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice } from '@/lib/prices';
-import {
-  sendIceBathReservationNotification,
-  sendSurfClassReservationNotification
-} from '@/lib/whatsapp';
 import BookingConfirmation from './BookingConfirmation';
 import BackButton from './BackButton';
 
@@ -136,6 +132,16 @@ export default function PaymentSection() {
         });
       }
 
+      // Filter yoga classes to only include this participant's activities
+      const filteredYogaClasses: Record<string, number> = {};
+      if (participant.yogaClasses) {
+        Object.entries(participant.yogaClasses).forEach(([activityId, classes]) => {
+          if (participantActivityIds.has(activityId)) {
+            filteredYogaClasses[activityId] = classes as number;
+          }
+        });
+      }
+
       return {
         id: participant.id,
         name: participant.name || `Participant ${index + 1}`,
@@ -156,6 +162,7 @@ export default function PaymentSection() {
         })),
         activityQuantities: filteredActivityQuantities,
         selectedYogaPackages: filteredYogaPackages,
+        yogaClasses: filteredYogaClasses,
         selectedSurfClasses: filteredSurfClasses,
       };
     }),
@@ -454,94 +461,6 @@ export default function PaymentSection() {
       setIsProcessing(false);
     }
   };
-
-  // Función para enviar notificaciones de WhatsApp según las actividades reservadas
-  const sendActivityWhatsAppNotifications = async () => {
-    try {
-      console.log('📱 Enviando notificaciones de WhatsApp...');
-      
-      const guestName = `${bookingData.contactInfo?.firstName || ''} ${bookingData.contactInfo?.lastName || ''}`.trim();
-
-      // Preparar datos básicos para las notificaciones
-      const notificationData = {
-        checkIn: typeof bookingData.checkIn === 'string' ? bookingData.checkIn : bookingData.checkIn!.toISOString().split('T')[0],
-        checkOut: typeof bookingData.checkOut === 'string' ? bookingData.checkOut : bookingData.checkOut!.toISOString().split('T')[0],
-        guestName,
-        phone: bookingData.contactInfo?.phone || '',
-        dni: bookingData.contactInfo?.dni || '',
-        total: total,
-        guests: bookingData.guests || 1
-      };
-
-      const rawIceBathQuantity = activityQuantities['ice-bath-session'];
-      const iceBathQuantitySource =
-        typeof rawIceBathQuantity === 'number' && Number.isFinite(rawIceBathQuantity)
-          ? rawIceBathQuantity
-          : bookingData.guests || 1;
-      const iceBathQuantity = Math.max(1, iceBathQuantitySource);
-
-      // Enviar notificación de baño de hielo si está reservado
-      const iceBathActivity = selectedActivities.find((activity: any) =>
-        activity.id === 'ice-bath-session'
-      );
-      
-      if (iceBathActivity) {
-        console.log('🧊 Enviando notificación de baño de hielo...');
-        await sendIceBathReservationNotification({
-          ...notificationData,
-          quantity: iceBathQuantity
-        });
-        console.log('✅ Notificación de baño de hielo enviada');
-      }
-
-      // Enviar notificación de clases de surf si están reservadas
-      const surfActivity = selectedActivities.find((activity: any) =>
-        activity.id === 'surf-package'
-      );
-      
-      if (surfActivity) {
-        const surfPackage = selectedSurfPackages[surfActivity.id];
-        if (surfPackage) {
-          const surfClasses = selectedSurfClasses[surfActivity.id];
-          console.log('🏄‍♂️ Enviando notificación de clases de surf...');
-          await sendSurfClassReservationNotification({
-            ...notificationData,
-            surfPackage: surfPackage,
-            surfClasses: typeof surfClasses === 'number' && Number.isFinite(surfClasses)
-              ? surfClasses
-              : undefined
-          });
-          console.log('✅ Notificación de clases de surf enviada');
-        }
-      }
-
-      console.log('📱 Todas las notificaciones de WhatsApp enviadas');
-    } catch (error) {
-      console.error('❌ Error enviando notificaciones de WhatsApp:', error);
-      // No fallar el pago por errores de WhatsApp
-    }
-  };
-
-  // Si no hay datos completos, mostrar error
-  if (!isReadyForPayment) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card"
-      >
-        <h2 className="text-2xl font-bold mb-4 font-heading">{t('payment.error.title')}</h2>
-        <div className="mb-4 text-warm-600 font-semibold">{t('payment.error.missingData')}</div>
-        <button
-          onClick={() => setCurrentStep('contact')}
-          className="btn-primary"
-        >
-          {t('common.back')}
-        </button>
-      </motion.div>
-      );
-    }
-
   const nights = bookingData.checkIn && bookingData.checkOut ? Math.ceil(
     (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
     (1000 * 60 * 60 * 24)

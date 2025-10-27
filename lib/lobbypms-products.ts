@@ -62,6 +62,9 @@ export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> 
   },
   'ice-bath-session': {
     defaultProductId: '465954'
+  },
+  'hosting-service': {
+    defaultProductId: '494398'
   }
 };
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Activity, LobbyPMSReservationRequest } from '@/types';
 import { generateBookingReference } from '@/lib/utils';
 import { lobbyPMSClient, LobbyPMSCustomerPayload } from '@/lib/lobbypms';
+import { createClient } from '@supabase/supabase-js';
 import {
   sendBookingConfirmation,
   sendWhatsAppMessage,
@@ -185,6 +186,14 @@ const buildConsumptionItems = (
   guests: number,
   options: { hasDetailedSelections: boolean }
 ) => {
+  console.log('📦 [buildConsumptionItems] ===== START =====');
+  console.log('📦 [buildConsumptionItems] Input:', {
+    activitiesCount: activities.length,
+    activities: activities.map(a => ({ id: a.id, category: a.category, quantity: a.quantity, classCount: a.classCount, package: a.package })),
+    guests,
+    hasDetailedSelections: options.hasDetailedSelections
+  });
+
   const { hasDetailedSelections } = options;
   const itemsMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
 
@@ -211,12 +220,26 @@ const buildConsumptionItems = (
         ? Math.max(1, Math.round(activity.quantity))
         : 1;
 
+    console.log('📦 [buildConsumptionItems] Activity quantity calculation:', {
+      activityId: activity.id,
+      category: activity.category,
+      rawQuantity: activity.quantity,
+      initialQuantity: quantity,
+      willApplyGuestMultiplier: quantity === 1 && !hasDetailedSelections && (activity.category === 'yoga' || activity.category === 'ice_bath'),
+      guests
+    });
+
     if (
       quantity === 1 &&
       !hasDetailedSelections &&
       (activity.category === 'yoga' || activity.category === 'ice_bath')
     ) {
       quantity = Math.max(1, guests);
+      console.log('📦 [buildConsumptionItems] Applied guest multiplier:', {
+        activityId: activity.id,
+        category: activity.category,
+        newQuantity: quantity
+      });
     }
 
     if (!itemsMap[productId]) {
@@ -226,34 +249,88 @@ const buildConsumptionItems = (
         cant: quantity,
         ...(inventoryCenterId ? { inventory_center_id: inventoryCenterId } : {})
       };
+      console.log('📦 [buildConsumptionItems] Added new item to map:', {
+        productId,
+        quantity,
+        activityId: activity.id,
+        inventoryCenterId
+      });
     } else {
       itemsMap[productId].cant += quantity;
+      console.log('📦 [buildConsumptionItems] Updated existing item quantity:', {
+        productId,
+        previousQuantity: itemsMap[productId].cant - quantity,
+        addedQuantity: quantity,
+        newTotalQuantity: itemsMap[productId].cant
+      });
     }
   });
 
-  return Object.values(itemsMap);
+  const finalItems = Object.values(itemsMap);
+  console.log('📦 [buildConsumptionItems] ===== FINAL RESULT =====');
+  console.log('📦 [buildConsumptionItems] Total items:', finalItems.length);
+  console.log('📦 [buildConsumptionItems] Items:', finalItems);
+  console.log('📦 [buildConsumptionItems] ===== END =====');
+
+  return finalItems;
 };
 
 
 
 const buildParticipantConsumptionItems = (participant: any) => {
-  console.log(`🔍 [buildParticipantConsumptionItems] Processing participant:`, participant.name);
-  console.log(`🔍 [buildParticipantConsumptionItems] selectedActivities:`, JSON.stringify(participant?.selectedActivities, null, 2));
-  console.log(`🔍 [buildParticipantConsumptionItems] selectedSurfClasses:`, JSON.stringify(participant?.selectedSurfClasses, null, 2));
-  console.log(`🔍 [buildParticipantConsumptionItems] selectedYogaPackages:`, JSON.stringify(participant?.selectedYogaPackages, null, 2));
-  console.log(`🔍 [buildParticipantConsumptionItems] activityQuantities:`, JSON.stringify(participant?.activityQuantities, null, 2));
+  console.log('🧘 [buildParticipantConsumptionItems] ========================================');
+  console.log('🧘 [buildParticipantConsumptionItems] Processing participant:', participant.name);
+  console.log('🧘 [buildParticipantConsumptionItems] selectedActivities:', JSON.stringify(participant?.selectedActivities, null, 2));
+  console.log('🧘 [buildParticipantConsumptionItems] selectedSurfClasses:', JSON.stringify(participant?.selectedSurfClasses, null, 2));
+  console.log('🧘 [buildParticipantConsumptionItems] selectedYogaPackages:', JSON.stringify(participant?.selectedYogaPackages, null, 2));
+  console.log('🧘 [buildParticipantConsumptionItems] yogaClasses:', JSON.stringify(participant?.yogaClasses, null, 2));
+  console.log('🧘 [buildParticipantConsumptionItems] activityQuantities:', JSON.stringify(participant?.activityQuantities, null, 2));
 
   const itemsMap: Record<string, { product_id: string; cant: number; inventory_center_id?: string }> = {};
 
-  const participantActivities = participant?.selectedActivities || [];
+  const participantActivities = Array.isArray(participant?.selectedActivities)
+    ? participant.selectedActivities
+    : [];
 
+  console.log('🔍 [buildParticipantConsumptionItems] participantActivities before processing:', {
+    count: participantActivities.length,
+    activities: participantActivities.map(a => ({ id: a.id, category: a.category }))
+  });
+
+  const uniqueActivities = new Map<string, any>();
   participantActivities.forEach((activity: any) => {
     if (!activity?.id) {
       return;
     }
 
+    if (!uniqueActivities.has(activity.id)) {
+      uniqueActivities.set(activity.id, { ...activity });
+      return;
+    }
+
+    const existing = uniqueActivities.get(activity.id);
+    const incomingQty = typeof activity.quantity === 'number' && Number.isFinite(activity.quantity)
+      ? Math.max(1, Math.round(activity.quantity))
+      : undefined;
+
+    if (incomingQty) {
+      const currentQty = typeof existing.quantity === 'number' && Number.isFinite(existing.quantity)
+        ? Math.max(1, Math.round(existing.quantity))
+        : 0;
+      existing.quantity = currentQty + incomingQty;
+    }
+  });
+
+  uniqueActivities.forEach((activity: any) => {
     const baseActivity = getActivityById(activity.id);
     const category = (activity.category || baseActivity?.category) as Activity['category'] | undefined;
+
+    console.log(`🔍 [buildParticipantConsumptionItems] Processing activity ${activity.id} for ${participant.name}:`, {
+      activityId: activity.id,
+      category,
+      activityPackage: activity.package,
+      activityClassCount: activity.classCount
+    });
 
     let packageName = activity.package;
     let classCount = activity.classCount;
@@ -287,11 +364,58 @@ const buildParticipantConsumptionItems = (participant: any) => {
       classCount = Math.min(10, Math.max(3, classCount));
       packageName = `${classCount}-classes`;
     } else if (category === 'yoga') {
+      console.log('🧘 ========== YOGA PROCESSING START ==========');
+      console.log('🧘 [buildParticipantConsumptionItems] Processing yoga activity', {
+        activityId: activity.id,
+        participantName: participant.name,
+        selectedYogaPackages: participant.selectedYogaPackages,
+        yogaClasses: participant.yogaClasses,
+        currentPackageName: packageName,
+        currentClassCount: classCount
+      });
+
       if (participant.selectedYogaPackages) {
+        console.log('🧘 [buildParticipantConsumptionItems] Checking selectedYogaPackages...');
         const participantPackage = participant.selectedYogaPackages[activity.id];
+        console.log('🧘 [buildParticipantConsumptionItems] participantPackage from selectedYogaPackages:', participantPackage);
         if (participantPackage) {
           packageName = participantPackage;
+          console.log('🧘 [buildParticipantConsumptionItems] ✅ Found yoga package:', packageName);
+        } else {
+          console.log('🧘 [buildParticipantConsumptionItems] ❌ No package found in selectedYogaPackages for activity', activity.id);
         }
+      } else {
+        console.log('🧘 [buildParticipantConsumptionItems] ⚠️ selectedYogaPackages is null/undefined');
+      }
+
+      // Fallback to yogaClasses if no package
+      if (!packageName) {
+        console.log('🧘 [buildParticipantConsumptionItems] No package found, trying yogaClasses fallback...');
+        if (participant.yogaClasses) {
+          console.log('🧘 [buildParticipantConsumptionItems] yogaClasses exists:', participant.yogaClasses);
+          const yogaClassCount = participant.yogaClasses[activity.id];
+          console.log('🧘 [buildParticipantConsumptionItems] yogaClassCount for activity', activity.id, ':', yogaClassCount);
+          if (yogaClassCount !== undefined) {
+            classCount = yogaClassCount;
+            // Generate package name based on class count
+            packageName = `${yogaClassCount}-${yogaClassCount === 1 ? 'class' : 'classes'}`;
+            console.log('🧘 [buildParticipantConsumptionItems] ✅ Using yogaClasses fallback:', {
+              yogaClassCount,
+              generatedPackage: packageName
+            });
+          } else {
+            console.log('🧘 [buildParticipantConsumptionItems] ❌ yogaClassCount is undefined for activity', activity.id);
+          }
+        } else {
+          console.log('🧘 [buildParticipantConsumptionItems] ❌ yogaClasses is null/undefined');
+        }
+      }
+
+      // FINAL FALLBACK: If still no package for yoga, default to 1-class
+      if (!packageName && category === 'yoga') {
+        console.log('🧘 [buildParticipantConsumptionItems] ⚠️ FINAL FALLBACK: No yoga package found, defaulting to 1-class');
+        packageName = '1-class';
+        classCount = 1;
       }
 
       if (classCount === undefined && typeof packageName === 'string') {
@@ -302,11 +426,22 @@ const buildParticipantConsumptionItems = (participant: any) => {
       }
 
       if (classCount && ![1, 3, 10].includes(classCount)) {
+        console.warn('[buildParticipantConsumptionItems] Invalid yoga classCount, resetting:', classCount);
         classCount = undefined;
       }
+
+      console.log('🧘 [buildParticipantConsumptionItems] Final yoga data:', {
+        packageName,
+        classCount
+      });
+      console.log('🧘 ========== YOGA PROCESSING END ==========');
     }
 
-    let quantity: number | undefined = activity.quantity;
+    let quantity: number | undefined =
+      typeof activity.quantity === 'number' && Number.isFinite(activity.quantity)
+        ? Math.max(1, Math.round(activity.quantity))
+        : undefined;
+
     if (typeof quantity !== 'number' || !Number.isFinite(quantity)) {
       quantity = participant.activityQuantities?.[activity.id];
     }
@@ -315,10 +450,22 @@ const buildParticipantConsumptionItems = (participant: any) => {
     }
     quantity = Math.max(1, Math.round(quantity));
 
+    if (category === 'surf' || category === 'yoga') {
+      quantity = 1;
+    }
+
     const productId = getEnvProductId(activity.id, packageName, classCount);
 
+    console.log(`📦 [buildParticipantConsumptionItems] Getting productId for ${activity.id}:`, {
+      activityId: activity.id,
+      packageName,
+      classCount,
+      productId,
+      category
+    });
+
     if (!productId) {
-      console.warn('[RESERVE] [ParticipantConsumption] No product mapping found for activity', {
+      console.warn('❌ [RESERVE] [ParticipantConsumption] No product mapping found for activity', {
         participant: participant.name,
         activityId: activity.id,
         packageName,
@@ -326,6 +473,13 @@ const buildParticipantConsumptionItems = (participant: any) => {
       });
       return;
     }
+
+    console.log(`✅ [buildParticipantConsumptionItems] Adding product to itemsMap:`, {
+      productId,
+      quantity,
+      activityId: activity.id,
+      participantName: participant.name
+    });
 
     if (!itemsMap[productId]) {
       const inventoryCenterId = getEnvInventoryCenterId(activity.id, packageName) || undefined;
@@ -339,16 +493,92 @@ const buildParticipantConsumptionItems = (participant: any) => {
     }
   });
 
-  return Object.values(itemsMap);
+  const finalItems = Object.values(itemsMap);
+  console.log(`🎯 [buildParticipantConsumptionItems] Final consumption items for ${participant.name}:`, {
+    participantName: participant.name,
+    itemCount: finalItems.length,
+    items: finalItems
+  });
+  console.log('🧘 [buildParticipantConsumptionItems] ========================================');
+
+  return finalItems;
 };
 
 
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🏨 [RESERVE] Incoming reservation request');
+    console.log(`ðŸ¨ [RESERVE] [PID:${process.pid}] Incoming reservation request`);
     const body = await request.json();
-    console.log('🏨 [RESERVE] Raw request body:', JSON.stringify(body, null, 2));
+    console.log(`ðŸ¨ [RESERVE] [PID:${process.pid}] Raw request body:`, JSON.stringify(body, null, 2));
+    // 🛡️ ANTI-DUPLICATE PROTECTION: Check if reservation already exists
+    if (body.paymentIntentId || body.contactInfo?.dni) {
+      console.log('🛡️ [RESERVE] Checking for duplicate reservations...');
+
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+      // Search by payment_intent_id or DNI + dates
+      let existingOrder = null;
+
+      if (body.paymentIntentId) {
+        const { data } = await supabase
+          .from('orders')
+          .select('id, lobbypms_reservation_id, created_at')
+          .eq('payment_intent_id', body.paymentIntentId)
+          .not('lobbypms_reservation_id', 'is', null)
+          .maybeSingle();
+        existingOrder = data;
+      }
+
+      if (!existingOrder && body.contactInfo?.dni && body.checkIn && body.checkOut) {
+        // Fallback: search by DNI + dates (less than 5 minutes old)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data } = await supabase
+          .from('orders')
+          .select('id, lobbypms_reservation_id, created_at, booking_data')
+          .gte('created_at', fiveMinutesAgo)
+          .not('lobbypms_reservation_id', 'is', null);
+
+        if (data && data.length > 0) {
+          existingOrder = data.find((order: any) => {
+            const bookingData = order.booking_data;
+            return (
+              bookingData?.contactInfo?.dni === body.contactInfo.dni &&
+              bookingData?.checkIn === body.checkIn &&
+              bookingData?.checkOut === body.checkOut
+            );
+          });
+        }
+      }
+
+      if (existingOrder) {
+        console.log('🛡️ [RESERVE] ⚠️ DUPLICATE DETECTED - Reservation already exists:', {
+          orderId: existingOrder.id,
+          lobbypmsReservationId: existingOrder.lobbypms_reservation_id,
+          createdAt: existingOrder.created_at
+        });
+
+        return NextResponse.json({
+          success: true,
+          reservationId: existingOrder.lobbypms_reservation_id,
+          status: 'already_exists',
+          message: 'Reserva ya existe - se evitó duplicado',
+          isDuplicate: true
+        });
+      }
+
+      console.log('🛡️ [RESERVE] ✅ No duplicate found - proceeding with reservation');
+    }
+
     const {
       checkIn,
       checkOut,
@@ -362,6 +592,14 @@ export async function POST(request: NextRequest) {
       paymentIntentId,
       participants = [] // Array of participants with their info and activities
     } = body;
+
+    console.log('🛏️ [RESERVE] ===== GUEST COUNT ANALYSIS =====');
+    console.log('🛏️ [RESERVE] guests parameter:', guests);
+    console.log('🛏️ [RESERVE] isSharedRoom:', isSharedRoom);
+    console.log('🛏️ [RESERVE] participants.length:', participants.length);
+    console.log('🛏️ [RESERVE] roomTypeId:', roomTypeId);
+    console.log('🛏️ [RESERVE] selectedActivities (top-level):', selectedActivitiesPayload.map((a: any) => a.id));
+    console.log('🛏️ [RESERVE] activityIds:', activityIds);
 
     const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
     if (contactInfo?.phone) {
@@ -379,8 +617,8 @@ export async function POST(request: NextRequest) {
 
     const bookingReference = generateBookingReference();
 
-    console.log('🏨 ===== PROCESSING RESERVATION =====');
-    console.log('🏨 Booking data:', {
+    console.log('ðŸ¨ ===== PROCESSING RESERVATION =====');
+    console.log('ðŸ¨ Booking data:', {
       checkIn,
       checkOut,
       guests,
@@ -390,7 +628,7 @@ export async function POST(request: NextRequest) {
       bookingReference
     });
 
-    console.log('🏨 [RESERVE] Environment snapshot:', {
+    console.log('ðŸ¨ [RESERVE] Environment snapshot:', {
       nextPublicBaseUrl: process.env.NEXT_PUBLIC_BASE_URL,
       lobbypmsApiUrl: process.env.LOBBYPMS_API_URL,
       hasLobbyApiKey: !!process.env.LOBBYPMS_API_KEY,
@@ -402,15 +640,15 @@ export async function POST(request: NextRequest) {
     const categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
     
     if (!categoryId) {
-      console.error('❌ Invalid room type:', roomTypeId);
-      console.error('🏨 [RESERVE] Known roomTypeIds:', ROOM_TYPE_MAPPING);
+      console.error('âŒ Invalid room type:', roomTypeId);
+      console.error('ðŸ¨ [RESERVE] Known roomTypeIds:', ROOM_TYPE_MAPPING);
       return NextResponse.json(
-        { error: `Tipo de habitación no válido: ${roomTypeId}` },
+        { error: `Tipo de habitaciÃ³n no vÃ¡lido: ${roomTypeId}` },
         { status: 400 }
       );
     }
 
-    console.log('🔄 Mapping room type:', {
+    console.log('ðŸ”„ Mapping room type:', {
       roomTypeId,
       categoryId,
       mappingUsed: ROOM_TYPE_MAPPING
@@ -425,35 +663,48 @@ export async function POST(request: NextRequest) {
     const formattedCheckIn = formatDateForLobbyPMS(checkIn);
     const formattedCheckOut = formatDateForLobbyPMS(checkOut);
 
-    console.log('📅 Date formatting:', {
+    console.log('ðŸ“… Date formatting:', {
       original: { checkIn, checkOut },
       formatted: { checkIn: formattedCheckIn, checkOut: formattedCheckOut }
     });
 
     // Prepare LobbyPMS reservation request with correct field names and date format
-    const baseNotes = `🏄‍♂️ RESERVA DESDE SURFCAMP SANTA TERESA 🏄‍♂️\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- Huésped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- Teléfono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`;
+    const baseNotes = `ðŸ„â€â™‚ï¸ RESERVA DESDE SURFCAMP SANTA TERESA ðŸ„â€â™‚ï¸\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- HuÃ©sped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- TelÃ©fono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`;
+    // FIX: guest_count should always be the number of guests, regardless of room type
+    // The logic of creating multiple reservations is handled separately below
+    const calculatedGuestCount = guests || 1;
+    console.log('🛏️ [RESERVE] ===== BOOKING DATA GUEST COUNT CALCULATION =====');
+    console.log('🛏️ [RESERVE] Calculated guest_count:', calculatedGuestCount);
+    console.log('🛏️ [RESERVE] Calculated total_adults:', calculatedGuestCount);
+    console.log('🛏️ [RESERVE] Logic: guests || 1 =', guests, '|| 1 =>', calculatedGuestCount);
+    console.log('🛏️ [RESERVE] isSharedRoom:', isSharedRoom, '(not used for guest_count calculation)');
+
     const bookingData = {
       start_date: formattedCheckIn,     // Y-m-d format as required by LobbyPMS
       end_date: formattedCheckOut,      // Y-m-d format as required by LobbyPMS
-      guest_count: isSharedRoom ? guests : 1,
-      total_adults: isSharedRoom ? guests : 1,             // Required field by LobbyPMS
+      guest_count: calculatedGuestCount,
+      total_adults: calculatedGuestCount,             // Required field by LobbyPMS
       total_children: 0,                // Default to 0 children
       guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
       holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`, // Required when customer document is not present
       guest_email: contactInfo.email,
-      guest_document: contactInfo.dni,  // DNI del huésped
-      customer_document: contactInfo.dni, // También como customer_document por si LobbyPMS lo requiere así
-      customer_nationality: 'ES',       // Nacionalidad por defecto España (requerido cuando hay documento)
+      guest_document: contactInfo.dni,  // DNI del huÃ©sped
+      customer_document: contactInfo.dni, // TambiÃ©n como customer_document por si LobbyPMS lo requiere asÃ­
+      customer_nationality: 'ES',       // Nacionalidad por defecto EspaÃ±a (requerido cuando hay documento)
       customer_email: contactInfo.email,
       category_id: categoryId,
       room_type_id: roomTypeId,
       booking_reference: bookingReference,
-      source: 'Surfcamp Santa Teresa',     // Fuente más clara
+      source: 'Surfcamp Santa Teresa',     // Fuente mÃ¡s clara
       payment_intent_id: paymentIntentId,
       status: 'confirmed',
       notes: `${baseNotes}\n- Nota Surfcamp: Surfcamp`,
-      special_requests: `Reserva realizada a través de la página web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
+      special_requests: `Reserva realizada a travÃ©s de la pÃ¡gina web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
     };
+
+    console.log('🛏️ [RESERVE] ===== FINAL BOOKING DATA =====');
+    console.log('🛏️ [RESERVE] bookingData.guest_count:', bookingData.guest_count);
+    console.log('🛏️ [RESERVE] bookingData.total_adults:', bookingData.total_adults);
 
     if (phoneForLobby) {
       (bookingData as any).guest_phone = phoneForLobby;
@@ -475,14 +726,13 @@ export async function POST(request: NextRequest) {
     const hasDetailedActivityPayload =
       Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
-    // Check if we need to create multiple reservations (casa-playa with multiple participants)
+    // Check if we need to create multiple reservations (ANY room with multiple participants)
+    // IMPORTANT: Create individual reservations for EACH participant to track their activities separately
     const shouldCreateMultipleReservations =
-      roomTypeId === 'casa-playa' &&
-      isSharedRoom &&
       Array.isArray(participants) &&
       participants.length > 1;
 
-    console.log('🏨 [RESERVE] Reservation strategy:', {
+    console.log('ðŸ¨ [RESERVE] Reservation strategy:', {
       shouldCreateMultipleReservations,
       roomTypeId,
       isSharedRoom,
@@ -520,41 +770,76 @@ export async function POST(request: NextRequest) {
 
         console.log('[RESERVE] LobbyPMS createCustomer response:', customerResult);
       } else {
-        console.warn('⚠️ [RESERVE] Missing customer data to create LobbyPMS customer:', {
+        console.warn('âš ï¸ [RESERVE] Missing customer data to create LobbyPMS customer:', {
           hasDni: !!contactInfo?.dni,
           hasFirstName: !!contactInfo?.firstName,
           hasLastName: !!contactInfo?.lastName
         });
       }
     } catch (customerError) {
-      console.error('❌ [RESERVE] Failed to create LobbyPMS customer:', customerError);
+      console.error('âŒ [RESERVE] Failed to create LobbyPMS customer:', customerError);
       // Continue with booking even if customer creation failed (LobbyPMS may auto-create)
     }
 
-    console.log('📡 Sending to LobbyPMS:', bookingData);
+    console.log('ðŸ“¡ Sending to LobbyPMS:', bookingData);
 
     // If we need to create multiple reservations (one per participant in shared room)
     if (shouldCreateMultipleReservations) {
-      console.log('🏨 [RESERVE] Creating multiple reservations for shared room participants');
+      console.log('ðŸ¨ [RESERVE] Creating multiple reservations for shared room participants');
 
       const createdReservations: any[] = [];
       const bookingIds: string[] = [];
 
-      for (let i = 0; i < participants.length; i++) {
-        const participant = participants[i];
-        console.log(`🏨 [RESERVE] ========== PARTICIPANT ${i + 1}/${participants.length} ==========`);
-        console.log(`🏨 [RESERVE] Participant name:`, participant.name);
-        console.log(`🏨 [RESERVE] Participant data:`, JSON.stringify(participant, null, 2));
+      console.log('🔍 [RESERVE] Participants array analysis:', {
+        participantsLength: participants.length,
+        participantsData: participants.map((p: any, idx: number) => ({
+          index: idx,
+          id: p.id,
+          name: p.name,
+          hasActivities: p.selectedActivities?.length > 0,
+          activityCount: p.selectedActivities?.length || 0
+        }))
+      });
+
+      // 🛡️ Deduplicate participants by ID to prevent duplicate reservations
+      const seenParticipantIds = new Set<string>();
+      const uniqueParticipants = participants.filter((p: any) => {
+        if (!p.id) return true; // Keep participants without IDs (shouldn't happen)
+        if (seenParticipantIds.has(p.id)) {
+          console.warn(`⚠️ [RESERVE] Skipping duplicate participant: ${p.name} (ID: ${p.id})`);
+          return false;
+        }
+        seenParticipantIds.add(p.id);
+        return true;
+      });
+
+      console.log('🔍 [RESERVE] After deduplication:', {
+        originalCount: participants.length,
+        uniqueCount: uniqueParticipants.length,
+        removedDuplicates: participants.length - uniqueParticipants.length
+      });
+
+      for (let i = 0; i < uniqueParticipants.length; i++) {
+        const participant = uniqueParticipants[i];
+        console.log(`ðŸ¨ [RESERVE] ========== PARTICIPANT ${i + 1}/${participants.length} ==========`);
+        console.log(`ðŸ¨ [RESERVE] Participant name:`, participant.name);
+        console.log(`ðŸ¨ [RESERVE] Participant data:`, JSON.stringify(participant, null, 2));
 
         // Build participant-specific booking data
         const participantBookingData = {
           ...bookingData,
           guest_count: 1,
           total_adults: 1,
-          guest_name: participant.name || `${contactInfo.firstName} ${contactInfo.lastName}`,
-          holder_name: participant.name || `${contactInfo.firstName} ${contactInfo.lastName}`,
-          notes: `${baseNotes}\n- Participante ${i + 1}/${participants.length}: ${participant.name}\n- Nota Surfcamp: Surfcamp`,
+          guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          notes: `${baseNotes}\n- Participante ${i + 1}/${uniqueParticipants.length}: ${participant.name}\n- Nota Surfcamp: Surfcamp`,
         };
+
+        console.log(`🛏️ [RESERVE] Participant ${i + 1} booking data:`, {
+          guest_count: participantBookingData.guest_count,
+          total_adults: participantBookingData.total_adults,
+          participant: participant.name
+        });
 
         try {
           const participantReservation = await lobbyPMSClient.createBooking(participantBookingData);
@@ -608,29 +893,34 @@ export async function POST(request: NextRequest) {
                 return enriched;
               });
 
-              console.log(`📋 [RESERVE] Enriched activities for ${participant.name}:`, JSON.stringify(enrichedActivities, null, 2));
+              console.log(`ðŸ“‹ [RESERVE] Enriched activities for ${participant.name}:`, JSON.stringify(enrichedActivities, null, 2));
 
               const participantConsumptionItems = buildParticipantConsumptionItems(participant);
-              console.log(`📦 [RESERVE] Consumption items for ${participant.name}:`, JSON.stringify(participantConsumptionItems, null, 2));
+              console.log(`ðŸ"¦ [RESERVE] Consumption items for ${participant.name}:`, JSON.stringify(participantConsumptionItems, null, 2));
 
               if (participantConsumptionItems.length > 0) {
+                console.log(`📤 [RESERVE] SENDING TO LOBBY PMS for ${participant.name}:`, {
+                  bookingId: participantBookingId,
+                  itemCount: participantConsumptionItems.length,
+                  items: participantConsumptionItems
+                });
                 await lobbyPMSClient.addProductsToBooking(participantBookingId, participantConsumptionItems);
-                console.log(`✅ Added ${participantConsumptionItems.length} activities to reservation for ${participant.name}`);
+                console.log(`âœ… Added ${participantConsumptionItems.length} activities to reservation for ${participant.name}`);
               }
             }
           }
         } catch (participantError) {
-          console.error(`❌ Failed to create reservation for participant ${participant.name}:`, participantError);
+          console.error(`âŒ Failed to create reservation for participant ${participant.name}:`, participantError);
           // Continue with other participants even if one fails
         }
       }
 
-      console.log(`✅ Created ${createdReservations.length}/${participants.length} reservations for shared room`);
+      console.log(`âœ… Created ${createdReservations.length}/${uniqueParticipants.length} reservations for shared room`);
 
       // Send WhatsApp notifications
       try {
         // Send unified activities notification with all participants
-        const participantsForNotification = participants.map((p: any) => ({
+        const participantsForNotification = uniqueParticipants.map((p: any) => ({
           name: p.name,
           activities: (p.selectedActivities || []).map((act: any) => {
             const activity = getActivityById(act.id);
@@ -682,16 +972,16 @@ export async function POST(request: NextRequest) {
           total: 0, // Will be calculated if needed
           participants: participantsForNotification
         });
-        console.log('📱 Unified activities notification sent to staff');
+        console.log('ðŸ“± Unified activities notification sent to staff');
 
         // Send admin notification
-        const waMessage = `¡Hola! Se confirmaron ${createdReservations.length} reservas en SurfCamp (Casa Playa compartida) para las fechas ${checkIn} a ${checkOut}. Referencia: ${bookingReference}\nParticipantes: ${participants.map((p: any) => p.name).join(', ')}`;
+        const waMessage = `Â¡Hola! Se confirmaron ${createdReservations.length} reservas en SurfCamp (Casa Playa compartida) para las fechas ${checkIn} a ${checkOut}. Referencia: ${bookingReference}\nParticipantes: ${uniqueParticipants.map((p: any) => p.name).join(', ')}`;
         await sendWhatsAppMessage('+5491162802566', waMessage);
-        console.log('📱 WhatsApp confirmation sent to admin');
+        console.log('ðŸ“± WhatsApp confirmation sent to admin');
 
         // Send welcome message to main contact
         if (contactInfo?.phone) {
-          const allActivityNames = participants.flatMap((p: any) =>
+          const allActivityNames = uniqueParticipants.flatMap((p: any) =>
             (p.selectedActivities || []).map((act: any) => {
               const activity = getActivityById(act.id);
               return activity?.name || act.id;
@@ -704,13 +994,18 @@ export async function POST(request: NextRequest) {
             guestName: contactInfo.firstName,
             activities: Array.from(new Set(allActivityNames)), // Remove duplicates
             roomTypeName: getRoomTypeName(roomTypeId),
-            guests: participants.length
+            guests: uniqueParticipants.length
           });
-          console.log('📱 Welcome message sent to main contact');
+          console.log('ðŸ“± Welcome message sent to main contact');
         }
       } catch (whatsappError) {
-        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+        console.error('âŒ WhatsApp error (non-blocking):', whatsappError);
       }
+
+      console.log('✅✅✅ [RESERVE] ===== MULTIPLE RESERVATIONS COMPLETED =====');
+      console.log('✅ [RESERVE] Total reservations created:', createdReservations.length);
+      console.log('✅ [RESERVE] Booking IDs:', bookingIds);
+      console.log('✅ [RESERVE] Returning response and exiting...');
 
       return NextResponse.json({
         success: true,
@@ -720,16 +1015,20 @@ export async function POST(request: NextRequest) {
         message: `${createdReservations.length} reservas confirmadas exitosamente en LobbyPMS`,
         demoMode: false,
         multipleReservations: true,
-        participantCount: participants.length,
+        participantCount: uniqueParticipants.length,
         lobbyPMSResponses: createdReservations
       });
     }
 
+    // ⚠️ THIS CODE SHOULD NOT RUN IF shouldCreateMultipleReservations IS TRUE
+    console.log('🔵 [RESERVE] ===== SINGLE RESERVATION FLOW =====');
+    console.log('🔵 [RESERVE] This should NOT run if multiple reservations were created');
+
     // Single reservation flow (original logic)
     try {
-      console.log('🚀 Attempting to create booking in LobbyPMS...');
+      console.log('ðŸš€ Attempting to create booking in LobbyPMS...');
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
-      console.log('🏨 [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
+      console.log('ðŸ¨ [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
 
       const registeredGuests =
         reservationData?.booking?.guests?.registered ??
@@ -749,7 +1048,7 @@ export async function POST(request: NextRequest) {
         lobbyResponseHasGuestsField: Boolean(reservationData?.booking?.guests),
       });
 
-      console.log('✅ LobbyPMS reservation successful:', reservationData);
+      console.log('âœ… LobbyPMS reservation successful:', reservationData);
 
       const bookingId =
         reservationData?.booking?.booking_id ||
@@ -757,7 +1056,7 @@ export async function POST(request: NextRequest) {
         reservationData?.id;
 
       if (!bookingId) {
-        console.warn('⚠️ [RESERVE] Could not determine booking_id from LobbyPMS response. Skipping add-product-service.');
+        console.warn('âš ï¸ [RESERVE] Could not determine booking_id from LobbyPMS response. Skipping add-product-service.');
       } else {
         try {
           let consumptionItems;
@@ -795,24 +1094,29 @@ export async function POST(request: NextRequest) {
           console.log('[RESERVE] Final consumption items for booking:', consumptionItems);
 
           if (consumptionItems.length > 0) {
+            console.log('📤 [RESERVE] ===== SENDING TO LOBBY PMS (Single Reservation) =====');
+            console.log('📤 [RESERVE] Booking ID:', bookingId);
+            console.log('📤 [RESERVE] Consumption items count:', consumptionItems.length);
+            console.log('📤 [RESERVE] Consumption items:', JSON.stringify(consumptionItems, null, 2));
             await lobbyPMSClient.addProductsToBooking(bookingId, consumptionItems);
+            console.log('✅ [RESERVE] Successfully added products to booking');
           } else {
-            console.warn('[RESERVE] No consumption items resolved for booking. Skipping addProductsToBooking call.');
+            console.warn('⚠️ [RESERVE] No consumption items resolved for booking. Skipping addProductsToBooking call.');
           }
         } catch (consumptionError) {
-          console.error('❌ [RESERVE] Failed to add products/services to booking:', consumptionError);
+          console.error('âŒ [RESERVE] Failed to add products/services to booking:', consumptionError);
         }
       }
 
-      // Enviar mensajes de WhatsApp (solo si todo salió bien)
+      // Enviar mensajes de WhatsApp (solo si todo saliÃ³ bien)
       try {
-        // 1. Notificación a Dario (admin)
-        const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huésped(es). Referencia: ${bookingReference}`;
+        // 1. NotificaciÃ³n a Dario (admin)
+        const waMessage = `Â¡Hola! Se confirmÃ³ una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huÃ©sped(es). Referencia: ${bookingReference}`;
         const whatsappResult = await sendWhatsAppMessage(
           '+5491162802566',
           waMessage
         );
-        console.log('📱 WhatsApp confirmation sent to admin:', whatsappResult);
+        console.log('ðŸ“± WhatsApp confirmation sent to admin:', whatsappResult);
 
         // 2. Mensaje de bienvenida de Dario al cliente
         if (contactInfo?.phone) {
@@ -829,10 +1133,10 @@ export async function POST(request: NextRequest) {
             roomTypeName: getRoomTypeName(roomTypeId),
             guests: guests || 1
           });
-          console.log('📱 Welcome message sent to client');
+          console.log('ðŸ“± Welcome message sent to client');
         }
 
-        // 3. Notificaciones de actividades específicas al staff
+        // 3. Notificaciones de actividades especÃ­ficas al staff
         // Check if we have multiple participants with different activities
         const hasMultipleParticipantsWithActivities =
           Array.isArray(participants) &&
@@ -893,7 +1197,7 @@ export async function POST(request: NextRequest) {
             total: 0,
             participants: participantsForNotification
           });
-          console.log('📱 Unified activities notification sent to staff');
+          console.log('ðŸ“± Unified activities notification sent to staff');
         } else {
           // Use individual notifications for single participant or no participants data
           const hasSurf = resolvedActivities.some(act => act.category === 'surf');
@@ -912,7 +1216,7 @@ export async function POST(request: NextRequest) {
               guests: surfActivity?.quantity || 1, // Use quantity from surfActivity
               surfClasses: surfActivity?.classCount
             });
-            console.log('📱 Surf notification sent to staff');
+            console.log('ðŸ“± Surf notification sent to staff');
           }
 
           if (hasIceBath) {
@@ -925,12 +1229,12 @@ export async function POST(request: NextRequest) {
               total: 0, // Will be calculated from priceBreakdown if needed
               quantity: 1
             });
-            console.log('📱 Ice bath notification sent to staff');
+            console.log('ðŸ“± Ice bath notification sent to staff');
           }
         }
 
       } catch (whatsappError) {
-        console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+        console.error('âŒ WhatsApp error (non-blocking):', whatsappError);
       }
 
       return NextResponse.json({
@@ -944,19 +1248,19 @@ export async function POST(request: NextRequest) {
       });
 
     } catch (lobbyError: any) {
-      console.error('❌ LobbyPMS booking error:', {
+      console.error('âŒ LobbyPMS booking error:', {
         message: lobbyError.message,
         status: lobbyError.response?.status,
         data: lobbyError.response?.data,
         bookingData
       });
-      console.error('🏨 [RESERVE] LobbyPMS error stack:', lobbyError.stack);
+      console.error('ðŸ¨ [RESERVE] LobbyPMS error stack:', lobbyError.stack);
 
       // Si es error de capacidad, ajustar y reintentar
       if (lobbyError.response?.data?.error_code === 'MAXIMUM_CAPACITY') {
-        console.log('🔄 Capacity error detected, adjusting guest count...');
+        console.log('ðŸ”„ Capacity error detected, adjusting guest count...');
         
-        // Reducir huéspedes a 1 e intentar de nuevo
+        // Reducir huÃ©spedes a 1 e intentar de nuevo
         const adjustedBookingData = {
           ...bookingData,
           guest_count: 1,
@@ -964,10 +1268,10 @@ export async function POST(request: NextRequest) {
         };
         
         try {
-          console.log('🔄 Retrying with 1 guest...');
+          console.log('ðŸ”„ Retrying with 1 guest...');
           const retryReservationData = await lobbyPMSClient.createBooking(adjustedBookingData);
           
-          console.log('✅ LobbyPMS reservation successful (adjusted):', retryReservationData);
+          console.log('âœ… LobbyPMS reservation successful (adjusted):', retryReservationData);
 
           const adjustedBookingId =
             retryReservationData?.booking?.booking_id ||
@@ -994,16 +1298,16 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          // Enviar mensaje de confirmación por WhatsApp (solo si el retry fue exitoso)
+          // Enviar mensaje de confirmaciÃ³n por WhatsApp (solo si el retry fue exitoso)
           try {
-            const waMessage = `¡Hola! Se confirmó una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para 1 huésped (ajustado por capacidad). Referencia: ${bookingReference}`;
+            const waMessage = `Â¡Hola! Se confirmÃ³ una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para 1 huÃ©sped (ajustado por capacidad). Referencia: ${bookingReference}`;
             const whatsappResult = await sendWhatsAppMessage(
               '+5491162802566',
               waMessage
             );
-            console.log('📱 WhatsApp confirmation sent (adjusted):', whatsappResult);
+            console.log('ðŸ“± WhatsApp confirmation sent (adjusted):', whatsappResult);
           } catch (whatsappError) {
-            console.error('❌ WhatsApp error (non-blocking):', whatsappError);
+            console.error('âŒ WhatsApp error (non-blocking):', whatsappError);
           }
 
           return NextResponse.json({
@@ -1011,7 +1315,7 @@ export async function POST(request: NextRequest) {
             reservationId: retryReservationData.reservation_id || retryReservationData.id,
             bookingReference,
             status: retryReservationData.status || 'confirmed',
-            message: 'Reserva confirmada exitosamente en LobbyPMS (ajustada a 1 huésped por capacidad)',
+            message: 'Reserva confirmada exitosamente en LobbyPMS (ajustada a 1 huÃ©sped por capacidad)',
             demoMode: false,
             adjusted: true,
             originalGuests: guests,
@@ -1020,44 +1324,44 @@ export async function POST(request: NextRequest) {
           });
           
         } catch (retryError: any) {
-          console.error('❌ Retry also failed:', retryError);
+          console.error('âŒ Retry also failed:', retryError);
           // Continue to fallback below
         }
       }
 
-      // Solo como ÚLTIMO RECURSO: modo demo con notificación especial
-      console.log('🔄 LobbyPMS failed, using emergency fallback mode');
+      // Solo como ÃšLTIMO RECURSO: modo demo con notificaciÃ³n especial
+      console.log('ðŸ”„ LobbyPMS failed, using emergency fallback mode');
 
-      // NO enviar mensaje de WhatsApp aquí - ya se envió en el retry o en el intento principal
-      // El mensaje de alerta se enviará solo si hay un error crítico general (catch block)
+      // NO enviar mensaje de WhatsApp aquÃ­ - ya se enviÃ³ en el retry o en el intento principal
+      // El mensaje de alerta se enviarÃ¡ solo si hay un error crÃ­tico general (catch block)
 
       return NextResponse.json({
         success: true,
         reservationId: `EMERGENCY-${bookingReference}`,
         bookingReference,
         status: 'pending_manual_processing',
-        message: 'Reserva recibida - procesándose manualmente',
+        message: 'Reserva recibida - procesÃ¡ndose manualmente',
         demoMode: true,
         needsManualProcessing: true,
         fallbackReason: lobbyError.message,
         originalError: lobbyError.response?.data,
-        note: 'Tu reserva está confirmada. Nos contactaremos contigo en las próximas horas para finalizar los detalles.'
+        note: 'Tu reserva estÃ¡ confirmada. Nos contactaremos contigo en las prÃ³ximas horas para finalizar los detalles.'
       });
     }
 
   } catch (error: any) {
-    console.error('❌ General reservation error:', error);
-    console.error('🏨 [RESERVE] Error stack:', error.stack);
+    console.error('âŒ General reservation error:', error);
+    console.error('ðŸ¨ [RESERVE] Error stack:', error.stack);
 
     // Generate a fallback booking reference if we don't have one
     const fallbackReference = generateBookingReference();
     
-    // Enviar alerta crítica por WhatsApp
+    // Enviar alerta crÃ­tica por WhatsApp
     try {
-      const criticalAlert = `🚨 ERROR CRÍTICO: Fallo general en sistema de reservas.\n\nReferencia: ${fallbackReference}\nError: ${error.message}`;
+      const criticalAlert = `ðŸš¨ ERROR CRÃTICO: Fallo general en sistema de reservas.\n\nReferencia: ${fallbackReference}\nError: ${error.message}`;
       await sendWhatsAppMessage('+5491162802566', criticalAlert);
     } catch (whatsappError) {
-      console.error('❌ Critical WhatsApp alert failed:', whatsappError);
+      console.error('âŒ Critical WhatsApp alert failed:', whatsappError);
     }
     
     // Incluso en error general, confirmar al usuario
@@ -1066,7 +1370,7 @@ export async function POST(request: NextRequest) {
       reservationId: `CRITICAL-FALLBACK-${fallbackReference}`,
       bookingReference: fallbackReference,
       status: 'pending_manual_processing',
-      message: 'Reserva recibida - procesándose manualmente',
+      message: 'Reserva recibida - procesÃ¡ndose manualmente',
       demoMode: true,
       needsManualProcessing: true,
       error: error.message,
@@ -1074,6 +1378,7 @@ export async function POST(request: NextRequest) {
     });
   }
 }
+
 
 
 

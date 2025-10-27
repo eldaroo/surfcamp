@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice } from '@/lib/prices';
 
 // Helper function for currency formatting
 const formatCurrency = (amount: number, locale: string = 'en-US'): string => {
@@ -28,12 +28,20 @@ const getActivityDetailsForParticipant = (activity: any, participant: any) => {
 
   if (activity.category === 'yoga') {
     const yogaPackage = participant.selectedYogaPackages[activity.id];
+    const yogaClassCount = participant.yogaClasses[activity.id] ?? 1;
+    const useDiscount = participant.yogaUsePackDiscount[activity.id] ?? false;
+
     if (yogaPackage) {
       price = getActivityTotalPrice('yoga', yogaPackage);
       packageInfo = yogaPackage;
       // Extract number from package (e.g., "4-classes" -> "4 classes")
       const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
       unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
+    } else {
+      // Calculate price based on yoga classes and discount
+      price = calculateYogaPrice(yogaClassCount, useDiscount);
+      packageInfo = `${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'}`;
+      unitLabel = `${yogaClassCount} × ${formatCurrency(price / yogaClassCount)} / class`;
     }
   } else if (activity.category === 'surf') {
     const surfClasses = participant.selectedSurfClasses[activity.id];
@@ -159,99 +167,6 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       >
         {getText('prices.summary', 'Price Summary')}
       </h3>
-
-      {/* Stay Summary - Compact Grid */}
-      {bookingData.checkIn && bookingData.checkOut && (
-        <>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 mb-6">
-            <dt
-              className="text-[13px] font-medium"
-              style={{ color: 'var(--brand-text-dim)' }}
-            >
-              {getText('dates.checkIn', 'Check-in')}
-            </dt>
-            <dd
-              className="text-[13px] font-medium text-right"
-              style={{ color: 'var(--brand-text)' }}
-            >
-              {new Date(bookingData.checkIn).toLocaleDateString(
-                locale === 'en' ? 'en-US' : 'es-ES',
-                {
-                  month: 'short',
-                  day: 'numeric',
-                  year: new Date(bookingData.checkIn).getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
-                }
-              )}
-            </dd>
-
-            <dt
-              className="text-[13px] font-medium"
-              style={{ color: 'var(--brand-text-dim)' }}
-            >
-              {getText('dates.checkOut', 'Check-out')}
-            </dt>
-            <dd
-              className="text-[13px] font-medium text-right"
-              style={{ color: 'var(--brand-text)' }}
-            >
-              {new Date(bookingData.checkOut).toLocaleDateString(
-                locale === 'en' ? 'en-US' : 'es-ES',
-                {
-                  month: 'short',
-                  day: 'numeric',
-                  year: new Date(bookingData.checkOut).getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
-                }
-              )}
-            </dd>
-
-            <dt
-              className="text-[13px] font-medium"
-              style={{ color: 'var(--brand-text-dim)' }}
-            >
-              {getText('dates.guests', 'Guests')}
-            </dt>
-            <dd
-              className="text-[13px] font-medium text-right"
-              style={{ color: 'var(--brand-text)' }}
-            >
-              {bookingData.guests} {pluralize(bookingData.guests || 1, 'guest', 'guests')}
-            </dd>
-
-            <dt
-              className="text-[13px] font-medium"
-              style={{ color: 'var(--brand-text-dim)' }}
-            >
-              {getText('dates.nights', 'Nights')}
-            </dt>
-            <dd
-              className="text-[13px] font-medium text-right"
-              style={{ color: 'var(--brand-text)' }}
-            >
-              {nights} {pluralize(nights, 'night', 'nights')}
-            </dd>
-          </dl>
-
-          {/* Edit Button */}
-          <div className="flex justify-end mb-6">
-            <button
-              onClick={() => setCurrentStep('dates')}
-              className="text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
-              style={{
-                color: 'var(--brand-gold)',
-                borderColor: 'var(--brand-gold)'
-              }}
-            >
-              {getText('accommodation.changeDates', 'Edit')}
-            </button>
-          </div>
-
-          {/* Separator */}
-          <div
-            className="h-px mb-6"
-            style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
-          />
-        </>
-      )}
 
       {/* Line Items */}
       <ul className="space-y-4 mb-6">

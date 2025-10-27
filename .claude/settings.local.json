@@ -74,7 +74,10 @@
       "Bash(mkdir:*)",
       "Bash(del package-lock.json)",
       "Bash(npm ci:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(del \"C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\app\\api\\reserve\\anti-duplicate-check.ts\")",
+      "Bash(npx create-file-with-code.js)",
+      "Bash(del \"C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\add-pid-logs.js\")"
     ],
     "deny": [],
     "ask": []

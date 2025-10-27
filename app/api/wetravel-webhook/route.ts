@@ -974,7 +974,18 @@ async function handleBookingCreated(
           orderId: payment.order_id
         });
 
-        if (orderData && orderData.booking_data && !orderError) {
+        // IMPORTANT: Webhook should NOT create reservations to avoid duplicates
+        // The payment-status endpoint will handle reservation creation instead
+        console.log(`🔵 [LOBBYPMS-DEBUG] [PID:${process.pid}] ⚠️ Webhook does NOT create reservations`);
+        console.log('🔵 [LOBBYPMS-DEBUG] Reason: payment-status endpoint handles all reservation creation');
+        console.log('🔵 [LOBBYPMS-DEBUG] Order ID:', payment.order_id);
+        console.log('🔵 [LOBBYPMS-DEBUG] Booking data exists:', !!orderData?.booking_data);
+
+        // Do NOT proceed with reservation creation - just mark as complete
+        // The old reservation creation code below is permanently disabled
+        if (false && orderData && orderData.booking_data && !orderError) {
+          // DISABLED: This code was creating duplicate reservations
+          // payment-status endpoint handles reservation creation instead
           const booking = orderData.booking_data;
           console.log('🔵 [LOBBYPMS-DEBUG] Booking data retrieved:', {
             checkIn: booking.checkIn,
@@ -1029,9 +1040,11 @@ async function handleBookingCreated(
                   checkOut: booking.checkOut,
                   guests: booking.guests,
                   roomTypeId: booking.roomTypeId,
+                  isSharedRoom: booking.isSharedRoom || false,
                   contactInfo: booking.contactInfo,
                   activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
-                  selectedActivities: booking.selectedActivities || []
+                  selectedActivities: booking.selectedActivities || [],
+                  participants: booking.participants || []
                 };
 
           console.log('🔵 [LOBBYPMS-DEBUG] Creating reservation in LobbyPMS...');

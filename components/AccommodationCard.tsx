@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { CheckCircle2, X, ZoomIn } from 'lucide-react';
@@ -26,7 +27,7 @@ type AccommodationCardProps = {
   roomPrice: number;
   totalPrice: number;
   features: { label: string; color: 'aqua' | 'gold' | 'orange' }[];
-  description: string;
+  description: string | { desktop: string; mobile: string };
   locale: 'es' | 'en';
   onSelect: () => void;
   getFeatureChipStyle: (color: 'aqua' | 'gold' | 'orange') => string;
@@ -41,25 +42,34 @@ const accommodationImages: Record<string, string> = {
 // Gallery images for each accommodation type
 const accommodationGalleries: Record<string, string[]> = {
   'casitas-privadas': [
-    '/assets/accomodations/privadas/10337621829372707f.jpg',
-    '/assets/accomodations/privadas/103376218295a6354e.jpg',
-    '/assets/accomodations/privadas/103376218296bc3914.jpg',
-    '/assets/accomodations/privadas/1033762182b0e5084f - copia.jpg',
-    '/assets/accomodations/privadas/1033762182b5dc5787.jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur.jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (1).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (2).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (3).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (4).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (5).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (6).jpg',
+    '/assets/accomodations/privadas/private-zeneidas-sur (7).jpg',
   ],
   'casa-playa': [
-    '/assets/accomodations/shared/10337622666123bbee - copia.jpg',
-    '/assets/accomodations/shared/1033762377b0ab2774 - copia.jpg',
-    '/assets/accomodations/shared/10337647bc8c76985d - copia.jpg',
-    '/assets/accomodations/shared/IMG_7536 - copia.JPG',
-    '/assets/accomodations/shared/IMG_7560 - copia.JPG',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g.jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (1).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (2).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (3).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (4).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (5).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (6).jpg',
+    '/assets/accomodations/shared/dorm-zeneidas-surf-g (7).jpg',
+    '/assets/accomodations/shared/10337622666123bbee.jpg',
   ],
   'casas-deluxe': [
-    '/assets/accomodations/Studio Deluxe/10337647bb1de2f9c0 - copia.jpg',
-    '/assets/accomodations/Studio Deluxe/10337647bb1f31ea46 - copia.jpg',
-    '/assets/accomodations/Studio Deluxe/IMG_8534 - copia.JPG',
-    '/assets/accomodations/Studio Deluxe/IMG_8578 - copia.JPG',
-    '/assets/accomodations/Studio Deluxe/IMG_8595 - copia.JPG',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf.jpg',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf (1).jpg',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf (2).jpg',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf (3).jpeg',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf (4).jpeg',
+    '/assets/accomodations/Studio Deluxe/deluxe-zeneidas-surf (5).jpeg',
+    '/assets/accomodations/Studio Deluxe/IMG_8534.jpg',
   ],
 };
 
@@ -82,11 +92,24 @@ const AccommodationCard = ({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
   const lightboxWrapperRef = useRef<HTMLDivElement | null>(null);
+  const lightboxOverlayRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const ignoreNextFlipRef = useRef(false);
   const [lightboxDimensions, setLightboxDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const visibleFeatures = features.slice(0, 3);
   const hiddenCount = features.length - 3;
 
   const handleFlip = () => {
+    console.log('[AccommodationCard] handleFlip', {
+      isUnavailable,
+      currentFlipped: isFlipped,
+      ignoreNext: ignoreNextFlipRef.current,
+    });
+    if (ignoreNextFlipRef.current) {
+      ignoreNextFlipRef.current = false;
+      return;
+    }
     if (!isUnavailable) {
       setIsFlipped(!isFlipped);
     }
@@ -97,27 +120,42 @@ const AccommodationCard = ({
 
   const openLightbox = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('[AccommodationCard] openLightbox', { index });
     setLightboxImageIndex(index);
     setLightboxOpen(true);
   };
 
   const closeLightbox = () => {
+    console.log('[AccommodationCard] closeLightbox');
     setLightboxOpen(false);
   };
 
   const nextLightboxImage = () => {
+    console.log('[AccommodationCard] nextLightboxImage', {
+      previousIndex: lightboxImageIndex,
+      nextIndex: (lightboxImageIndex + 1) % gallery.length,
+    });
     setLightboxImageIndex((prev) => (prev + 1) % gallery.length);
   };
 
   const prevLightboxImage = () => {
+    console.log('[AccommodationCard] prevLightboxImage', {
+      previousIndex: lightboxImageIndex,
+      nextIndex: (lightboxImageIndex - 1 + gallery.length) % gallery.length,
+    });
     setLightboxImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
   };
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!lightboxOpen) return undefined;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    console.log('[AccommodationCard] lightbox effect mounted');
 
     const aspectRatio = 16 / 10;
 
@@ -133,18 +171,21 @@ const AccommodationCard = ({
         width = height * aspectRatio;
       }
 
-      setLightboxDimensions({ width, height });
+      const roundedWidth = Math.round(width);
+      const roundedHeight = Math.round(height);
 
-      const rect = lightboxWrapperRef.current?.getBoundingClientRect();
-      if (rect) {
-        console.log('[Lightbox] opened', {
-          width: rect.width,
-          height: rect.height,
+      setLightboxDimensions((prev) => {
+        if (prev && prev.width === roundedWidth && prev.height === roundedHeight) {
+          return prev;
+        }
+        console.log('[AccommodationCard] computeDimensions', {
+          width: roundedWidth,
+          height: roundedHeight,
           windowWidth: window.innerWidth,
           windowHeight: window.innerHeight,
-          imageIndex: lightboxImageIndex,
         });
-      }
+        return { width: roundedWidth, height: roundedHeight };
+      });
     };
 
     computeDimensions();
@@ -153,34 +194,77 @@ const AccommodationCard = ({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('resize', computeDimensions);
+      console.log('[AccommodationCard] lightbox effect cleaned up');
     };
   }, [lightboxOpen, lightboxImageIndex]);
 
-  const logBounds = useCallback((label: string) => {
-    const rect = lightboxWrapperRef.current?.getBoundingClientRect();
-    if (rect) {
-      console.log(`[Lightbox] ${label}`, {
-        width: rect.width,
-        height: rect.height,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        imageIndex: lightboxImageIndex,
-        timestamp: Date.now(),
-      });
+  useEffect(() => {
+    console.log('[AccommodationCard] isFlipped state changed', { isFlipped });
+  }, [isFlipped]);
+
+  useEffect(() => {
+    console.log('[AccommodationCard] lightboxOpen state changed', { lightboxOpen });
+  }, [lightboxOpen]);
+
+  useEffect(() => {
+    if (lightboxDimensions) {
+      console.log('[AccommodationCard] lightboxDimensions updated', lightboxDimensions);
     }
-  }, [lightboxImageIndex]);
+  }, [lightboxDimensions]);
 
-  const handleLightboxMouseEnter = useCallback(() => {
-    logBounds('mouse enter');
-  }, [logBounds]);
+  useEffect(() => {
+    if (!isFlipped) return;
 
-  const handleLightboxMouseLeave = useCallback(() => {
-    logBounds('mouse leave');
-  }, [logBounds]);
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (
+        !target ||
+        (cardRef.current && cardRef.current.contains(target)) ||
+        (lightboxOverlayRef.current && lightboxOverlayRef.current.contains(target))
+      ) {
+        return;
+      }
+
+      console.log('[AccommodationCard] handleClickOutside', {
+        lightboxOpen,
+        hasCardRef: Boolean(cardRef.current),
+        hasOverlayRef: Boolean(lightboxOverlayRef.current),
+      });
+
+      if (cardRef.current) {
+        ignoreNextFlipRef.current = true;
+        setLightboxOpen(false);
+        setIsFlipped(false);
+        setTimeout(() => {
+          ignoreNextFlipRef.current = false;
+        }, 0);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    console.log('[AccommodationCard] registered outside click handler');
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      console.log('[AccommodationCard] removed outside click handler');
+    };
+  }, [isFlipped, lightboxOpen]);
+
+  useEffect(() => {
+    if (!isFlipped) {
+      ignoreNextFlipRef.current = false;
+    }
+  }, [isFlipped]);
 
   return (
     <>
-      <div className="flip-card w-full h-[300px] md:h-[220px]" style={{ perspective: '1000px' }}>
+      <div
+        ref={cardRef}
+        className="flip-card w-full h-[300px] md:h-[220px]"
+        style={{ perspective: '1000px' }}
+      >
         <motion.div
           className="flip-card-inner w-full h-full relative"
           animate={{ rotateY: isFlipped ? 180 : 0 }}
@@ -226,11 +310,20 @@ const AccommodationCard = ({
                   {t(`accommodation.roomTypes.${room.roomTypeId}.name`)}
                 </h2>
                 <div
-                  className="inline-block rounded-full px-3 py-1.5 text-sm md:text-base font-semibold backdrop-blur-sm"
+                  className="inline-block rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold backdrop-blur-sm min-w-fit"
                   style={{ backgroundColor: 'rgba(242, 193, 78, 0.9)', color: '#1a1a1a' }}
                 >
-                  ${roomPrice}
-                  <span className="font-medium"> / night</span>
+                  {room.isSharedRoom ? (
+                    <>
+                      <span className="text-sm md:text-base font-bold">${roomPrice}</span>
+                      <span className="font-medium"> / {locale === 'es' ? 'noche / persona' : 'night / person'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm md:text-base font-bold">${roomPrice}</span>
+                      <span className="font-medium"> / {locale === 'es' ? 'noche (total)' : 'night (total)'}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -311,8 +404,9 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs md:text-sm leading-relaxed text-slate-300">
-                    {description}
+                  <p className="text-xs md:text-[15px] leading-relaxed text-slate-300">
+                    <span className="md:hidden">{typeof description === 'object' ? description.mobile : description}</span>
+                    <span className="hidden md:inline">{typeof description === 'object' ? description.desktop : description}</span>
                   </p>
                 </div>
               </div>
@@ -463,117 +557,116 @@ const AccommodationCard = ({
         </motion.div>
       </div>
 
-      {/* Lightbox Modal - Refined Compact View */}
-              {lightboxOpen && gallery.length > 0 && (
+      {/* Lightbox Modal - rendered via portal */}
+      {isClient && lightboxOpen && gallery.length > 0 && createPortal(
+        <div
+          ref={lightboxOverlayRef}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:p-8"
+          onClick={closeLightbox}
+        >
+          {/* Compact Container - Auto-adjusts to image */}
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:p-8"
-            onClick={closeLightbox}
-            onMouseEnter={() => logBounds('overlay enter')}
-            onMouseLeave={() => logBounds('overlay leave')}
+            ref={lightboxWrapperRef}
+            className="relative w-full"
+            style={{ maxWidth: "1280px", width: lightboxDimensions ? `${lightboxDimensions.width}px` : "100%" }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Compact Container - Auto-adjusts to image */}
-            <div
-              ref={lightboxWrapperRef}
-              className="relative w-full"
-              style={{ maxWidth: "1280px", width: lightboxDimensions ? `${lightboxDimensions.width}px` : "100%" }}
-              onClick={(e) => e.stopPropagation()}
-              onMouseEnter={handleLightboxMouseEnter}
-              onMouseLeave={handleLightboxMouseLeave}>
-              {/* Close Button - Outside top-right */}
-              <button
-                onClick={closeLightbox}
-                className="absolute -top-12 right-0 md:-top-14 md:-right-2 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all backdrop-blur-sm z-20 shadow-lg"
-                aria-label="Close lightbox"
-              >
-                <X className="h-5 w-5 md:h-6 md:w-6" />
-              </button>
+            {/* Close Button - Outside top-right */}
+            <button
+              onClick={closeLightbox}
+              className="absolute -top-12 right-0 md:-top-14 md:-right-2 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all backdrop-blur-sm z-20 shadow-lg"
+              aria-label="Close lightbox"
+            >
+              <X className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
 
-              {/* Image Counter - Outside top-left */}
-              <div className="absolute -top-12 left-0 md:-top-14 md:-left-2 px-4 py-2 rounded-full bg-black/70 text-white text-xs md:text-sm font-medium backdrop-blur-md z-20 shadow-lg">
-                {lightboxImageIndex + 1} / {gallery.length}
+            {/* Image Counter - Outside top-left */}
+            <div className="absolute -top-12 left-0 md:-top-14 md:-left-2 px-4 py-2 rounded-full bg-black/70 text-white text-xs md:text-sm font-medium backdrop-blur-md z-20 shadow-lg">
+              {lightboxImageIndex + 1} / {gallery.length}
+            </div>
+
+            {/* Main Image Container with rounded corners and shadow */}
+            <motion.div
+              key={lightboxImageIndex}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/60 bg-slate-900/50"
+            >
+              <div className="relative w-full" style={{ aspectRatio: "16/10", height: lightboxDimensions ? `${lightboxDimensions.height}px` : undefined }}>
+                <Image
+                  src={gallery[lightboxImageIndex]}
+                  alt={`${room.roomTypeName} - Image ${lightboxImageIndex + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+                  priority
+                />
               </div>
+            </motion.div>
 
-              {/* Main Image Container with rounded corners and shadow */}
-              <motion.div
-                key={lightboxImageIndex}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-black/60 bg-slate-900/50"
-              >
-                <div className="relative w-full" style={{ aspectRatio: "16/10", height: lightboxDimensions ? `${lightboxDimensions.height}px` : undefined }}>
-                  <Image
-                    src={gallery[lightboxImageIndex]}
-                    alt={`${room.roomTypeName} - Image ${lightboxImageIndex + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
-                    priority
-                  />
-                </div>
-              </motion.div>
+            {/* Navigation Arrows - Positioned relative to image container */}
+            {gallery.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevLightboxImage();
+                  }}
+                  className="absolute left-2 md:-left-16 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all backdrop-blur-md shadow-lg"
+                  aria-label="Previous image"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextLightboxImage();
+                  }}
+                  className="absolute right-2 md:-right-16 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all backdrop-blur-md shadow-lg"
+                  aria-label="Next image"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
 
-              {/* Navigation Arrows - Positioned relative to image container */}
-              {gallery.length > 1 && (
-                <>
+            {/* Thumbnail Strip - Below image */}
+            <div className="mt-4 md:mt-6 flex justify-center">
+              <div className="flex gap-2 px-4 py-2.5 rounded-full bg-black/70 backdrop-blur-md max-w-full overflow-x-auto scrollbar-hide shadow-lg">
+                {gallery.map((img, idx) => (
                   <button
+                    key={idx}
                     onClick={(e) => {
                       e.stopPropagation();
-                      prevLightboxImage();
+                      setLightboxImageIndex(idx);
                     }}
-                    className="absolute left-2 md:-left-16 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all backdrop-blur-md shadow-lg"
-                    aria-label="Previous image"
+                    className={`relative flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      idx === lightboxImageIndex
+                        ? 'border-amber-300 scale-105 shadow-lg shadow-amber-300/30'
+                        : 'border-white/30 hover:border-white/60 hover:scale-105'
+                    }`}
                   >
-                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <Image
+                      src={img}
+                      alt={`Thumbnail ${idx + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
                   </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      nextLightboxImage();
-                    }}
-                    className="absolute right-2 md:-right-16 top-1/2 -translate-y-1/2 p-2.5 md:p-3 rounded-full bg-white/15 text-white hover:bg-white/25 active:scale-95 transition-all backdrop-blur-md shadow-lg"
-                    aria-label="Next image"
-                  >
-                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </>
-              )}
-
-              {/* Thumbnail Strip - Below image */}
-              <div className="mt-4 md:mt-6 flex justify-center">
-                <div className="flex gap-2 px-4 py-2.5 rounded-full bg-black/70 backdrop-blur-md max-w-full overflow-x-auto scrollbar-hide shadow-lg">
-                  {gallery.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLightboxImageIndex(idx);
-                      }}
-                      className={`relative flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                        idx === lightboxImageIndex
-                          ? 'border-amber-300 scale-105 shadow-lg shadow-amber-300/30'
-                          : 'border-white/30 hover:border-white/60 hover:scale-105'
-                      }`}
-                    >
-                      <Image
-                        src={img}
-                        alt={`Thumbnail ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
           </div>
-        )}
+        </div>,
+        document.body
+      )}
 
     </>
   );

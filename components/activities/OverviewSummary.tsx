@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { X, CheckCircle2, User } from 'lucide-react';
 import { Activity } from '@/types';
@@ -27,6 +29,16 @@ const OverviewSummary = ({
   onContinue,
   locale
 }: OverviewSummaryProps) => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
+
   const t = {
     es: {
       title: 'Resumen de selecciones',
@@ -80,7 +92,7 @@ const OverviewSummary = ({
     return '';
   };
 
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -207,7 +219,8 @@ const OverviewSummary = ({
           </div>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 };
 

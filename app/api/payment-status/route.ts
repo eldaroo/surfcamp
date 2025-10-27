@@ -17,7 +17,7 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔵 [LOBBYPMS-DEBUG] 📞 /api/payment-status called');
+    console.log(`🔵 [LOBBYPMS-DEBUG] [PID:${process.pid}] 📞 /api/payment-status called`);
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
     const tripId = searchParams.get('trip_id');
@@ -138,12 +138,32 @@ export async function GET(request: NextRequest) {
       });
 
       if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
-        console.log('🔵 [LOBBYPMS-DEBUG] 🏨 Booking created but no LobbyPMS reservation - creating now...');
+        console.log('🔵 [LOBBYPMS-DEBUG] 🏨 Booking created but no LobbyPMS reservation - attempting to claim...');
 
-        const booking = orderData.booking_data;
+        // 🔒 RACE CONDITION PROTECTION: Use optimistic locking
+        // Try to claim this order for reservation creation by setting a temporary marker
+        const claimTimestamp = new Date().toISOString();
+        const { data: claimResult, error: claimError } = await supabase
+          .from('orders')
+          .update({
+            lobbypms_reservation_id: `CREATING_${claimTimestamp}`
+          })
+          .eq('id', payment.order_id)
+          .is('lobbypms_reservation_id', null)  // Only update if still null
+          .select();
 
-        try {
-          const reserveUrl = `${request.nextUrl.origin}/api/reserve`;
+        if (claimError || !claimResult || claimResult.length === 0) {
+          console.log('🔵 [LOBBYPMS-DEBUG] ⚠️ Could not claim order - another process may be creating reservation');
+          console.log('🔵 [LOBBYPMS-DEBUG] Claim error:', claimError);
+          console.log('🔵 [LOBBYPMS-DEBUG] Claim result:', claimResult);
+          // Another process claimed it, skip
+        } else {
+          console.log('🔵 [LOBBYPMS-DEBUG] ✅ Successfully claimed order for reservation creation');
+
+          const booking = orderData.booking_data;
+
+          try {
+            const reserveUrl = `${request.nextUrl.origin}/api/reserve`;
 
           const reservePayload = {
             checkIn: booking.checkIn,
@@ -174,21 +194,47 @@ export async function GET(request: NextRequest) {
           if (reserveResponse.ok) {
             console.log('🔵 [LOBBYPMS-DEBUG] ✅ LobbyPMS reservation created successfully');
 
-            await supabase
-              .from('orders')
-              .update({
-                lobbypms_reservation_id: reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id,
-                lobbypms_data: reserveData
-              })
-              .eq('id', payment.order_id);
+            // Handle both single and multiple reservations
+            let reservationId;
+            if (reserveData.multipleReservations && reserveData.reservationIds) {
+              // Multiple reservations: use the first ID or join them
+              reservationId = Array.isArray(reserveData.reservationIds)
+                ? reserveData.reservationIds[0]
+                : reserveData.reservationIds;
+              console.log('🔵 [LOBBYPMS-DEBUG] 📋 Multiple reservations detected:', {
+                count: reserveData.reservationIds.length,
+                ids: reserveData.reservationIds,
+                savingFirstId: reservationId
+              });
+            } else {
+              // Single reservation
+              reservationId = reserveData.reservationId ||
+                             reserveData.reservation?.id ||
+                             reserveData.lobbyPMSResponse?.booking?.booking_id ||
+                             reserveData.lobbyPMSResponse?.id;
+              console.log('🔵 [LOBBYPMS-DEBUG] 📋 Single reservation detected:', reservationId);
+            }
 
-            console.log('🔵 [LOBBYPMS-DEBUG] 💾 Order updated with LobbyPMS reservation ID');
+            if (reservationId) {
+              await supabase
+                .from('orders')
+                .update({
+                  lobbypms_reservation_id: reservationId,
+                  lobbypms_data: reserveData
+                })
+                .eq('id', payment.order_id);
+
+              console.log('🔵 [LOBBYPMS-DEBUG] 💾 Order updated with LobbyPMS reservation ID:', reservationId);
+            } else {
+              console.error('🔵 [LOBBYPMS-DEBUG] ⚠️ Could not extract reservation ID from response:', reserveData);
+            }
           } else {
             console.error('🔵 [LOBBYPMS-DEBUG] ❌ Failed to create LobbyPMS reservation:', reserveData);
           }
         } catch (lobbyError) {
           console.error('🔵 [LOBBYPMS-DEBUG] ❌ Error creating LobbyPMS reservation:', lobbyError);
         }
+        }  // End of claim success block
       } else {
         console.log('🔵 [LOBBYPMS-DEBUG] ℹ️ Skipping LobbyPMS creation:', {
           reason: !orderData ? 'No order data' : !orderData.booking_data ? 'No booking data' : 'Already has LobbyPMS reservation',

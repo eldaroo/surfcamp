@@ -1,15 +1,17 @@
 ﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useBookingStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { getLocalizedActivities } from "@/lib/activities";
-import { getActivityTotalPrice, calculateSurfPrice } from "@/lib/prices";
+import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice } from "@/lib/prices";
 import { formatCurrency } from "@/lib/utils";
 import { Activity } from "@/types";
 import ActivityCard from "./ActivityCard";
 import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
+import ActiveParticipantBanner from "../ActiveParticipantBanner";
 import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -31,6 +33,8 @@ const ActivitiesPage = () => {
     personalizationName,
     setPersonalizationName,
     setSelectedActivities,
+    setYogaClasses,
+    setYogaUsePackDiscount,
     setSelectedYogaPackage,
     setSelectedSurfPackage,
     setSelectedSurfClasses,
@@ -45,6 +49,7 @@ const ActivitiesPage = () => {
     addParticipant,
     removeParticipant,
     copyChoicesToAll,
+    copyChoicesToParticipant,
     syncParticipantsWithGuests,
     // Activity flow state
     activityFlowStep,
@@ -53,12 +58,15 @@ const ActivitiesPage = () => {
     previousActivityStep,
     skipCurrentActivity,
     resetActivityFlow,
+    goToActivityStep,
   } = useBookingStore();
 
-  const { selectedActivities, selectedYogaPackages, selectedSurfPackages, selectedSurfClasses, activityQuantities, selectedTimeSlots } = useMemo(() => {
+  const { selectedActivities, yogaClasses, yogaUsePackDiscount, selectedYogaPackages, selectedSurfPackages, selectedSurfClasses, activityQuantities, selectedTimeSlots } = useMemo(() => {
     const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
     return {
       selectedActivities: activeParticipant?.selectedActivities ?? [],
+      yogaClasses: activeParticipant?.yogaClasses ?? {},
+      yogaUsePackDiscount: activeParticipant?.yogaUsePackDiscount ?? {},
       selectedYogaPackages: activeParticipant?.selectedYogaPackages ?? {},
       selectedSurfPackages: activeParticipant?.selectedSurfPackages ?? {},
       selectedSurfClasses: activeParticipant?.selectedSurfClasses ?? {},
@@ -80,6 +88,16 @@ const ActivitiesPage = () => {
 
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
+  const [showTravelingWithModal, setShowTravelingWithModal] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [expandedParticipantId, setExpandedParticipantId] = useState<string | null>(
+    storeParticipants[0]?.id || null
+  );
+  const [addPersonChoice, setAddPersonChoice] = useState<'copy' | 'customize'>('copy');
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Load the current participant's name when showing completion screen
   useEffect(() => {
@@ -183,9 +201,10 @@ const ActivitiesPage = () => {
       }
 
       // Ensure default configs
-      if (activity.category === "yoga" && !selectedYogaPackages[activity.id]) {
-        console.log('[ActivitiesPage] handleToggleActivity - setting default yoga package');
-        setSelectedYogaPackage(activity.id, DEFAULT_YOGA_PACKAGE);
+      if (activity.category === "yoga" && !yogaClasses[activity.id]) {
+        console.log('[ActivitiesPage] handleToggleActivity - setting default yoga classes');
+        setYogaClasses(activity.id, 1); // Default to 1 class
+        setYogaUsePackDiscount(activity.id, false);
       }
       if (quantityCategories.has(activity.category) && !activityQuantities[activity.id]) {
         console.log('[ActivitiesPage] handleToggleActivity - setting default quantity');
@@ -205,8 +224,9 @@ const ActivitiesPage = () => {
     [
       selectedActivities,
       setSelectedActivities,
-      selectedYogaPackages,
-      setSelectedYogaPackage,
+      yogaClasses,
+      setYogaClasses,
+      setYogaUsePackDiscount,
       activityQuantities,
       setActivityQuantity,
       selectedTimeSlots,
@@ -215,9 +235,9 @@ const ActivitiesPage = () => {
     ]
   );
 
-  const handleYogaPackageChange = useCallback(
-    (activityId: string, packageType: "1-class" | "3-classes" | "10-classes") => {
-      setSelectedYogaPackage(activityId, packageType);
+  const handleYogaClassesChange = useCallback(
+    (activityId: string, classes: number) => {
+      setYogaClasses(activityId, classes);
       if (!selectedActivities.some((activity) => activity.id === activityId)) {
         const baseActivity = localizedActivities.find((activity) => activity.id === activityId);
         if (baseActivity) {
@@ -225,7 +245,20 @@ const ActivitiesPage = () => {
         }
       }
     },
-    [localizedActivities, selectedActivities, setSelectedActivities, setSelectedYogaPackage]
+    [localizedActivities, selectedActivities, setSelectedActivities, setYogaClasses]
+  );
+
+  const handleYogaPackDiscountChange = useCallback(
+    (activityId: string, useDiscount: boolean) => {
+      setYogaUsePackDiscount(activityId, useDiscount);
+      if (!selectedActivities.some((activity) => activity.id === activityId)) {
+        const baseActivity = localizedActivities.find((activity) => activity.id === activityId);
+        if (baseActivity) {
+          setSelectedActivities([...selectedActivities, baseActivity]);
+        }
+      }
+    },
+    [localizedActivities, selectedActivities, setSelectedActivities, setYogaUsePackDiscount]
   );
 
   const handleSurfClassesChange = useCallback(
@@ -262,9 +295,9 @@ const ActivitiesPage = () => {
     (activity: Activity): number => {
       // Price is now per participant (individual pricing)
       if (activity.category === "yoga") {
-        const packageType = selectedYogaPackages[activity.id] ?? DEFAULT_YOGA_PACKAGE;
-        // Get price for 1 person only since selections are per participant
-        return getActivityTotalPrice("yoga", packageType, 1);
+        const classes = yogaClasses[activity.id] ?? 1;
+        const useDiscount = yogaUsePackDiscount[activity.id] ?? false;
+        return calculateYogaPrice(classes, useDiscount);
       }
 
       if (activity.category === "surf") {
@@ -285,7 +318,8 @@ const ActivitiesPage = () => {
     [
       activityQuantities,
       selectedSurfClasses,
-      selectedYogaPackages,
+      yogaClasses,
+      yogaUsePackDiscount,
     ]
   );
 
@@ -367,6 +401,8 @@ const ActivitiesPage = () => {
         return localizedActivities.find(a => a.category === 'yoga');
       case 'ice-bath':
         return localizedActivities.find(a => a.category === 'ice_bath');
+      case 'hosting':
+        return localizedActivities.find(a => a.category === 'hosting');
       default:
         return null;
     }
@@ -384,11 +420,36 @@ const ActivitiesPage = () => {
   };
 
   const handleCompleteAndContinue = () => {
-    // Save the participant name if provided
-    if (completionName.trim() && activeParticipantId) {
-      updateParticipantName(activeParticipantId, completionName.trim());
-    }
+    // Show modal asking if traveling with someone
+    setShowTravelingWithModal(true);
+  };
+
+  const handleSkipAddPerson = () => {
+    setShowTravelingWithModal(false);
     handleContinue();
+  };
+
+  const handleConfirmAddPerson = () => {
+    setShowTravelingWithModal(false);
+
+    if (addPersonChoice === 'copy') {
+      // Save current participant's ID before adding a new one
+      const currentParticipantId = activeParticipantId;
+      // Calculate what the new participant's ID will be
+      const newParticipantId = `participant-${storeParticipants.length + 1}`;
+      // Add new participant (this will make the new participant active)
+      addParticipant();
+      // Copy current participant's choices ONLY to the new participant
+      copyChoicesToParticipant(currentParticipantId, newParticipantId);
+      // Expand the new participant in the accordion
+      setExpandedParticipantId(newParticipantId);
+      // Go directly to the complete step to show all participants
+      goToActivityStep('complete');
+    } else {
+      // Customize - add participant and start from scratch
+      addParticipant();
+      resetActivityFlow();
+    }
   };
 
   const handleBackStep = () => {
@@ -450,6 +511,75 @@ const ActivitiesPage = () => {
     return total;
   };
 
+  // Calculate price for a specific activity of a specific participant
+  const computeActivityPriceForParticipant = (
+    activity: Activity,
+    participant: typeof storeParticipants[0]
+  ): number => {
+    if (activity.category === "yoga") {
+      const classes = participant.yogaClasses[activity.id] ?? 1;
+      const useDiscount = participant.yogaUsePackDiscount[activity.id] ?? false;
+      return calculateYogaPrice(classes, useDiscount);
+    }
+
+    if (activity.category === "surf") {
+      const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
+      return calculateSurfPrice(classes);
+    }
+
+    const quantity = quantityCategories.has(activity.category)
+      ? participant.activityQuantities[activity.id] ?? 1
+      : 1;
+
+    const perGuest = perGuestCategories.has(activity.category) ? 1 : 1;
+    return activity.price * quantity * perGuest;
+  };
+
+  // Get details for a specific activity of a specific participant
+  const getActivityDetailsForParticipant = (
+    activity: Activity,
+    participant: typeof storeParticipants[0]
+  ): string => {
+    if (activity.category === "yoga") {
+      const classes = participant.yogaClasses[activity.id] ?? 1;
+      const packageKey = participant.selectedYogaPackages[activity.id];
+      if (packageKey) {
+        return `${classes} ${classes === 1 ? (locale === "es" ? "clase" : "class") : (locale === "es" ? "clases" : "classes")}`;
+      }
+      return `${classes} ${classes === 1 ? (locale === "es" ? "clase" : "class") : (locale === "es" ? "clases" : "classes")}`;
+    }
+
+    if (activity.category === "surf") {
+      const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
+      return `${classes} ${classes === 1 ? (locale === "es" ? "clase" : "class") : (locale === "es" ? "clases" : "classes")}`;
+    }
+
+    if (quantityCategories.has(activity.category)) {
+      const quantity = participant.activityQuantities[activity.id] ?? 1;
+      return `${quantity}x`;
+    }
+
+    if (timeSlotCategories.has(activity.category)) {
+      const timeSlot = participant.selectedTimeSlots[activity.id];
+      return timeSlot ?? "";
+    }
+
+    return "";
+  };
+
+  // Calculate total for all participants
+  const calculateGrandTotal = () => {
+    return storeParticipants.reduce((total, participant) => {
+      const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
+        return sum + computeActivityPriceForParticipant(activity, participant);
+      }, 0);
+      return total + participantTotal;
+    }, 0);
+  };
+
+  // Get active participant info
+  const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
+
   return (
     <div className="mx-auto max-w-7xl px-3 md:px-4 py-6 md:py-8">
       <HeaderPersonalization
@@ -491,127 +621,189 @@ const ActivitiesPage = () => {
               </h2>
               <p className="text-slate-400 text-sm md:text-base">
                 {locale === "es"
-                  ? "Revisa tu selección y personaliza el nombre del participante"
-                  : "Review your selection and customize the participant name"}
+                  ? "Revisa la selección de todos los participantes"
+                  : "Review the selection for all participants"}
               </p>
             </div>
 
-            {/* Activities Summary */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="rounded-3xl border border-slate-700/50 bg-slate-900/70 shadow-xl overflow-hidden mb-6"
-            >
-              <div className="px-6 py-4 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-200">
-                  {locale === "es" ? "Actividades seleccionadas" : "Selected activities"}
-                </h3>
-                <button
-                  onClick={() => resetActivityFlow()}
-                  className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-amber-300"
-                  title={locale === "es" ? "Editar actividades" : "Edit activities"}
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              </div>
+            {/* All Participants Summary - Accordion Style */}
+            <div className="space-y-3 mb-6">
+              {storeParticipants.map((participant, participantIndex) => {
+                const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
+                  return sum + computeActivityPriceForParticipant(activity, participant);
+                }, 0);
+                const isExpanded = expandedParticipantId === participant.id;
 
-              <div className="p-6 space-y-3">
-                {selectedActivities.length === 0 ? (
-                  <p className="text-slate-400 text-center py-4">
-                    {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
-                  </p>
-                ) : (
-                  selectedActivities.map((activity, index) => {
-                    const Icon = getActivityIcon(activity.category);
-                    const details = getActivityDetails(activity);
-                    const price = computeActivityPrice(activity);
-
-                    return (
-                      <motion.div
-                        key={activity.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 + index * 0.1, duration: 0.3 }}
-                        className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:bg-slate-800/60 transition-all"
-                      >
-                        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-300/10 border border-amber-300/20">
-                          <Icon className="h-6 w-6 text-amber-300" />
+                return (
+                  <motion.div
+                    key={participant.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + participantIndex * 0.1, duration: 0.4 }}
+                    className={`rounded-3xl border bg-slate-900/70 shadow-xl overflow-hidden transition-all ${
+                      isExpanded
+                        ? 'border-amber-400/50'
+                        : 'border-slate-700/50 hover:border-slate-600/50'
+                    }`}
+                  >
+                    {/* Participant Header - Clickable */}
+                    <button
+                      onClick={() => setExpandedParticipantId(isExpanded ? null : participant.id)}
+                      className="w-full px-6 py-4 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between hover:bg-slate-800/50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border transition-colors ${
+                          isExpanded
+                            ? 'bg-amber-300/20 border-amber-400/30'
+                            : 'bg-cyan-500/20 border-cyan-400/30'
+                        }`}>
+                          <User className={`h-5 w-5 transition-colors ${
+                            isExpanded ? 'text-amber-300' : 'text-cyan-300'
+                          }`} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-base font-bold text-slate-100 truncate">
-                            {activity.name}
-                          </h4>
-                          {details && (
-                            <p className="text-sm text-slate-400 mt-0.5">{details}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-amber-300">
-                            {formatCurrency(price)}
+                        <div className="text-left">
+                          <h3 className="text-lg font-bold text-slate-200">
+                            {participant.name}
+                            {participant.isYou && (
+                              <span className="ml-2 text-sm text-cyan-400">
+                                ({locale === "es" ? "Tú" : "You"})
+                              </span>
+                            )}
+                          </h3>
+                          <p className="text-xs text-slate-400">
+                            {participant.selectedActivities.length}{" "}
+                            {participant.selectedActivities.length === 1
+                              ? (locale === "es" ? "actividad" : "activity")
+                              : (locale === "es" ? "actividades" : "activities")}
+                            {" • "}
+                            <span className="text-amber-300 font-semibold">
+                              {formatCurrency(participantTotal)}
+                            </span>
                           </p>
                         </div>
-                      </motion.div>
-                    );
-                  })
-                )}
-              </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveParticipant(participant.id);
+                            resetActivityFlow();
+                          }}
+                          className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-amber-300"
+                          title={locale === "es" ? "Editar actividades" : "Edit activities"}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <motion.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-slate-400"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </motion.div>
+                      </div>
+                    </button>
 
-              {/* Total */}
-              {selectedActivities.length > 0 && (
-                <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-slate-200">
-                      {locale === "es" ? "Total" : "Total"}
-                    </span>
-                    <span className="text-2xl font-bold text-amber-300">
-                      {formatCurrency(calculateParticipantTotal())}
-                    </span>
-                  </div>
+                    {/* Participant Activities - Collapsible */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-6 space-y-3">
+                            {participant.selectedActivities.length === 0 ? (
+                              <p className="text-slate-400 text-center py-4">
+                                {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
+                              </p>
+                            ) : (
+                              participant.selectedActivities.map((activity, index) => {
+                                const Icon = getActivityIcon(activity.category);
+                                const details = getActivityDetailsForParticipant(activity, participant);
+                                const price = computeActivityPriceForParticipant(activity, participant);
+
+                                return (
+                                  <motion.div
+                                    key={activity.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05, duration: 0.3 }}
+                                    className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:bg-slate-800/60 transition-all"
+                                  >
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-300/10 border border-amber-300/20">
+                                      <Icon className="h-6 w-6 text-amber-300" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="text-base font-bold text-slate-100 truncate">
+                                        {activity.name}
+                                      </h4>
+                                      {details && (
+                                        <p className="text-sm text-slate-400 mt-0.5">{details}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-lg font-bold text-amber-300">
+                                        {formatCurrency(price)}
+                                      </p>
+                                    </div>
+                                  </motion.div>
+                                );
+                              })
+                            )}
+                          </div>
+
+                          {/* Participant Total */}
+                          {participant.selectedActivities.length > 0 && (
+                            <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30">
+                              <div className="flex items-center justify-between">
+                                <span className="text-base font-bold text-slate-200">
+                                  {locale === "es" ? "Subtotal" : "Subtotal"}
+                                </span>
+                                <span className="text-xl font-bold text-amber-300">
+                                  {formatCurrency(participantTotal)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Grand Total - Only show if multiple participants */}
+            {storeParticipants.length > 1 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="rounded-3xl border-2 border-amber-400/30 bg-gradient-to-br from-slate-900/90 to-slate-800/90 shadow-2xl overflow-hidden mb-6"
+              >
+                <div className="px-6 py-5 flex items-center justify-between">
+                  <span className="text-xl font-bold text-white">
+                    {locale === "es" ? "Total General" : "Grand Total"}
+                  </span>
+                  <span className="text-3xl font-bold text-amber-300">
+                    {formatCurrency(calculateGrandTotal())}
+                  </span>
                 </div>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
 
-            {/* Participant Name Input */}
+            {/* Action Button */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.4 }}
-              className="rounded-3xl border border-slate-700/50 bg-slate-900/70 shadow-xl p-6 mb-6"
+              className="flex justify-center"
             >
-              <label className="block text-sm font-bold text-slate-300 mb-3">
-                {locale === "es" ? "Nombre del participante" : "Participant name"}
-              </label>
-              <input
-                type="text"
-                value={completionName}
-                onChange={(e) => setCompletionName(e.target.value)}
-                placeholder={locale === "es" ? "ej. Claire Caffrey" : "e.g. Claire Caffrey"}
-                className="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/60 focus:border-transparent transition-all"
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                {locale === "es"
-                  ? "Opcional: deja este campo vacío para usar el nombre por defecto"
-                  : "Optional: leave empty to use the default name"}
-              </p>
-            </motion.div>
-
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3 justify-center"
-            >
-              <motion.button
-                onClick={handleAddPerson}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-[#0F1C2E] text-white rounded-2xl font-bold text-base hover:shadow-md hover:border-slate-500 ring-2 ring-slate-600/60 shadow-lg transition-all duration-150 flex items-center justify-center gap-2"
-              >
-                <Users className="h-5 w-5" />
-                {locale === "es" ? "Agregar persona" : "Add person"}
-              </motion.button>
               <motion.button
                 onClick={handleCompleteAndContinue}
                 whileHover={{ scale: 1.02 }}
@@ -655,12 +847,32 @@ const ActivitiesPage = () => {
               const supportsTime = timeSlotCategories.has(currentActivity.category);
 
               return (
-                <ActivityCard
-                  key={currentActivity.id}
-                  activity={currentActivity}
-                  locale={(locale as "es" | "en") || "es"}
-                  participants={1}
-                  isSelected={isSelected}
+                <div className="relative">
+                  {/* Active Participant Badge - Top Right */}
+                  {storeParticipants.length > 1 && activeParticipant && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-blue-500/90 border border-cyan-400/60 shadow-xl backdrop-blur-md"
+                    >
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 border border-white/30">
+                        <User className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="text-xs font-bold text-white">
+                        {activeParticipant.name}
+                        {activeParticipant.isYou && (
+                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                        )}
+                      </span>
+                    </motion.div>
+                  )}
+
+                  <ActivityCard
+                    key={currentActivity.id}
+                    activity={currentActivity}
+                    locale={(locale as "es" | "en") || "es"}
+                    participants={1}
+                    isSelected={isSelected}
                   onToggle={() => handleToggleActivity(currentActivity)}
                   onAutoAdvance={nextActivityStep}
                   onSkip={skipCurrentActivity}
@@ -669,8 +881,10 @@ const ActivitiesPage = () => {
                   price={individualPrice}
                   pricePerPerson={undefined}
                   formatPrice={formatCurrency}
-                  selectedYogaPackage={isYoga ? selectedYogaPackages[currentActivity.id] : undefined}
-                  onYogaPackageChange={isYoga ? (pkg) => handleYogaPackageChange(currentActivity.id, pkg) : undefined}
+                  yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
+                  onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
+                  yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
+                  onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
                   surfClasses={isSurf ? selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES : undefined}
                   onSurfClassesChange={isSurf ? (classes) => handleSurfClassesChange(currentActivity.id, classes) : undefined}
                   hasQuantitySelector={supportsQuantity}
@@ -680,6 +894,7 @@ const ActivitiesPage = () => {
                   timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
                   onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
                 />
+                </div>
               );
             })()}
           </motion.div>
@@ -705,8 +920,142 @@ const ActivitiesPage = () => {
           />
         )}
       </AnimatePresence>
+
+      {isClient && createPortal(
+        <AnimatePresence>
+          {showTravelingWithModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTravelingWithModal(false)}
+              className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+              >
+                <div className="flex flex-col gap-6">
+                  {/* Icon */}
+                  <div className="flex justify-center">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30">
+                      <Users className="h-8 w-8 text-amber-300" />
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl md:text-2xl font-bold text-white text-center">
+                    {storeParticipants.length > 1
+                      ? (locale === "es" ? "¿Agregar otro viajero?" : "Add another traveler?")
+                      : (locale === "es" ? "¿Viajas con alguien?" : "Are you traveling with someone?")}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-slate-300 text-sm md:text-base text-center">
+                    {storeParticipants.length > 1
+                      ? (locale === "es"
+                          ? "Puedes seguir agregando viajeros con las mismas actividades o personalizarlas."
+                          : "You can keep adding travelers with the same activities or customize them.")
+                      : (locale === "es"
+                          ? "Puedes agregar más personas con las mismas actividades o personalizarlas individualmente."
+                          : "You can add more people with the same activities or customize them individually.")}
+                  </p>
+
+                  {/* Radio Options */}
+                  <div className="space-y-3">
+                    <label
+                      className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        addPersonChoice === 'copy'
+                          ? 'border-amber-400 bg-amber-400/10'
+                          : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="addPersonChoice"
+                        value="copy"
+                        checked={addPersonChoice === 'copy'}
+                        onChange={(e) => setAddPersonChoice('copy')}
+                        className="mt-1 w-4 h-4 text-amber-400 border-slate-600 focus:ring-amber-400 focus:ring-offset-slate-900"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Copy className="h-4 w-4 text-amber-300" />
+                          <span className="font-semibold text-slate-100">
+                            {locale === "es" ? "Copiar mis actividades" : "Copy my activities"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {locale === "es"
+                            ? "El nuevo viajero tendrá las mismas actividades seleccionadas"
+                            : "The new traveler will have the same activities selected"}
+                        </p>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        addPersonChoice === 'customize'
+                          ? 'border-amber-400 bg-amber-400/10'
+                          : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="addPersonChoice"
+                        value="customize"
+                        checked={addPersonChoice === 'customize'}
+                        onChange={(e) => setAddPersonChoice('customize')}
+                        className="mt-1 w-4 h-4 text-amber-400 border-slate-600 focus:ring-amber-400 focus:ring-offset-slate-900"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <Edit2 className="h-4 w-4 text-amber-300" />
+                          <span className="font-semibold text-slate-100">
+                            {locale === "es" ? "Personalizar actividades" : "Customize activities"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {locale === "es"
+                            ? "Elige actividades diferentes para el nuevo viajero"
+                            : "Choose different activities for the new traveler"}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-4">
+                    <motion.button
+                      onClick={handleConfirmAddPerson}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 font-bold hover:from-amber-200 hover:to-amber-300 transition-all shadow-lg"
+                    >
+                      {locale === "es" ? "Confirmar" : "Confirm"}
+                    </motion.button>
+                    <motion.button
+                      onClick={handleSkipAddPerson}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-6 py-3.5 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-800/50 hover:text-slate-300 transition-all font-medium"
+                    >
+                      {locale === "es" ? "Saltar" : "Skip"}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
 
 export default ActivitiesPage;
+

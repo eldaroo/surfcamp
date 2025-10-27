@@ -9,6 +9,7 @@ interface I18nContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string) => string;
+  raw: <T = unknown>(key: string) => T | undefined;
 }
 
 // Traducciones
@@ -78,6 +79,9 @@ const translations = {
       night: "noche",
       guest: "persona",
       guests_plural: "personas",
+      searchAvailability: "Ver disponibilidad",
+      searchingAvailability: "Buscando disponibilidad...",
+      searchHint: "Actualiza las fechas y presiona Ver disponibilidad para mostrar los resultados.",
       placeholder: {
         selectDate: "Selecciona fecha"
       },
@@ -112,7 +116,7 @@ const translations = {
       roomTypes: {
         "casa-playa": {
           name: "Casa de Playa (Cuarto Compartido)",
-          description: "Habitación compartida con 8 camas, perfecta para surfistas que buscan una experiencia social y económica.",
+          description: "Casa compartida frente al mar con vista al océano y ambiente social. Incluye cocina compartida, comedor amplio y patio con hamacas. Hasta 8 huéspedes (habitaciones con ventilador y AC).",
           features: ["Compartida", "Económica", "Social"]
         },
         "casitas-privadas": {
@@ -151,9 +155,18 @@ const translations = {
       totalBeds: "camas totales",
       kingSizeBed: "2 personas en cama king size",
       roomDescriptions: {
-        "casa-playa": "Habitación compartida con vista al mar y ambiente social",
-        "casitas-privadas": "Casita privada con jardín independiente",
-        "casas-deluxe": "Studio privado a 2 pasos del océano con cocina y baño privado"
+        "casa-playa": {
+          desktop: "Casa compartida frente al mar con vista al océano y ambiente social. Incluye cocina, comedor amplio y patio con hamacas.",
+          mobile: "Casa compartida frente al mar con vista al océano y ambiente social."
+        },
+        "casitas-privadas": {
+          desktop: "Cabaña privada rodeada de jardín tropical, con total privacidad y confort. Incluye cocina, Wi-Fi y A/C — ideal para parejas.",
+          mobile: "Cabaña privada con vista al jardín, Wi-Fi y A/C."
+        },
+        "casas-deluxe": {
+          desktop: "Estudio privado a pocos pasos del mar. Equipado con cocina, baño con agua caliente, Wi-Fi y A/C — perfecto para parejas que buscan confort y privacidad.",
+          mobile: "Estudio frente al mar para 2 personas, con cocina, Wi-Fi, A/C y cama king-size."
+        }
       },
       features: {
         sharedRoom: "Cuarto Compartido",
@@ -396,6 +409,9 @@ const translations = {
       night: "night",
       guest: "guest",
       guests_plural: "guests",
+      searchAvailability: "Check availability",
+      searchingAvailability: "Searching availability...",
+      searchHint: "Update your dates and press Check availability to see results.",
       placeholder: {
         selectDate: "Select date"
       },
@@ -430,7 +446,7 @@ const translations = {
       roomTypes: {
         "casa-playa": {
           name: "Beach House (Shared Room)",
-          description: "Shared room with 8 beds, perfect for surfers looking for a social and affordable experience.",
+          description: "Shared beachfront house with ocean view and social vibe. Includes shared kitchen, large dining area, and hammock yard. Up to 8 guests (rooms with fan & AC).",
           features: ["Shared", "Affordable", "Social"]
         },
         "casitas-privadas": {
@@ -469,9 +485,18 @@ const translations = {
       totalBeds: "total beds",
       kingSizeBed: "2 people in a king size bed",
       roomDescriptions: {
-        "casa-playa": "Shared room with ocean view and social environment",
-        "casitas-privadas": "Private cottage with independent garden",
-        "casas-deluxe": "Private studio 2 steps from the ocean with kitchen and private bathroom"
+        "casa-playa": {
+          desktop: "Shared beachfront house with ocean view and social vibe. Includes shared kitchen, large dining area, and hammock yard.",
+          mobile: "Shared beachfront house with ocean view and social vibe."
+        },
+        "casitas-privadas": {
+          desktop: "Private cottage surrounded by tropical garden, offering total privacy and comfort. Includes private kitchen, Wi-Fi, and A/C — ideal for couples.",
+          mobile: "Private cottage with garden view, Wi-Fi, and A/C."
+        },
+        "casas-deluxe": {
+          desktop: "Private studio just steps from the beach. Includes a private kitchen, hot-water bathroom, Wi-Fi, and A/C — perfect for couples seeking comfort and privacy.",
+          mobile: "Beachfront studio for 2 guests with kitchen, Wi-Fi, A/C, and king-size bed."
+        }
       },
       features: {
         sharedRoom: "Shared Room",
@@ -664,9 +689,13 @@ export function useI18n() {
 }
 
 // Función para obtener traducción anidada
-function getNestedTranslation(obj: any, path: string): string {
-  return path.split('.').reduce((current, key) => {
-    return current && current[key] !== undefined ? current[key] : path;
+function getNestedTranslation(obj: any, path: string): unknown {
+  return path.split('.').reduce<unknown>((current, key) => {
+    if (current && typeof current === 'object' && key in current) {
+      // @ts-expect-error dynamic lookup
+      return current[key];
+    }
+    return undefined;
   }, obj);
 }
 
@@ -676,13 +705,16 @@ export function I18nProvider({ children, initialLocale = 'en' }: { children: Rea
 
   const t = (key: string): string => {
     const translation = getNestedTranslation(translations[locale], key);
-    const result = typeof translation === 'string' ? translation : key;
-    return result;
+    return typeof translation === 'string' ? translation : key;
+  };
+
+  const raw = <T = unknown>(key: string): T | undefined => {
+    return getNestedTranslation(translations[locale], key) as T | undefined;
   };
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, raw }}>
       {children}
     </I18nContext.Provider>
   );
-} 
+}

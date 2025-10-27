@@ -31,10 +31,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const YOGA_PACKAGES = ["1-class", "3-classes", "10-classes"] as const;
 const SURF_CLASSES_RANGE = { min: 3, max: 10 } as const;
-
-type YogaPackage = (typeof YOGA_PACKAGES)[number];
+const YOGA_CLASSES_RANGE = { min: 1, max: 15 } as const;
 
 type ActivityCardProps = {
   activity: Activity;
@@ -49,8 +47,10 @@ type ActivityCardProps = {
   onSkip?: () => void;
   onBack?: () => void;
   isFirstStep?: boolean;
-  selectedYogaPackage?: YogaPackage;
-  onYogaPackageChange?: (value: YogaPackage) => void;
+  yogaClasses?: number;
+  onYogaClassesChange?: (value: number) => void;
+  yogaUsePackDiscount?: boolean;
+  onYogaPackDiscountChange?: (value: boolean) => void;
   surfClasses?: number;
   onSurfClassesChange?: (value: number) => void;
   hasQuantitySelector?: boolean;
@@ -76,6 +76,14 @@ const localeCopy = {
     quantity: "Sesiones",
     timeSlot: "Horario preferido",
     selectPackage: "Selecciona un paquete",
+    yogaClasses: "Clases de Yoga",
+    class: "clase",
+    classes: "clases",
+    total: "Total",
+    packOffer: "Obtén el pack de 10 clases por $80 (ahorra $20)",
+    selectPack: "Seleccionar Pack de 10",
+    packSelected: "Pack de 10 Clases Seleccionado",
+    regularPrice: "Precio regular",
   },
   en: {
     add: "Add",
@@ -91,6 +99,14 @@ const localeCopy = {
     quantity: "Sessions",
     timeSlot: "Preferred time",
     selectPackage: "Choose a package",
+    yogaClasses: "Yoga Classes",
+    class: "class",
+    classes: "classes",
+    total: "Total",
+    packOffer: "Get the 10-class pack for $80 (save $20)",
+    selectPack: "Select 10-Class Pack",
+    packSelected: "10-Class Pack Selected",
+    regularPrice: "Regular price",
   },
 };
 
@@ -299,7 +315,7 @@ const descriptiveContent = {
   },
   yoga: {
     es: {
-      description: "Sesiones de yoga al amanecer para comenzar el día con energía y equilibrio.",
+      description: "Sesiones de yoga para comenzar el día con energía y equilibrio.",
       features: [
         { icon: Timer, text: "60 minutos" },
         { icon: Users, text: "Grupos pequeños" },
@@ -307,7 +323,7 @@ const descriptiveContent = {
       ],
     },
     en: {
-      description: "Sunrise yoga sessions to start the day with energy and balance.",
+      description: "Yoga sessions to start the day with energy and balance.",
       features: [
         { icon: Timer, text: "60 minutes" },
         { icon: Users, text: "Small groups" },
@@ -384,8 +400,10 @@ const ActivityCard = ({
   onSkip,
   onBack,
   isFirstStep = false,
-  selectedYogaPackage,
-  onYogaPackageChange,
+  yogaClasses,
+  onYogaClassesChange,
+  yogaUsePackDiscount,
+  onYogaPackDiscountChange,
   surfClasses,
   onSurfClassesChange,
   hasQuantitySelector,
@@ -463,54 +481,223 @@ const ActivityCard = ({
   };
 
 
-  const handleYogaPackageSelect = (pkg: YogaPackage) => {
-    if (onYogaPackageChange) {
-      onYogaPackageChange(pkg);
-      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+  const handleYogaClassesChange = (newClasses: number) => {
+    if (onYogaClassesChange) {
+      onYogaClassesChange(newClasses);
+      setHasInteracted(true);
+      // Si está en 10 y tenía el descuento, quitarlo al cambiar manualmente
+      if (yogaUsePackDiscount && newClasses !== 10 && onYogaPackDiscountChange) {
+        onYogaPackDiscountChange(false);
+      }
     }
   };
 
-  const renderYogaPackages = () => {
-    if (!onYogaPackageChange) return null;
-
-    const getPackageLabel = (pkg: YogaPackage) => {
-      if (locale === "en") {
-        if (pkg === "1-class") return "1 class";
-        if (pkg === "3-classes") return "3-class package";
-        if (pkg === "10-classes") return "10-class package";
-      } else {
-        if (pkg === "1-class") return "1 clase";
-        if (pkg === "3-classes") return "Paquete 3 clases";
-        if (pkg === "10-classes") return "Paquete 10 clases";
+  const handleYogaPackDiscountToggle = () => {
+    if (onYogaPackDiscountChange && onYogaClassesChange) {
+      const newDiscountState = !yogaUsePackDiscount;
+      onYogaPackDiscountChange(newDiscountState);
+      // Si activa el pack, establecer en 10 clases
+      if (newDiscountState) {
+        onYogaClassesChange(10);
       }
-      return pkg;
-    };
+      setHasInteracted(true);
+    }
+  };
+
+  const renderYogaSelector = () => {
+    if (!onYogaClassesChange || typeof yogaClasses !== "number") return null;
+
+    const currentClasses = yogaClasses;
+    const isAtPackThreshold = currentClasses === 10;
 
     return (
-      <div onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block mb-3 md:mb-4">
-          {copy.selectPackage}
+      <div className="space-y-4 md:space-y-5" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
+          {copy.yogaClasses}
         </span>
-        <div className="grid grid-cols-3 gap-2 md:gap-3">
-          {YOGA_PACKAGES.map((pkg) => {
-            const isActive = selectedYogaPackage === pkg;
-            return (
+
+        {/* Desktop: Horizontal Layout */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between gap-4">
+            {/* Counter Section */}
+            <div className="flex items-center gap-4">
               <motion.button
-                key={pkg}
                 type="button"
-                onClick={() => handleYogaPackageSelect(pkg)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`rounded-xl border px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base font-bold transition-all ${
-                  isActive
-                    ? "border-transparent bg-gradient-to-br from-amber-300 to-amber-400 text-slate-900 shadow-xl shadow-amber-300/40"
-                    : "border-slate-600/60 bg-slate-800/50 text-slate-200 hover:border-amber-300/60 hover:bg-slate-800/70"
+                onClick={() => handleYogaClassesChange(Math.max(YOGA_CLASSES_RANGE.min, currentClasses - 1))}
+                disabled={currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount}
+                whileHover={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+                whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
+                    ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
+                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
                 }`}
               >
-                {getPackageLabel(pkg)}
+                <Minus className="h-5 w-5" />
               </motion.button>
-            );
-          })}
+
+              <div className="flex items-baseline gap-2">
+                <motion.span
+                  key={currentClasses}
+                  initial={{ scale: 0.85 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
+                  className="text-3xl font-bold text-slate-50"
+                >
+                  {currentClasses}
+                </motion.span>
+                <span className="text-sm text-slate-400 font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+              </div>
+
+              <motion.button
+                type="button"
+                onClick={() => handleYogaClassesChange(Math.min(YOGA_CLASSES_RANGE.max, currentClasses + 1))}
+                disabled={currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount}
+                whileHover={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+                whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
+                    ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
+                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+                }`}
+              >
+                <Plus className="h-5 w-5" />
+              </motion.button>
+            </div>
+
+            {/* OR Divider */}
+            <span className="text-xs text-slate-500 font-medium uppercase px-2">or</span>
+
+            {/* 10-Class Pack Option */}
+            <motion.button
+              type="button"
+              onClick={handleYogaPackDiscountToggle}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex-1 max-w-[250px] rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
+                yogaUsePackDiscount || isAtPackThreshold
+                  ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
+                  : "border-slate-600/50 bg-slate-800/40 hover:border-amber-300/40 hover:bg-slate-800/60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <p className="text-sm font-bold text-slate-200">
+                    {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
+                  </p>
+                  <motion.p
+                    animate={isAtPackThreshold && !yogaUsePackDiscount ? {
+                      opacity: [1, 0.6, 1],
+                      scale: [1, 1.05, 1]
+                    } : {}}
+                    transition={{ duration: 0.6, repeat: isAtPackThreshold && !yogaUsePackDiscount ? 2 : 0 }}
+                    className="text-xs text-amber-300 font-semibold"
+                  >
+                    {locale === 'es' ? 'ahorra $20' : 'save $20'}
+                  </motion.p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-amber-300">$80</p>
+                  {yogaUsePackDiscount && (
+                    <CheckCircle2 className="h-5 w-5 text-green-400 ml-auto" />
+                  )}
+                </div>
+              </div>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Mobile: Vertical Layout */}
+        <div className="md:hidden space-y-3">
+          {/* Counter Section */}
+          <div className="flex items-center justify-center gap-4">
+            <motion.button
+              type="button"
+              onClick={() => handleYogaClassesChange(Math.max(YOGA_CLASSES_RANGE.min, currentClasses - 1))}
+              disabled={currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount}
+              whileHover={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+              whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+              className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
+                  ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
+                  : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Minus className="h-5 w-5" />
+            </motion.button>
+
+            <div className="flex items-baseline gap-2">
+              <motion.span
+                key={currentClasses}
+                initial={{ scale: 0.85 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
+                className="text-3xl font-bold text-slate-50"
+              >
+                {currentClasses}
+              </motion.span>
+              <span className="text-sm text-slate-400 font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={() => handleYogaClassesChange(Math.min(YOGA_CLASSES_RANGE.max, currentClasses + 1))}
+              disabled={currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount}
+              whileHover={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+              whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+              className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
+                  ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
+                  : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Plus className="h-5 w-5" />
+            </motion.button>
+          </div>
+
+          {/* OR Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-700/50"></div>
+            <span className="text-xs text-slate-500 font-medium uppercase">or</span>
+            <div className="flex-1 h-px bg-slate-700/50"></div>
+          </div>
+
+          {/* 10-Class Pack Option */}
+          <motion.button
+            type="button"
+            onClick={handleYogaPackDiscountToggle}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`w-full rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
+              yogaUsePackDiscount || isAtPackThreshold
+                ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
+                : "border-slate-600/50 bg-slate-800/40"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <p className="text-sm font-bold text-slate-200">
+                  {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
+                </p>
+                <motion.p
+                  animate={isAtPackThreshold && !yogaUsePackDiscount ? {
+                    opacity: [1, 0.6, 1],
+                    scale: [1, 1.05, 1]
+                  } : {}}
+                  transition={{ duration: 0.6, repeat: isAtPackThreshold && !yogaUsePackDiscount ? 2 : 0 }}
+                  className="text-xs text-amber-300 font-semibold"
+                >
+                  {locale === 'es' ? 'ahorra $20' : 'save $20'}
+                </motion.p>
+              </div>
+              <div className="text-right flex items-center gap-2">
+                <p className="text-lg font-bold text-amber-300">$80</p>
+                {yogaUsePackDiscount && (
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                )}
+              </div>
+            </div>
+          </motion.button>
         </div>
       </div>
     );
@@ -575,9 +762,19 @@ const ActivityCard = ({
         <div className="flex items-center justify-center gap-4 md:gap-5">
           <motion.button
             type="button"
-whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9 }}
-            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
+            onClick={() => {
+              if (quantity > 1) {
+                handleQuantityChange(quantity - 1);
+              }
+            }}
+            disabled={quantity <= 1}
+            whileHover={{ scale: quantity > 1 ? 1.05 : 1 }}
+            whileTap={{ scale: quantity > 1 ? 0.9 : 1 }}
+            className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all ${
+              quantity > 1
+                ? "hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
+                : "cursor-not-allowed opacity-40"
+            }`}
           >
             <Minus className="h-4 w-4 md:h-5 md:w-5" />
           </motion.button>
@@ -724,7 +921,7 @@ whileHover={{ scale: 1.05 }}
 
           {/* 1. Description */}
           {descriptive && (
-            <p className="text-sm md:text-base leading-relaxed text-slate-300/90 font-light">
+            <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
               {descriptive.description}
             </p>
           )}
@@ -742,7 +939,7 @@ whileHover={{ scale: 1.05 }}
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                     </svg>
                   </div>
-                  <span className="text-sm md:text-base text-slate-200 font-light leading-snug md:leading-relaxed">
+                  <span className="text-sm md:text-[15px] text-slate-200 font-light leading-snug md:leading-relaxed">
                     {feature.text}
                   </span>
                 </div>
@@ -751,9 +948,9 @@ whileHover={{ scale: 1.05 }}
           )}
 
           {/* 3. Class/Session Selector */}
-          {(renderYogaPackages() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
+          {(renderYogaSelector() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
             <div>
-              {renderYogaPackages()}
+              {renderYogaSelector()}
               {renderSurfSelector()}
               {renderQuantityControl()}
               {renderTimeSlot()}

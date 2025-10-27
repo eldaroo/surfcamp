@@ -357,7 +357,10 @@ export class LobbyPMSClient {
    */
   async createBooking(booking: LobbyPMSBooking): Promise<LobbyPMSBooking> {
     try {
+      const callStack = new Error().stack;
       console.log('🚀 ===== LOBBY PMS CREATE BOOKING =====');
+      console.log('🚀 Called at:', new Date().toISOString());
+      console.log('🚀 Call stack:', callStack?.split('\n').slice(0, 5).join('\n'));
       console.log('🚀 Endpoint: /bookings');
       console.log('🚀 Booking data:', JSON.stringify(booking, null, 2));
       
