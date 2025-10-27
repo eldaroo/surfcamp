@@ -294,7 +294,7 @@ const buildParticipantConsumptionItems = (participant: any) => {
 
   console.log('🔍 [buildParticipantConsumptionItems] participantActivities before processing:', {
     count: participantActivities.length,
-    activities: participantActivities.map(a => ({ id: a.id, category: a.category }))
+    activities: participantActivities.map((a: any) => ({ id: a.id, category: a.category }))
   });
 
   const uniqueActivities = new Map<string, any>();
