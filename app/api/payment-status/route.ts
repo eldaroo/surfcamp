@@ -17,23 +17,15 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    console.log(`🔵 [LOBBYPMS-DEBUG] [PID:${process.pid}] 📞 /api/payment-status called`);
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
     const tripId = searchParams.get('trip_id');
-
-    console.log('🔵 [LOBBYPMS-DEBUG] 🔍 Search params:', { orderId, tripId });
-
     if (!orderId && !tripId) {
       return NextResponse.json(
         { error: 'Either order_id or trip_id is required' },
         { status: 400 }
       );
     }
-
-    console.log('🔍 Checking payment status for:', { orderId, tripId });
-    console.log('🔍 Search params raw:', { orderIdRaw: searchParams.get('order_id'), tripIdRaw: searchParams.get('trip_id') });
-
     let payment;
     let paymentError;
 
@@ -59,7 +51,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (paymentError) {
-      console.error('❌ Error finding payment:', paymentError);
       return NextResponse.json(
         { error: 'Error finding payment' },
         { status: 500 }
@@ -73,17 +64,8 @@ export async function GET(request: NextRequest) {
         message: 'Payment not found'
       });
     }
-
-    console.log('🔵 [LOBBYPMS-DEBUG] ✅ Payment found:', {
-      id: payment.id,
-      order_id: payment.order_id,
-      status: payment.status
-    });
-
     // Check if this payment has orphaned events and fix them automatically
     if (tripId && payment.status === 'pending') {
-      console.log('🔧 Checking for orphaned events for trip_id:', tripId);
-
       // Try to fix any orphaned events for this trip
       const { data: orphanedEvents, error: orphanError } = await supabase
         .from('wetravel_events')
@@ -97,8 +79,6 @@ export async function GET(request: NextRequest) {
         .select();
 
       if (orphanedEvents && orphanedEvents.length > 0) {
-        console.log('🔧 Fixed orphaned events:', orphanedEvents.length);
-
         // Update payment and order status to booking_created
         await supabase
           .from('payments')
@@ -109,37 +89,19 @@ export async function GET(request: NextRequest) {
           .from('orders')
           .update({ status: 'booking_created' })
           .eq('id', payment.order_id);
-
-        console.log('✅ Updated payment and order status to booking_created');
-
         // Update the payment object to reflect the new status
         payment.status = 'booking_created';
       }
     }
 
     // Check if booking_created but no LobbyPMS reservation yet
-    console.log('🔵 [LOBBYPMS-DEBUG] 🔍 Checking if LobbyPMS reservation needed...');
-    console.log('🔵 [LOBBYPMS-DEBUG] Payment status:', payment.status);
-
     if (payment.status === 'booking_created') {
-      console.log('🔵 [LOBBYPMS-DEBUG] ✅ Status is booking_created - fetching order data...');
-
       const { data: orderData } = await supabase
         .from('orders')
         .select('booking_data, lobbypms_reservation_id')
         .eq('id', payment.order_id)
         .single();
-
-      console.log('🔵 [LOBBYPMS-DEBUG] 📋 Order data fetched:', {
-        hasOrderData: !!orderData,
-        hasBookingData: !!orderData?.booking_data,
-        hasLobbyPMSId: !!orderData?.lobbypms_reservation_id,
-        lobbypms_reservation_id: orderData?.lobbypms_reservation_id
-      });
-
       if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
-        console.log('🔵 [LOBBYPMS-DEBUG] 🏨 Booking created but no LobbyPMS reservation - attempting to claim...');
-
         // 🔒 RACE CONDITION PROTECTION: Use optimistic locking
         // Try to claim this order for reservation creation by setting a temporary marker
         const claimTimestamp = new Date().toISOString();
@@ -153,13 +115,8 @@ export async function GET(request: NextRequest) {
           .select();
 
         if (claimError || !claimResult || claimResult.length === 0) {
-          console.log('🔵 [LOBBYPMS-DEBUG] ⚠️ Could not claim order - another process may be creating reservation');
-          console.log('🔵 [LOBBYPMS-DEBUG] Claim error:', claimError);
-          console.log('🔵 [LOBBYPMS-DEBUG] Claim result:', claimResult);
           // Another process claimed it, skip
         } else {
-          console.log('🔵 [LOBBYPMS-DEBUG] ✅ Successfully claimed order for reservation creation');
-
           const booking = orderData.booking_data;
 
           try {
@@ -176,10 +133,6 @@ export async function GET(request: NextRequest) {
             selectedActivities: booking.selectedActivities || [],
             participants: booking.participants || []
           };
-
-          console.log('🔵 [LOBBYPMS-DEBUG] 🔗 Reserve URL:', reserveUrl);
-          console.log('🔵 [LOBBYPMS-DEBUG] 📤 Reserve payload:', JSON.stringify(reservePayload, null, 2));
-
           const reserveResponse = await fetch(reserveUrl, {
             method: 'POST',
             headers: {
@@ -189,11 +142,7 @@ export async function GET(request: NextRequest) {
           });
 
           const reserveData = await reserveResponse.json();
-          console.log('🔵 [LOBBYPMS-DEBUG] 📥 Reserve response:', JSON.stringify(reserveData, null, 2));
-
           if (reserveResponse.ok) {
-            console.log('🔵 [LOBBYPMS-DEBUG] ✅ LobbyPMS reservation created successfully');
-
             // Handle both single and multiple reservations
             let reservationId;
             if (reserveData.multipleReservations && reserveData.reservationIds) {
@@ -201,18 +150,12 @@ export async function GET(request: NextRequest) {
               reservationId = Array.isArray(reserveData.reservationIds)
                 ? reserveData.reservationIds[0]
                 : reserveData.reservationIds;
-              console.log('🔵 [LOBBYPMS-DEBUG] 📋 Multiple reservations detected:', {
-                count: reserveData.reservationIds.length,
-                ids: reserveData.reservationIds,
-                savingFirstId: reservationId
-              });
             } else {
               // Single reservation
               reservationId = reserveData.reservationId ||
                              reserveData.reservation?.id ||
                              reserveData.lobbyPMSResponse?.booking?.booking_id ||
                              reserveData.lobbyPMSResponse?.id;
-              console.log('🔵 [LOBBYPMS-DEBUG] 📋 Single reservation detected:', reservationId);
             }
 
             if (reservationId) {
@@ -223,26 +166,16 @@ export async function GET(request: NextRequest) {
                   lobbypms_data: reserveData
                 })
                 .eq('id', payment.order_id);
-
-              console.log('🔵 [LOBBYPMS-DEBUG] 💾 Order updated with LobbyPMS reservation ID:', reservationId);
             } else {
-              console.error('🔵 [LOBBYPMS-DEBUG] ⚠️ Could not extract reservation ID from response:', reserveData);
             }
           } else {
-            console.error('🔵 [LOBBYPMS-DEBUG] ❌ Failed to create LobbyPMS reservation:', reserveData);
           }
         } catch (lobbyError) {
-          console.error('🔵 [LOBBYPMS-DEBUG] ❌ Error creating LobbyPMS reservation:', lobbyError);
         }
         }  // End of claim success block
       } else {
-        console.log('🔵 [LOBBYPMS-DEBUG] ℹ️ Skipping LobbyPMS creation:', {
-          reason: !orderData ? 'No order data' : !orderData.booking_data ? 'No booking data' : 'Already has LobbyPMS reservation',
-          lobbypms_reservation_id: orderData?.lobbypms_reservation_id
-        });
       }
     } else {
-      console.log('🔵 [LOBBYPMS-DEBUG] ℹ️ Status is not booking_created, skipping LobbyPMS check');
     }
 
     // Get order details if available
@@ -275,7 +208,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('❌ Error checking payment status:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
