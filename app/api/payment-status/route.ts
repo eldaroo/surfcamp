@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
     const tripId = searchParams.get('trip_id');
+
+    console.log('🔍 [PAYMENT-STATUS] Endpoint called with:', { orderId, tripId });
+
     if (!orderId && !tripId) {
       return NextResponse.json(
         { error: 'Either order_id or trip_id is required' },
@@ -96,11 +99,20 @@ export async function GET(request: NextRequest) {
 
     // Check if booking_created but no LobbyPMS reservation yet
     if (payment.status === 'booking_created') {
+      console.log('📊 [PAYMENT-STATUS] Status is booking_created, checking if reservation needed');
+
       const { data: orderData } = await supabase
         .from('orders')
         .select('booking_data, lobbypms_reservation_id')
         .eq('id', payment.order_id)
         .single();
+
+      console.log('📊 [PAYMENT-STATUS] Order check:', {
+        hasBookingData: !!orderData?.booking_data,
+        hasReservationId: !!orderData?.lobbypms_reservation_id,
+        reservationId: orderData?.lobbypms_reservation_id
+      });
+
       if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
         // 🔒 RACE CONDITION PROTECTION: Use optimistic locking
         // Try to claim this order for reservation creation by setting a temporary marker
@@ -115,12 +127,16 @@ export async function GET(request: NextRequest) {
           .select();
 
         if (claimError || !claimResult || claimResult.length === 0) {
+          console.log('⚠️ [PAYMENT-STATUS] Could not claim order (already claimed or error)');
           // Another process claimed it, skip
         } else {
+          console.log('✅ [PAYMENT-STATUS] Successfully claimed order, creating reservation');
+
           const booking = orderData.booking_data;
 
           try {
             const reserveUrl = `${request.nextUrl.origin}/api/reserve`;
+            console.log('📞 [PAYMENT-STATUS] Calling /api/reserve:', reserveUrl);
 
           const reservePayload = {
             checkIn: booking.checkIn,
@@ -142,6 +158,12 @@ export async function GET(request: NextRequest) {
           });
 
           const reserveData = await reserveResponse.json();
+          console.log('📥 [PAYMENT-STATUS] /api/reserve responded:', {
+            ok: reserveResponse.ok,
+            status: reserveResponse.status,
+            success: reserveData.success
+          });
+
           if (reserveResponse.ok) {
             // Handle both single and multiple reservations
             let reservationId;
@@ -150,12 +172,14 @@ export async function GET(request: NextRequest) {
               reservationId = Array.isArray(reserveData.reservationIds)
                 ? reserveData.reservationIds[0]
                 : reserveData.reservationIds;
+              console.log('✅ [PAYMENT-STATUS] Multiple reservations created:', reserveData.reservationIds);
             } else {
               // Single reservation
               reservationId = reserveData.reservationId ||
                              reserveData.reservation?.id ||
                              reserveData.lobbyPMSResponse?.booking?.booking_id ||
                              reserveData.lobbyPMSResponse?.id;
+              console.log('✅ [PAYMENT-STATUS] Single reservation created:', reservationId);
             }
 
             if (reservationId) {
@@ -166,11 +190,15 @@ export async function GET(request: NextRequest) {
                   lobbypms_data: reserveData
                 })
                 .eq('id', payment.order_id);
+              console.log('💾 [PAYMENT-STATUS] Reservation ID saved to database:', reservationId);
             } else {
+              console.error('❌ [PAYMENT-STATUS] Could not extract reservation ID from response');
             }
           } else {
+            console.error('❌ [PAYMENT-STATUS] /api/reserve failed:', reserveData);
           }
         } catch (lobbyError) {
+          console.error('❌ [PAYMENT-STATUS] Error calling /api/reserve:', lobbyError);
         }
         }  // End of claim success block
       } else {

@@ -684,15 +684,22 @@ async function handleBookingCreated(
         .eq('id', payment.id);
 
       if (updatePaymentError) {
+        console.error('❌ [WEBHOOK] Failed to update payment:', updatePaymentError);
         return;
       }
+
+      console.log('✅ [WEBHOOK] Payment marked as booking_created:', payment.id);
+
       const { error: updateOrderError } = await supabase
         .from('orders')
         .update({ status: 'booking_created' })
         .eq('id', payment.order_id);
 
       if (updateOrderError) {
+        console.error('❌ [WEBHOOK] Failed to update order:', updateOrderError);
       } else {
+        console.log('✅ [WEBHOOK] Order marked as booking_created:', payment.order_id);
+        console.log('📞 [WEBHOOK] Frontend should now poll /api/payment-status to trigger reservation');
       }
 
           try {
