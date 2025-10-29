@@ -265,7 +265,9 @@ export async function POST(request: NextRequest) {
   try {
     const signature = request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
-    // Webhook payload received
+
+    console.log('🔔 [WEBHOOK] ========== NEW WEBHOOK RECEIVED ==========');
+    console.log('🔔 [WEBHOOK] Raw body length:', rawBody.length);
     
     // Verify webhook signature
     const webhookSecret = process.env.WETRAVEL_WEBHOOK_SECRET;
@@ -288,6 +290,9 @@ export async function POST(request: NextRequest) {
     }
 
     const webhookData: WeTravelWebhookData = body;
+
+    console.log('📨 [WEBHOOK] Event type:', body.type);
+    console.log('📨 [WEBHOOK] Event data keys:', Object.keys(body.data || {}));
 
     // Determinar el tipo de evento y extraer identificadores útiles
     const eventType = body.type; // payment.created, payment.updated, etc.
@@ -641,21 +646,38 @@ async function handleBookingCreated(
   bookingContext: BookingEventContext
 ) {
   try {
+    console.log('📦 [WEBHOOK] handleBookingCreated called with context:', {
+      tripId: context.tripId,
+      wetravelOrderId: context.wetravelOrderId,
+      metadataOrderId: context.metadataOrderId,
+      actualOrderId: context.actualOrderId
+    });
+
     const match = await findMatchingPayment({
       ...context,
       eventType: 'booking.created'
     });
 
     if (!match) {
+      console.error('❌ [WEBHOOK] NO PAYMENT FOUND for booking.created');
+      console.error('❌ [WEBHOOK] Search context was:', context);
+
       const { data: allPayments, error: allPaymentsError } = await supabase
         .from('payments')
         .select('id, order_id, wetravel_data, wetravel_order_id, status')
         .limit(5);
 
       if (!allPaymentsError && allPayments) {
+        console.log('📋 [WEBHOOK] Recent payments in DB:', allPayments.map(p => ({
+          id: p.id,
+          order_id: p.order_id,
+          status: p.status,
+          trip_id: (p.wetravel_data as any)?.trip_id
+        })));
       }
 
     } else {
+      console.log('✅ [WEBHOOK] Payment FOUND, matched by:', match.matchedBy);
       const payment = match.payment;
       const updatedWetravelData = buildUpdatedWetravelData(
         payment.wetravel_data as Record<string, unknown> | null,
