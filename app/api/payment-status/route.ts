@@ -77,6 +77,45 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('💾 [PAYMENT-STATUS] Payment found with status:', payment.status);
+    console.log('🕐 [PAYMENT-STATUS] Payment updated_at:', payment.updated_at);
+    console.log('🔢 [PAYMENT-STATUS] Payment ID:', payment.id);
+
+    // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry after delay
+    if (payment.status === 'pending' && payment.updated_at) {
+      const updatedAt = new Date(payment.updated_at);
+      const now = new Date();
+      const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
+
+      console.log('⏱️ [PAYMENT-STATUS] Seconds since last update:', secondsSinceUpdate);
+
+      // If updated in last 10 seconds, might be read-after-write issue
+      if (secondsSinceUpdate < 10) {
+        console.log('⏳ [PAYMENT-STATUS] Recent update detected, waiting 500ms and retrying...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Retry the query
+        let retryPayment;
+        if (orderId) {
+          const { data } = await supabase
+            .from('payments')
+            .select('id, order_id, status, wetravel_data, created_at, updated_at')
+            .eq('order_id', orderId)
+            .single();
+          retryPayment = data;
+        } else if (tripId) {
+          const { data } = await supabase
+            .from('payments')
+            .select('id, order_id, status, wetravel_data, created_at, updated_at')
+            .contains('wetravel_data', { trip_id: tripId });
+          retryPayment = data && data.length > 0 ? data[0] : null;
+        }
+
+        if (retryPayment) {
+          console.log('🔄 [PAYMENT-STATUS] Retry result - status:', retryPayment.status);
+          payment = retryPayment;
+        }
+      }
+    }
 
     // Check if this payment has orphaned events and fix them automatically
     if (tripId && payment.status === 'pending') {
@@ -223,9 +262,13 @@ export async function GET(request: NextRequest) {
     // Get order details if available
     const { data: order } = await supabase
       .from('orders')
-      .select('id, status, booking_data')
+      .select('id, status, booking_data, lobbypms_reservation_id')
       .eq('id', payment.order_id)
       .single();
+
+    // Check if reservation exists (even if status shows pending due to cache)
+    const hasReservation = order?.lobbypms_reservation_id &&
+                          !order.lobbypms_reservation_id.startsWith('CREATING_');
 
     const response = {
       found: true,
@@ -240,11 +283,12 @@ export async function GET(request: NextRequest) {
       order: order ? {
         id: order.id,
         status: order.status,
-        booking_data: order.booking_data
+        booking_data: order.booking_data,
+        lobbypms_reservation_id: order.lobbypms_reservation_id
       } : null,
-      is_booking_created: payment.status === 'booking_created',
+      is_booking_created: payment.status === 'booking_created' || hasReservation,
       is_completed: payment.status === 'completed',
-      show_success: payment.status === 'booking_created' || payment.status === 'completed'
+      show_success: payment.status === 'booking_created' || payment.status === 'completed' || hasReservation
     };
 
     return NextResponse.json(response);
