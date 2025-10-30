@@ -700,26 +700,41 @@ async function handleBookingCreated(
         paymentUpdatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
       }
 
-      const { error: updatePaymentError } = await supabase
+      console.log('🔄 [WEBHOOK] Attempting to update payment:', {
+        payment_id: payment.id,
+        payload: paymentUpdatePayload
+      });
+
+      const { data: updatedPayment, error: updatePaymentError } = await supabase
         .from('payments')
         .update(paymentUpdatePayload)
-        .eq('id', payment.id);
+        .eq('id', payment.id)
+        .select();
 
       if (updatePaymentError) {
         console.error('❌ [WEBHOOK] Failed to update payment:', updatePaymentError);
         return;
       }
 
+      console.log('✅ [WEBHOOK] Payment UPDATE result:', {
+        rowsAffected: updatedPayment?.length || 0,
+        updated: updatedPayment
+      });
       console.log('✅ [WEBHOOK] Payment marked as booking_created:', payment.id);
 
-      const { error: updateOrderError } = await supabase
+      const { data: updatedOrder, error: updateOrderError } = await supabase
         .from('orders')
         .update({ status: 'booking_created' })
-        .eq('id', payment.order_id);
+        .eq('id', payment.order_id)
+        .select();
 
       if (updateOrderError) {
         console.error('❌ [WEBHOOK] Failed to update order:', updateOrderError);
       } else {
+        console.log('✅ [WEBHOOK] Order UPDATE result:', {
+          rowsAffected: updatedOrder?.length || 0,
+          order_id: payment.order_id
+        });
         console.log('✅ [WEBHOOK] Order marked as booking_created:', payment.order_id);
         console.log('📞 [WEBHOOK] Frontend should now poll /api/payment-status to trigger reservation');
       }
