@@ -805,6 +805,22 @@ async function handleBookingCreated(
 
             if (reservationId) {
               console.log('💾 [WEBHOOK] Reservation ID from /api/reserve:', reservationId);
+
+              // Save reservation ID to database
+              const { error: updateError } = await supabase
+                .from('orders')
+                .update({
+                  lobbypms_reservation_id: reservationId,
+                  lobbypms_data: reserveData,
+                  status: 'booking_created'
+                })
+                .eq('id', payment.order_id);
+
+              if (updateError) {
+                console.error('❌ [WEBHOOK] Failed to save reservation ID:', updateError);
+              } else {
+                console.log('✅ [WEBHOOK] Reservation ID saved to database successfully');
+              }
             } else {
               console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
             }
