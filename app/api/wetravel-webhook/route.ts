@@ -736,21 +736,117 @@ async function handleBookingCreated(
           order_id: payment.order_id
         });
         console.log('✅ [WEBHOOK] Order marked as booking_created:', payment.order_id);
-        console.log('📞 [WEBHOOK] Frontend should now poll /api/payment-status to trigger reservation');
+        console.log('📞 [WEBHOOK] Now creating LobbyPMS reservation directly from webhook');
       }
 
-          try {
-            const { data: orderData, error: orderError } = await supabase
-              .from('orders')
-              .select('booking_data')
-              .eq('id', payment.order_id)
-              .single();
-        // IMPORTANT: Webhook should NOT create reservations to avoid duplicates
-        // The payment-status endpoint will handle reservation creation instead
-        // Do NOT proceed with reservation creation
-        // payment-status endpoint handles all reservation creation
+      // 🏨 CREATE LOBBYPMS RESERVATION DIRECTLY FROM WEBHOOK
+      try {
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('booking_data, lobbypms_reservation_id')
+          .eq('id', payment.order_id)
+          .single();
 
+        if (orderError) {
+          console.error('❌ [WEBHOOK] Error fetching order data:', orderError);
+        } else if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
+          // 🔒 Use optimistic locking to prevent duplicate reservations
+          const claimTimestamp = new Date().toISOString();
+          const { data: claimResult, error: claimError } = await supabase
+            .from('orders')
+            .update({
+              lobbypms_reservation_id: `CREATING_${claimTimestamp}`
+            })
+            .eq('id', payment.order_id)
+            .is('lobbypms_reservation_id', null)
+            .select();
+
+          if (claimError || !claimResult || claimResult.length === 0) {
+            console.log('⚠️ [WEBHOOK] Could not claim order for reservation (already claimed)');
+          } else {
+            console.log('✅ [WEBHOOK] Successfully claimed order, creating LobbyPMS reservation');
+
+            const booking = orderData.booking_data;
+            const reservePayload = {
+              checkIn: booking.checkIn,
+              checkOut: booking.checkOut,
+              guests: booking.guests,
+              roomTypeId: booking.roomTypeId,
+              isSharedRoom: booking.isSharedRoom || false,
+              contactInfo: booking.contactInfo,
+              activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
+              selectedActivities: booking.selectedActivities || [],
+              participants: booking.participants || []
+            };
+
+            console.log('📞 [WEBHOOK] Calling /api/reserve with payload:', {
+              checkIn: reservePayload.checkIn,
+              checkOut: reservePayload.checkOut,
+              guests: reservePayload.guests,
+              roomTypeId: reservePayload.roomTypeId
+            });
+
+            // Call reserve endpoint
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://surfcampwidget.duckdns.org';
+            const reserveResponse = await fetch(`${baseUrl}/api/reserve`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(reservePayload)
+            });
+
+            const reserveData = await reserveResponse.json();
+            console.log('📥 [WEBHOOK] /api/reserve responded:', {
+              ok: reserveResponse.ok,
+              status: reserveResponse.status,
+              success: reserveData.success
+            });
+
+            if (reserveResponse.ok) {
+              let reservationId;
+              if (reserveData.multipleReservations && reserveData.reservationIds) {
+                reservationId = Array.isArray(reserveData.reservationIds)
+                  ? reserveData.reservationIds[0]
+                  : reserveData.reservationIds;
+                console.log('✅ [WEBHOOK] Multiple reservations created:', reserveData.reservationIds);
+              } else {
+                reservationId = reserveData.reservationId ||
+                               reserveData.reservation?.id ||
+                               reserveData.lobbyPMSResponse?.booking?.booking_id ||
+                               reserveData.lobbyPMSResponse?.id;
+                console.log('✅ [WEBHOOK] Single reservation created:', reservationId);
+              }
+
+              if (reservationId) {
+                await supabase
+                  .from('orders')
+                  .update({
+                    lobbypms_reservation_id: reservationId,
+                    lobbypms_data: reserveData
+                  })
+                  .eq('id', payment.order_id);
+                console.log('💾 [WEBHOOK] Reservation ID saved to database:', reservationId);
+              } else {
+                console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
+                // Revert the claim marker on failure
+                await supabase
+                  .from('orders')
+                  .update({ lobbypms_reservation_id: null })
+                  .eq('id', payment.order_id);
+              }
+            } else {
+              console.error('❌ [WEBHOOK] /api/reserve failed:', reserveData);
+              // Revert the claim marker on failure
+              await supabase
+                .from('orders')
+                .update({ lobbypms_reservation_id: null })
+                .eq('id', payment.order_id);
+            }
+          }
+        } else if (orderData?.lobbypms_reservation_id) {
+          console.log('ℹ️ [WEBHOOK] Reservation already exists:', orderData.lobbypms_reservation_id);
+        }
       } catch (error) {
+        console.error('❌ [WEBHOOK] Error creating reservation:', error);
       }
 
       if (bookingContext.eventKey) {
