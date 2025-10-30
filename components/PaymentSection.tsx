@@ -28,6 +28,7 @@ export default function PaymentSection() {
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
 
   const closePaymentWindow = useCallback(() => {
@@ -215,7 +216,79 @@ export default function PaymentSection() {
     }
   };
 
-  // Function to start polling payment status
+  // Function to start SSE connection for real-time payment status
+  const startPaymentStatusSSE = (orderId: string) => {
+    // Close any existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    setIsCheckingPaymentStatus(true);
+    console.log('📡 Starting SSE connection for order:', orderId);
+
+    // Create EventSource connection
+    const eventSource = new EventSource(`/api/payment-status-stream?order_id=${orderId}`);
+    eventSourceRef.current = eventSource;
+
+    eventSource.onopen = () => {
+      console.log('✅ SSE connection opened');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('📡 SSE message received:', data);
+
+        if (data.type === 'connected') {
+          console.log('🔗 SSE connected for order:', data.orderId);
+        } else if (data.type === 'reservation_complete') {
+          console.log('🎉 Reservation complete! Data:', data);
+
+          // Calculate final prices
+          const prices = calculatePrices();
+          if (prices) {
+            setPriceBreakdown(prices);
+            console.log('💰 Price breakdown calculated:', prices);
+          }
+
+          // Close SSE connection
+          eventSource.close();
+          eventSourceRef.current = null;
+
+          // Update UI
+          setIsWaitingForPayment(false);
+          setIsCheckingPaymentStatus(false);
+          setCurrentStep('success');
+          closePaymentWindow();
+          window.focus();
+        }
+      } catch (error) {
+        console.error('❌ Error parsing SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE connection error:', error);
+      eventSource.close();
+      eventSourceRef.current = null;
+
+      // Fallback to polling after SSE failure
+      console.log('⚠️ Falling back to polling...');
+      startPaymentStatusPolling(orderId, undefined);
+    };
+
+    // Timeout after 10 minutes
+    setTimeout(() => {
+      if (eventSourceRef.current) {
+        console.log('⏰ SSE connection timeout');
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+        setIsCheckingPaymentStatus(false);
+      }
+    }, 10 * 60 * 1000);
+  };
+
+  // Fallback: Polling function (used if SSE fails)
   const startPaymentStatusPolling = (orderId?: string, tripId?: string) => {
     if (paymentStatusInterval.current) {
       clearInterval(paymentStatusInterval.current);
@@ -232,7 +305,7 @@ export default function PaymentSection() {
       checkPaymentStatus(orderId, tripId);
     }, 3000);
 
-    // Stop polling after 10 minutes to avoid infinite polling
+    // Stop polling after 10 minutes
     setTimeout(() => {
       if (paymentStatusInterval.current) {
         clearInterval(paymentStatusInterval.current);
@@ -240,14 +313,17 @@ export default function PaymentSection() {
         setIsCheckingPaymentStatus(false);
         console.log('⏰ Payment status polling timed out');
       }
-    }, 10 * 60 * 1000); // 10 minutes
+    }, 10 * 60 * 1000);
   };
 
-  // Cleanup interval on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (paymentStatusInterval.current) {
         clearInterval(paymentStatusInterval.current);
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
       }
       closePaymentWindow();
     };
@@ -439,13 +515,13 @@ export default function PaymentSection() {
         const orderId = wetravelData.order_id;
         const tripId = wetravelData.trip_id;
 
-        console.log('🔗 Payment link opened in new tab, starting payment status polling...', {
+        console.log('🔗 Payment link opened in new tab, starting payment status monitoring...', {
           orderId,
           tripId
         });
 
-        // Start polling payment status
-        startPaymentStatusPolling(orderId, tripId);
+        // Start SSE connection for real-time updates
+        startPaymentStatusSSE(orderId);
       } else {
         // Cerrar la ventana si no hay URL
         closePaymentWindow();

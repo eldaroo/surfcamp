@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { notifyOrderUpdate } from '@/lib/sse-manager';
 import { sendDarioWelcomeMessage } from '@/lib/whatsapp';
 
 // Initialize Supabase client
@@ -836,6 +837,19 @@ async function handleBookingCreated(
                 console.error('❌ [WEBHOOK] Failed to update payment to completed:', paymentUpdateError);
               } else {
                 console.log('✅ [WEBHOOK] Payment status updated to completed');
+
+                // 📡 NOTIFY FRONTEND VIA SSE
+                notifyOrderUpdate(payment.order_id.toString(), {
+                  type: 'reservation_complete',
+                  status: 'completed',
+                  orderId: payment.order_id,
+                  paymentId: payment.id,
+                  reservationId: reservationId,
+                  reservationIds: reserveData.reservationIds || [reservationId],
+                  bookingReference: reserveData.bookingReference,
+                  message: 'Reservation created successfully!'
+                });
+                console.log('📡 [WEBHOOK] SSE notification sent for order:', payment.order_id);
               }
             } else {
               console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
