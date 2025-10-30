@@ -67,6 +67,9 @@ export async function GET(request: NextRequest) {
         message: 'Payment not found'
       });
     }
+
+    console.log('💾 [PAYMENT-STATUS] Payment found with status:', payment.status);
+
     // Check if this payment has orphaned events and fix them automatically
     if (tripId && payment.status === 'pending') {
       // Try to fix any orphaned events for this trip
@@ -94,8 +97,11 @@ export async function GET(request: NextRequest) {
           .eq('id', payment.order_id);
         // Update the payment object to reflect the new status
         payment.status = 'booking_created';
+        console.log('🔄 [PAYMENT-STATUS] Status updated to booking_created after fixing orphaned events');
       }
     }
+
+    console.log('🎯 [PAYMENT-STATUS] About to check reservation creation. Current status:', payment.status);
 
     // Check if booking_created but no LobbyPMS reservation yet
     if (payment.status === 'booking_created') {
