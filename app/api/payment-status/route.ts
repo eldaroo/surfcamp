@@ -281,29 +281,47 @@ export async function GET(request: NextRequest) {
       lobbypmsReservationId: order?.lobbypms_reservation_id
     });
 
-    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry after delay
+    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry multiple times
     if (!order?.lobbypms_reservation_id && payment.updated_at) {
       const updatedAt = new Date(payment.updated_at);
       const now = new Date();
       const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
 
       if (secondsSinceUpdate < 30) {
-        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, waiting 1.5s and retrying order query...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 3 times...');
 
-        const { data: retryOrder } = await supabase
-          .from('orders')
-          .select('id, status, booking_data, lobbypms_reservation_id')
-          .eq('id', payment.order_id)
-          .single();
+        // Try up to 3 times with increasing delays
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const delay = attempt * 1000; // 1s, 2s, 3s
+          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/3, waiting ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
 
-        if (retryOrder) {
-          console.log('🔄 [PAYMENT-STATUS] Order data (after retry):', {
-            orderId: retryOrder.id,
-            orderStatus: retryOrder.status,
-            lobbypmsReservationId: retryOrder.lobbypms_reservation_id
+          const freshSupabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            {
+              auth: { autoRefreshToken: false, persistSession: false },
+              global: { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } }
+            }
+          );
+
+          const { data: retryOrder } = await freshSupabase
+            .from('orders')
+            .select('id, status, booking_data, lobbypms_reservation_id')
+            .eq('id', payment.order_id)
+            .single();
+
+          console.log(`🔄 [PAYMENT-STATUS] Order data (retry ${attempt}/3):`, {
+            orderId: retryOrder?.id,
+            orderStatus: retryOrder?.status,
+            lobbypmsReservationId: retryOrder?.lobbypms_reservation_id
           });
-          order = retryOrder;
+
+          if (retryOrder?.lobbypms_reservation_id) {
+            console.log('✅ [PAYMENT-STATUS] Reservation ID found on retry!');
+            order = retryOrder;
+            break;
+          }
         }
       }
     }
