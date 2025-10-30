@@ -803,14 +803,13 @@ async function handleBookingCreated(
                 console.log('✅ [WEBHOOK] Single reservation created:', reservationId);
               }
 
-              if (reservationId) {
-                console.log('💾 [WEBHOOK] Reservation ID from /api/reserve:', reservationId);
-              } else {
-                console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
-              }
+            if (reservationId) {
+              console.log('💾 [WEBHOOK] Reservation ID from /api/reserve:', reservationId);
             } else {
-              console.error('❌ [WEBHOOK] /api/reserve failed:', reserveData);
+              console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
             }
+          } else {
+            console.error('❌ [WEBHOOK] /api/reserve failed:', reserveData);
           }
         } else if (orderData?.lobbypms_reservation_id) {
           console.log('ℹ️ [WEBHOOK] Reservation already exists:', orderData.lobbypms_reservation_id);
