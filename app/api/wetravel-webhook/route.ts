@@ -821,6 +821,22 @@ async function handleBookingCreated(
               } else {
                 console.log('✅ [WEBHOOK] Reservation ID saved to database successfully');
               }
+
+              // ALSO update payment status to completed so frontend sees it immediately
+              // Force cache invalidation by updating updated_at
+              const { error: paymentUpdateError } = await supabase
+                .from('payments')
+                .update({
+                  status: 'completed',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', payment.id);
+
+              if (paymentUpdateError) {
+                console.error('❌ [WEBHOOK] Failed to update payment to completed:', paymentUpdateError);
+              } else {
+                console.log('✅ [WEBHOOK] Payment status updated to completed');
+              }
             } else {
               console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
             }

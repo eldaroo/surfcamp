@@ -88,22 +88,31 @@ export async function GET(request: NextRequest) {
 
       console.log('⏱️ [PAYMENT-STATUS] Seconds since last update:', secondsSinceUpdate);
 
-      // If updated in last 10 seconds, might be read-after-write issue
-      if (secondsSinceUpdate < 10) {
-        console.log('⏳ [PAYMENT-STATUS] Recent update detected, waiting 500ms and retrying...');
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // If updated in last 30 seconds, might be read-after-write issue
+      if (secondsSinceUpdate < 30) {
+        console.log('⏳ [PAYMENT-STATUS] Recent update detected, waiting 1s and retrying payment query...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Retry the query
+        // Retry the query with fresh client
+        const freshSupabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: { autoRefreshToken: false, persistSession: false },
+            global: { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } }
+          }
+        );
+
         let retryPayment;
         if (orderId) {
-          const { data } = await supabase
+          const { data } = await freshSupabase
             .from('payments')
             .select('id, order_id, status, wetravel_data, created_at, updated_at')
             .eq('order_id', orderId)
             .single();
           retryPayment = data;
         } else if (tripId) {
-          const { data } = await supabase
+          const { data } = await freshSupabase
             .from('payments')
             .select('id, order_id, status, wetravel_data, created_at, updated_at')
             .contains('wetravel_data', { trip_id: tripId });
@@ -260,17 +269,44 @@ export async function GET(request: NextRequest) {
     }
 
     // Get order details if available
-    const { data: order } = await supabase
+    let { data: order } = await supabase
       .from('orders')
       .select('id, status, booking_data, lobbypms_reservation_id')
       .eq('id', payment.order_id)
       .single();
 
-    console.log('🏨 [PAYMENT-STATUS] Order data:', {
+    console.log('🏨 [PAYMENT-STATUS] Order data (first read):', {
       orderId: order?.id,
       orderStatus: order?.status,
       lobbypmsReservationId: order?.lobbypms_reservation_id
     });
+
+    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry after delay
+    if (!order?.lobbypms_reservation_id && payment.updated_at) {
+      const updatedAt = new Date(payment.updated_at);
+      const now = new Date();
+      const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
+
+      if (secondsSinceUpdate < 30) {
+        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, waiting 1.5s and retrying order query...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const { data: retryOrder } = await supabase
+          .from('orders')
+          .select('id, status, booking_data, lobbypms_reservation_id')
+          .eq('id', payment.order_id)
+          .single();
+
+        if (retryOrder) {
+          console.log('🔄 [PAYMENT-STATUS] Order data (after retry):', {
+            orderId: retryOrder.id,
+            orderStatus: retryOrder.status,
+            lobbypmsReservationId: retryOrder.lobbypms_reservation_id
+          });
+          order = retryOrder;
+        }
+      }
+    }
 
     // Check if reservation exists (even if status shows pending due to cache)
     const hasReservation = order?.lobbypms_reservation_id &&
