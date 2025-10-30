@@ -376,6 +376,8 @@ const buildParticipantConsumptionItems = (participant: any) => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('🏨 [RESERVE] ========== NEW RESERVATION REQUEST ==========');
+    console.log('🏨 [RESERVE] Request body:', JSON.stringify(body, null, 2));
     // 🛡️ ANTI-DUPLICATE PROTECTION: Check if reservation already exists
     if (body.paymentIntentId || body.contactInfo?.dni) {
       const supabase = createClient(

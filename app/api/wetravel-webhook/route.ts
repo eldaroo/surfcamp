@@ -750,21 +750,7 @@ async function handleBookingCreated(
         if (orderError) {
           console.error('❌ [WEBHOOK] Error fetching order data:', orderError);
         } else if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
-          // 🔒 Use optimistic locking to prevent duplicate reservations
-          const claimTimestamp = new Date().toISOString();
-          const { data: claimResult, error: claimError } = await supabase
-            .from('orders')
-            .update({
-              lobbypms_reservation_id: `CREATING_${claimTimestamp}`
-            })
-            .eq('id', payment.order_id)
-            .is('lobbypms_reservation_id', null)
-            .select();
-
-          if (claimError || !claimResult || claimResult.length === 0) {
-            console.log('⚠️ [WEBHOOK] Could not claim order for reservation (already claimed)');
-          } else {
-            console.log('✅ [WEBHOOK] Successfully claimed order, creating LobbyPMS reservation');
+          console.log('✅ [WEBHOOK] Order has booking data and no reservation yet, calling /api/reserve');
 
             const booking = orderData.booking_data;
             const reservePayload = {
@@ -800,6 +786,7 @@ async function handleBookingCreated(
               status: reserveResponse.status,
               success: reserveData.success
             });
+            console.log('📦 [WEBHOOK] Full /api/reserve response:', JSON.stringify(reserveData, null, 2));
 
             if (reserveResponse.ok) {
               let reservationId;
@@ -817,29 +804,12 @@ async function handleBookingCreated(
               }
 
               if (reservationId) {
-                await supabase
-                  .from('orders')
-                  .update({
-                    lobbypms_reservation_id: reservationId,
-                    lobbypms_data: reserveData
-                  })
-                  .eq('id', payment.order_id);
-                console.log('💾 [WEBHOOK] Reservation ID saved to database:', reservationId);
+                console.log('💾 [WEBHOOK] Reservation ID from /api/reserve:', reservationId);
               } else {
                 console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
-                // Revert the claim marker on failure
-                await supabase
-                  .from('orders')
-                  .update({ lobbypms_reservation_id: null })
-                  .eq('id', payment.order_id);
               }
             } else {
               console.error('❌ [WEBHOOK] /api/reserve failed:', reserveData);
-              // Revert the claim marker on failure
-              await supabase
-                .from('orders')
-                .update({ lobbypms_reservation_id: null })
-                .eq('id', payment.order_id);
             }
           }
         } else if (orderData?.lobbypms_reservation_id) {
