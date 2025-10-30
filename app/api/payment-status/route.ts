@@ -266,9 +266,21 @@ export async function GET(request: NextRequest) {
       .eq('id', payment.order_id)
       .single();
 
+    console.log('🏨 [PAYMENT-STATUS] Order data:', {
+      orderId: order?.id,
+      orderStatus: order?.status,
+      lobbypmsReservationId: order?.lobbypms_reservation_id
+    });
+
     // Check if reservation exists (even if status shows pending due to cache)
     const hasReservation = order?.lobbypms_reservation_id &&
                           !order.lobbypms_reservation_id.startsWith('CREATING_');
+
+    console.log('✨ [PAYMENT-STATUS] Final decision:', {
+      hasReservation,
+      paymentStatus: payment.status,
+      willShowSuccess: payment.status === 'booking_created' || payment.status === 'completed' || hasReservation
+    });
 
     const response = {
       found: true,
