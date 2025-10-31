@@ -4,17 +4,29 @@ import crypto from 'crypto';
 import { notifyOrderUpdate } from '@/lib/sse-manager';
 import { sendDarioWelcomeMessage } from '@/lib/whatsapp';
 
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Helper to create fresh Supabase client (no cache, no pooling)
+function createFreshSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: {
+          'cache-control': 'no-cache, no-store, must-revalidate',
+          'pragma': 'no-cache',
+          'expires': '0'
+        }
+      }
     }
-  }
-);
+  );
+}
 
 function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
   const computedSignature = crypto
@@ -263,6 +275,9 @@ async function findMatchingPayment(
 }
 
 export async function POST(request: NextRequest) {
+  // Create fresh Supabase client for this request (no cache)
+  const supabase = createFreshSupabaseClient();
+
   try {
     const signature = request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
@@ -820,7 +835,32 @@ async function handleBookingCreated(
               if (updateError) {
                 console.error('❌ [WEBHOOK] Failed to save reservation ID:', updateError);
               } else {
-                console.log('✅ [WEBHOOK] Reservation ID saved to database successfully');
+                console.log('✅ [WEBHOOK] Reservation ID UPDATE executed');
+
+                // 🔄 VERIFY the update actually persisted by reading it back
+                let verified = false;
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                  console.log(`🔍 [WEBHOOK] Verifying reservation ID was saved (attempt ${attempt}/3)...`);
+                  await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+
+                  const { data: verifyOrder } = await supabase
+                    .from('orders')
+                    .select('lobbypms_reservation_id')
+                    .eq('id', payment.order_id)
+                    .single();
+
+                  if (verifyOrder?.lobbypms_reservation_id === reservationId.toString()) {
+                    console.log('✅ [WEBHOOK] Reservation ID verified in database!');
+                    verified = true;
+                    break;
+                  } else {
+                    console.log(`⚠️ [WEBHOOK] Verification attempt ${attempt} - still not visible:`, verifyOrder?.lobbypms_reservation_id);
+                  }
+                }
+
+                if (!verified) {
+                  console.error('❌ [WEBHOOK] Could not verify reservation ID after 3 attempts - replica lag issue');
+                }
               }
 
               // ALSO update payment status to completed so frontend sees it immediately
