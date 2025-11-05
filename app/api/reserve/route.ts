@@ -480,7 +480,8 @@ export async function POST(request: NextRequest) {
     const baseNotes = `ðŸ„â€â™‚ï¸ RESERVA DESDE SURFCAMP SANTA TERESA ðŸ„â€â™‚ï¸\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- HuÃ©sped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- TelÃ©fono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`;
     // FIX: guest_count should always be the number of guests, regardless of room type
     // The logic of creating multiple reservations is handled separately below
-    const calculatedGuestCount = guests || 1;
+    // If guests is not provided, use participants.length as fallback
+    const calculatedGuestCount = guests || (Array.isArray(participants) && participants.length > 0 ? participants.length : 1);
     const bookingData = {
       start_date: formattedCheckIn,     // Y-m-d format as required by LobbyPMS
       end_date: formattedCheckOut,      // Y-m-d format as required by LobbyPMS
@@ -523,11 +524,21 @@ export async function POST(request: NextRequest) {
     const hasDetailedActivityPayload =
       Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
-    // Check if we need to create multiple reservations (ANY room with multiple participants)
-    // IMPORTANT: Create individual reservations for EACH participant to track their activities separately
+    // Check if we need to create multiple reservations (ONLY for shared rooms)
+    // IMPORTANT: Create individual reservations for EACH participant ONLY in shared rooms (casa-playa)
+    // For private houses (casitas-privadas, casas-deluxe), create ONE reservation with all guests
+    console.log('🏨 [RESERVE] Checking if multiple reservations needed:', {
+      participantsIsArray: Array.isArray(participants),
+      participantsLength: participants?.length,
+      isSharedRoom,
+      roomTypeId,
+      shouldCreateMultiple: Array.isArray(participants) && participants.length > 1 && (isSharedRoom || roomTypeId === 'casa-playa')
+    });
+
     const shouldCreateMultipleReservations =
       Array.isArray(participants) &&
-      participants.length > 1;
+      participants.length > 1 &&
+      (isSharedRoom || roomTypeId === 'casa-playa');
     // Ensure customer exists in LobbyPMS before booking
     try {
       if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
@@ -729,8 +740,17 @@ export async function POST(request: NextRequest) {
 
     // ⚠️ THIS CODE SHOULD NOT RUN IF shouldCreateMultipleReservations IS TRUE
     // Single reservation flow (original logic)
+    console.log('🏨 [RESERVE] Creating SINGLE reservation with data:', {
+      start_date: bookingData.start_date,
+      end_date: bookingData.end_date,
+      guest_count: bookingData.guest_count,
+      category_id: bookingData.category_id,
+      room_type_id: bookingData.room_type_id
+    });
+
     try {
       const reservationData = await lobbyPMSClient.createBooking(bookingData);
+      console.log('✅ [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
       const registeredGuests =
         reservationData?.booking?.guests?.registered ??
         reservationData?.booking?.registered_guests ??
@@ -916,8 +936,16 @@ export async function POST(request: NextRequest) {
       });
 
     } catch (lobbyError: any) {
+      console.error('❌ [RESERVE] LobbyPMS createBooking ERROR:', {
+        message: lobbyError.message,
+        response: lobbyError.response?.data,
+        status: lobbyError.response?.status,
+        errorCode: lobbyError.response?.data?.error_code
+      });
+
       // Si es error de capacidad, ajustar y reintentar
       if (lobbyError.response?.data?.error_code === 'MAXIMUM_CAPACITY') {
+        console.log('⚠️ [RESERVE] MAXIMUM_CAPACITY error detected, retrying with guest_count=1');
         // Reducir huÃ©spedes a 1 e intentar de nuevo
         const adjustedBookingData = {
           ...bookingData,

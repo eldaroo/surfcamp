@@ -178,6 +178,7 @@ function buildUpdatedWetravelData(
 }
 
 async function findMatchingPayment(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   context: PaymentSearchContext
 ): Promise<PaymentSearchResult | null> {
   const selectColumns = 'id, order_id, status, wetravel_data, wetravel_order_id';
@@ -385,23 +386,23 @@ export async function POST(request: NextRequest) {
 
     switch (eventType) {
       case 'payment.created':
-        await handlePaymentCreated(webhookData, baseSearchContext);
+        await handlePaymentCreated(supabase, webhookData, baseSearchContext);
         break;
 
       case 'payment.completed':
-        await handlePaymentCompleted(webhookData, baseSearchContext, eventType);
+        await handlePaymentCompleted(supabase, webhookData, baseSearchContext, eventType);
         break;
 
       case 'payment.failed':
-        await handlePaymentFailed(webhookData, baseSearchContext);
+        await handlePaymentFailed(supabase, webhookData, baseSearchContext);
         break;
 
       case 'payment.updated':
-        await handlePaymentUpdated(webhookData, baseSearchContext);
+        await handlePaymentUpdated(supabase, webhookData, baseSearchContext);
         break;
 
       case 'booking.created':
-        await handleBookingCreated(webhookData, baseSearchContext, { eventKey, actualOrderId });
+        await handleBookingCreated(supabase, webhookData, baseSearchContext, { eventKey, actualOrderId });
         break;
 
       // Legacy events
@@ -462,11 +463,12 @@ async function handleBookingUpdated(webhookData: WeTravelWebhookData) {
 
 // Función para manejar pagos creados
 async function handlePaymentCreated(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
   try {
-    const match = await findMatchingPayment({
+    const match = await findMatchingPayment(supabase, {
       ...context,
       eventType: 'payment.created'
     });
@@ -511,11 +513,12 @@ async function handlePaymentCreated(
 
 // Función para manejar pagos actualizados
 async function handlePaymentUpdated(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
   try {
-    const match = await findMatchingPayment({
+    const match = await findMatchingPayment(supabase, {
       ...context,
       eventType: 'payment.updated'
     });
@@ -560,12 +563,13 @@ async function handlePaymentUpdated(
 
 // Función para manejar pagos completados
 async function handlePaymentCompleted(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext,
   eventType?: string
 ) {
   try {
-    const match = await findMatchingPayment({
+    const match = await findMatchingPayment(supabase, {
       ...context,
       eventType: eventType || 'payment.completed'
     });
@@ -628,6 +632,7 @@ async function handlePaymentCompleted(
 
 // Función para manejar pagos fallidos
 async function handlePaymentFailed(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
@@ -657,6 +662,7 @@ async function handleTripConfirmed(webhookData: WeTravelWebhookData) {
 
 // Función para manejar reserva creada
 async function handleBookingCreated(
+  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext,
   bookingContext: BookingEventContext
@@ -669,7 +675,7 @@ async function handleBookingCreated(
       actualOrderId: context.actualOrderId
     });
 
-    const match = await findMatchingPayment({
+    const match = await findMatchingPayment(supabase, {
       ...context,
       eventType: 'booking.created'
     });
@@ -769,6 +775,8 @@ async function handleBookingCreated(
           console.log('✅ [WEBHOOK] Order has booking data and no reservation yet, calling /api/reserve');
 
             const booking = orderData.booking_data;
+            console.log('📦 [WEBHOOK] Full booking_data from DB:', JSON.stringify(booking, null, 2));
+
             const reservePayload = {
               checkIn: booking.checkIn,
               checkOut: booking.checkOut,
@@ -781,12 +789,7 @@ async function handleBookingCreated(
               participants: booking.participants || []
             };
 
-            console.log('📞 [WEBHOOK] Calling /api/reserve with payload:', {
-              checkIn: reservePayload.checkIn,
-              checkOut: reservePayload.checkOut,
-              guests: reservePayload.guests,
-              roomTypeId: reservePayload.roomTypeId
-            });
+            console.log('📞 [WEBHOOK] Calling /api/reserve with FULL payload:', JSON.stringify(reservePayload, null, 2));
 
             // Call reserve endpoint
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://surfcampwidget.duckdns.org';
@@ -947,8 +950,11 @@ async function fixOrphanedEvents(
 ) {
   if (!tripId && !webhookOrderId && !metadataOrderId) return;
 
+  // Create fresh Supabase client for this background task
+  const supabase = createFreshSupabaseClient();
+
   try {
-    const match = await findMatchingPayment({
+    const match = await findMatchingPayment(supabase, {
       tripId: tripId || undefined,
       wetravelOrderId: webhookOrderId || undefined,
       metadataOrderId: metadataOrderId || undefined,

@@ -336,7 +336,6 @@ export default function DateSelector() {
                       }}
                       placeholderText={t('dates.checkIn')}
                       minDate={new Date()}
-                      maxDate={checkOutDate || undefined}
                     />
                   </div>
 
@@ -498,8 +497,7 @@ export default function DateSelector() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              onClick={() => setIsDateSelectorCollapsed(false)}
-              className="card cursor-pointer hover:border-amber-300/50 transition-all"
+              className="card"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
@@ -537,6 +535,7 @@ export default function DateSelector() {
                 </div>
                 <button
                   type="button"
+                  onClick={() => setIsDateSelectorCollapsed(false)}
                   className="px-3 py-1.5 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors whitespace-nowrap"
                 >
                   {t('common.edit')}
