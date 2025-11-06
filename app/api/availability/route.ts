@@ -237,25 +237,37 @@ export async function POST(request: NextRequest) {
              Object.entries(roomTypes).forEach(([roomTypeKey, roomType]) => {
          const availableRooms = roomType.availableRoomsByDay[0] || 0;
          let totalCapacity = 0;
-         
+         let canAccommodateInSingleUnit = false;
+
          if (roomType.isSharedRoom) {
            // For shared rooms (Casa de Playa), available_rooms indicates available beds
            // Casa de Playa has 3 rooms: 2 rooms with 2 beds each + 1 room with 4 beds = 8 total beds
            totalCapacity = availableRooms;
+           // Shared rooms can accommodate multiple guests as long as there are enough beds
+           canAccommodateInSingleUnit = availableRooms >= guests;
            console.log(`🏠 ${roomTypeKey}: ${availableRooms} camas disponibles de ${roomType.maxGuests} totales`);
          } else {
-           // For individual rooms, multiply available rooms by capacity per room
-           totalCapacity = availableRooms * roomType.maxGuests;
-           console.log(`🏠 ${roomTypeKey}: ${availableRooms} habitaciones × ${roomType.maxGuests} huéspedes = ${totalCapacity} camas totales`);
+           // For individual private rooms, check if ONE room can accommodate all guests
+           // Don't multiply by available rooms - we need to fit everyone in ONE unit
+           totalCapacity = roomType.maxGuests;
+           canAccommodateInSingleUnit = roomType.maxGuests >= guests;
+           console.log(`🏠 ${roomTypeKey}: ${availableRooms} habitaciones disponibles, cada una con capacidad para ${roomType.maxGuests} huéspedes`);
+           console.log(`🏠 ${roomTypeKey}: Una habitación puede acomodar a ${guests} huéspedes: ${canAccommodateInSingleUnit ? 'SÍ' : 'NO'}`);
          }
-         
-         // Only include room types that can accommodate the requested guests
-         if (totalCapacity >= guests) {
+
+         // Only include room types where ONE unit can accommodate the requested guests
+         if (canAccommodateInSingleUnit) {
            validRoomTypes[roomTypeKey] = roomType;
-           totalBedsAvailable += totalCapacity;
-           console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes (${totalCapacity} camas disponibles)`);
+           totalBedsAvailable += (roomType.isSharedRoom ? availableRooms : roomType.maxGuests);
+           console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes en UNA unidad`);
          } else {
-           console.log(`❌ ${roomTypeKey} NO puede acomodar a ${guests} huéspedes (solo ${totalCapacity} camas disponibles)`);
+           console.log(`❌ ${roomTypeKey} NO puede acomodar a ${guests} huéspedes en una sola unidad (capacidad por unidad: ${roomType.maxGuests})`);
+
+           // Add helpful message for private rooms that need multiple units
+           if (!roomType.isSharedRoom && (availableRooms * roomType.maxGuests) >= guests) {
+             const roomsNeeded = Math.ceil(guests / roomType.maxGuests);
+             console.log(`ℹ️ ${roomTypeKey}: Necesitarías ${roomsNeeded} habitaciones para ${guests} huéspedes (${availableRooms} disponibles)`);
+           }
          }
        });
       
@@ -263,32 +275,61 @@ export async function POST(request: NextRequest) {
       
       // If no room types can accommodate the requested guests, return error
       if (Object.keys(validRoomTypes).length === 0) {
-        console.log(`❌ No hay ningún tipo de habitación que pueda acomodar a ${guests} huéspedes`);
-        
+        console.log(`❌ No hay ningún tipo de habitación individual que pueda acomodar a ${guests} huéspedes`);
+
         // Create detailed capacity breakdown for better error message
         const capacityBreakdown = Object.entries(roomTypes).map(([key, roomType]) => {
           const availableBeds = roomType.availableRoomsByDay[0] || 0;
-          const totalCapacity = availableBeds * roomType.maxGuests;
+          const maxGuestsPerUnit = roomType.maxGuests;
+          const roomsNeeded = roomType.isSharedRoom ?
+            (availableBeds >= guests ? 1 : 0) :
+            Math.ceil(guests / maxGuestsPerUnit);
+          const canAccommodateWithMultiple = roomType.isSharedRoom ?
+            availableBeds >= guests :
+            (availableBeds * maxGuestsPerUnit) >= guests;
+
           return {
             roomType: roomType.roomTypeName,
             availableRooms: availableBeds,
-            maxGuestsPerRoom: roomType.maxGuests,
-            totalCapacity: totalCapacity
+            maxGuestsPerUnit: maxGuestsPerUnit,
+            roomsNeeded: roomsNeeded,
+            canAccommodateWithMultiple: canAccommodateWithMultiple,
+            isSharedRoom: roomType.isSharedRoom
           };
         });
-        
+
+        // Check if any room type can accommodate with multiple units
+        const multiRoomOptions = capacityBreakdown.filter(room =>
+          !room.isSharedRoom && room.canAccommodateWithMultiple && room.roomsNeeded <= room.availableRooms
+        );
+
+        let errorMessage = `No hay habitaciones individuales que puedan acomodar a ${guests} huéspedes.`;
+        let suggestions = [
+          'Reducir el número de huéspedes',
+          'Seleccionar fechas diferentes'
+        ];
+
+        if (multiRoomOptions.length > 0) {
+          errorMessage = `Para ${guests} huéspedes, necesitas reservar múltiples habitaciones.`;
+          suggestions = [
+            ...multiRoomOptions.map(room =>
+              `${room.roomType}: Reservar ${room.roomsNeeded} habitaciones (${room.availableRooms} disponibles)`
+            ),
+            'Contactar al surfcamp para asistencia con reservas múltiples'
+          ];
+        } else {
+          suggestions.push('Contactar al surfcamp para opciones especiales');
+        }
+
         return NextResponse.json({
           success: false,
-          error: `No hay ningún tipo de habitación que pueda acomodar a ${guests} huéspedes.`,
+          error: errorMessage,
           available: false,
           requestedGuests: guests,
           totalBedsAvailable: 0,
           capacityBreakdown: capacityBreakdown,
-          suggestions: [
-            'Reducir el número de huéspedes',
-            'Seleccionar fechas diferentes',
-            'Contactar al surfcamp para opciones especiales'
-          ],
+          multiRoomOptions: multiRoomOptions,
+          suggestions: suggestions,
           debug: {
             totalDaysFromAPI: availabilityData.length,
             endpointUsed: '/available-rooms',
