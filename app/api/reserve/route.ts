@@ -15,7 +15,14 @@ import {
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
 
-// Mapeo de roomTypeId a category_id de LobbyPMS
+// Mapeo de roomTypeId a category_id de LobbyPMS (múltiples opciones por tipo)
+const ROOM_TYPE_MAPPING_MULTIPLE = {
+  'casa-playa': [4234],                      // Casa Playa
+  'casitas-privadas': [15507, 15505, 15506], // Casita 7, 3, 4 (try all)
+  'casas-deluxe': [5348, 5349, 15509, 15508] // Studio 1, Studio 2, Casita 5, Casita 6 (try all)
+};
+
+// Legacy mapping for backwards compatibility
 const ROOM_TYPE_MAPPING = {
   'casa-playa': 4234,        // Casa Playa
   'casitas-privadas': 15507, // Casita 7 (representativa de casitas privadas)
@@ -468,7 +475,7 @@ export async function POST(request: NextRequest) {
 
     // 🔍 DYNAMIC AVAILABILITY CHECK: Get real-time availability and select an available category
     console.log('🔍 [RESERVE] Checking real-time availability for dynamic category selection...');
-    let categoryId: number | undefined;
+    let categoryIdsToTry: number[] = [];
 
     try {
       // Call our own availability API to get real-time availability
@@ -495,31 +502,40 @@ export async function POST(request: NextRequest) {
         );
 
         if (requestedRoom && requestedRoom.debug?.originalCategory?.category_id) {
-          categoryId = requestedRoom.debug.originalCategory.category_id;
+          // Start with the dynamically found category
+          categoryIdsToTry.push(requestedRoom.debug.originalCategory.category_id);
           console.log('✅ [RESERVE] Found available category dynamically:', {
             roomTypeId,
-            categoryId,
+            categoryId: requestedRoom.debug.originalCategory.category_id,
             categoryName: requestedRoom.debug.originalCategory.name,
             availableRooms: requestedRoom.availableRooms
           });
-        } else {
-          console.log('⚠️ [RESERVE] No available category found for room type:', roomTypeId);
-          console.log('⚠️ [RESERVE] Available rooms:', availabilityData.availableRooms?.map((r: any) => r.roomTypeId));
         }
+
+        // Add all other category IDs for this room type as backups
+        const allCategoriesForType = ROOM_TYPE_MAPPING_MULTIPLE[roomTypeId as keyof typeof ROOM_TYPE_MAPPING_MULTIPLE] || [];
+        allCategoriesForType.forEach(id => {
+          if (!categoryIdsToTry.includes(id)) {
+            categoryIdsToTry.push(id);
+          }
+        });
       }
     } catch (availabilityError) {
       console.error('❌ [RESERVE] Error checking availability:', availabilityError);
     }
 
-    // Fallback to static mapping if dynamic selection failed
-    if (!categoryId) {
+    // Fallback to static mapping if no categories found
+    if (categoryIdsToTry.length === 0) {
       console.log('⚠️ [RESERVE] Falling back to static category mapping');
-      categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
+      const fallbackIds = ROOM_TYPE_MAPPING_MULTIPLE[roomTypeId as keyof typeof ROOM_TYPE_MAPPING_MULTIPLE];
+      if (fallbackIds && fallbackIds.length > 0) {
+        categoryIdsToTry = [...fallbackIds];
+      }
     }
 
-    console.log('🎯 [RESERVE] Final category_id selected:', categoryId);
+    console.log('🎯 [RESERVE] Category IDs to try (in order):', categoryIdsToTry);
 
-    if (!categoryId) {
+    if (categoryIdsToTry.length === 0) {
       return NextResponse.json(
         { error: `Tipo de habitaciÃ³n no vÃ¡lido: ${roomTypeId}` },
         { status: 400 }
@@ -547,7 +563,7 @@ export async function POST(request: NextRequest) {
       customer_document: contactInfo.dni, // TambiÃ©n como customer_document por si LobbyPMS lo requiere asÃ­
       customer_nationality: 'ES',       // Nacionalidad por defecto EspaÃ±a (requerido cuando hay documento)
       customer_email: contactInfo.email,
-      category_id: categoryId,
+      category_id: categoryIdsToTry[0], // Use first category ID, will retry with others if this fails
       room_type_id: roomTypeId,
       booking_reference: bookingReference,
       source: 'Surfcamp Santa Teresa',     // Fuente mÃ¡s clara
@@ -638,8 +654,47 @@ export async function POST(request: NextRequest) {
           holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
           notes: `${baseNotes}\n- Participante ${i + 1}/${uniqueParticipants.length}: ${participant.name}\n- Nota Surfcamp: Surfcamp`,
         };
+
+        // Try each category_id for this participant
+        let participantReservation: any = null;
+        let participantSuccess = false;
+
+        for (let categoryIdx = 0; categoryIdx < categoryIdsToTry.length; categoryIdx++) {
+          const currentCategoryId = categoryIdsToTry[categoryIdx];
+          console.log(`🔄 [RESERVE] Participant ${i + 1} - Attempt ${categoryIdx + 1}/${categoryIdsToTry.length} with category_id: ${currentCategoryId}`);
+
+          try {
+            const attemptData = {
+              ...participantBookingData,
+              category_id: currentCategoryId
+            };
+            participantReservation = await lobbyPMSClient.createBooking(attemptData);
+            participantSuccess = true;
+            console.log(`✅ [RESERVE] Participant ${i + 1} SUCCESS with category_id: ${currentCategoryId}`);
+            break;
+          } catch (participantAttemptError: any) {
+            const errorCode = participantAttemptError.response?.data?.error_code;
+            console.log(`❌ [RESERVE] Participant ${i + 1} attempt ${categoryIdx + 1} failed`, {
+              categoryId: currentCategoryId,
+              errorCode
+            });
+
+            // If NOT_ROOM and more categories available, try next
+            if (errorCode === 'NOT_ROOM' && categoryIdx < categoryIdsToTry.length - 1) {
+              continue;
+            }
+
+            // Otherwise, log but don't throw (continue with other participants)
+            break;
+          }
+        }
+
+        if (!participantSuccess || !participantReservation) {
+          console.error(`❌ [RESERVE] Failed to create reservation for participant ${i + 1}: ${participant.name}`);
+          continue; // Skip to next participant
+        }
+
         try {
-          const participantReservation = await lobbyPMSClient.createBooking(participantBookingData);
           const participantBookingId =
             participantReservation?.booking?.booking_id ||
             participantReservation?.booking_id ||
@@ -800,9 +855,53 @@ export async function POST(request: NextRequest) {
       room_type_id: bookingData.room_type_id
     });
 
+    // Try creating booking with each category_id until one succeeds
+    let reservationData: any = null;
+    let lastError: any = null;
+    let successfulCategoryId: number | null = null;
+
+    for (let i = 0; i < categoryIdsToTry.length; i++) {
+      const currentCategoryId = categoryIdsToTry[i];
+      console.log(`🔄 [RESERVE] Attempt ${i + 1}/${categoryIdsToTry.length} - Trying with category_id: ${currentCategoryId}`);
+
+      try {
+        const attemptBookingData = {
+          ...bookingData,
+          category_id: currentCategoryId
+        };
+
+        reservationData = await lobbyPMSClient.createBooking(attemptBookingData);
+        successfulCategoryId = currentCategoryId;
+        console.log(`✅ [RESERVE] SUCCESS with category_id: ${currentCategoryId}`);
+        console.log('✅ [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
+        break; // Success! Exit the loop
+      } catch (attemptError: any) {
+        lastError = attemptError;
+        const errorCode = attemptError.response?.data?.error_code;
+        console.log(`❌ [RESERVE] Attempt ${i + 1} failed with category_id: ${currentCategoryId}`, {
+          errorCode,
+          error: attemptError.response?.data?.error
+        });
+
+        // If it's a NOT_ROOM error and we have more categories to try, continue to next
+        if (errorCode === 'NOT_ROOM' && i < categoryIdsToTry.length - 1) {
+          console.log(`🔄 [RESERVE] Room not available, trying next category...`);
+          continue;
+        }
+
+        // For other errors or if this was the last attempt, throw the error
+        throw attemptError;
+      }
+    }
+
+    // If we got here without reservationData, all attempts failed
+    if (!reservationData) {
+      console.error('❌ [RESERVE] All category attempts failed');
+      throw lastError || new Error('Failed to create booking with any available category');
+    }
+
     try {
-      const reservationData = await lobbyPMSClient.createBooking(bookingData);
-      console.log('✅ [RESERVE] LobbyPMS createBooking response:', JSON.stringify(reservationData, null, 2));
+      console.log('✅ [RESERVE] Booking created successfully with category_id:', successfulCategoryId);
       const registeredGuests =
         reservationData?.booking?.guests?.registered ??
         reservationData?.booking?.registered_guests ??
