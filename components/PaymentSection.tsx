@@ -27,6 +27,7 @@ export default function PaymentSection() {
   const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
+  const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation'>('waiting');
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
@@ -183,6 +184,15 @@ export default function PaymentSection() {
       console.log('🔍 Payment status check:', data);
       console.log('🔍 Debug - orderId:', orderId, 'tripId:', tripId);
       console.log('🔍 Debug - show_success:', data.show_success, 'is_booking_created:', data.is_booking_created, 'is_completed:', data.is_completed);
+
+      // Update status message based on payment state
+      if (data.payment?.status === 'booking_created' || data.payment?.status === 'completed') {
+        if (data.order?.lobbypms_reservation_id) {
+          setPaymentStatusMessage('processing_reservation');
+        } else {
+          setPaymentStatusMessage('payment_received');
+        }
+      }
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
         console.log('🎉 Payment successful, redirecting to success page');
@@ -510,6 +520,7 @@ export default function PaymentSection() {
         // Mostrar estado de esperando procesar pago
         setError(''); // Limpiar errores previos
         setIsWaitingForPayment(true);
+        setPaymentStatusMessage('waiting'); // Reset message to initial state
 
         // Start polling for payment status using both order_id and trip_id
         const orderId = wetravelData.order_id;
@@ -647,15 +658,39 @@ export default function PaymentSection() {
             <div className="flex flex-col items-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300"></div>
               <div>
-                <h3 className="text-lg font-semibold text-yellow-300 mb-2 font-heading">
-                  {t('payment.waitingForPayment.title')}
-                </h3>
-                <p className="text-blue-300 text-sm">
-                  {t('payment.waitingForPayment.description')}
-                </p>
+                {paymentStatusMessage === 'waiting' && (
+                  <>
+                    <h3 className="text-lg font-semibold text-yellow-300 mb-2 font-heading">
+                      {t('payment.waitingForPayment.title')}
+                    </h3>
+                    <p className="text-blue-300 text-sm">
+                      {t('payment.waitingForPayment.description')}
+                    </p>
+                  </>
+                )}
+                {paymentStatusMessage === 'payment_received' && (
+                  <>
+                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
+                      ✅ ¡Pago Recibido!
+                    </h3>
+                    <p className="text-blue-300 text-sm">
+                      Procesando tu reserva, esto tomará solo unos segundos...
+                    </p>
+                  </>
+                )}
+                {paymentStatusMessage === 'processing_reservation' && (
+                  <>
+                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
+                      ✨ Confirmando Reserva...
+                    </h3>
+                    <p className="text-blue-300 text-sm">
+                      Tu pago fue procesado exitosamente. Estamos confirmando tu reserva en el sistema.
+                    </p>
+                  </>
+                )}
                 {isCheckingPaymentStatus && (
-                  <p className="text-green-300 text-xs mt-2">
-                    ✅ Verificando estado del pago automáticamente...
+                  <p className="text-green-300 text-xs mt-3 animate-pulse">
+                    🔄 Verificando estado automáticamente...
                   </p>
                 )}
               </div>

@@ -90,12 +90,12 @@ export async function GET(request: NextRequest) {
 
       // If updated in last 60 seconds, might be read-after-write issue / replica lag
       if (secondsSinceUpdate < 60) {
-        console.log('⏳ [PAYMENT-STATUS] Recent update detected, retrying payment query up to 5 times...');
+        console.log('⏳ [PAYMENT-STATUS] Recent update detected, retrying payment query up to 6 times...');
 
-        // Try up to 5 times with increasing delays: 2s, 3s, 4s, 5s, 6s
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          const delay = (attempt + 1) * 1000;
-          console.log(`⏳ [PAYMENT-STATUS] Payment retry attempt ${attempt}/5, waiting ${delay}ms...`);
+        // Try up to 6 times with shorter delays: 1s, 1.5s, 2s, 2.5s, 3s, 3.5s (total ~13.5s)
+        for (let attempt = 1; attempt <= 6; attempt++) {
+          const delay = 500 + (attempt * 500); // 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
+          console.log(`⏳ [PAYMENT-STATUS] Payment retry attempt ${attempt}/6, waiting ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
           // Retry the query with completely fresh client
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
             retryPayment = data && data.length > 0 ? data[0] : null;
           }
 
-          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/5 - status:`, retryPayment?.status || 'not_found');
+          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 - status:`, retryPayment?.status || 'not_found');
 
           if (retryPayment) {
             payment = retryPayment as typeof payment;
@@ -308,12 +308,12 @@ export async function GET(request: NextRequest) {
 
       // Increased time window from 30s to 60s
       if (secondsSinceUpdate < 60) {
-        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 5 times with longer delays...');
+        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 6 times with shorter delays...');
 
-        // Try up to 5 times with exponential backoff: 2s, 3s, 4s, 5s, 6s
-        for (let attempt = 1; attempt <= 5; attempt++) {
-          const delay = (attempt + 1) * 1000; // 2s, 3s, 4s, 5s, 6s
-          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/5, waiting ${delay}ms...`);
+        // Try up to 6 times with shorter delays: 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
+        for (let attempt = 1; attempt <= 6; attempt++) {
+          const delay = 500 + (attempt * 500); // 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
+          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/6, waiting ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
           // Create completely fresh client each time
@@ -346,7 +346,7 @@ export async function GET(request: NextRequest) {
             .eq('id', payment.order_id)
             .single();
 
-          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/5 results:`, {
+          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/6 results:`, {
             paymentStatus: retryPayment?.status || 'not_found',
             orderStatus: retryOrder?.status || 'not_found',
             lobbypmsReservationId: retryOrder?.lobbypms_reservation_id || null,
