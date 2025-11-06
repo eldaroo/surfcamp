@@ -675,10 +675,55 @@ async function handleBookingCreated(
       actualOrderId: context.actualOrderId
     });
 
-    const match = await findMatchingPayment(supabase, {
+    let match = await findMatchingPayment(supabase, {
       ...context,
       eventType: 'booking.created'
     });
+
+    // 🔄 FALLBACK: If no match found, try searching by recent pending payments
+    if (!match && context.tripId) {
+      console.log('⚠️ [WEBHOOK] No match found, trying fallback search by recent pending payments...');
+
+      // Get the most recent pending payment (within last 5 minutes)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: recentPayments } = await supabase
+        .from('payments')
+        .select('id, order_id, wetravel_data, wetravel_order_id, status, created_at')
+        .eq('status', 'pending')
+        .gte('created_at', fiveMinutesAgo)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (recentPayments && recentPayments.length > 0) {
+        console.log(`🔍 [WEBHOOK] Found ${recentPayments.length} recent pending payments`);
+
+        // Try to match by order_id similarity or just use the most recent one
+        const possibleMatch = recentPayments[0];
+
+        // Update this payment with the trip_id for future reference
+        const { error: updateError } = await supabase
+          .from('payments')
+          .update({
+            wetravel_data: {
+              ...(possibleMatch.wetravel_data as any || {}),
+              trip_id: context.tripId,
+              wetravel_order_id: context.wetravelOrderId,
+              matched_by_fallback: true,
+              matched_at: new Date().toISOString()
+            },
+            wetravel_order_id: context.wetravelOrderId || possibleMatch.wetravel_order_id
+          })
+          .eq('id', possibleMatch.id);
+
+        if (!updateError) {
+          console.log('✅ [WEBHOOK] Updated payment with trip_id via fallback');
+          match = {
+            payment: possibleMatch as any,
+            matchedBy: 'fallback-recent-pending'
+          };
+        }
+      }
+    }
 
     if (!match) {
       console.error('❌ [WEBHOOK] NO PAYMENT FOUND for booking.created');
@@ -686,7 +731,8 @@ async function handleBookingCreated(
 
       const { data: allPayments, error: allPaymentsError } = await supabase
         .from('payments')
-        .select('id, order_id, wetravel_data, wetravel_order_id, status')
+        .select('id, order_id, wetravel_data, wetravel_order_id, status, created_at')
+        .order('created_at', { ascending: false })
         .limit(5);
 
       if (!allPaymentsError && allPayments) {
@@ -694,10 +740,13 @@ async function handleBookingCreated(
           id: p.id,
           order_id: p.order_id,
           status: p.status,
-          trip_id: (p.wetravel_data as any)?.trip_id
+          created_at: p.created_at,
+          trip_id: (p.wetravel_data as any)?.trip_id,
+          wetravel_order_id: p.wetravel_order_id
         })));
       }
 
+      return; // Exit early if no payment found
     } else {
       console.log('✅ [WEBHOOK] Payment FOUND, matched by:', match.matchedBy);
       const payment = match.payment;

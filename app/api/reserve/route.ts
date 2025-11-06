@@ -489,7 +489,12 @@ export async function POST(request: NextRequest) {
 
       console.log('🔍 [RESERVE] Got availability data from LobbyPMS:', {
         daysReturned: rawAvailabilityData.length,
-        firstDayCategories: rawAvailabilityData[0]?.categories?.length || 0
+        firstDayCategories: rawAvailabilityData[0]?.categories?.length || 0,
+        allCategories: rawAvailabilityData[0]?.categories?.map((c: any) => ({
+          id: c.category_id,
+          name: c.name,
+          available: c.available_rooms
+        })) || []
       });
 
       // Extract ALL available category IDs for the requested room type
@@ -534,6 +539,12 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+
+      console.log('🎯 [RESERVE] Category IDs extraction completed:', {
+        roomTypeId,
+        foundCategoryIds: categoryIdsToTry,
+        count: categoryIdsToTry.length
+      });
     } catch (availabilityError) {
       console.error('❌ [RESERVE] Error checking availability:', availabilityError);
     }
