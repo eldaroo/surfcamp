@@ -16,6 +16,8 @@ type RoomFromAPI = {
   totalCapacity?: number;
   canAccommodateRequestedGuests?: boolean;
   isSharedRoom?: boolean;
+  roomsNeeded?: number;
+  requiresMultipleRooms?: boolean;
 };
 
 type AccommodationCardProps = {
@@ -360,7 +362,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Availability + Capacity */}
-                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
+                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5 flex-wrap">
                     <div
                       className="rounded-full px-2 md:px-3 py-0.5 md:py-1 text-white text-[10px] md:text-xs font-medium border"
                       style={{
@@ -370,6 +372,19 @@ const AccommodationCard = ({
                     >
                       {room.availableRooms} {room.availableRooms === 1 ? 'available' : 'available'}
                     </div>
+
+                    {/* Multiple Rooms Badge */}
+                    {room.requiresMultipleRooms && room.roomsNeeded && (
+                      <div
+                        className="rounded-full px-2 md:px-3 py-0.5 md:py-1 text-white text-[10px] md:text-xs font-semibold border animate-pulse"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--brand-orange) 25%, transparent)',
+                          borderColor: 'color-mix(in srgb, var(--brand-orange) 50%, transparent)'
+                        }}
+                      >
+                        {room.roomsNeeded} {locale === 'es' ? 'habitaciones necesarias' : 'rooms needed'}
+                      </div>
+                    )}
 
                     <div className="flex items-center text-slate-300 text-[10px] md:text-xs font-medium">
                       <svg className="w-3 md:w-4 h-3 md:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

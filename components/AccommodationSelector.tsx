@@ -32,6 +32,8 @@ export default function AccommodationSelector() {
     totalCapacity?: number;
     canAccommodateRequestedGuests?: boolean;
     isSharedRoom?: boolean;
+    roomsNeeded?: number;
+    requiresMultipleRooms?: boolean;
   };
 
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -238,10 +240,22 @@ export default function AccommodationSelector() {
             const features = getRoomFeatures(room.roomTypeId);
             const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
             const isUnavailable = room.availableRooms === 0;
-            const roomPrice = room.isSharedRoom ? room.pricePerNight * (bookingData.guests || 1) : room.pricePerNight;
-            const totalPrice = room.isSharedRoom
-              ? room.pricePerNight * nights * (bookingData.guests || 1)
-              : room.pricePerNight * nights;
+
+            const roomsNeeded = room.roomsNeeded || 1;
+
+            // Calculate price based on room type and number of rooms needed
+            let roomPrice;
+            let totalPrice;
+
+            if (room.isSharedRoom) {
+              // Shared room: price per person per night
+              roomPrice = room.pricePerNight * (bookingData.guests || 1);
+              totalPrice = roomPrice * nights;
+            } else {
+              // Private rooms: price per room per night, multiplied by number of rooms needed
+              roomPrice = room.pricePerNight * roomsNeeded;
+              totalPrice = roomPrice * nights;
+            }
 
             // Get room descriptions directly from translations
             const roomDescriptions = raw<Record<string, { desktop: string; mobile: string }>>('accommodation.roomDescriptions') || {};

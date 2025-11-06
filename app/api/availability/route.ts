@@ -237,36 +237,48 @@ export async function POST(request: NextRequest) {
              Object.entries(roomTypes).forEach(([roomTypeKey, roomType]) => {
          const availableRooms = roomType.availableRoomsByDay[0] || 0;
          let totalCapacity = 0;
-         let canAccommodateInSingleUnit = false;
+         let canAccommodate = false;
+         let roomsNeeded = 0;
+         let requiresMultipleRooms = false;
 
          if (roomType.isSharedRoom) {
            // For shared rooms (Casa de Playa), available_rooms indicates available beds
-           // Casa de Playa has 3 rooms: 2 rooms with 2 beds each + 1 room with 4 beds = 8 total beds
            totalCapacity = availableRooms;
-           // Shared rooms can accommodate multiple guests as long as there are enough beds
-           canAccommodateInSingleUnit = availableRooms >= guests;
+           roomsNeeded = 1; // Shared room is always 1 unit
+           canAccommodate = availableRooms >= guests;
+           requiresMultipleRooms = false;
            console.log(`🏠 ${roomTypeKey}: ${availableRooms} camas disponibles de ${roomType.maxGuests} totales`);
          } else {
-           // For individual private rooms, check if ONE room can accommodate all guests
-           // Don't multiply by available rooms - we need to fit everyone in ONE unit
-           totalCapacity = roomType.maxGuests;
-           canAccommodateInSingleUnit = roomType.maxGuests >= guests;
+           // For individual private rooms, calculate how many rooms are needed
+           roomsNeeded = Math.ceil(guests / roomType.maxGuests);
+           totalCapacity = availableRooms * roomType.maxGuests;
+           canAccommodate = availableRooms >= roomsNeeded;
+           requiresMultipleRooms = roomsNeeded > 1;
+
            console.log(`🏠 ${roomTypeKey}: ${availableRooms} habitaciones disponibles, cada una con capacidad para ${roomType.maxGuests} huéspedes`);
-           console.log(`🏠 ${roomTypeKey}: Una habitación puede acomodar a ${guests} huéspedes: ${canAccommodateInSingleUnit ? 'SÍ' : 'NO'}`);
+           console.log(`🏠 ${roomTypeKey}: Para ${guests} huéspedes se necesitan ${roomsNeeded} habitaciones`);
+           console.log(`🏠 ${roomTypeKey}: ¿Puede acomodar? ${canAccommodate ? 'SÍ' : 'NO'} (${requiresMultipleRooms ? 'MÚLTIPLES habitaciones' : 'UNA habitación'})`);
          }
 
-         // Only include room types where ONE unit can accommodate the requested guests
-         if (canAccommodateInSingleUnit) {
-           validRoomTypes[roomTypeKey] = roomType;
-           totalBedsAvailable += (roomType.isSharedRoom ? availableRooms : roomType.maxGuests);
-           console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes en UNA unidad`);
-         } else {
-           console.log(`❌ ${roomTypeKey} NO puede acomodar a ${guests} huéspedes en una sola unidad (capacidad por unidad: ${roomType.maxGuests})`);
+         // Include room types that can accommodate guests (either in single or multiple rooms)
+         if (canAccommodate && availableRooms > 0) {
+           validRoomTypes[roomTypeKey] = {
+             ...roomType,
+             roomsNeeded,
+             requiresMultipleRooms
+           };
+           totalBedsAvailable += (roomType.isSharedRoom ? availableRooms : totalCapacity);
 
-           // Add helpful message for private rooms that need multiple units
-           if (!roomType.isSharedRoom && (availableRooms * roomType.maxGuests) >= guests) {
-             const roomsNeeded = Math.ceil(guests / roomType.maxGuests);
-             console.log(`ℹ️ ${roomTypeKey}: Necesitarías ${roomsNeeded} habitaciones para ${guests} huéspedes (${availableRooms} disponibles)`);
+           if (requiresMultipleRooms) {
+             console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes usando ${roomsNeeded} habitaciones`);
+           } else {
+             console.log(`✅ ${roomTypeKey} puede acomodar a ${guests} huéspedes en UNA unidad`);
+           }
+         } else {
+           if (availableRooms === 0) {
+             console.log(`❌ ${roomTypeKey} no tiene habitaciones disponibles`);
+           } else {
+             console.log(`❌ ${roomTypeKey} NO puede acomodar a ${guests} huéspedes (necesita ${roomsNeeded} habitaciones, solo ${availableRooms} disponibles)`);
            }
          }
        });
@@ -360,27 +372,36 @@ export async function POST(request: NextRequest) {
           
           if (key === 'casa-playa') {
             // Casa de Playa: precio por persona/cama
-            finalPrice = representativeCategory.prices?.find((p: any) => p.people === 1)?.value || null;
+            const pricePerBed = representativeCategory.prices?.find((p: any) => p.people === 1)?.value || null;
+            finalPrice = pricePerBed; // Price per night per person
+            console.log(`💰 ${key}: ${guests} guests × $${pricePerBed} per person = $${pricePerBed} per person per night`);
           } else {
-            // Casitas Privadas/Deluxe: usar precio por habitación según ocupación real
+            // Casitas Privadas/Deluxe: calcular precio total para múltiples habitaciones
             const singlePrice = representativeCategory.prices?.find((p: any) => p.people === 1)?.value;
             const doublePrice = representativeCategory.prices?.find((p: any) => p.people === 2)?.value;
-            
-            // Para habitaciones privadas, determinar la ocupación más eficiente
+
+            const roomsNeeded = roomType.roomsNeeded || 1;
             console.log(`💰 ${key} available prices - Single: $${singlePrice}, Double: $${doublePrice}`);
-            
-            if (guests === 1) {
-              finalPrice = singlePrice;
-              console.log(`💰 ${key}: 1 guest → single occupancy price: $${finalPrice}`);
-            } else if (guests === 2) {
-              finalPrice = doublePrice || singlePrice;
-              console.log(`💰 ${key}: 2 guests → ${doublePrice ? 'double' : 'single fallback'} price: $${finalPrice}`);
+            console.log(`💰 ${key}: Need ${roomsNeeded} room(s) for ${guests} guests`);
+
+            // Calculate price per room based on optimal occupancy
+            let pricePerRoom = doublePrice || singlePrice;
+
+            if (roomsNeeded === 1) {
+              // Single room - use appropriate pricing
+              if (guests === 1) {
+                pricePerRoom = singlePrice;
+              } else {
+                pricePerRoom = doublePrice || singlePrice;
+              }
             } else {
-              // Para más de 2 huéspedes, usar precio doble como base
-              // (el frontend calculará habitaciones necesarias)
-              finalPrice = doublePrice || singlePrice;
-              console.log(`💰 ${key}: ${guests} guests → using ${doublePrice ? 'double' : 'single fallback'} base price: $${finalPrice}`);
+              // Multiple rooms needed - use double occupancy pricing as base
+              // For example: 3 guests = 2 rooms (1 double + 1 single)
+              pricePerRoom = doublePrice || singlePrice;
             }
+
+            finalPrice = pricePerRoom;
+            console.log(`💰 ${key}: Base price per room: $${finalPrice}`);
           }
         }
         
@@ -415,6 +436,8 @@ export async function POST(request: NextRequest) {
           totalCapacity: totalCapacity,
           canAccommodateRequestedGuests: canAccommodateRequestedGuests,
           isSharedRoom: roomType.isSharedRoom,
+          roomsNeeded: roomType.roomsNeeded || 1, // Number of rooms needed for requested guests
+          requiresMultipleRooms: roomType.requiresMultipleRooms || false, // Flag indicating multiple rooms required
           debug: {
             originalCategory: roomType.categories[0] || null, // First category as example (null if none)
             source: 'available-rooms-endpoint',
