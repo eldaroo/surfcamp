@@ -79,7 +79,9 @@
       "Bash(npx create-file-with-code.js)",
       "Bash(del \"C:\\Users\\loko_\\OneDrive\\Desktop\\Escritorio\\surfcamp\\add-pid-logs.js\")",
       "Bash(git checkout:*)",
-      "Bash(nslookup:*)"
+      "Bash(nslookup:*)",
+      "Bash(pm2 restart:*)",
+      "Bash(npx pm2:*)"
     ],
     "deny": [],
     "ask": []

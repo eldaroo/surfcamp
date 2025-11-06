@@ -16,10 +16,11 @@ import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
 
 // Mapeo de roomTypeId a category_id de LobbyPMS (múltiples opciones por tipo)
+// TODO: Verificar los category_ids correctos para cada casita en LobbyPMS
 const ROOM_TYPE_MAPPING_MULTIPLE = {
-  'casa-playa': [4234],                      // Casa Playa
-  'casitas-privadas': [15507, 15505, 15506], // Casita 7, 3, 4 (try all)
-  'casas-deluxe': [5348, 5349, 15509, 15508] // Studio 1, Studio 2, Casita 5, Casita 6 (try all)
+  'casa-playa': [4234],     // Casa Playa
+  'casitas-privadas': [15507], // Casita 7 (otros IDs por verificar)
+  'casas-deluxe': [5348]    // Studio 1 (otros IDs por verificar)
 };
 
 // Legacy mapping for backwards compatibility
@@ -478,47 +479,60 @@ export async function POST(request: NextRequest) {
     let categoryIdsToTry: number[] = [];
 
     try {
-      // Call our own availability API to get real-time availability
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-      const availabilityUrl = new URL(`${baseUrl}/api/availability`);
-      availabilityUrl.searchParams.append('checkIn', formatDateForLobbyPMS(checkIn));
-      availabilityUrl.searchParams.append('checkOut', formatDateForLobbyPMS(checkOut));
-      availabilityUrl.searchParams.append('guests', guests?.toString() || '1');
+      // Call LobbyPMS directly to get real-time availability
+      console.log('🔍 [RESERVE] Calling LobbyPMS available-rooms API...');
 
-      console.log('🔍 [RESERVE] Calling availability API:', availabilityUrl.toString());
-
-      const availabilityResponse = await fetch(availabilityUrl.toString());
-      const availabilityData = await availabilityResponse.json();
-
-      console.log('🔍 [RESERVE] Availability response:', {
-        success: availabilityData.success,
-        availableRoomsCount: availabilityData.availableRooms?.length
+      const rawAvailabilityData = await lobbyPMSClient.getAvailableRooms({
+        start_date: formatDateForLobbyPMS(checkIn),
+        end_date: formatDateForLobbyPMS(checkOut),
       });
 
-      if (availabilityData.success && availabilityData.availableRooms) {
-        // Find the requested room type
-        const requestedRoom = availabilityData.availableRooms.find(
-          (room: any) => room.roomTypeId === roomTypeId && room.available
-        );
+      console.log('🔍 [RESERVE] Got availability data from LobbyPMS:', {
+        daysReturned: rawAvailabilityData.length,
+        firstDayCategories: rawAvailabilityData[0]?.categories?.length || 0
+      });
 
-        if (requestedRoom && requestedRoom.debug?.originalCategory?.category_id) {
-          // Start with the dynamically found category
-          categoryIdsToTry.push(requestedRoom.debug.originalCategory.category_id);
-          console.log('✅ [RESERVE] Found available category dynamically:', {
-            roomTypeId,
-            categoryId: requestedRoom.debug.originalCategory.category_id,
-            categoryName: requestedRoom.debug.originalCategory.name,
-            availableRooms: requestedRoom.availableRooms
+      // Extract ALL available category IDs for the requested room type
+      if (rawAvailabilityData && rawAvailabilityData.length > 0) {
+        const firstDay = rawAvailabilityData[0];
+
+        if (firstDay && firstDay.categories) {
+          firstDay.categories.forEach((category: any) => {
+            const categoryName = (category.name || '').toLowerCase();
+            let shouldInclude = false;
+
+            // Match categories to room types
+            if (roomTypeId === 'casa-playa' && categoryName === 'casa playa') {
+              shouldInclude = true;
+            } else if (roomTypeId === 'casitas-privadas' &&
+                      (categoryName === 'casita 3' || categoryName === 'casita 4' || categoryName === 'casita 7')) {
+              shouldInclude = true;
+            } else if (roomTypeId === 'casas-deluxe' &&
+                      (categoryName === 'studio 1' || categoryName === 'studio 2' ||
+                       categoryName === 'casita 5' || categoryName === 'casita 6')) {
+              shouldInclude = true;
+            }
+
+            if (shouldInclude && category.category_id) {
+              const availableRooms = category.available_rooms || 0;
+
+              // Add this category if it has availability
+              if (availableRooms > 0 && !categoryIdsToTry.includes(category.category_id)) {
+                categoryIdsToTry.push(category.category_id);
+                console.log('✅ [RESERVE] Found available category:', {
+                  categoryId: category.category_id,
+                  categoryName: category.name,
+                  availableRooms: availableRooms
+                });
+              } else if (availableRooms === 0) {
+                console.log('⚠️ [RESERVE] Category has no availability:', {
+                  categoryId: category.category_id,
+                  categoryName: category.name
+                });
+              }
+            }
           });
         }
-
-        // Add all other category IDs for this room type as backups
-        const allCategoriesForType = ROOM_TYPE_MAPPING_MULTIPLE[roomTypeId as keyof typeof ROOM_TYPE_MAPPING_MULTIPLE] || [];
-        allCategoriesForType.forEach(id => {
-          if (!categoryIdsToTry.includes(id)) {
-            categoryIdsToTry.push(id);
-          }
-        });
       }
     } catch (availabilityError) {
       console.error('❌ [RESERVE] Error checking availability:', availabilityError);
