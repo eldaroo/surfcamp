@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
           console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/5 - status:`, retryPayment?.status || 'not_found');
 
           if (retryPayment) {
-            payment = retryPayment;
+            payment = retryPayment as typeof payment;
             // If status changed from pending, break early
             if (retryPayment.status !== 'pending') {
               console.log(`✅ [PAYMENT-STATUS] Payment status changed to ${retryPayment.status} on attempt ${attempt}!`);
@@ -356,7 +356,7 @@ export async function GET(request: NextRequest) {
           // Update local variables if we got better data
           if (retryPayment && retryPayment.status !== 'pending') {
             console.log(`✅ [PAYMENT-STATUS] Payment status updated to ${retryPayment.status} on retry!`);
-            payment = { ...payment, ...retryPayment };
+            payment = { ...payment, ...retryPayment } as typeof payment;
           }
 
           if (retryOrder) {
