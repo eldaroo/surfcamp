@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     console.log('🕐 [PAYMENT-STATUS] Payment updated_at:', payment.updated_at);
     console.log('🔢 [PAYMENT-STATUS] Payment ID:', payment.id);
 
-    // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry after delay
+    // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry multiple times with delays
     if (payment.status === 'pending' && payment.updated_at) {
       const updatedAt = new Date(payment.updated_at);
       const now = new Date();
@@ -88,40 +88,59 @@ export async function GET(request: NextRequest) {
 
       console.log('⏱️ [PAYMENT-STATUS] Seconds since last update:', secondsSinceUpdate);
 
-      // If updated in last 30 seconds, might be read-after-write issue
-      if (secondsSinceUpdate < 30) {
-        console.log('⏳ [PAYMENT-STATUS] Recent update detected, waiting 1s and retrying payment query...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      // If updated in last 60 seconds, might be read-after-write issue / replica lag
+      if (secondsSinceUpdate < 60) {
+        console.log('⏳ [PAYMENT-STATUS] Recent update detected, retrying payment query up to 5 times...');
 
-        // Retry the query with fresh client
-        const freshSupabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: { autoRefreshToken: false, persistSession: false },
-            global: { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } }
+        // Try up to 5 times with increasing delays: 2s, 3s, 4s, 5s, 6s
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          const delay = (attempt + 1) * 1000;
+          console.log(`⏳ [PAYMENT-STATUS] Payment retry attempt ${attempt}/5, waiting ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+
+          // Retry the query with completely fresh client
+          const freshSupabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+            {
+              auth: { autoRefreshToken: false, persistSession: false },
+              db: { schema: 'public' },
+              global: {
+                headers: {
+                  'cache-control': 'no-cache, no-store, must-revalidate',
+                  'pragma': 'no-cache',
+                  'expires': '0'
+                }
+              }
+            }
+          );
+
+          let retryPayment;
+          if (orderId) {
+            const { data } = await freshSupabase
+              .from('payments')
+              .select('id, order_id, status, wetravel_data, created_at, updated_at')
+              .eq('order_id', orderId)
+              .single();
+            retryPayment = data;
+          } else if (tripId) {
+            const { data } = await freshSupabase
+              .from('payments')
+              .select('id, order_id, status, wetravel_data, created_at, updated_at')
+              .contains('wetravel_data', { trip_id: tripId });
+            retryPayment = data && data.length > 0 ? data[0] : null;
           }
-        );
 
-        let retryPayment;
-        if (orderId) {
-          const { data } = await freshSupabase
-            .from('payments')
-            .select('id, order_id, status, wetravel_data, created_at, updated_at')
-            .eq('order_id', orderId)
-            .single();
-          retryPayment = data;
-        } else if (tripId) {
-          const { data } = await freshSupabase
-            .from('payments')
-            .select('id, order_id, status, wetravel_data, created_at, updated_at')
-            .contains('wetravel_data', { trip_id: tripId });
-          retryPayment = data && data.length > 0 ? data[0] : null;
-        }
+          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/5 - status:`, retryPayment?.status || 'not_found');
 
-        if (retryPayment) {
-          console.log('🔄 [PAYMENT-STATUS] Retry result - status:', retryPayment.status);
-          payment = retryPayment;
+          if (retryPayment) {
+            payment = retryPayment;
+            // If status changed from pending, break early
+            if (retryPayment.status !== 'pending') {
+              console.log(`✅ [PAYMENT-STATUS] Payment status changed to ${retryPayment.status} on attempt ${attempt}!`);
+              break;
+            }
+          }
         }
       }
     }
@@ -281,29 +300,45 @@ export async function GET(request: NextRequest) {
       lobbypmsReservationId: order?.lobbypms_reservation_id
     });
 
-    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry multiple times
+    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry multiple times with longer delays
     if (!order?.lobbypms_reservation_id && payment.updated_at) {
       const updatedAt = new Date(payment.updated_at);
       const now = new Date();
       const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
 
-      if (secondsSinceUpdate < 30) {
-        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 3 times...');
+      // Increased time window from 30s to 60s
+      if (secondsSinceUpdate < 60) {
+        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 5 times with longer delays...');
 
-        // Try up to 3 times with increasing delays
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          const delay = attempt * 1000; // 1s, 2s, 3s
-          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/3, waiting ${delay}ms...`);
+        // Try up to 5 times with exponential backoff: 2s, 3s, 4s, 5s, 6s
+        for (let attempt = 1; attempt <= 5; attempt++) {
+          const delay = (attempt + 1) * 1000; // 2s, 3s, 4s, 5s, 6s
+          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/5, waiting ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
+          // Create completely fresh client each time
           const freshSupabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.SUPABASE_SERVICE_ROLE_KEY!,
             {
               auth: { autoRefreshToken: false, persistSession: false },
-              global: { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } }
+              db: { schema: 'public' },
+              global: {
+                headers: {
+                  'cache-control': 'no-cache, no-store, must-revalidate',
+                  'pragma': 'no-cache',
+                  'expires': '0'
+                }
+              }
             }
           );
+
+          // Re-query both payment and order with fresh client
+          const { data: retryPayment } = await freshSupabase
+            .from('payments')
+            .select('id, order_id, status, updated_at')
+            .eq('id', payment.id)
+            .single();
 
           const { data: retryOrder } = await freshSupabase
             .from('orders')
@@ -311,16 +346,25 @@ export async function GET(request: NextRequest) {
             .eq('id', payment.order_id)
             .single();
 
-          console.log(`🔄 [PAYMENT-STATUS] Order data (retry ${attempt}/3):`, {
-            orderId: retryOrder?.id,
-            orderStatus: retryOrder?.status,
-            lobbypmsReservationId: retryOrder?.lobbypms_reservation_id
+          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/5 results:`, {
+            paymentStatus: retryPayment?.status || 'not_found',
+            orderStatus: retryOrder?.status || 'not_found',
+            lobbypmsReservationId: retryOrder?.lobbypms_reservation_id || null,
+            paymentUpdatedAt: retryPayment?.updated_at
           });
 
-          if (retryOrder?.lobbypms_reservation_id) {
-            console.log('✅ [PAYMENT-STATUS] Reservation ID found on retry!');
+          // Update local variables if we got better data
+          if (retryPayment && retryPayment.status !== 'pending') {
+            console.log(`✅ [PAYMENT-STATUS] Payment status updated to ${retryPayment.status} on retry!`);
+            payment = { ...payment, ...retryPayment };
+          }
+
+          if (retryOrder) {
             order = retryOrder;
-            break;
+            if (retryOrder.lobbypms_reservation_id) {
+              console.log('✅ [PAYMENT-STATUS] Reservation ID found on retry:', retryOrder.lobbypms_reservation_id);
+              break;
+            }
           }
         }
       }
