@@ -459,20 +459,72 @@ export async function POST(request: NextRequest) {
     }
 
     const bookingReference = generateBookingReference();
-    // Get the corresponding category_id for LobbyPMS
-    const categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
-    
+
+    // Convert dates to the format expected by LobbyPMS (Y-m-d)
+    const formatDateForLobbyPMS = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0]; // Gets YYYY-MM-DD format
+    };
+
+    // 🔍 DYNAMIC AVAILABILITY CHECK: Get real-time availability and select an available category
+    console.log('🔍 [RESERVE] Checking real-time availability for dynamic category selection...');
+    let categoryId: number | undefined;
+
+    try {
+      // Call our own availability API to get real-time availability
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+      const availabilityUrl = new URL(`${baseUrl}/api/availability`);
+      availabilityUrl.searchParams.append('checkIn', formatDateForLobbyPMS(checkIn));
+      availabilityUrl.searchParams.append('checkOut', formatDateForLobbyPMS(checkOut));
+      availabilityUrl.searchParams.append('guests', guests?.toString() || '1');
+
+      console.log('🔍 [RESERVE] Calling availability API:', availabilityUrl.toString());
+
+      const availabilityResponse = await fetch(availabilityUrl.toString());
+      const availabilityData = await availabilityResponse.json();
+
+      console.log('🔍 [RESERVE] Availability response:', {
+        success: availabilityData.success,
+        availableRoomsCount: availabilityData.availableRooms?.length
+      });
+
+      if (availabilityData.success && availabilityData.availableRooms) {
+        // Find the requested room type
+        const requestedRoom = availabilityData.availableRooms.find(
+          (room: any) => room.roomTypeId === roomTypeId && room.available
+        );
+
+        if (requestedRoom && requestedRoom.debug?.originalCategory?.category_id) {
+          categoryId = requestedRoom.debug.originalCategory.category_id;
+          console.log('✅ [RESERVE] Found available category dynamically:', {
+            roomTypeId,
+            categoryId,
+            categoryName: requestedRoom.debug.originalCategory.name,
+            availableRooms: requestedRoom.availableRooms
+          });
+        } else {
+          console.log('⚠️ [RESERVE] No available category found for room type:', roomTypeId);
+          console.log('⚠️ [RESERVE] Available rooms:', availabilityData.availableRooms?.map((r: any) => r.roomTypeId));
+        }
+      }
+    } catch (availabilityError) {
+      console.error('❌ [RESERVE] Error checking availability:', availabilityError);
+    }
+
+    // Fallback to static mapping if dynamic selection failed
+    if (!categoryId) {
+      console.log('⚠️ [RESERVE] Falling back to static category mapping');
+      categoryId = ROOM_TYPE_MAPPING[roomTypeId as keyof typeof ROOM_TYPE_MAPPING];
+    }
+
+    console.log('🎯 [RESERVE] Final category_id selected:', categoryId);
+
     if (!categoryId) {
       return NextResponse.json(
         { error: `Tipo de habitaciÃ³n no vÃ¡lido: ${roomTypeId}` },
         { status: 400 }
       );
     }
-    // Convert dates to the format expected by LobbyPMS (Y-m-d)
-    const formatDateForLobbyPMS = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toISOString().split('T')[0]; // Gets YYYY-MM-DD format
-    };
 
     const formattedCheckIn = formatDateForLobbyPMS(checkIn);
     const formattedCheckOut = formatDateForLobbyPMS(checkOut);

@@ -158,7 +158,7 @@ const ParticipantTabs = ({
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
-                        {participants.length > 1 && onRemoveParticipant && (
+                        {onRemoveParticipant && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -229,7 +229,7 @@ const ParticipantTabs = ({
               `}
             >
               {/* Delete button - top right corner for mobile */}
-              {participants.length > 1 && onRemoveParticipant && editingId !== participant.id && (
+              {onRemoveParticipant && editingId !== participant.id && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

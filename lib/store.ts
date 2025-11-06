@@ -236,8 +236,29 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   removeParticipant: (participantId) =>
     set((state) => {
-      if (state.participants.length <= 1) return state;
       const filtered = state.participants.filter(p => p.id !== participantId);
+
+      // If removing the last participant, create a new empty one
+      if (filtered.length === 0) {
+        const newParticipant: ParticipantData = {
+          id: `participant-${Date.now()}`,
+          name: 'Participant 1',
+          isYou: true,
+          selectedActivities: [],
+          activityQuantities: {},
+          selectedTimeSlots: {},
+          yogaClasses: {},
+          yogaUsePackDiscount: {},
+          selectedYogaPackages: {},
+          selectedSurfClasses: {},
+          selectedSurfPackages: {},
+        };
+        return {
+          participants: [newParticipant],
+          activeParticipantId: newParticipant.id,
+        };
+      }
+
       const newActiveId = state.activeParticipantId === participantId
         ? filtered[0].id
         : state.activeParticipantId;

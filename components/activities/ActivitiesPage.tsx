@@ -12,7 +12,7 @@ import ActivityCard from "./ActivityCard";
 import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
 import ActiveParticipantBanner from "../ActiveParticipantBanner";
-import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2 } from "lucide-react";
+import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type SurfPackage = '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes';
@@ -94,6 +94,7 @@ const ActivitiesPage = () => {
     storeParticipants[0]?.id || null
   );
   const [addPersonChoice, setAddPersonChoice] = useState<'copy' | 'customize'>('copy');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -588,12 +589,6 @@ const ActivitiesPage = () => {
         locale={(locale as "es" | "en") || "es"}
         onNameChange={setPersonalizationName}
         onParticipantsChange={(value) => setBookingData({ guests: value })}
-        participantTabs={participantTabsData}
-        activeParticipantId={activeParticipantId}
-        onParticipantChange={handleParticipantChange}
-        onParticipantNameChange={updateParticipantName}
-        onRemoveParticipant={removeParticipant}
-        onCopyChoicesToAll={participantTabsData.length > 1 ? handleCopyChoices : undefined}
       />
 
       <AnimatePresence mode="wait">
@@ -694,6 +689,18 @@ const ActivitiesPage = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
+                        {storeParticipants.length > 1 && participantIndex > 0 && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteConfirmId(participant.id);
+                            }}
+                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-400 group"
+                            title={locale === "es" ? "Eliminar participante" : "Remove participant"}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                         <motion.div
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.3 }}
@@ -921,8 +928,75 @@ const ActivitiesPage = () => {
         )}
       </AnimatePresence>
 
+      {/* Delete Confirmation Modal */}
       {isClient && createPortal(
         <AnimatePresence>
+          {deleteConfirmId && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmId(null)}
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+              >
+                <div className="flex flex-col gap-4">
+                  {/* Title */}
+                  <h3 className="text-xl md:text-2xl font-bold text-white">
+                    {locale === "es" ? "¿Estás seguro?" : "Are you sure?"}
+                  </h3>
+
+                  {/* Message */}
+                  <p className="text-slate-300 text-sm md:text-base">
+                    {locale === "es"
+                      ? "¿Deseas eliminar a este participante? Esta acción no se puede deshacer."
+                      : "Do you want to remove this participant? This action cannot be undone."}
+                  </p>
+
+                  {/* Participant name */}
+                  {deleteConfirmId && (
+                    <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700/50">
+                      <p className="text-cyan-400 font-semibold">
+                        {storeParticipants.find(p => p.id === deleteConfirmId)?.name}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Buttons */}
+                  <div className="flex gap-3 mt-2">
+                    <motion.button
+                      onClick={() => setDeleteConfirmId(null)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:border-slate-600 transition-all font-semibold"
+                    >
+                      {locale === "es" ? "Cancelar" : "Cancel"}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => {
+                        if (deleteConfirmId) {
+                          removeParticipant(deleteConfirmId);
+                          setDeleteConfirmId(null);
+                          setExpandedParticipantId(null);
+                        }
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 px-4 py-3 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 hover:border-red-500/70 transition-all font-semibold"
+                    >
+                      {locale === "es" ? "Eliminar" : "Delete"}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
           {showTravelingWithModal && (
             <motion.div
               initial={{ opacity: 0 }}
