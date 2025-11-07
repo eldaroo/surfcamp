@@ -5,6 +5,7 @@ import { notifyOrderUpdate } from '@/lib/sse-manager';
 import { sendDarioWelcomeMessage } from '@/lib/whatsapp';
 
 // Helper to create fresh Supabase client (no cache, no pooling)
+// Force read/write to PRIMARY database to avoid replica lag
 function createFreshSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,7 +22,8 @@ function createFreshSupabaseClient() {
         headers: {
           'cache-control': 'no-cache, no-store, must-revalidate',
           'pragma': 'no-cache',
-          'expires': '0'
+          'expires': '0',
+          'x-supabase-read-preference': 'primary'
         }
       }
     }

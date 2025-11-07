@@ -395,6 +395,11 @@ export async function POST(request: NextRequest) {
           auth: {
             autoRefreshToken: false,
             persistSession: false
+          },
+          global: {
+            headers: {
+              'x-supabase-read-preference': 'primary'
+            }
           }
         }
       );

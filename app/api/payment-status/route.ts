@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Create fresh Supabase client for each request to avoid cache
+    // Force read from PRIMARY database to avoid replica lag
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -19,7 +20,8 @@ export async function GET(request: NextRequest) {
         },
         global: {
           headers: {
-            'cache-control': 'no-cache, no-store, must-revalidate'
+            'cache-control': 'no-cache, no-store, must-revalidate',
+            'x-supabase-read-preference': 'primary'
           }
         }
       }
@@ -132,7 +134,8 @@ export async function GET(request: NextRequest) {
                 headers: {
                   'cache-control': 'no-cache, no-store, must-revalidate',
                   'pragma': 'no-cache',
-                  'expires': '0'
+                  'expires': '0',
+                  'x-supabase-read-preference': 'primary'
                 }
               }
             }
@@ -354,7 +357,8 @@ export async function GET(request: NextRequest) {
                 headers: {
                   'cache-control': 'no-cache, no-store, must-revalidate',
                   'pragma': 'no-cache',
-                  'expires': '0'
+                  'expires': '0',
+                  'x-supabase-read-preference': 'primary'
                 }
               }
             }
