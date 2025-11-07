@@ -617,21 +617,32 @@ export async function POST(request: NextRequest) {
     const hasDetailedActivityPayload =
       Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
-    // Check if we need to create multiple reservations (ONLY for shared rooms)
-    // IMPORTANT: Create individual reservations for EACH participant ONLY in shared rooms (casa-playa)
-    // For private houses (casitas-privadas, casas-deluxe), create ONE reservation with all guests
+    // Check if we need to create multiple reservations
+    // CASE 1: Shared rooms (casa-playa) - one reservation per participant
+    // CASE 2: Private rooms with more guests than capacity - multiple room reservations
+    const maxGuestsPerRoom = roomTypeId === 'casa-playa' ? 8 : 2; // casitas and deluxe have max 2 guests
+    const roomsNeeded = Math.ceil(calculatedGuestCount / maxGuestsPerRoom);
+    const needsMultiplePrivateRooms = !isSharedRoom && roomsNeeded > 1;
+
     console.log('🏨 [RESERVE] Checking if multiple reservations needed:', {
       participantsIsArray: Array.isArray(participants),
       participantsLength: participants?.length,
+      calculatedGuestCount,
       isSharedRoom,
       roomTypeId,
-      shouldCreateMultiple: Array.isArray(participants) && participants.length > 1 && (isSharedRoom || roomTypeId === 'casa-playa')
+      maxGuestsPerRoom,
+      roomsNeeded,
+      needsMultiplePrivateRooms,
+      shouldCreateMultipleForShared: Array.isArray(participants) && participants.length > 1 && (isSharedRoom || roomTypeId === 'casa-playa'),
+      shouldCreateMultipleForPrivate: needsMultiplePrivateRooms
     });
 
+    // Multiple reservations needed if:
+    // 1. Shared room with multiple participants OR
+    // 2. Private rooms where guests exceed capacity of one room
     const shouldCreateMultipleReservations =
-      Array.isArray(participants) &&
-      participants.length > 1 &&
-      (isSharedRoom || roomTypeId === 'casa-playa');
+      (Array.isArray(participants) && participants.length > 1 && (isSharedRoom || roomTypeId === 'casa-playa')) ||
+      needsMultiplePrivateRooms;
     // Ensure customer exists in LobbyPMS before booking
     try {
       if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
@@ -654,10 +665,132 @@ export async function POST(request: NextRequest) {
     } catch (customerError) {
       // Continue with booking even if customer creation failed (LobbyPMS may auto-create)
     }
-    // If we need to create multiple reservations (one per participant in shared room)
+    // If we need to create multiple reservations
     if (shouldCreateMultipleReservations) {
       const createdReservations: any[] = [];
       const bookingIds: string[] = [];
+
+      // CASE 1: Multiple private rooms (casitas/deluxe for > 2 guests)
+      if (needsMultiplePrivateRooms) {
+        console.log(`🏠 [RESERVE] Creating ${roomsNeeded} separate private room reservations for ${calculatedGuestCount} guests`);
+
+        for (let roomIndex = 0; roomIndex < roomsNeeded; roomIndex++) {
+          // Distribute guests across rooms: fill each room with maxGuestsPerRoom, remainder in last room
+          const guestsInThisRoom = roomIndex < roomsNeeded - 1
+            ? maxGuestsPerRoom
+            : calculatedGuestCount - (roomIndex * maxGuestsPerRoom);
+
+          console.log(`🏠 [RESERVE] Room ${roomIndex + 1}/${roomsNeeded}: ${guestsInThisRoom} guests`);
+
+          const roomBookingData = {
+            ...bookingData,
+            guest_count: guestsInThisRoom,
+            total_adults: guestsInThisRoom,
+            notes: `${baseNotes}\n- Habitación ${roomIndex + 1}/${roomsNeeded} (${guestsInThisRoom} huéspedes)\n- Nota Surfcamp: Surfcamp`,
+          };
+
+          // Try each category_id for this room
+          let roomReservation: any = null;
+          let roomSuccess = false;
+
+          for (let categoryIdx = 0; categoryIdx < categoryIdsToTry.length; categoryIdx++) {
+            const currentCategoryId = categoryIdsToTry[categoryIdx];
+            console.log(`🔄 [RESERVE] Room ${roomIndex + 1} - Attempt ${categoryIdx + 1}/${categoryIdsToTry.length} with category_id: ${currentCategoryId}`);
+
+            try {
+              const attemptData = {
+                ...roomBookingData,
+                category_id: currentCategoryId
+              };
+              roomReservation = await lobbyPMSClient.createBooking(attemptData);
+              roomSuccess = true;
+              console.log(`✅ [RESERVE] Room ${roomIndex + 1} SUCCESS with category_id: ${currentCategoryId}`);
+              break;
+            } catch (roomAttemptError: any) {
+              const errorCode = roomAttemptError.response?.data?.error_code;
+              console.log(`❌ [RESERVE] Room ${roomIndex + 1} attempt ${categoryIdx + 1} failed`, {
+                categoryId: currentCategoryId,
+                errorCode
+              });
+
+              // If NOT_ROOM and more categories available, try next
+              if (errorCode === 'NOT_ROOM' && categoryIdx < categoryIdsToTry.length - 1) {
+                continue;
+              }
+
+              // Otherwise throw error - we need all rooms
+              throw roomAttemptError;
+            }
+          }
+
+          if (!roomSuccess || !roomReservation) {
+            throw new Error(`Failed to create reservation for room ${roomIndex + 1}`);
+          }
+
+          const roomBookingId =
+            roomReservation?.booking?.booking_id ||
+            roomReservation?.booking_id ||
+            roomReservation?.id;
+
+          if (roomBookingId) {
+            bookingIds.push(roomBookingId);
+            createdReservations.push(roomReservation);
+
+            // Add activities to this room's reservation (divide activities proportionally)
+            const consumptionItems = buildConsumptionItems(
+              resolvedActivities,
+              guestsInThisRoom,
+              { hasDetailedSelections: hasDetailedActivityPayload }
+            );
+
+            if (consumptionItems.length > 0) {
+              try {
+                await lobbyPMSClient.addProductsToBooking(roomBookingId, consumptionItems);
+                console.log(`✅ [RESERVE] Added ${consumptionItems.length} activities to room ${roomIndex + 1}`);
+              } catch (consumptionError) {
+                console.error(`❌ [RESERVE] Failed to add activities to room ${roomIndex + 1}:`, consumptionError);
+              }
+            }
+          }
+        }
+
+        // Send WhatsApp notifications
+        try {
+          await sendUnifiedActivitiesNotification({
+            checkIn,
+            checkOut,
+            guestName: contactInfo.firstName,
+            phone: contactInfo.phone || '',
+            dni: contactInfo.dni || '',
+            total: calculatedGuestCount,
+            participants: [{
+              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
+              activities: resolvedActivities.map(a => ({
+                type: a.category || 'other',
+                classes: a.classCount,
+                package: a.package,
+                quantity: a.quantity
+              }))
+            }]
+          });
+        } catch (whatsappError) {
+          console.error('WhatsApp notification error:', whatsappError);
+        }
+
+        return NextResponse.json({
+          success: true,
+          reservationIds: bookingIds,
+          bookingReference,
+          status: 'confirmed',
+          message: `${createdReservations.length} habitaciones privadas reservadas exitosamente en LobbyPMS`,
+          demoMode: false,
+          multipleReservations: true,
+          roomCount: roomsNeeded,
+          lobbyPMSResponses: createdReservations
+        });
+      }
+
+      // CASE 2: Shared room with multiple participants (original logic)
       // 🛡️ Deduplicate participants by ID to prevent duplicate reservations
       const seenParticipantIds = new Set<string>();
       const uniqueParticipants = participants.filter((p: any) => {
