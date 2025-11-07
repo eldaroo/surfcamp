@@ -131,7 +131,11 @@ export async function GET(request: NextRequest) {
             retryPayment = data && data.length > 0 ? data[0] : null;
           }
 
-          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 - status:`, retryPayment?.status || 'not_found');
+          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 - status:`, retryPayment?.status || 'not_found', {
+            paymentId: retryPayment?.id,
+            orderId: retryPayment?.order_id,
+            updatedAt: retryPayment?.updated_at
+          });
 
           if (retryPayment) {
             payment = retryPayment as typeof payment;

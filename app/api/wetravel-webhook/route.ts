@@ -917,18 +917,30 @@ async function handleBookingCreated(
 
               // ALSO update payment status to completed so frontend sees it immediately
               // Force cache invalidation by updating updated_at
+              const updateTimestamp = new Date().toISOString();
+              console.log('🔄 [WEBHOOK] Attempting to update payment status', {
+                paymentId: payment.id,
+                orderId: payment.order_id,
+                currentStatus: payment.status,
+                targetStatus: 'completed',
+                timestamp: updateTimestamp
+              });
+
               const { error: paymentUpdateError } = await supabase
                 .from('payments')
                 .update({
                   status: 'completed',
-                  updated_at: new Date().toISOString()
+                  updated_at: updateTimestamp
                 })
                 .eq('id', payment.id);
 
               if (paymentUpdateError) {
                 console.error('❌ [WEBHOOK] Failed to update payment to completed:', paymentUpdateError);
               } else {
-                console.log('✅ [WEBHOOK] Payment status updated to completed');
+                console.log('✅ [WEBHOOK] Payment status updated to completed',{
+                  paymentId: payment.id,
+                  updatedAt: updateTimestamp
+                });
 
                 // 📡 NOTIFY FRONTEND VIA SSE
                 notifyOrderUpdate(payment.order_id.toString(), {
