@@ -409,7 +409,11 @@ export async function POST(request: NextRequest) {
           .eq('payment_intent_id', body.paymentIntentId)
           .not('lobbypms_reservation_id', 'is', null)
           .maybeSingle();
-        existingOrder = data;
+
+        // CRITICAL: Ignore if it's a temporary placeholder ID
+        if (data && data.lobbypms_reservation_id && !data.lobbypms_reservation_id.startsWith('CREATING_')) {
+          existingOrder = data;
+        }
       }
 
       if (!existingOrder && body.contactInfo?.dni && body.checkIn && body.checkOut) {
@@ -424,7 +428,13 @@ export async function POST(request: NextRequest) {
         if (data && data.length > 0) {
           existingOrder = data.find((order: any) => {
             const bookingData = order.booking_data;
+            const reservationId = order.lobbypms_reservation_id;
+
+            // CRITICAL: Ignore temporary placeholder IDs created by payment-status
+            const isTemporaryId = reservationId && reservationId.startsWith('CREATING_');
+
             return (
+              !isTemporaryId &&
               bookingData?.contactInfo?.dni === body.contactInfo.dni &&
               bookingData?.checkIn === body.checkIn &&
               bookingData?.checkOut === body.checkOut
@@ -433,7 +443,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      if (existingOrder) {
+      // CRITICAL: Only return "already exists" if we have a REAL reservation ID (not temporary)
+      if (existingOrder && existingOrder.lobbypms_reservation_id && !existingOrder.lobbypms_reservation_id.startsWith('CREATING_')) {
+        console.log('🏨 [RESERVE] Found existing reservation, skipping creation:', existingOrder.lobbypms_reservation_id);
         return NextResponse.json({
           success: true,
           reservationId: existingOrder.lobbypms_reservation_id,
