@@ -45,11 +45,20 @@ export async function GET(request: NextRequest) {
 
     if (orderId) {
       // Search by order_id
+      console.log('🔍 [PAYMENT-STATUS] Querying payments table by order_id:', orderId);
       const { data, error } = await supabase
         .from('payments')
         .select('id, order_id, status, wetravel_data, created_at, updated_at')
         .eq('order_id', orderId)
         .single();
+
+      console.log('📊 [PAYMENT-STATUS] Raw Supabase response:', {
+        found: !!data,
+        status: data?.status,
+        updated_at: data?.updated_at,
+        created_at: data?.created_at,
+        id: data?.id
+      });
 
       payment = data;
       paymentError = error;
@@ -318,6 +327,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get order details if available
+    console.log('🔍 [PAYMENT-STATUS] Querying orders table for order_id:', payment.order_id);
     let { data: order } = await supabase
       .from('orders')
       .select('id, status, booking_data, lobbypms_reservation_id')
