@@ -28,12 +28,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
     const tripId = searchParams.get('trip_id');
+    const tripUuid = searchParams.get('trip_uuid');
 
-    console.log('🔍 [PAYMENT-STATUS] Endpoint called with:', { orderId, tripId });
+    console.log('🔍 [PAYMENT-STATUS] Endpoint called with:', { orderId, tripId, tripUuid });
 
-    if (!orderId && !tripId) {
+    if (!orderId && !tripId && !tripUuid) {
       return NextResponse.json(
-        { error: 'Either order_id or trip_id is required' },
+        { error: 'Either order_id, trip_id, or trip_uuid is required' },
         { status: 400 }
       );
     }
@@ -50,12 +51,34 @@ export async function GET(request: NextRequest) {
 
       payment = data;
       paymentError = error;
-    } else if (tripId) {
+    } else if (tripId && tripId !== '') {
       // Search by trip_id in the wetravel_data JSONB field
       const { data, error } = await supabase
         .from('payments')
         .select('id, order_id, status, wetravel_data, created_at, updated_at')
         .contains('wetravel_data', { trip_id: tripId });
+
+      payment = data && data.length > 0 ? data[0] : null;
+      paymentError = error;
+
+      // If trip_id search failed and we have trip_uuid, try that
+      if (!payment && tripUuid && tripUuid !== '') {
+        console.log('🔄 [PAYMENT-STATUS] trip_id search failed, trying trip_uuid:', tripUuid);
+        const { data: uuidData, error: uuidError } = await supabase
+          .from('payments')
+          .select('id, order_id, status, wetravel_data, created_at, updated_at')
+          .contains('wetravel_data', { trip_uuid: tripUuid });
+
+        payment = uuidData && uuidData.length > 0 ? uuidData[0] : null;
+        paymentError = uuidError;
+      }
+    } else if (tripUuid && tripUuid !== '') {
+      // Search by trip_uuid in the wetravel_data JSONB field
+      console.log('🔍 [PAYMENT-STATUS] Searching by trip_uuid:', tripUuid);
+      const { data, error } = await supabase
+        .from('payments')
+        .select('id, order_id, status, wetravel_data, created_at, updated_at')
+        .contains('wetravel_data', { trip_uuid: tripUuid });
 
       payment = data && data.length > 0 ? data[0] : null;
       paymentError = error;
