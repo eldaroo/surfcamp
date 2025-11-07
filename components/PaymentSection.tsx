@@ -172,17 +172,18 @@ export default function PaymentSection() {
   );
 
   // Function to check payment status
-  const checkPaymentStatus = async (orderId?: string, tripId?: string) => {
+  const checkPaymentStatus = async (orderId?: string, tripId?: string, tripUuid?: string) => {
     try {
       const params = new URLSearchParams();
       if (orderId) params.append('order_id', orderId);
-      if (tripId) params.append('trip_id', tripId);
+      if (tripId && tripId !== '') params.append('trip_id', tripId);
+      if (tripUuid && tripUuid !== '') params.append('trip_uuid', tripUuid);
 
       const response = await fetch(`/api/payment-status?${params.toString()}`);
       const data = await response.json();
 
       console.log('🔍 Payment status check:', data);
-      console.log('🔍 Debug - orderId:', orderId, 'tripId:', tripId);
+      console.log('🔍 Debug - orderId:', orderId, 'tripId:', tripId, 'tripUuid:', tripUuid);
       console.log('🔍 Debug - show_success:', data.show_success, 'is_booking_created:', data.is_booking_created, 'is_completed:', data.is_completed);
 
       // Update status message based on payment state
@@ -299,20 +300,20 @@ export default function PaymentSection() {
   };
 
   // Fallback: Polling function (used if SSE fails)
-  const startPaymentStatusPolling = (orderId?: string, tripId?: string) => {
+  const startPaymentStatusPolling = (orderId?: string, tripId?: string, tripUuid?: string) => {
     if (paymentStatusInterval.current) {
       clearInterval(paymentStatusInterval.current);
     }
 
     setIsCheckingPaymentStatus(true);
-    console.log('🔄 Starting payment status polling for:', { orderId, tripId });
+    console.log('🔄 Starting payment status polling for:', { orderId, tripId, tripUuid });
 
     // Check immediately
-    checkPaymentStatus(orderId, tripId);
+    checkPaymentStatus(orderId, tripId, tripUuid);
 
     // Then check every 3 seconds
     paymentStatusInterval.current = setInterval(() => {
-      checkPaymentStatus(orderId, tripId);
+      checkPaymentStatus(orderId, tripId, tripUuid);
     }, 3000);
 
     // Stop polling after 10 minutes
@@ -522,17 +523,26 @@ export default function PaymentSection() {
         setIsWaitingForPayment(true);
         setPaymentStatusMessage('waiting'); // Reset message to initial state
 
-        // Start polling for payment status using both order_id and trip_id
+        // Start polling for payment status using order_id, trip_id, and trip_uuid
         const orderId = wetravelData.order_id;
         const tripId = wetravelData.trip_id;
+        // Extract trip_uuid from various possible locations
+        const tripUuid = wetravelData.trip_uuid ||
+                        wetravelData.metadata?.trip?.uuid ||
+                        wetravelData.debug?.trip_id ||
+                        null;
 
         console.log('🔗 Payment link opened in new tab, starting payment status monitoring...', {
           orderId,
-          tripId
+          tripId,
+          tripUuid
         });
 
         // Start SSE connection for real-time updates
         startPaymentStatusSSE(orderId);
+
+        // ALSO start polling as fallback with all available IDs
+        startPaymentStatusPolling(orderId, tripId, tripUuid);
       } else {
         // Cerrar la ventana si no hay URL
         closePaymentWindow();
