@@ -98,9 +98,29 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       unitLabel: string;
     }> = [];
 
+    console.log('[PriceSummary] Building activity selections', {
+      participantCount: participants.length,
+      participants: participants.map(p => ({
+        id: p.id,
+        name: p.name,
+        activitiesCount: p.selectedActivities.length,
+        activities: p.selectedActivities.map(a => a.name),
+        yogaClasses: p.yogaClasses,
+        yogaUsePackDiscount: p.yogaUsePackDiscount,
+        selectedYogaPackages: p.selectedYogaPackages,
+      }))
+    });
+
     participants.forEach(participant => {
       participant.selectedActivities.forEach(activity => {
         const details = getActivityDetailsForParticipant(activity, participant);
+        console.log('[PriceSummary] Activity details', {
+          participantName: participant.name,
+          activityName: activity.name,
+          category: activity.category,
+          price: details.price,
+          packageInfo: details.packageInfo,
+        });
         selections.push({
           activity,
           participant,
@@ -109,6 +129,7 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       });
     });
 
+    console.log('[PriceSummary] Total selections:', selections.length);
     return selections;
   }, [participants]);
 
