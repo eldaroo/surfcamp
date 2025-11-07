@@ -412,6 +412,11 @@ const ActivitiesPage = () => {
   const currentActivity = getCurrentStepActivity();
 
   const handleAddPerson = () => {
+    // Safety check: don't add if we already have 2 participants
+    if (storeParticipants.length >= 2) {
+      return;
+    }
+
     // Save the participant name if provided
     if (completionName.trim() && activeParticipantId) {
       updateParticipantName(activeParticipantId, completionName.trim());
@@ -421,8 +426,13 @@ const ActivitiesPage = () => {
   };
 
   const handleCompleteAndContinue = () => {
-    // Show modal asking if traveling with someone
-    setShowTravelingWithModal(true);
+    // Only show modal if we haven't reached the maximum of 2 participants
+    if (storeParticipants.length < 2) {
+      setShowTravelingWithModal(true);
+    } else {
+      // Already at max capacity, go straight to continue
+      handleContinue();
+    }
   };
 
   const handleSkipAddPerson = () => {
@@ -432,6 +442,12 @@ const ActivitiesPage = () => {
 
   const handleConfirmAddPerson = () => {
     setShowTravelingWithModal(false);
+
+    // Safety check: don't add if we already have 2 participants
+    if (storeParticipants.length >= 2) {
+      handleContinue();
+      return;
+    }
 
     if (addPersonChoice === 'copy') {
       // Save current participant's ID before adding a new one

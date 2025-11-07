@@ -230,8 +230,13 @@ export default function ActiveParticipantBanner() {
               {/* Add participant button */}
               <button
                 onClick={handleAddParticipant}
-                className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 rounded-xl text-gray-900 font-semibold transition-all duration-200 shadow-lg hover:shadow-yellow-500/25"
-                title="Add new participant"
+                disabled={participants.length >= 2}
+                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 ${
+                  participants.length >= 2
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed opacity-50'
+                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-gray-900 shadow-lg hover:shadow-yellow-500/25'
+                }`}
+                title={participants.length >= 2 ? 'Maximum 2 participants allowed' : 'Add new participant'}
               >
                 <Plus className="w-4 h-4" />
                 <span className="text-sm hidden sm:inline">Add</span>

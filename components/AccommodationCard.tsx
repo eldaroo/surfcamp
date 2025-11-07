@@ -264,7 +264,7 @@ const AccommodationCard = ({
     <>
       <div
         ref={cardRef}
-        className="flip-card w-full h-[300px] md:h-[220px]"
+        className="flip-card w-full h-[420px] md:h-[220px]"
         style={{ perspective: '1000px' }}
       >
         <motion.div
@@ -361,6 +361,32 @@ const AccommodationCard = ({
                     )}
                   </div>
 
+                  {/* Multiple Rooms Alert - Prominent Warning */}
+                  {room.requiresMultipleRooms && room.roomsNeeded && (
+                    <div className="mb-2 md:mb-3 p-2 md:p-3 rounded-lg border-2" style={{
+                      backgroundColor: 'color-mix(in srgb, var(--brand-orange) 15%, transparent)',
+                      borderColor: 'var(--brand-orange)'
+                    }}>
+                      <div className="flex items-start gap-2">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-amber-200 text-xs md:text-sm font-bold mb-0.5">
+                            {locale === 'es'
+                              ? `Necesitas ${room.roomsNeeded} habitaciones separadas`
+                              : `You need ${room.roomsNeeded} separate rooms`}
+                          </p>
+                          <p className="text-slate-300 text-[10px] md:text-xs leading-snug">
+                            {locale === 'es'
+                              ? `Para ${guests} huéspedes se reservarán ${room.roomsNeeded} unidades independientes (${room.availableRooms} disponibles)`
+                              : `For ${guests} guests, ${room.roomsNeeded} independent units will be booked (${room.availableRooms} available)`}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Availability + Capacity */}
                   <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5 flex-wrap">
                     <div
@@ -373,24 +399,11 @@ const AccommodationCard = ({
                       {room.availableRooms} {room.availableRooms === 1 ? 'available' : 'available'}
                     </div>
 
-                    {/* Multiple Rooms Badge */}
-                    {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <div
-                        className="rounded-full px-2 md:px-3 py-0.5 md:py-1 text-white text-[10px] md:text-xs font-semibold border animate-pulse"
-                        style={{
-                          backgroundColor: 'color-mix(in srgb, var(--brand-orange) 25%, transparent)',
-                          borderColor: 'color-mix(in srgb, var(--brand-orange) 50%, transparent)'
-                        }}
-                      >
-                        {room.roomsNeeded} {locale === 'es' ? 'habitaciones necesarias' : 'rooms needed'}
-                      </div>
-                    )}
-
                     <div className="flex items-center text-slate-300 text-[10px] md:text-xs font-medium">
                       <svg className="w-3 md:w-4 h-3 md:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      {room.maxGuests} {room.maxGuests === 1 ? 'guest' : 'guests'}
+                      {room.maxGuests} {room.maxGuests === 1 ? 'guest' : 'guests'} {locale === 'es' ? 'por unidad' : 'per unit'}
                     </div>
                   </div>
 
@@ -472,10 +485,20 @@ const AccommodationCard = ({
                     <div className="text-xl font-bold text-amber-300">
                       ${totalPrice}
                     </div>
+                    {room.requiresMultipleRooms && room.roomsNeeded && (
+                      <span className="text-[9px] text-slate-400 mt-0.5">
+                        {room.roomsNeeded} × ${room.pricePerNight}/noche
+                      </span>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase tracking-wide">Per night</p>
                     <p className="text-xs text-slate-400 font-medium">${roomPrice}</p>
+                    {room.requiresMultipleRooms && room.roomsNeeded && (
+                      <p className="text-[9px] text-slate-500 mt-0.5">
+                        ({room.roomsNeeded} {locale === 'es' ? 'unidades' : 'units'})
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -539,9 +562,16 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Price per night info */}
-                  <p className="text-[10px] text-slate-400 text-center mt-1.5 pt-1.5 border-t border-slate-600/30">
-                    {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
-                  </p>
+                  <div className="text-center mt-1.5 pt-1.5 border-t border-slate-600/30">
+                    <p className="text-[10px] text-slate-400">
+                      {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
+                    </p>
+                    {room.requiresMultipleRooms && room.roomsNeeded && (
+                      <p className="text-[9px] text-slate-500 mt-0.5">
+                        ({room.roomsNeeded} {locale === 'es' ? 'habitaciones' : 'rooms'} × ${room.pricePerNight})
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Button */}

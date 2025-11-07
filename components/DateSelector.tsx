@@ -382,12 +382,15 @@ export default function DateSelector() {
                       </span>
                       <button
                         type="button"
+                        disabled={guests >= 2}
                         onClick={() => {
-                          const newGuests = Math.min(5, guests + 1);
+                          const newGuests = Math.min(2, guests + 1);
                           markAvailabilityAsStale();
                           setBookingData({ guests: newGuests });
                         }}
-                        className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center hover:bg-white/10 transition-colors"
+                        className={`w-10 h-10 rounded-full border border-white/30 flex items-center justify-center transition-colors ${
+                          guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
+                        }`}
                       >
                         <span className="text-white">+</span>
                       </button>
