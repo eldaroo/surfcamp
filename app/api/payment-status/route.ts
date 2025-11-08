@@ -45,20 +45,44 @@ export async function GET(request: NextRequest) {
     let paymentError;
 
     if (orderId) {
-      // Search by order_id using DIRECT connection to PRIMARY database
-      console.log('🔍 [PAYMENT-STATUS] Querying PRIMARY database by order_id:', orderId);
+      // Try DIRECT connection to PRIMARY database first (if DATABASE_URL_DIRECT is configured)
+      console.log('🔍 [PAYMENT-STATUS] Attempting PRIMARY database query by order_id:', orderId);
 
       try {
         payment = await getPaymentByOrderId(orderId);
-        console.log('📊 [PAYMENT-STATUS] Direct PRIMARY DB response:', {
-          found: !!payment,
-          status: payment?.status,
-          updated_at: payment?.updated_at,
-          created_at: payment?.created_at,
-          id: payment?.id
-        });
+
+        if (payment) {
+          console.log('📊 [PAYMENT-STATUS] Direct PRIMARY DB response:', {
+            found: true,
+            status: payment.status,
+            updated_at: payment.updated_at,
+            created_at: payment.created_at,
+            id: payment.id
+          });
+        } else {
+          // Fallback to Supabase client (may have replica lag)
+          console.log('⚠️ [PAYMENT-STATUS] No direct DB connection, using Supabase client (may have replica lag)');
+          const { data, error } = await supabase
+            .from('payments')
+            .select('id, order_id, status, wetravel_data, created_at, updated_at')
+            .eq('order_id', orderId)
+            .single();
+
+          payment = data;
+          paymentError = error;
+
+          if (payment) {
+            console.log('📊 [PAYMENT-STATUS] Supabase client response:', {
+              found: true,
+              status: payment.status,
+              updated_at: payment.updated_at,
+              created_at: payment.created_at,
+              id: payment.id
+            });
+          }
+        }
       } catch (error) {
-        console.error('❌ [PAYMENT-STATUS] Error querying PRIMARY database:', error);
+        console.error('❌ [PAYMENT-STATUS] Error querying database:', error);
         paymentError = error;
       }
     } else if (tripId && tripId !== '') {
@@ -131,24 +155,29 @@ export async function GET(request: NextRequest) {
           console.log(`⏳ [PAYMENT-STATUS] Payment retry attempt ${attempt}/6, waiting ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          // Retry the query from PRIMARY database
+          // Retry the query from PRIMARY database (with fallback)
           let retryPayment;
           if (orderId) {
             retryPayment = await getPaymentByOrderId(orderId);
+            // Fallback to Supabase if direct connection not available
+            if (!retryPayment) {
+              const { data } = await supabase
+                .from('payments')
+                .select('id, order_id, status, wetravel_data, created_at, updated_at')
+                .eq('order_id', orderId)
+                .single();
+              retryPayment = data;
+            }
           } else if (tripId) {
-            // For tripId search, still use Supabase (JSONB queries not supported in direct SQL helper yet)
-            const freshSupabase = createClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              process.env.SUPABASE_SERVICE_ROLE_KEY!
-            );
-            const { data } = await freshSupabase
+            // For tripId search, use Supabase (JSONB queries)
+            const { data } = await supabase
               .from('payments')
               .select('id, order_id, status, wetravel_data, created_at, updated_at')
               .contains('wetravel_data', { trip_id: tripId });
             retryPayment = data && data.length > 0 ? data[0] : null;
           }
 
-          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 from PRIMARY - status:`, retryPayment?.status || 'not_found', {
+          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 - status:`, retryPayment?.status || 'not_found', {
             paymentId: retryPayment?.id,
             orderId: retryPayment?.order_id,
             updatedAt: retryPayment?.updated_at
@@ -309,10 +338,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Get order details if available using DIRECT connection to PRIMARY database
-    console.log('🔍 [PAYMENT-STATUS] Querying PRIMARY database for order_id:', payment.order_id);
+    console.log('🔍 [PAYMENT-STATUS] Attempting PRIMARY database query for order_id:', payment.order_id);
     let order = await getOrderById(payment.order_id);
 
-    console.log('🏨 [PAYMENT-STATUS] Order data from PRIMARY (first read):', {
+    // Fallback to Supabase if direct connection not available
+    if (!order) {
+      console.log('⚠️ [PAYMENT-STATUS] No direct DB connection for orders, using Supabase client');
+      const { data } = await supabase
+        .from('orders')
+        .select('id, status, booking_data, lobbypms_reservation_id')
+        .eq('id', payment.order_id)
+        .single();
+      order = data;
+    }
+
+    console.log('🏨 [PAYMENT-STATUS] Order data (first read):', {
       orderId: order?.id,
       orderStatus: order?.status,
       lobbypmsReservationId: order?.lobbypms_reservation_id
@@ -334,11 +374,30 @@ export async function GET(request: NextRequest) {
           console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/6, waiting ${delay}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          // Re-query both payment and order from PRIMARY database
-          const retryPayment = await getPaymentByOrderId(payment.order_id);
-          const retryOrder = await getOrderById(payment.order_id);
+          // Re-query both payment and order from PRIMARY database (with fallback)
+          let retryPayment = await getPaymentByOrderId(payment.order_id);
+          let retryOrder = await getOrderById(payment.order_id);
 
-          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/6 results from PRIMARY:`, {
+          // Fallback to Supabase if direct connection not available
+          if (!retryPayment) {
+            const { data } = await supabase
+              .from('payments')
+              .select('id, order_id, status, updated_at')
+              .eq('id', payment.id)
+              .single();
+            retryPayment = data;
+          }
+
+          if (!retryOrder) {
+            const { data } = await supabase
+              .from('orders')
+              .select('id, status, booking_data, lobbypms_reservation_id')
+              .eq('id', payment.order_id)
+              .single();
+            retryOrder = data;
+          }
+
+          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/6 results:`, {
             paymentStatus: retryPayment?.status || 'not_found',
             orderStatus: retryOrder?.status || 'not_found',
             lobbypmsReservationId: retryOrder?.lobbypms_reservation_id || null,

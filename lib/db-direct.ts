@@ -11,7 +11,8 @@ function getPool() {
     const connectionString = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
 
     if (!connectionString) {
-      throw new Error('DATABASE_URL_DIRECT or DATABASE_URL not configured');
+      // Return null if no connection string - will fallback to Supabase client
+      return null;
     }
 
     pool = new Pool({
@@ -30,6 +31,12 @@ function getPool() {
 // Get payment by order_id from PRIMARY database
 export async function getPaymentByOrderId(orderId: string | number) {
   const pool = getPool();
+
+  // If no pool available (no DATABASE_URL_DIRECT), return null to trigger fallback
+  if (!pool) {
+    return null;
+  }
+
   const client = await pool.connect();
 
   try {
@@ -50,6 +57,12 @@ export async function getPaymentByOrderId(orderId: string | number) {
 // Get order by id from PRIMARY database
 export async function getOrderById(orderId: string | number) {
   const pool = getPool();
+
+  // If no pool available (no DATABASE_URL_DIRECT), return null to trigger fallback
+  if (!pool) {
+    return null;
+  }
+
   const client = await pool.connect();
 
   try {
