@@ -10,7 +10,10 @@ import {
   sendIceBathReservationNotification,
   sendSurfClassReservationNotification,
   sendUnifiedActivitiesNotification,
-  getRoomTypeName
+  getRoomTypeName,
+  sendIceBathInstructorNotification,
+  sendSurfInstructorNotification,
+  sendClientConfirmationMessage
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
@@ -87,6 +90,56 @@ const normalizePhoneNumber = (phone?: string | null) => {
     return plusDigits;
   }
   return digitsOnly;
+};
+
+// Helper: Extract activities data for instructor notifications
+const extractActivitiesForInstructors = (
+  resolvedActivities: ResolvedActivityConsumption[],
+  participants?: any[]
+) => {
+  const iceBathParticipants: Array<{ name: string; iceBathSessions: number }> = [];
+  const surfParticipants: Array<{ name: string; surfClasses: number }> = [];
+
+  // If we have participants data with individual activities
+  if (participants && participants.length > 0) {
+    participants.forEach((participant) => {
+      const participantName = participant.name || 'Participante';
+
+      // Extract ice bath sessions
+      if (participant.selectedActivities) {
+        participant.selectedActivities.forEach((act: any) => {
+          const activity = getActivityById(act.id);
+
+          if (activity?.category === 'ice_bath') {
+            const sessions = participant.activityQuantities?.[act.id] || 1;
+            iceBathParticipants.push({ name: participantName, iceBathSessions: sessions });
+          }
+
+          if (activity?.category === 'surf') {
+            const classes = participant.selectedSurfClasses?.[act.id] || 1;
+            surfParticipants.push({ name: participantName, surfClasses: classes });
+          }
+        });
+      }
+    });
+  } else {
+    // Fallback: use resolvedActivities (simpler case, no participant breakdown)
+    resolvedActivities.forEach((activity) => {
+      const participantName = activity.participantName || 'Cliente';
+
+      if (activity.category === 'ice_bath') {
+        const sessions = activity.quantity || 1;
+        iceBathParticipants.push({ name: participantName, iceBathSessions: sessions });
+      }
+
+      if (activity.category === 'surf') {
+        const classes = activity.classCount || 1;
+        surfParticipants.push({ name: participantName, surfClasses: classes });
+      }
+    });
+  }
+
+  return { iceBathParticipants, surfParticipants };
 };
 
 interface ResolvedActivityConsumption {
@@ -472,7 +525,8 @@ export async function POST(request: NextRequest) {
       selectedActivities: selectedActivitiesPayload = [],
       activityIds = [],
       paymentIntentId,
-      participants = [] // Array of participants with their info and activities
+      participants = [], // Array of participants with their info and activities
+      locale = 'es' // Language: 'en' or 'es', defaults to 'es'
     } = body;
     const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
     if (contactInfo?.phone) {
@@ -771,24 +825,45 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Send WhatsApp notifications
+        // Send NEW WhatsApp notifications
         try {
-          await sendUnifiedActivitiesNotification({
+          const clientFullName = `${contactInfo.firstName} ${contactInfo.lastName}`;
+          const clientPhone = contactInfo.phone || '';
+
+          const { iceBathParticipants, surfParticipants } = extractActivitiesForInstructors(
+            resolvedActivities,
+            undefined // No participants array in this case
+          );
+
+          // Send to ice bath instructor if there are ice bath sessions
+          if (iceBathParticipants.length > 0) {
+            await sendIceBathInstructorNotification({
+              clientFullName,
+              clientPhone,
+              checkIn,
+              checkOut,
+              participants: iceBathParticipants
+            });
+          }
+
+          // Send to surf instructor if there are surf classes
+          if (surfParticipants.length > 0) {
+            await sendSurfInstructorNotification({
+              clientFullName,
+              clientPhone,
+              checkIn,
+              checkOut,
+              participants: surfParticipants
+            });
+          }
+
+          // Send confirmation to client
+          await sendClientConfirmationMessage({
+            clientPhone,
+            clientFirstName: contactInfo.firstName,
             checkIn,
             checkOut,
-            guestName: contactInfo.firstName,
-            phone: contactInfo.phone || '',
-            dni: contactInfo.dni || '',
-            total: calculatedGuestCount,
-            participants: [{
-              name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-              activities: resolvedActivities.map(a => ({
-                type: a.category || 'other',
-                classes: a.classCount,
-                package: a.package,
-                quantity: a.quantity
-              }))
-            }]
+            locale
           });
         } catch (whatsappError) {
           console.error('WhatsApp notification error:', whatsappError);
@@ -975,34 +1050,45 @@ export async function POST(request: NextRequest) {
           })
         }));
 
-        await sendUnifiedActivitiesNotification({
-          checkIn,
-          checkOut,
-          guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-          phone: contactInfo.phone,
-          dni: contactInfo.dni || 'No informado',
-          total: 0, // Will be calculated if needed
-          participants: participantsForNotification
-        });
-        // Send admin notification
-        const waMessage = `Â¡Hola! Se confirmaron ${createdReservations.length} reservas en SurfCamp (Casa Playa compartida) para las fechas ${checkIn} a ${checkOut}. Referencia: ${bookingReference}\nParticipantes: ${uniqueParticipants.map((p: any) => p.name).join(', ')}`;
-        await sendWhatsAppMessage('+5491162802566', waMessage);
-        // Send welcome message to main contact
-        if (contactInfo?.phone) {
-          const allActivityNames = uniqueParticipants.flatMap((p: any) =>
-            (p.selectedActivities || []).map((act: any) => {
-              const activity = getActivityById(act.id);
-              return activity?.name || act.id;
-            })
-          );
+        // Send NEW WhatsApp notifications
+        const clientFullName = `${contactInfo.firstName} ${contactInfo.lastName}`;
+        const clientPhone = contactInfo.phone || '';
 
-          await sendDarioWelcomeMessage(contactInfo.phone, {
+        const { iceBathParticipants, surfParticipants } = extractActivitiesForInstructors(
+          [], // Empty, we use participants directly
+          uniqueParticipants
+        );
+
+        // Send to ice bath instructor if there are ice bath sessions
+        if (iceBathParticipants.length > 0) {
+          await sendIceBathInstructorNotification({
+            clientFullName,
+            clientPhone,
             checkIn,
             checkOut,
-            guestName: contactInfo.firstName,
-            activities: Array.from(new Set(allActivityNames)), // Remove duplicates
-            roomTypeName: getRoomTypeName(roomTypeId),
-            guests: uniqueParticipants.length
+            participants: iceBathParticipants
+          });
+        }
+
+        // Send to surf instructor if there are surf classes
+        if (surfParticipants.length > 0) {
+          await sendSurfInstructorNotification({
+            clientFullName,
+            clientPhone,
+            checkIn,
+            checkOut,
+            participants: surfParticipants
+          });
+        }
+
+        // Send confirmation to client
+        if (contactInfo?.phone) {
+          await sendClientConfirmationMessage({
+            clientPhone,
+            clientFirstName: contactInfo.firstName,
+            checkIn,
+            checkOut,
+            locale
           });
         }
       } catch (whatsappError) {
@@ -1129,126 +1215,57 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Enviar mensajes de WhatsApp (solo si todo saliÃ³ bien)
+      // Send NEW WhatsApp notifications
       try {
-        // 1. NotificaciÃ³n a Dario (admin)
-        const waMessage = `Â¡Hola! Se confirmÃ³ una reserva en SurfCamp para las fechas ${checkIn} a ${checkOut} para ${guests} huÃ©sped(es). Referencia: ${bookingReference}`;
-        const whatsappResult = await sendWhatsAppMessage(
-          '+5491162802566',
-          waMessage
-        );
-        // 2. Mensaje de bienvenida de Dario al cliente
-        if (contactInfo?.phone) {
-          const activityNames = resolvedActivities.map(act => {
-            const activity = getActivityById(act.id);
-            return activity?.name || act.id;
-          });
+        const clientFullName = `${contactInfo.firstName} ${contactInfo.lastName}`;
+        const clientPhone = contactInfo.phone || '';
 
-          await sendDarioWelcomeMessage(contactInfo.phone, {
-            checkIn,
-            checkOut,
-            guestName: contactInfo.firstName,
-            activities: activityNames,
-            roomTypeName: getRoomTypeName(roomTypeId),
-            guests: guests || 1
-          });
-        }
-
-        // 3. Notificaciones de actividades especÃ­ficas al staff
         // Check if we have multiple participants with different activities
         const hasMultipleParticipantsWithActivities =
           Array.isArray(participants) &&
           participants.length > 1 &&
           participants.some((p: any) => p.selectedActivities && p.selectedActivities.length > 0);
 
-        if (hasMultipleParticipantsWithActivities) {
-          // Use unified notification for multiple participants
-          const participantsForNotification = participants.map((p: any) => ({
-            name: p.name,
-            activities: (p.selectedActivities || []).map((act: any) => {
-              const activity = getActivityById(act.id);
-              const category = activity?.category || 'other';
+        const { iceBathParticipants, surfParticipants } = extractActivitiesForInstructors(
+          resolvedActivities,
+          hasMultipleParticipantsWithActivities ? participants : undefined
+        );
 
-              let classes: number | undefined;
-              let packageName: string | undefined;
-              let quantity: number | undefined;
-
-              // Get surf-specific data
-              if (category === 'surf' && p.selectedSurfClasses) {
-                classes = p.selectedSurfClasses[act.id];
-                if (classes) {
-                  packageName = `${classes}-classes`;
-                }
-              }
-
-              // Get yoga-specific data
-              if (category === 'yoga' && p.selectedYogaPackages) {
-                packageName = p.selectedYogaPackages[act.id];
-                if (packageName) {
-                  const match = packageName.match(/(\d+)/);
-                  if (match) {
-                    classes = parseInt(match[1], 10);
-                  }
-                }
-              }
-
-              // Get quantity for other activities (ice_bath, etc.)
-              if (p.activityQuantities) {
-                quantity = p.activityQuantities[act.id];
-              }
-
-              return {
-                type: category,
-                classes,
-                package: packageName,
-                quantity
-              };
-            })
-          }));
-
-          await sendUnifiedActivitiesNotification({
+        // Send to ice bath instructor if there are ice bath sessions
+        if (iceBathParticipants.length > 0) {
+          await sendIceBathInstructorNotification({
+            clientFullName,
+            clientPhone,
             checkIn,
             checkOut,
-            guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-            phone: contactInfo.phone,
-            dni: contactInfo.dni || 'No informado',
-            total: 0,
-            participants: participantsForNotification
+            participants: iceBathParticipants
           });
-        } else {
-          // Use individual notifications for single participant or no participants data
-          const hasSurf = resolvedActivities.some(act => act.category === 'surf');
-          const hasIceBath = resolvedActivities.some(act => act.category === 'ice_bath');
+        }
 
-          if (hasSurf) {
-            const surfActivity = resolvedActivities.find(act => act.category === 'surf');
-            await sendSurfClassReservationNotification({
-              checkIn,
-              checkOut,
-              guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-              phone: contactInfo.phone,
-              dni: contactInfo.dni || 'No informado',
-              total: 0, // Will be calculated from priceBreakdown if needed
-              surfPackage: surfActivity?.package || '4-classes',
-              guests: surfActivity?.quantity || 1, // Use quantity from surfActivity
-              surfClasses: surfActivity?.classCount
-            });
-          }
+        // Send to surf instructor if there are surf classes
+        if (surfParticipants.length > 0) {
+          await sendSurfInstructorNotification({
+            clientFullName,
+            clientPhone,
+            checkIn,
+            checkOut,
+            participants: surfParticipants
+          });
+        }
 
-          if (hasIceBath) {
-            await sendIceBathReservationNotification({
-              checkIn,
-              checkOut,
-              guestName: `${contactInfo.firstName} ${contactInfo.lastName}`,
-              phone: contactInfo.phone,
-              dni: contactInfo.dni || 'No informado',
-              total: 0, // Will be calculated from priceBreakdown if needed
-              quantity: 1
-            });
-          }
+        // Send confirmation to client
+        if (contactInfo?.phone) {
+          await sendClientConfirmationMessage({
+            clientPhone,
+            clientFirstName: contactInfo.firstName,
+            checkIn,
+            checkOut,
+            locale
+          });
         }
 
       } catch (whatsappError) {
+        console.error('WhatsApp notification error:', whatsappError);
       }
 
       return NextResponse.json({

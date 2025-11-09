@@ -328,4 +328,139 @@ Los profesores se van a estar contactando contigo para coordinar los horarios de
 Zeneida's Garden`;
 
   return sendWhatsAppMessage(phone, message);
+};
+
+// ========== NEW MESSAGE SYSTEM ==========
+
+// Mensaje al instructor de Ice Bath
+export const sendIceBathInstructorNotification = async (
+  bookingData: {
+    clientFullName: string;
+    clientPhone: string;
+    checkIn: string;
+    checkOut: string;
+    participants: Array<{
+      name: string;
+      iceBathSessions: number;
+    }>;
+  }
+) => {
+  // Build participant list
+  let participantsList = '';
+  bookingData.participants.forEach((p) => {
+    participantsList += `   • ${p.name}: ${p.iceBathSessions} ${p.iceBathSessions === 1 ? 'sesión' : 'sesiones'}\n`;
+  });
+
+  const message = `🧊 *NUEVA RESERVA - BAÑO DE HIELO*
+
+📇 *Cliente:* ${bookingData.clientFullName}
+📞 *Teléfono:* ${bookingData.clientPhone}
+📅 *Llegada:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Salida:* ${formatDateForWhatsApp(bookingData.checkOut)}
+
+❄️ *Participantes y sesiones:*
+${participantsList}
+Coordiná horarios directamente con el cliente.`;
+
+  // TESTING: Send to test number instead of real instructor
+  return sendWhatsAppMessage('+541153695627', message);
+};
+
+// Mensaje al instructor de Surf
+export const sendSurfInstructorNotification = async (
+  bookingData: {
+    clientFullName: string;
+    clientPhone: string;
+    checkIn: string;
+    checkOut: string;
+    participants: Array<{
+      name: string;
+      surfClasses: number;
+    }>;
+  }
+) => {
+  // Build participant list
+  let participantsList = '';
+  bookingData.participants.forEach((p) => {
+    participantsList += `   • ${p.name}: ${p.surfClasses} ${p.surfClasses === 1 ? 'clase' : 'clases'}\n`;
+  });
+
+  const message = `🏄‍♂️ *NUEVA RESERVA - SURF*
+
+📇 *Cliente:* ${bookingData.clientFullName}
+📞 *Teléfono:* ${bookingData.clientPhone}
+📅 *Llegada:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Salida:* ${formatDateForWhatsApp(bookingData.checkOut)}
+
+🌊 *Participantes y clases:*
+${participantsList}
+Coordiná horarios directamente con el cliente.`;
+
+  // TESTING: Send to test number instead of real instructor
+  return sendWhatsAppMessage('+541153695627', message);
+};
+
+// Mensaje de confirmación al cliente
+export const sendClientConfirmationMessage = async (
+  bookingData: {
+    clientPhone: string;
+    clientFirstName: string;
+    checkIn: string;
+    checkOut: string;
+    locale?: string; // 'en' or 'es', defaults to 'es'
+  }
+) => {
+  const isEnglish = bookingData.locale === 'en';
+
+  // Format dates according to locale
+  const formattedCheckIn = isEnglish
+    ? new Date(bookingData.checkIn.split('T')[0]).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : formatDateForWhatsApp(bookingData.checkIn);
+
+  const formattedCheckOut = isEnglish
+    ? new Date(bookingData.checkOut.split('T')[0]).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : formatDateForWhatsApp(bookingData.checkOut);
+
+  const message = isEnglish
+    ? `Hi ${bookingData.clientFirstName}! 👋
+
+✅ *Your reservation is confirmed*
+
+📅 *Check-in:* ${formattedCheckIn}
+📅 *Check-out:* ${formattedCheckOut}
+
+The instructors will contact you to coordinate the activity schedules.
+
+If you have any questions, write to us at this number. We're here to help!
+
+See you soon! 🌊
+
+*Zeneida's Garden*`
+    : `¡Hola ${bookingData.clientFirstName}! 👋
+
+✅ *Tu reserva está confirmada*
+
+📅 *Check-in:* ${formattedCheckIn}
+📅 *Check-out:* ${formattedCheckOut}
+
+Los instructores se van a contactar contigo para coordinar los horarios de las actividades.
+
+Si tenés alguna duda, escribinos a este número. ¡Estamos para ayudarte!
+
+¡Nos vemos pronto! 🌊
+
+*Zeneida's Garden*`;
+
+  // TESTING: Send to test number instead of real client
+  return sendWhatsAppMessage('+541153695627', message);
 }; 
