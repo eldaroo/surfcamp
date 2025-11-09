@@ -266,7 +266,18 @@ const total = accommodationTotal + activitiesTotal;
       const response = await fetch(`/api/payment-status?${params.toString()}`);
       const data = await response.json();
 
+      console.log('💰 [PAYMENT-STATUS] Poll response:', {
+        show_success: data.show_success,
+        is_booking_created: data.is_booking_created,
+        is_completed: data.is_completed,
+        payment_status: data.payment?.status,
+        has_reservation: data.order?.lobbypms_reservation_id,
+        orderId,
+        tripId
+      });
+
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
+        console.log('✅ [PAYMENT-STATUS] Success detected! Showing success page...');
         const prices = {
           accommodation: accommodationTotal,
           activities: activitiesTotal,
@@ -300,15 +311,19 @@ const total = accommodationTotal + activitiesTotal;
       clearInterval(paymentStatusInterval.current);
     }
 
+    console.log('🔄 [PAYMENT-POLLING] Starting payment status polling', { orderId, tripId });
     setIsCheckingPaymentStatus(true);
     checkPaymentStatus(orderId, tripId);
 
+    // Poll every 2 seconds for faster response (reduced from 3 seconds)
     paymentStatusInterval.current = setInterval(() => {
       checkPaymentStatus(orderId, tripId);
-    }, 3000);
+    }, 2000);
 
+    // Timeout after 10 minutes
     setTimeout(() => {
       if (paymentStatusInterval.current) {
+        console.log('⏱️ [PAYMENT-POLLING] Timeout reached, stopping polling');
         clearInterval(paymentStatusInterval.current);
         paymentStatusInterval.current = null;
         setIsCheckingPaymentStatus(false);
@@ -571,7 +586,7 @@ const total = accommodationTotal + activitiesTotal;
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
