@@ -24,7 +24,7 @@ const buildLeadGuestName = (firstName: string, lastName: string) =>
   `${firstName.trim()} ${lastName.trim()}`.trim();
 
 export default function ContactForm() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     bookingData,
     setBookingData,
@@ -476,6 +476,7 @@ const total = accommodationTotal + activitiesTotal;
           classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
         })),
         participants: serializedParticipants,
+        locale, // Pass locale for WhatsApp language
         wetravelData: {
           trip: {
             title: "Surf & Yoga Retreat – Santa Teresa",

@@ -837,7 +837,8 @@ async function handleBookingCreated(
               contactInfo: booking.contactInfo,
               activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
               selectedActivities: booking.selectedActivities || [],
-              participants: booking.participants || []
+              participants: booking.participants || [],
+              locale: booking.locale || 'es' // Pass locale for WhatsApp messages
             };
 
             console.log('📞 [WEBHOOK] Calling /api/reserve with FULL payload:', JSON.stringify(reservePayload, null, 2));
