@@ -38,7 +38,7 @@ type AccommodationCardProps = {
 const accommodationImages: Record<string, string> = {
   'casa-playa': '/assets/casa-playa.jpg',
   'casitas-privadas': '/assets/casitas-privadas.jpg',
-  'casas-deluxe': '/assets/casas-deluxe.jpg',
+  'casas-deluxe': '/assets/casas-deluxe.JPG',
 };
 
 // Gallery images for each accommodation type

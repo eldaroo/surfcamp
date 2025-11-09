@@ -68,8 +68,15 @@ export default function PaymentSection() {
       participant.selectedActivities.forEach((activity: any) => {
         if (activity.category === 'yoga') {
           const yogaPackage = participant.selectedYogaPackages[activity.id];
+          const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+          const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+
           if (yogaPackage) {
             activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, 1);
+          } else {
+            // Calculate from individual classes
+            const pricePerClass = useDiscount ? 8 : 10;
+            activitiesTotal += yogaClassCount * pricePerClass;
           }
         } else if (activity.category === 'surf') {
           const surfClasses = participant.selectedSurfClasses[activity.id];
@@ -575,8 +582,15 @@ export default function PaymentSection() {
     participant.selectedActivities.forEach((activity: any) => {
       if (activity.category === 'yoga') {
         const yogaPackage = participant.selectedYogaPackages[activity.id];
+        const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+        const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+
         if (yogaPackage) {
           activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, 1);
+        } else {
+          // Calculate from individual classes
+          const pricePerClass = useDiscount ? 8 : 10;
+          activitiesTotal += yogaClassCount * pricePerClass;
         }
       } else if (activity.category === 'surf') {
         const surfClasses = participant.selectedSurfClasses[activity.id];
@@ -593,7 +607,7 @@ export default function PaymentSection() {
   const total = accommodationTotal + activitiesTotal;
 
   // Debug log to check participants data
-  console.log('🔍 [PaymentSection] Participants data:', {
+  console.log('🔍 [PaymentSection] RENDERING - Participants data:', {
     participantsCount: participants.length,
     participants: participants.map(p => ({
       id: p.id,
@@ -603,14 +617,18 @@ export default function PaymentSection() {
         id: a.id,
         name: a.name,
         category: a.category,
-        surfClasses: p.selectedSurfClasses[a.id],
-        yogaPackage: p.selectedYogaPackages[a.id],
-        quantity: p.activityQuantities[a.id]
+        surfClasses: p.selectedSurfClasses?.[a.id],
+        yogaPackage: p.selectedYogaPackages?.[a.id],
+        yogaClasses: p.yogaClasses?.[a.id],
+        yogaUsePackDiscount: p.yogaUsePackDiscount?.[a.id],
+        quantity: p.activityQuantities?.[a.id]
       }))
     })),
     activitiesTotal,
     total
   });
+
+  console.log('==================== PAYMENT SECTION START ====================');
 
   return (
     <motion.div
@@ -733,17 +751,51 @@ export default function PaymentSection() {
                   <span className="font-medium text-blue-400">${accommodationTotal}</span>
                 </div>
               )}
-              {participants.flatMap((participant, pIndex) =>
-                participant.selectedActivities.map((activity: any, aIndex) => {
+              {participants.flatMap((participant, pIndex) => {
+                console.log(`🔍 [PaymentSection] Participant ${pIndex + 1}:`, {
+                  name: participant.name,
+                  selectedActivitiesCount: participant.selectedActivities.length,
+                  selectedActivities: participant.selectedActivities.map((a: any) => ({
+                    id: a.id,
+                    name: a.name,
+                    category: a.category
+                  })),
+                  selectedYogaPackages: participant.selectedYogaPackages,
+                  yogaClasses: participant.yogaClasses,
+                  yogaUsePackDiscount: participant.yogaUsePackDiscount
+                });
+
+                return participant.selectedActivities.map((activity: any, aIndex) => {
                   let activityPrice: number;
                   let activityDetails: string = '';
                   const showParticipantName = participants.length > 1;
 
                   if (activity.category === 'yoga') {
                     const selectedYogaPackage = participant.selectedYogaPackages[activity.id];
-                    if (!selectedYogaPackage) return null; // No hay paquete seleccionado
-                    activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, 1);
-                    activityDetails = `(${selectedYogaPackage})`;
+                    const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+                    const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+
+                    console.log(`🧘 [PaymentSection] Yoga activity for ${participant.name}:`, {
+                      activityId: activity.id,
+                      activityName: activity.name,
+                      selectedYogaPackage,
+                      yogaClassCount,
+                      useDiscount
+                    });
+
+                    if (selectedYogaPackage) {
+                      // Has predefined package
+                      activityPrice = getActivityTotalPrice('yoga', selectedYogaPackage, 1);
+                      activityDetails = `(${selectedYogaPackage.replace('-', ' ')})`;
+                      console.log(`✅ [PaymentSection] Yoga with package:`, { activityPrice, activityDetails });
+                    } else {
+                      // Calculate from individual classes
+                      // Import calculateYogaPrice if needed, or calculate inline
+                      const pricePerClass = useDiscount ? 8 : 10; // $10/class or $8/class with discount
+                      activityPrice = yogaClassCount * pricePerClass;
+                      activityDetails = `(${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'})`;
+                      console.log(`✅ [PaymentSection] Yoga with individual classes:`, { activityPrice, activityDetails, yogaClassCount, pricePerClass });
+                    }
                   } else if (activity.category === 'surf') {
                     const surfClasses = participant.selectedSurfClasses[activity.id];
                     if (!surfClasses) return null; // No hay clases seleccionadas
@@ -774,8 +826,9 @@ export default function PaymentSection() {
                       <span className="font-medium text-blue-400 whitespace-nowrap">${activityPrice}</span>
                     </div>
                   );
-                })
-              )}
+                });
+              })
+              }
               <div className="border-t border-white/20 pt-3">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white">{t('payment.summary.total')}</span>

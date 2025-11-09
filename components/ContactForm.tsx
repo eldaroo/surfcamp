@@ -121,11 +121,19 @@ const buildParticipantActivitySummary = useCallback((activity: any, participant:
 
   if (activity.category === 'yoga') {
     const yogaPackage = participant.selectedYogaPackages?.[activity.id];
-    if (!yogaPackage) {
-      return null;
+    const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+    const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+
+    if (yogaPackage) {
+      // Has predefined package
+      price = getActivityTotalPrice('yoga', yogaPackage);
+      detailParts.push(yogaPackage.replace('-', ' '));
+    } else {
+      // Calculate from individual classes
+      const pricePerClass = useDiscount ? 8 : 10;
+      price = yogaClassCount * pricePerClass;
+      detailParts.push(`${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'}`);
     }
-    price = getActivityTotalPrice('yoga', yogaPackage);
-    detailParts.push(yogaPackage);
   } else if (activity.category === 'surf') {
     const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
     price = calculateSurfPrice(surfClasses);
