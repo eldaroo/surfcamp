@@ -296,23 +296,23 @@ export default function DateSelector() {
   const total = subtotal + fees;
 
   return (
-    <div className="min-h-screen py-6 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
+    <div className="min-h-screen py-3 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="max-w-7xl mx-auto"
       >
-        {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
+        {/* PASS 2: mb-5 → mb-4, text-[28px] → text-[24px] */}
+        <div className="flex items-center space-x-4 mb-4">
           <BackButton variant="minimal" />
           <div>
-            <h1 className="text-[28px] font-bold text-white font-heading">{t('dates.title')}</h1>
-            <p className="text-[15px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
+            <h1 className="text-[24px] font-bold text-white font-heading">{t('dates.title')}</h1>
+            <p className="text-[14px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
           </div>
         </div>
 
-        <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-8 mb-12 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+        <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 mb-6 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
           {/* Columna izquierda - Selector de fechas */}
           {!isDateSelectorCollapsed ? (
             <motion.div
@@ -321,8 +321,8 @@ export default function DateSelector() {
               transition={{ duration: 0.5 }}
               className="card h-fit"
             >
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Check-in Date */}
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">
@@ -567,8 +567,8 @@ export default function DateSelector() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="mb-6">
-              <h2 className="text-[24px] font-bold text-white font-heading mb-2">
+            <div className="mb-3">
+              <h2 className="text-[20px] font-bold text-white font-heading mb-1">
                 {t('accommodation.title')}
               </h2>
               <p className="text-[15px] text-[var(--brand-text-dim)]">

@@ -10,19 +10,31 @@ function getPool() {
     // Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
     const connectionString = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
 
+    console.log('🔌 [DB-DIRECT] Attempting to create pool...', {
+      hasDatabaseUrlDirect: !!process.env.DATABASE_URL_DIRECT,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      hasConnectionString: !!connectionString,
+      connectionStringStart: connectionString ? connectionString.substring(0, 30) + '...' : 'none'
+    });
+
     if (!connectionString) {
-      // Return null if no connection string - will fallback to Supabase client
+      console.log('❌ [DB-DIRECT] No connection string available - will use Supabase client fallback');
       return null;
     }
 
-    pool = new Pool({
-      connectionString,
-      max: 10, // Maximum number of connections in pool
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-    });
+    try {
+      pool = new Pool({
+        connectionString,
+        max: 10, // Maximum number of connections in pool
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      });
 
-    console.log('🔌 [DB-DIRECT] Connection pool created for PRIMARY database');
+      console.log('✅ [DB-DIRECT] Connection pool created for PRIMARY database');
+    } catch (error) {
+      console.error('❌ [DB-DIRECT] Failed to create connection pool:', error);
+      return null;
+    }
   }
 
   return pool;

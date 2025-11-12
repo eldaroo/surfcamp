@@ -598,7 +598,7 @@ const ActivitiesPage = () => {
   const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
 
   return (
-    <div className="mx-auto max-w-7xl px-3 md:px-4 py-6 md:py-8">
+    <div className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4">
       <HeaderPersonalization
         name={personalizationName}
         participants={participantCount}
@@ -617,17 +617,17 @@ const ActivitiesPage = () => {
             transition={{ duration: 0.4 }}
             className="max-w-3xl mx-auto"
           >
-            {/* Header */}
-            <div className="text-center mb-8">
+            {/* PASS 2: mb-8 → mb-5, icon w-16/h-16 mb-4 → w-12/h-12 mb-2.5, text-2xl/3xl mb-2 → text-xl/2xl mb-1.5 */}
+            <div className="text-center mb-5">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.4 }}
-                className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-4"
+                className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
               >
-                <CheckCircle2 className="h-8 w-8 text-amber-300" />
+                <CheckCircle2 className="h-6 w-6 text-amber-300" />
               </motion.div>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-50 font-heading mb-2">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-50 font-heading mb-1.5">
                 {locale === "es" ? "¡Actividades completadas!" : "Activities completed!"}
               </h2>
               <p className="text-slate-400 text-sm md:text-base">
@@ -637,8 +637,8 @@ const ActivitiesPage = () => {
               </p>
             </div>
 
-            {/* All Participants Summary - Accordion Style */}
-            <div className="space-y-3 mb-6">
+            {/* PASS 2: space-y-2.5 mb-4 → space-y-2 mb-3 */}
+            <div className="space-y-2 mb-3">
               {storeParticipants.map((participant, participantIndex) => {
                 const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
                   return sum + computeActivityPriceForParticipant(activity, participant);

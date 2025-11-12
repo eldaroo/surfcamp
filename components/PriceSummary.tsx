@@ -173,7 +173,7 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
 
   return (
     <div
-      className="rounded-2xl p-6 border lg:sticky lg:top-6"
+      className="rounded-2xl p-3 md:p-4 border lg:sticky lg:top-6"
       style={{
         backgroundColor: 'var(--brand-surface)',
         borderColor: 'var(--brand-border)'
@@ -181,16 +181,16 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       role="complementary"
       aria-label="Booking Summary"
     >
-      {/* Header */}
+      {/* PASS 2: mb-4 → mb-3, text-[18px] → text-[16px] */}
       <h3
-        className="text-[20px] font-semibold mb-6 font-heading"
+        className="text-[16px] font-semibold mb-3 font-heading"
         style={{ color: 'var(--brand-text)' }}
       >
         {getText('prices.summary', 'Price Summary')}
       </h3>
 
-      {/* Line Items */}
-      <ul className="space-y-4 mb-6">
+      {/* PASS 2: space-y-3 mb-4 → space-y-2.5 mb-3 */}
+      <ul className="space-y-2.5 mb-3">
         {/* Accommodation */}
         {selectedRoom && nights > 0 && (
           <li>
@@ -269,9 +269,9 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         })}
       </ul>
 
-      {/* Edit Activities Button */}
+      {/* PASS 2: mb-4 → mb-3 */}
       {allActivitySelections.length > 0 && (
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-end mb-3">
           <button
             onClick={() => setCurrentStep('activities')}
             className="text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
@@ -285,14 +285,14 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         </div>
       )}
 
-      {/* Subtotal (only show if we have multiple items) */}
+      {/* PASS 2: mb-2.5 → mb-2, mb-4 → mb-3 */}
       {((accommodationTotal > 0) && (activitiesTotal > 0)) && (
         <>
           <div
-            className="h-px mb-3"
+            className="h-px mb-2"
             style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
           />
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-3">
             <span
               className="text-[14px] font-medium"
               style={{ color: 'var(--brand-text-dim)' }}
@@ -309,9 +309,9 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         </>
       )}
 
-      {/* Fees */}
+      {/* PASS 2: mb-4 → mb-3 */}
       {fees > 0 && (
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-3">
           <span
             className="text-[14px] font-medium"
             style={{ color: 'var(--brand-text-dim)' }}
@@ -327,9 +327,9 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         </div>
       )}
 
-      {/* Discounts */}
+      {/* PASS 2: mb-4 → mb-3 */}
       {discounts > 0 && (
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-3">
           <span
             className="text-[14px] font-medium"
             style={{ color: 'var(--brand-text-dim)' }}
@@ -345,10 +345,10 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         </div>
       )}
 
-      {/* Total */}
+      {/* PASS 2: pt-4 → pt-3 */}
       {(accommodationTotal > 0 || activitiesTotal > 0) && (
         <div
-          className="border-t pt-6"
+          className="border-t pt-3"
           style={{ borderColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
         >
           <div className="flex justify-between items-center" aria-live="polite">

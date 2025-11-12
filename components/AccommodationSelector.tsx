@@ -202,19 +202,19 @@ export default function AccommodationSelector() {
   }
 
   return (
-    <div className="min-h-screen py-6 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
+    <div className="min-h-screen py-3 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="max-w-7xl mx-auto"
       >
-        {/* Header */}
-        <div className="flex items-center space-x-4 mb-8">
+        {/* PASS 2: mb-5 → mb-4, text-[28px] → text-[24px], text-[15px] → text-[14px] */}
+        <div className="flex items-center space-x-4 mb-4">
           <BackButton variant="minimal" />
           <div>
-            <h1 className="text-[28px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
-            <p className="text-[15px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
+            <h1 className="text-[24px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
+            <p className="text-[14px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
           </div>
         </div>
 
@@ -230,9 +230,9 @@ export default function AccommodationSelector() {
           </motion.div>
         )}
 
-        {/* Room Cards - One per row, centered with reduced width */}
+        {/* PASS 2: mb-5 → mb-4 */}
         <div
-          className="space-y-2 mb-8 flex flex-col items-center"
+          className="space-y-2 mb-4 flex flex-col items-center"
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >

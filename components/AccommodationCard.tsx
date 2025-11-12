@@ -264,7 +264,7 @@ const AccommodationCard = ({
     <>
       <div
         ref={cardRef}
-        className="flip-card w-full h-[420px] md:h-[220px]"
+        className="flip-card w-full h-[260px] md:h-[180px]"
         style={{ perspective: '1000px' }}
       >
         <motion.div
@@ -351,7 +351,7 @@ const AccommodationCard = ({
           onClick={handleFlip}
         >
           <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
-            <div className="flex flex-1 flex-col px-3 md:px-5 py-2 md:py-3 gap-1.5 md:gap-2">
+            <div className="flex flex-1 flex-col px-2.5 md:px-4 py-1.5 md:py-2 gap-0.5 md:gap-1">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
@@ -469,9 +469,9 @@ const AccommodationCard = ({
               )}
             </div>
 
-            {/* Right Side - Pricing & Action - Optimized for Mobile */}
+            {/* PASS 2: px-2.5/3 py-1.5/2 gap-1.5 → px-2/2.5 py-1/1.5 gap-1, min-w-220 → min-w-200 */}
             <div
-              className="flex flex-col justify-center items-center gap-2 md:gap-1.5 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-3 md:px-3 py-2 md:py-2 md:min-w-[240px] flex-shrink-0"
+              className="flex flex-col justify-center items-center gap-1 md:gap-1 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-2 md:px-2.5 py-1 md:py-1.5 md:min-w-[200px] flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Mobile: Compact Price + Button Layout */}

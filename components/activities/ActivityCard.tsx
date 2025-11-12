@@ -843,8 +843,8 @@ const ActivityCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Hero Visual Section - Top */}
-      <div className="relative w-full h-[180px] md:h-[275px] overflow-hidden group/hero">
+      {/* PASS 2 + Mobile: increased mobile from 110px to 135px, removed title overlay on mobile */}
+      <div className="relative w-full h-[135px] md:h-[170px] overflow-hidden group/hero">
         {imageData.hasImage && 'image' in imageData ? (
           <>
             <div
@@ -899,10 +899,10 @@ const ActivityCard = ({
           </span>
         </motion.div>
 
-        {/* Title Overlay - Centered */}
-        <div className="absolute inset-0 flex items-center justify-center px-6 md:px-8">
+        {/* Title Overlay - Centered - HIDDEN ON MOBILE, only desktop */}
+        <div className="absolute inset-0 hidden md:flex items-center justify-center px-6 md:px-8">
           <motion.h2
-            className="text-[1.5rem] md:text-[2rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
+            className="text-[2rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -913,14 +913,14 @@ const ActivityCard = ({
 
       </div>
 
-      {/* Information Section - Two Column Layout */}
+      {/* PASS 2: Further tightened */}
       <div className="flex flex-col md:flex-row md:items-start md:flex-1">
 
-        {/* Left Column (65-70%) - Information */}
-        <div className="flex flex-col flex-1 md:flex-[7] px-6 md:px-10 py-5 md:py-8 gap-5 md:gap-7">
+        {/* PASS 2: px-5/8 py-4/6 gap-4/5 → px-4/6 py-3/4 gap-3/4 */}
+        <div className="flex flex-col flex-1 md:flex-[7] px-4 md:px-6 py-3 md:py-4 gap-3 md:gap-4">
 
-          {/* 1. Description */}
-          {descriptive && (
+          {/* 1. Description - only for non-surf activities to avoid redundancy */}
+          {descriptive && activity.category !== 'surf' && (
             <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
               {descriptive.description}
             </p>
@@ -958,14 +958,13 @@ const ActivityCard = ({
           )}
         </div>
 
-        {/* Right Column (30-35%) - Action Block */}
-        <div className="md:flex-[3] md:border-l border-slate-700/40 px-6 md:px-8 py-5 md:py-8 bg-slate-800/10 md:bg-transparent">
-          <div className="flex flex-col gap-4 md:gap-6 md:sticky md:top-8 h-full">
+        {/* PASS 2: px-5/6 py-4/6 gap-3/4 → px-4/5 py-3/4 gap-2.5/3 */}
+        <div className="md:flex-[3] md:border-l border-slate-700/40 px-4 md:px-5 py-3 md:py-4 bg-slate-800/10 md:bg-transparent">
+          <div className="flex flex-col gap-2.5 md:gap-3 md:sticky md:top-8 h-full">
 
-            {/* Top Section - Price and Choose Button */}
-            <div className="flex flex-col items-center gap-4 md:gap-6">
-              {/* Price */}
-              <div className="w-full text-center space-y-2">
+            {/* PASS 2: gap-3/4 → gap-2.5/3, space-y-1.5 → space-y-1 */}
+            <div className="flex flex-col items-center gap-2.5 md:gap-3">
+              <div className="w-full text-center space-y-1">
                 <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total</p>
                 <motion.div
                   className="text-3xl md:text-4xl font-bold text-slate-50"
@@ -1035,9 +1034,9 @@ const ActivityCard = ({
               </div>
             </div>
 
-            {/* Social Proof (Surf only) - Moved here, below Choose button */}
+            {/* PASS 2: pt-3/4 → pt-2.5/3, space-y-2/3 → space-y-1.5/2.5 */}
             {isSurf && ratingValue && (
-              <div className="w-full pt-4 md:pt-5 border-t border-slate-700/30 space-y-3 md:space-y-4">
+              <div className="w-full pt-2.5 md:pt-3 border-t border-slate-700/30 space-y-1.5 md:space-y-2.5">
                 {/* Rating */}
                 <div className="flex items-center justify-center gap-2">
                   <div className="flex items-center gap-0.5">

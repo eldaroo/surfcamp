@@ -83,7 +83,8 @@
       "Bash(pm2 restart:*)",
       "Bash(npx pm2:*)",
       "Bash(/root/surfcamp/.env.local)",
-      "Bash(pm2 describe:*)"
+      "Bash(pm2 describe:*)",
+      "Bash(ssh root@surfcampwidget.duckdns.org:*)"
     ],
     "deny": [],
     "ask": []
