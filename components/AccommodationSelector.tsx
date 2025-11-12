@@ -178,21 +178,21 @@ export default function AccommodationSelector() {
 
   if (loadingRooms) {
     return (
-      <div className="min-h-screen py-6 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
+      <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-7xl mx-auto"
         >
-          <div className="flex items-center space-x-4 mb-8">
+          <div className="flex items-center space-x-4 mb-4">
             <BackButton variant="minimal" />
             <div>
-              <h1 className="text-[28px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
-              <p className="text-[15px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
+              <h1 className="text-[24px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
+              <p className="text-[14px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center py-24">
+          <div className="flex flex-col items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: 'var(--brand-gold)' }}></div>
             <p className="text-[var(--brand-text)] text-[15px]">{t('accommodation.searchingRooms')}</p>
           </div>
@@ -202,7 +202,7 @@ export default function AccommodationSelector() {
   }
 
   return (
-    <div className="min-h-screen py-3 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
+    <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -286,9 +286,9 @@ export default function AccommodationSelector() {
           })}
         </div>
 
-        {/* No rooms available */}
+        {/* No rooms available - reduced from py-12 to py-8 */}
         {(!availableRooms || availableRooms.length === 0) && (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <div className="text-6xl mb-4">🏠</div>
             <h3 className="text-[22px] font-bold text-white mb-3 font-heading">
               {t('accommodation.noRoomsAvailable')}

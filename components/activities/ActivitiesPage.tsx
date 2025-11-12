@@ -637,8 +637,8 @@ const ActivitiesPage = () => {
               </p>
             </div>
 
-            {/* PASS 2: space-y-2.5 mb-4 → space-y-2 mb-3 */}
-            <div className="space-y-2 mb-3">
+            {/* Desktop: ultra-compact spacing */}
+            <div className="space-y-2 mb-3 md:space-y-1.5 md:mb-2">
               {storeParticipants.map((participant, participantIndex) => {
                 const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
                   return sum + computeActivityPriceForParticipant(activity, participant);
@@ -660,28 +660,40 @@ const ActivitiesPage = () => {
                     {/* Participant Header - Clickable */}
                     <button
                       onClick={() => setExpandedParticipantId(isExpanded ? null : participant.id)}
-                      className="w-full px-6 py-4 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className="w-full px-3 py-3 md:py-2.5 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between hover:bg-slate-800/50 transition-colors cursor-pointer"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border transition-colors ${
+                      <div className="flex items-center gap-2.5 md:gap-2">
+                        <div className={`flex items-center justify-center w-8 h-8 md:w-7 md:h-7 rounded-full border transition-colors ${
                           isExpanded
                             ? 'bg-amber-300/20 border-amber-400/30'
                             : 'bg-cyan-500/20 border-cyan-400/30'
                         }`}>
-                          <User className={`h-5 w-5 transition-colors ${
+                          <User className={`h-4 w-4 transition-colors ${
                             isExpanded ? 'text-amber-300' : 'text-cyan-300'
                           }`} />
                         </div>
-                        <div className="text-left">
-                          <h3 className="text-lg font-bold text-slate-200">
+                        <div className="text-left flex-1">
+                          <h3 className="text-base md:text-sm font-bold text-slate-200">
                             {participant.name}
                             {participant.isYou && (
-                              <span className="ml-2 text-sm text-cyan-400">
+                              <span className="ml-2 text-sm md:text-[11px] text-cyan-400">
                                 ({locale === "es" ? "Tú" : "You"})
                               </span>
                             )}
+                            {/* Desktop: show activities + price inline */}
+                            <span className="hidden md:inline ml-2 text-[11px] text-slate-400 font-normal">
+                              • {participant.selectedActivities.length}{" "}
+                              {participant.selectedActivities.length === 1
+                                ? (locale === "es" ? "actividad" : "activity")
+                                : (locale === "es" ? "actividades" : "activities")}
+                              {" • "}
+                              <span className="text-amber-300 font-semibold">
+                                {formatCurrency(participantTotal)}
+                              </span>
+                            </span>
                           </h3>
-                          <p className="text-xs text-slate-400">
+                          {/* Mobile: show activities + price on second line */}
+                          <p className="md:hidden text-xs text-slate-400">
                             {participant.selectedActivities.length}{" "}
                             {participant.selectedActivities.length === 1
                               ? (locale === "es" ? "actividad" : "activity")
@@ -739,7 +751,7 @@ const ActivitiesPage = () => {
                           transition={{ duration: 0.3, ease: "easeInOut" }}
                           className="overflow-hidden"
                         >
-                          <div className="p-6 space-y-3">
+                          <div className="p-4 md:p-3 space-y-2 md:space-y-1.5">
                             {participant.selectedActivities.length === 0 ? (
                               <p className="text-slate-400 text-center py-4">
                                 {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
@@ -756,21 +768,22 @@ const ActivitiesPage = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.05, duration: 0.3 }}
-                                    className="flex items-center gap-4 p-4 rounded-xl bg-slate-800/40 border border-slate-700/30 hover:bg-slate-800/60 transition-all"
+                                    className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-slate-800/40 border-slate-700/30 hover:bg-slate-800/60 transition-all"
+                                    style={{ borderWidth: '1px' }}
                                   >
-                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-300/10 border border-amber-300/20">
-                                      <Icon className="h-6 w-6 text-amber-300" />
+                                    <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-amber-300/10 border border-amber-300/20">
+                                      <Icon className="h-5 w-5 md:h-4 md:w-4 text-amber-300" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <h4 className="text-base font-bold text-slate-100 truncate">
+                                      <h4 className="text-sm md:text-xs font-bold text-slate-100 truncate">
                                         {activity.name}
                                       </h4>
                                       {details && (
-                                        <p className="text-sm text-slate-400 mt-0.5">{details}</p>
+                                        <p className="text-sm md:text-[10px] text-slate-400 mt-0.5 md:mt-0">{details}</p>
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-lg font-bold text-amber-300">
+                                      <p className="text-base md:text-sm font-bold text-amber-300">
                                         {formatCurrency(price)}
                                       </p>
                                     </div>
@@ -782,12 +795,12 @@ const ActivitiesPage = () => {
 
                           {/* Participant Total */}
                           {participant.selectedActivities.length > 0 && (
-                            <div className="px-6 py-4 border-t border-slate-700/50 bg-slate-800/30">
+                            <div className="px-4 py-3 md:px-3 md:py-2 border-t border-slate-700/50 bg-slate-800/30">
                               <div className="flex items-center justify-between">
-                                <span className="text-base font-bold text-slate-200">
+                                <span className="text-sm md:text-xs font-bold text-slate-200">
                                   {locale === "es" ? "Subtotal" : "Subtotal"}
                                 </span>
-                                <span className="text-xl font-bold text-amber-300">
+                                <span className="text-lg md:text-sm font-bold text-amber-300">
                                   {formatCurrency(participantTotal)}
                                 </span>
                               </div>
@@ -807,13 +820,13 @@ const ActivitiesPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.4 }}
-                className="rounded-3xl border-2 border-amber-400/30 bg-gradient-to-br from-slate-900/90 to-slate-800/90 shadow-2xl overflow-hidden mb-6"
+                className="rounded-3xl md:rounded-2xl border-2 border-amber-400/30 bg-gradient-to-br from-slate-900/90 to-slate-800/90 shadow-2xl overflow-hidden mb-4 md:mb-2 md:mt-2"
               >
-                <div className="px-6 py-5 flex items-center justify-between">
-                  <span className="text-xl font-bold text-white">
+                <div className="px-4 py-3 md:px-3 md:py-2.5 flex items-center justify-between">
+                  <span className="text-lg md:text-sm font-bold text-white">
                     {locale === "es" ? "Total General" : "Grand Total"}
                   </span>
-                  <span className="text-3xl font-bold text-amber-300">
+                  <span className="text-2xl md:text-xl font-bold text-amber-300">
                     {formatCurrency(calculateGrandTotal())}
                   </span>
                 </div>
@@ -831,7 +844,7 @@ const ActivitiesPage = () => {
                 onClick={handleCompleteAndContinue}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-[#FDCB2E] text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-[#FCD34D] hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2"
+                className="w-full md:w-[240px] px-8 py-3 md:py-2.5 bg-[#FDCB2E] text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-[#FCD34D] hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2"
               >
                 {locale === "es" ? "Continuar" : "Continue"}
                 <ArrowRight className="h-5 w-5" />

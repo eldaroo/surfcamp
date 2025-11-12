@@ -264,7 +264,7 @@ const AccommodationCard = ({
     <>
       <div
         ref={cardRef}
-        className="flip-card w-full h-[260px] md:h-[180px]"
+        className="flip-card w-full min-h-[280px] md:min-h-[190px]"
         style={{ perspective: '1000px' }}
       >
         <motion.div

@@ -296,7 +296,7 @@ export default function DateSelector() {
   const total = subtotal + fees;
 
   return (
-    <div className="min-h-screen py-3 px-4" style={{ backgroundColor: 'var(--brand-bg)' }}>
+    <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -588,9 +588,9 @@ export default function DateSelector() {
               </motion.div>
             )}
 
-            {/* Loading State */}
+            {/* Loading State - reduced from py-24 to py-12 */}
             {hasRequestedAvailability && loadingRooms && (
-              <div className="flex flex-col items-center justify-center py-24">
+              <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: 'var(--brand-gold)' }}></div>
                 <p className="text-[var(--brand-text)] text-[15px]">{t('accommodation.searchingRooms')}</p>
               </div>
@@ -637,9 +637,9 @@ export default function DateSelector() {
               </>
             )}
 
-            {/* No rooms available */}
+            {/* No rooms available - reduced from py-12 to py-8 */}
             {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
-              <div className="text-center py-12">
+              <div className="text-center py-8">
                 <div className="text-6xl mb-4">🏠</div>
                 <h3 className="text-[22px] font-bold text-white mb-3 font-heading">
                   {t('accommodation.noRoomsAvailable')}
