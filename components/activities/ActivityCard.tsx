@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Activity } from "@/types";
 import {
@@ -47,6 +47,7 @@ type ActivityCardProps = {
   onSkip?: () => void;
   onBack?: () => void;
   isFirstStep?: boolean;
+  isSurfMandatory?: boolean;
   yogaClasses?: number;
   onYogaClassesChange?: (value: number) => void;
   yogaUsePackDiscount?: boolean;
@@ -400,6 +401,7 @@ const ActivityCard = ({
   onSkip,
   onBack,
   isFirstStep = false,
+  isSurfMandatory = true,
   yogaClasses,
   onYogaClassesChange,
   yogaUsePackDiscount,
@@ -427,12 +429,47 @@ const ActivityCard = ({
   const [hasInteracted, setHasInteracted] = useState(false); // Track if user has modified selectors
   const [showTestimonialsPopup, setShowTestimonialsPopup] = useState(false);
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
+  const [currentSurfImageIndex, setCurrentSurfImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
   const imageData = activityImages[activity.category as keyof typeof activityImages] || {
     gradient: "from-slate-600 to-slate-800",
     hasImage: false,
   };
 
   const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
+
+  // Surf image carousel for mobile
+  const surfImages = [
+    '/assets/Surf.jpg',
+    '/assets/Surf (2).jpg',
+    '/assets/Surf (3).jpg',
+    '/assets/Surf (4).jpg',
+    '/assets/Surf (5).jpg',
+    '/assets/Surfcamp - day2 - 49.jpg',
+    '/assets/Surfcamp_-_day2_-_43.jpg',
+  ];
+
+  const handleNextSurfImage = () => {
+    setCurrentSurfImageIndex((prev) => (prev + 1) % surfImages.length);
+  };
+
+  const handlePrevSurfImage = () => {
+    setCurrentSurfImageIndex((prev) => (prev - 1 + surfImages.length) % surfImages.length);
+  };
+
+  const handleOpenImageModal = (index: number) => {
+    setModalImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleNextModalImage = () => {
+    setModalImageIndex((prev) => (prev + 1) % surfImages.length);
+  };
+
+  const handlePrevModalImage = () => {
+    setModalImageIndex((prev) => (prev - 1 + surfImages.length) % surfImages.length);
+  };
 
   const handleNextTestimonial = () => {
     if (testimonials) {
@@ -456,6 +493,17 @@ const ActivityCard = ({
 
     return () => clearInterval(interval);
   }, [isSurf, testimonials]);
+
+  // Auto-rotate surf carousel every 4 seconds (mobile only)
+  useEffect(() => {
+    if (!isSurf) return;
+
+    const interval = setInterval(() => {
+      setCurrentSurfImageIndex((prev) => (prev + 1) % surfImages.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isSurf, surfImages.length]);
 
   const handleChoose = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -843,47 +891,243 @@ const ActivityCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* PASS 2 + Mobile: increased mobile from 110px to 135px, removed title overlay on mobile */}
-      <div className="relative w-full h-[135px] md:h-[170px] overflow-hidden group/hero">
-        {imageData.hasImage && 'image' in imageData ? (
+      {/* PASS 2 + Mobile: 135px, desktop 100px for panoramic view with less cropping */}
+      <div className="relative w-full h-[135px] md:h-[100px] overflow-hidden group/hero">
+        {/* Surf Mobile Carousel */}
+        {isSurf ? (
           <>
+            {/* Mobile: Carousel */}
             <div
-              className="activity-card-bg absolute inset-0 bg-no-repeat transition-all duration-500 ease-out group-hover/hero:scale-110"
-              style={{
-                backgroundImage: `url(${imageData.image})`,
+              className="md:hidden relative w-full h-full bg-slate-900 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenImageModal(currentSurfImageIndex);
               }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
-            <style jsx>{`
-              .activity-card-bg {
-                background-size: cover;
-                background-position: center 65%;
-              }
+            >
+              <motion.div
+                key={currentSurfImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={surfImages[currentSurfImageIndex]}
+                  alt={`Surf ${currentSurfImageIndex + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority={currentSurfImageIndex === 0}
+                  quality={85}
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
 
-              /* Mobile responsive positioning for better framing */
-              @media (max-width: 768px) {
-                .activity-card-bg {
-                  background-size: cover;
-                  background-position: ${isSurf ? 'center 40%' : activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
-                  ${isSurf && 'mobileImage' in imageData ? `background-image: url(${imageData.mobileImage}) !important;` : ''}
-                }
-              }
+              {/* Click to view indicator */}
+              <div className="absolute top-3 left-3 z-20 bg-black/70 backdrop-blur-md px-2 py-1 rounded-full text-white text-[10px] font-medium border border-white/20 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Ver
+              </div>
 
-              /* Desktop - keep current behavior */
-              @media (min-width: 769px) {
-                .activity-card-bg {
-                  background-size: cover;
-                  background-position: ${isSurf ? 'center 60%' : 'center 65%'};
-                }
-              }
-            `}</style>
-          </>
-        ) : (
-          <>
-            <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
-              <div className="absolute inset-0 bg-black/20"></div>
+              {/* Navigation Arrows - More Visible */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handlePrevSurfImage();
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleNextSurfImage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Pagination Dots - Minimal & Elegant */}
+              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 bg-black/30 backdrop-blur-sm px-1 py-0.5 rounded-full">
+                {surfImages.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setCurrentSurfImageIndex(index);
+                    }}
+                    style={{
+                      width: index === currentSurfImageIndex ? '8px' : '4px',
+                      height: '4px',
+                      minWidth: '4px',
+                      minHeight: '4px',
+                    }}
+                    className={`rounded-full transition-all ${
+                      index === currentSurfImageIndex
+                        ? 'bg-amber-400'
+                        : 'bg-white/30'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Image Counter */}
+              <div className="absolute top-3 right-3 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20">
+                {currentSurfImageIndex + 1} / {surfImages.length}
+              </div>
+            </div>
+
+            {/* Desktop: Carousel also visible */}
+            <div
+              className="hidden md:block relative w-full h-full bg-slate-900 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenImageModal(currentSurfImageIndex);
+              }}
+            >
+              <motion.div
+                key={currentSurfImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={surfImages[currentSurfImageIndex]}
+                  alt={`Surf ${currentSurfImageIndex + 1}`}
+                  fill
+                  className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority={currentSurfImageIndex === 0}
+                  quality={85}
+                  style={{ objectPosition: 'center 60%' }}
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
+
+              {/* Click to view indicator */}
+              <div className="absolute top-4 left-4 z-20 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-medium border border-white/20 flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Click para ver
+              </div>
+
+              {/* Navigation Arrows Desktop */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handlePrevSurfImage();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-7 h-7" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleNextSurfImage();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-7 h-7" />
+              </button>
+
+              {/* Pagination Dots Desktop */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
+                {surfImages.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setCurrentSurfImageIndex(index);
+                    }}
+                    style={{
+                      width: index === currentSurfImageIndex ? '12px' : '6px',
+                      height: '6px',
+                      minWidth: '6px',
+                      minHeight: '6px',
+                    }}
+                    className={`rounded-full transition-all ${
+                      index === currentSurfImageIndex
+                        ? 'bg-amber-400'
+                        : 'bg-white/40 hover:bg-white/70'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Image Counter Desktop */}
+              <div className="absolute top-4 right-4 z-20 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-semibold border border-white/20">
+                {currentSurfImageIndex + 1} / {surfImages.length}
+              </div>
             </div>
           </>
+        ) : (
+          /* Non-Surf Activities */
+          imageData.hasImage && 'image' in imageData ? (
+            <>
+              <div
+                className="activity-card-bg absolute inset-0 bg-no-repeat transition-all duration-500 ease-out group-hover/hero:scale-110"
+                style={{
+                  backgroundImage: `url(${imageData.image})`,
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+              <style jsx>{`
+                .activity-card-bg {
+                  background-size: cover;
+                  background-position: center 65%;
+                }
+
+                /* Mobile responsive positioning for better framing */
+                @media (max-width: 768px) {
+                  .activity-card-bg {
+                    background-size: cover;
+                    background-position: ${activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
+                  }
+                }
+
+                /* Desktop - keep current behavior */
+                @media (min-width: 769px) {
+                  .activity-card-bg {
+                    background-size: cover;
+                    background-position: center 65%;
+                  }
+                }
+              `}</style>
+            </>
+          ) : (
+            <>
+              <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
+                <div className="absolute inset-0 bg-black/20"></div>
+              </div>
+            </>
+          )
         )}
 
         {/* Category Badge - Top Left */}
@@ -1015,7 +1259,7 @@ const ActivityCard = ({
                 </motion.button>
 
                 {/* Skip Button - Only for non-mandatory activities */}
-                {!isSurf && onSkip && (
+                {(!isSurf || !isSurfMandatory) && onSkip && (
                   <motion.button
                     type="button"
                     onClick={(e) => {
@@ -1099,7 +1343,7 @@ const ActivityCard = ({
 
 
             {/* Navigation Buttons for Surf (maintains original vertical layout) */}
-            {isSurf && (onSkip || onBack) && (
+            {isSurf && ((!isSurfMandatory && onSkip) || onBack) && (
               <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-slate-700/30 flex-col gap-3">
                 {/* Back Button */}
                 {!isFirstStep && onBack && (
@@ -1120,7 +1364,7 @@ const ActivityCard = ({
                 )}
 
                 {/* Skip Button - Only for non-mandatory activities */}
-                {!isSurf && onSkip && (
+                {(!isSurf || !isSurfMandatory) && onSkip && (
                   <motion.button
                     type="button"
                     onClick={(e) => {
@@ -1142,7 +1386,7 @@ const ActivityCard = ({
       </div>
 
       {/* Desktop Footer - Navigation for non-Surf cards */}
-      {!isSurf && (onSkip || onBack) && (
+      {(!isSurf || !isSurfMandatory) && (onSkip || onBack) && (
         <div className="hidden md:block border-t border-slate-700/40 px-6 md:px-10 py-5 md:py-6">
           <div className="flex items-center justify-between">
             {/* Left Side - Back Button */}
@@ -1318,6 +1562,118 @@ const ActivityCard = ({
           </motion.div>
         </motion.div>
       )}
+
+      {/* Image Modal Fullscreen */}
+      <AnimatePresence>
+        {isSurf && showImageModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowImageModal(false)}
+            className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center"
+            style={{ margin: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 flex items-center justify-center"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setShowImageModal(false)}
+                className="absolute top-4 right-4 z-30 w-12 h-12 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Image Counter */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-semibold border border-white/20">
+                {modalImageIndex + 1} / {surfImages.length}
+              </div>
+
+              {/* Main Image */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <motion.div
+                  key={modalImageIndex}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative w-full h-full"
+                >
+                  <Image
+                    src={surfImages[modalImageIndex]}
+                    alt={`Surf ${modalImageIndex + 1}`}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    quality={95}
+                    priority
+                  />
+                </motion.div>
+              </div>
+
+              {/* Navigation Arrows */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevModalImage();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextModalImage();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+
+              {/* Thumbnail Strip */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-full overflow-x-auto">
+                <div className="flex gap-2 bg-black/80 backdrop-blur-md px-3 py-2 rounded-full border border-white/20">
+                  {surfImages.map((img, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalImageIndex(index);
+                      }}
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all flex-shrink-0 ${
+                        index === modalImageIndex
+                          ? 'ring-2 ring-amber-400 scale-110'
+                          : 'opacity-60 hover:opacity-100 hover:scale-105'
+                      }`}
+                    >
+                      <Image
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                        quality={60}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </motion.div>
   );

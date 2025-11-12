@@ -186,9 +186,12 @@ const ActivitiesPage = () => {
 
       const isAlreadySelected = selectedActivities.some((item) => item.id === activity.id);
 
-      // Surf is mandatory - can be selected but not deselected
-      if (activity.category === "surf" && isAlreadySelected) {
-        console.log('[ActivitiesPage] handleToggleActivity - surf is mandatory, cannot deselect');
+      // Surf is mandatory only for the first participant - can be selected but not deselected
+      const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
+      const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
+
+      if (activity.category === "surf" && isAlreadySelected && isFirstParticipant) {
+        console.log('[ActivitiesPage] handleToggleActivity - surf is mandatory for first participant, cannot deselect');
         return;
       }
 
@@ -882,6 +885,10 @@ const ActivitiesPage = () => {
               const supportsQuantity = quantityCategories.has(currentActivity.category);
               const supportsTime = timeSlotCategories.has(currentActivity.category);
 
+              // Determine if surf is mandatory for this participant
+              const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
+              const isSurfMandatory = isFirstParticipant;
+
               return (
                 <div className="relative">
                   {/* Active Participant Badge - Top Right */}
@@ -914,6 +921,7 @@ const ActivitiesPage = () => {
                   onSkip={skipCurrentActivity}
                   onBack={handleBackStep}
                   isFirstStep={activityFlowStep === 'surf'}
+                  isSurfMandatory={isSurfMandatory}
                   price={individualPrice}
                   pricePerPerson={undefined}
                   formatPrice={formatCurrency}
