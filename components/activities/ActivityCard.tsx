@@ -444,7 +444,7 @@ const ActivityCard = ({
     '/assets/Surf.jpg',
     '/assets/Surf (2).jpg',
     '/assets/Surf (3).jpg',
-    '/assets/Surf (4).jpg',
+    '/assets/Surf (4).png',
     '/assets/Surf (5).jpg',
     '/assets/Surfcamp - day2 - 49.jpg',
     '/assets/Surfcamp_-_day2_-_43.jpg',
@@ -891,19 +891,13 @@ const ActivityCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* PASS 2 + Mobile: 135px, desktop 100px for panoramic view with less cropping */}
-      <div className="relative w-full h-[135px] md:h-[100px] overflow-hidden group/hero">
+      {/* Compact banner - clean horizontal band */}
+      <div className="relative w-full h-[155px] md:h-[180px] overflow-hidden group/hero">
         {/* Surf Mobile Carousel */}
         {isSurf ? (
           <>
             {/* Mobile: Carousel */}
-            <div
-              className="md:hidden relative w-full h-full bg-slate-900 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenImageModal(currentSurfImageIndex);
-              }}
-            >
+            <div className="md:hidden relative w-full h-full bg-slate-900">
               <motion.div
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
@@ -916,21 +910,25 @@ const ActivityCard = ({
                   alt={`Surf ${currentSurfImageIndex + 1}`}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
                   priority={currentSurfImageIndex === 0}
-                  quality={85}
+                  quality={90}
+                  style={{
+                    objectPosition: 'center center',
+                    objectFit: 'cover'
+                  }}
                 />
               </motion.div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
 
-              {/* Click to view indicator */}
-              <div className="absolute top-3 left-3 z-20 bg-black/70 backdrop-blur-md px-2 py-1 rounded-full text-white text-[10px] font-medium border border-white/20 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                Ver
-              </div>
+              {/* Clickable overlay - opens modal when clicked */}
+              <div
+                className="absolute inset-0 z-10 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenImageModal(currentSurfImageIndex);
+                }}
+              />
 
               {/* Navigation Arrows - More Visible */}
               <button
@@ -992,13 +990,7 @@ const ActivityCard = ({
             </div>
 
             {/* Desktop: Carousel also visible */}
-            <div
-              className="hidden md:block relative w-full h-full bg-slate-900 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenImageModal(currentSurfImageIndex);
-              }}
-            >
+            <div className="hidden md:block relative w-full h-full bg-slate-900">
               <motion.div
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
@@ -1011,22 +1003,25 @@ const ActivityCard = ({
                   alt={`Surf ${currentSurfImageIndex + 1}`}
                   fill
                   className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
                   priority={currentSurfImageIndex === 0}
-                  quality={85}
-                  style={{ objectPosition: 'center 60%' }}
+                  quality={90}
+                  style={{
+                    objectPosition: 'center center',
+                    objectFit: 'cover'
+                  }}
                 />
               </motion.div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
 
-              {/* Click to view indicator */}
-              <div className="absolute top-4 left-4 z-20 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs font-medium border border-white/20 flex items-center gap-1.5">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                Click para ver
-              </div>
+              {/* Clickable overlay - opens modal when clicked */}
+              <div
+                className="absolute inset-0 z-10 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenImageModal(currentSurfImageIndex);
+                }}
+              />
 
               {/* Navigation Arrows Desktop */}
               <button
@@ -1091,35 +1086,19 @@ const ActivityCard = ({
           /* Non-Surf Activities */
           imageData.hasImage && 'image' in imageData ? (
             <>
-              <div
-                className="activity-card-bg absolute inset-0 bg-no-repeat transition-all duration-500 ease-out group-hover/hero:scale-110"
+              <Image
+                src={imageData.image}
+                alt={activity.name}
+                fill
+                className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
+                quality={90}
                 style={{
-                  backgroundImage: `url(${imageData.image})`,
+                  objectPosition: 'center center',
+                  objectFit: 'cover'
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
-              <style jsx>{`
-                .activity-card-bg {
-                  background-size: cover;
-                  background-position: center 65%;
-                }
-
-                /* Mobile responsive positioning for better framing */
-                @media (max-width: 768px) {
-                  .activity-card-bg {
-                    background-size: cover;
-                    background-position: ${activity.category === 'yoga' ? 'center 35%' : 'center 40%'};
-                  }
-                }
-
-                /* Desktop - keep current behavior */
-                @media (min-width: 769px) {
-                  .activity-card-bg {
-                    background-size: cover;
-                    background-position: center 65%;
-                  }
-                }
-              `}</style>
             </>
           ) : (
             <>

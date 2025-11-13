@@ -77,6 +77,10 @@ export default function DateSelector() {
     priceBreakdown,
     participants: participantList
   } = useBookingStore();
+
+  console.log('🏠 [DateSelector] Render - availableRooms:', availableRooms);
+  console.log('🏠 [DateSelector] Render - availableRooms length:', availableRooms?.length);
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -84,6 +88,13 @@ export default function DateSelector() {
   const [isPriceSummaryCollapsed, setIsPriceSummaryCollapsed] = useState(false);
   const [hasRequestedAvailability, setHasRequestedAvailability] = useState(false);
   const [isDateSelectorCollapsed, setIsDateSelectorCollapsed] = useState(false);
+
+  console.log('🏠 [DateSelector] State:', {
+    hasRequestedAvailability,
+    loadingRooms,
+    availableRoomsExists: !!availableRooms,
+    availableRoomsLength: availableRooms?.length
+  });
 
   // Usar fechas del store global para mantener sincronización
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
@@ -121,10 +132,18 @@ export default function DateSelector() {
   const fetchAvailableRooms = async () => {
     const guestsToUse = bookingData.guests ?? guests;
 
+    console.log('🔄 [DateSelector fetchAvailableRooms] Starting...', {
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
+      guestsToUse
+    });
+
     if (!bookingData.checkIn || !bookingData.checkOut || !guestsToUse) {
+      console.log('❌ [DateSelector fetchAvailableRooms] Missing required data');
       return;
     }
 
+    console.log('📞 [DateSelector fetchAvailableRooms] Calling API...');
     setLoadingRooms(true);
     setGlobalError(null);
 
@@ -139,10 +158,15 @@ export default function DateSelector() {
         }),
       });
 
+      console.log('📡 [DateSelector fetchAvailableRooms] Response:', response.status, response.ok);
+
       const data = await response.json();
+      console.log('📋 [DateSelector fetchAvailableRooms] Data:', data);
 
       if (!response.ok) {
+        console.log('❌ [DateSelector fetchAvailableRooms] Response not OK');
         if (response.status === 404 && data.error && data.error.includes('suficientes camas')) {
+          console.log('🛏️ [DateSelector fetchAvailableRooms] Not enough beds - setting empty array');
           setAvailableRooms([]);
           setGlobalError(null);
           return;
@@ -151,29 +175,40 @@ export default function DateSelector() {
       }
 
       if (!data.available || !data.availableRooms?.length) {
+        console.log('⚠️ [DateSelector fetchAvailableRooms] No rooms available or empty array');
         setAvailableRooms([]);
         setGlobalError(null);
         return;
       }
 
+      console.log('✅ [DateSelector fetchAvailableRooms] Setting rooms:', data.availableRooms);
       setAvailableRooms(data.availableRooms);
       setGlobalError(null);
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+      console.error('❌ [DateSelector fetchAvailableRooms] Error:', error);
       setGlobalError('Error getting available rooms. Please try again.');
       setAvailableRooms([]);
     } finally {
+      console.log('🏁 [DateSelector fetchAvailableRooms] Setting loadingRooms to false');
       setLoadingRooms(false);
     }
   };
 
   const handleAvailabilitySearch = async () => {
+    console.log('🔍 [DateSelector handleAvailabilitySearch] Starting...', {
+      checkIn: bookingData.checkIn,
+      checkOut: bookingData.checkOut,
+      guests
+    });
+
     if (!bookingData.checkIn || !bookingData.checkOut) {
+      console.log('❌ [DateSelector handleAvailabilitySearch] Missing dates');
       setError(t('dates.validation.selectDates'));
       setHasRequestedAvailability(false);
       return;
     }
 
+    console.log('✅ [DateSelector handleAvailabilitySearch] Setting hasRequestedAvailability = true');
     setError('');
     setGlobalError(null);
     setHasRequestedAvailability(true);
@@ -185,7 +220,9 @@ export default function DateSelector() {
     setIsPriceSummaryCollapsed(true);
     setIsDateSelectorCollapsed(true);
 
+    console.log('📞 [DateSelector handleAvailabilitySearch] Calling fetchAvailableRooms...');
     await fetchAvailableRooms();
+    console.log('🏁 [DateSelector handleAvailabilitySearch] Completed');
   };
 
   const handleRoomSelect = (room: RoomFromAPI) => {
@@ -304,13 +341,16 @@ export default function DateSelector() {
         className="max-w-7xl mx-auto"
       >
         {/* PASS 2: mb-5 → mb-4, text-[28px] → text-[24px] */}
-        <div className="flex items-center space-x-4 mb-4">
-          <BackButton variant="minimal" />
-          <div>
-            <h1 className="text-[24px] font-bold text-white font-heading">{t('dates.title')}</h1>
-            <p className="text-[14px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
+        {/* Only show dates header when accommodation section is not visible */}
+        {!(hasRequestedAvailability && availableRooms && availableRooms.length > 0) && (
+          <div className="flex items-center space-x-4 mb-4">
+            <BackButton variant="minimal" />
+            <div>
+              <h1 className="text-[24px] font-bold text-white font-heading">{t('dates.title')}</h1>
+              <p className="text-[14px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 mb-6 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
           {/* Columna izquierda - Selector de fechas */}
@@ -567,14 +607,29 @@ export default function DateSelector() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="mb-3">
-              <h2 className="text-[20px] font-bold text-white font-heading mb-1">
-                {t('accommodation.title')}
-              </h2>
-              <p className="text-[15px] text-[var(--brand-text-dim)]">
-                {t('accommodation.subtitle')}
-              </p>
-            </div>
+            {/* Show BackButton with accommodation header when rooms are displayed */}
+            {availableRooms && availableRooms.length > 0 ? (
+              <div className="flex items-center space-x-4 mb-4">
+                <BackButton variant="minimal" />
+                <div>
+                  <h2 className="text-[24px] font-bold text-white font-heading">
+                    {t('accommodation.title')}
+                  </h2>
+                  <p className="text-[14px] text-[var(--brand-text-dim)]">
+                    {t('accommodation.subtitle')}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-3">
+                <h2 className="text-[20px] font-bold text-white font-heading mb-1">
+                  {t('accommodation.title')}
+                </h2>
+                <p className="text-[15px] text-[var(--brand-text-dim)]">
+                  {t('accommodation.subtitle')}
+                </p>
+              </div>
+            )}
 
             {/* Error Message */}
             {hasRequestedAvailability && globalError && (
@@ -597,11 +652,23 @@ export default function DateSelector() {
             )}
 
             {/* Room Cards */}
+            {(() => {
+              console.log('🏠 [DateSelector] Room Cards condition check:', {
+                hasRequestedAvailability,
+                loadingRooms,
+                availableRooms,
+                availableRoomsLength: availableRooms?.length,
+                shouldShowRooms: hasRequestedAvailability && !loadingRooms && availableRooms && availableRooms.length > 0
+              });
+              return null;
+            })()}
             {hasRequestedAvailability && !loadingRooms && availableRooms && availableRooms.length > 0 && (
               <>
 
-                <div className="accommodation-cards-grid mb-6 flex flex-col gap-4">
+                <div className="accommodation-cards-grid mb-6 flex flex-col gap-4" style={{ overflow: 'visible' }}>
                 {availableRooms.map((room: RoomFromAPI) => {
+                  console.log('🏠 [DateSelector] Rendering room:', room);
+
                   const features = getRoomFeatures(room.roomTypeId);
                   const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
                   const isUnavailable = room.availableRooms === 0;
@@ -616,21 +683,22 @@ export default function DateSelector() {
                   };
 
                   return (
-                    <AccommodationCard
-                      key={room.roomTypeId}
-                      room={room}
-                      isSelected={isSelected}
-                      isUnavailable={isUnavailable}
-                      nights={nights}
-                      guests={bookingData.guests || 1}
-                      roomPrice={roomPrice}
-                      totalPrice={totalPrice}
-                      features={features}
-                      description={description}
-                      locale={locale}
-                      onSelect={() => handleRoomSelect(room)}
-                      getFeatureChipStyle={getFeatureChipStyle}
-                    />
+                    <div key={room.roomTypeId} className="mb-2 md:mb-0">
+                      <AccommodationCard
+                        room={room}
+                        isSelected={isSelected}
+                        isUnavailable={isUnavailable}
+                        nights={nights}
+                        guests={bookingData.guests || 1}
+                        roomPrice={roomPrice}
+                        totalPrice={totalPrice}
+                        features={features}
+                        description={description}
+                        locale={locale}
+                        onSelect={() => handleRoomSelect(room)}
+                        getFeatureChipStyle={getFeatureChipStyle}
+                      />
+                    </div>
                   );
                 })}
                 </div>

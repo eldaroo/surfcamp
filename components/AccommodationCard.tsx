@@ -264,11 +264,15 @@ const AccommodationCard = ({
     <>
       <div
         ref={cardRef}
-        className="flip-card w-full min-h-[280px] md:min-h-[190px]"
-        style={{ perspective: '1000px' }}
+        className="flip-card w-full relative min-h-[400px] md:min-h-[200px]"
+        style={{
+          perspective: '1000px',
+          height: 'auto',
+          isolation: 'isolate'
+        }}
       >
         <motion.div
-          className="flip-card-inner w-full h-full relative"
+          className="flip-card-inner w-full relative min-h-[400px] md:min-h-[200px]"
           animate={{ rotateY: isFlipped ? 180 : 0 }}
           transition={{
             duration: 0.5,
@@ -276,17 +280,23 @@ const AccommodationCard = ({
             stiffness: 200,
             damping: 25
           }}
-          style={{ transformStyle: 'preserve-3d' }}
+          style={{
+            transformStyle: 'preserve-3d',
+            height: 'auto'
+          }}
         >
         {/* Front Face - Image */}
         <div
-          className={`flip-card-face flip-card-front absolute w-full h-full rounded-3xl overflow-hidden group/card ${
+          className={`flip-card-face flip-card-front ${!isFlipped ? 'relative' : 'absolute inset-0'} w-full rounded-3xl overflow-hidden group/card min-h-[400px] md:min-h-[200px] ${
             isUnavailable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
           }`}
-          style={{ backfaceVisibility: 'hidden' }}
+          style={{
+            backfaceVisibility: 'hidden',
+            visibility: isFlipped ? 'hidden' : 'visible'
+          }}
           onClick={handleFlip}
         >
-          <div className="w-full h-full relative">
+          <div className="w-full relative min-h-[400px] md:min-h-[200px] h-full">
             {hasImage ? (
               <>
                 <Image
@@ -346,18 +356,22 @@ const AccommodationCard = ({
 
         {/* Back Face - Details with Mini Carousel at Bottom */}
         <div
-          className="flip-card-face flip-card-back absolute w-full h-full rounded-3xl cursor-pointer"
-          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+          className={`flip-card-face flip-card-back ${isFlipped ? 'relative' : 'absolute inset-0'} w-full rounded-3xl cursor-pointer min-h-[400px] md:min-h-[200px]`}
+          style={{
+            backfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            visibility: !isFlipped ? 'hidden' : 'visible'
+          }}
           onClick={handleFlip}
         >
-          <div className="flex w-full h-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden">
-            <div className="flex flex-1 flex-col px-2.5 md:px-4 py-1.5 md:py-2 gap-0.5 md:gap-1">
+          <div className="flex w-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden min-h-[400px] md:min-h-[200px]">
+            <div className="flex flex-1 flex-col px-3 md:px-3 py-3 md:py-2 gap-1.5 md:gap-1">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
-                    <h3 className="text-lg md:text-2xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
+                  <div className="flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5">
+                    <h3 className="text-lg md:text-xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
                     {isSelected && (
-                      <CheckCircle2 className="h-5 md:h-7 w-5 md:w-7 text-amber-300" aria-hidden="true" />
+                      <CheckCircle2 className="h-5 md:h-6 w-5 md:w-6 text-amber-300" aria-hidden="true" />
                     )}
                   </div>
 
@@ -388,9 +402,9 @@ const AccommodationCard = ({
                   )}
 
                   {/* Availability + Capacity */}
-                  <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5 flex-wrap">
+                  <div className="flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5 flex-wrap">
                     <div
-                      className="rounded-full px-2 md:px-3 py-0.5 md:py-1 text-white text-[10px] md:text-xs font-medium border"
+                      className="rounded-full px-2 md:px-2 py-0.5 md:py-0.5 text-white text-[10px] md:text-[11px] font-medium border"
                       style={{
                         backgroundColor: 'color-mix(in srgb, var(--brand-aqua) 18%, transparent)',
                         borderColor: 'color-mix(in srgb, var(--brand-aqua) 40%, transparent)'
@@ -399,8 +413,8 @@ const AccommodationCard = ({
                       {room.availableRooms} {room.availableRooms === 1 ? 'available' : 'available'}
                     </div>
 
-                    <div className="flex items-center text-slate-300 text-[10px] md:text-xs font-medium">
-                      <svg className="w-3 md:w-4 h-3 md:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center text-slate-300 text-[10px] md:text-[11px] font-medium">
+                      <svg className="w-3 md:w-3.5 h-3 md:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       {room.maxGuests} {room.maxGuests === 1 ? 'guest' : 'guests'} {locale === 'es' ? 'por unidad' : 'per unit'}
@@ -408,7 +422,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Feature Tags */}
-                  <div className="flex flex-wrap gap-1.5 md:gap-2 mb-1 md:mb-1.5">
+                  <div className="flex flex-wrap gap-1.5 md:gap-1.5 mb-2 md:mb-1.5">
                     {visibleFeatures.map((feature, index) => (
                       <span
                         key={index}
@@ -432,7 +446,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs md:text-[15px] leading-relaxed text-slate-300">
+                  <p className="text-xs md:text-xs leading-snug md:leading-tight text-slate-300 mb-2 md:mb-1">
                     <span className="md:hidden">{typeof description === 'object' ? description.mobile : description}</span>
                     <span className="hidden md:inline">{typeof description === 'object' ? description.desktop : description}</span>
                   </p>
@@ -441,8 +455,8 @@ const AccommodationCard = ({
 
               {/* Mini Photo Carousel - Bottom of left section */}
               {gallery.length > 0 && (
-                <div className="mt-auto pt-1.5 md:pt-2 border-t border-slate-700/40">
-                  <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto scrollbar-hide pb-1">
+                <div className="mt-auto pt-2 md:pt-1.5 border-t border-slate-700/40">
+                  <div className="flex items-center gap-1.5 md:gap-1.5 overflow-x-auto scrollbar-hide pb-2 md:pb-1">
                     {gallery.map((img, idx) => (
                       <motion.button
                         key={idx}
@@ -450,7 +464,7 @@ const AccommodationCard = ({
                         onClick={(e) => openLightbox(idx, e)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="relative flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-md md:rounded-lg overflow-hidden border-2 border-slate-600/60 hover:border-amber-300/80 transition-all group/thumb"
+                        className="relative flex-shrink-0 w-12 h-12 md:w-12 md:h-12 rounded-md md:rounded-md overflow-hidden border-2 border-slate-600/60 hover:border-amber-300/80 transition-all group/thumb"
                       >
                         <Image
                           src={img}
@@ -469,15 +483,15 @@ const AccommodationCard = ({
               )}
             </div>
 
-            {/* PASS 2: px-2.5/3 py-1.5/2 gap-1.5 → px-2/2.5 py-1/1.5 gap-1, min-w-220 → min-w-200 */}
+            {/* Price and Action Panel */}
             <div
-              className="flex flex-col justify-center items-center gap-1 md:gap-1 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-2 md:px-2.5 py-1 md:py-1.5 md:min-w-[200px] flex-shrink-0"
+              className="flex flex-col justify-center items-center gap-2 md:gap-2 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-3 md:px-3 py-3 md:py-2 md:min-w-[200px] flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Mobile: Compact Price + Button Layout */}
               <div className="w-full md:hidden">
                 {/* Price Row - Horizontal on Mobile */}
-                <div className="flex items-center justify-between mb-2 px-2">
+                <div className="flex items-center justify-between mb-3 px-2">
                   <div className="flex flex-col">
                     <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">
                       {nights} {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
@@ -510,7 +524,7 @@ const AccommodationCard = ({
                     onSelect();
                   }}
                   disabled={isUnavailable}
-                  className={`w-full rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                  className={`w-full rounded-xl px-4 py-3 text-sm font-bold transition ${
                     isSelected
                       ? "bg-slate-800/90 text-amber-200 border border-amber-300/30"
                       : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-md shadow-amber-300/30"
@@ -526,13 +540,13 @@ const AccommodationCard = ({
               </div>
 
               {/* Desktop: Horizontal Layout - 3 columns */}
-              <div className="hidden md:flex md:flex-col md:items-center md:gap-2 w-full">
+              <div className="hidden md:flex md:flex-col md:items-center md:gap-3 w-full">
                 {/* Unified Price Container - 3 Column Horizontal Layout */}
-                <div className="w-full py-2 px-2 rounded-xl bg-slate-700/50 border border-slate-600/50">
-                  <div className="flex items-center justify-center gap-2">
+                <div className="w-full py-3 px-3 rounded-xl bg-slate-700/50 border border-slate-600/50">
+                  <div className="flex items-center justify-center gap-3 py-1">
                     {/* Nights */}
                     <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
-                      <p className="text-[10px] text-slate-400 mb-0.5">
+                      <p className="text-[10px] text-slate-400 mb-1">
                         {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
                       </p>
                       <p className="text-xl font-bold text-slate-200">
@@ -542,7 +556,7 @@ const AccommodationCard = ({
 
                     {/* Guests */}
                     <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
-                      <p className="text-[10px] text-slate-400 mb-0.5">
+                      <p className="text-[10px] text-slate-400 mb-1">
                         {guests === 1 ? (locale === 'es' ? 'huésped' : 'guest') : (locale === 'es' ? 'huéspedes' : 'guests')}
                       </p>
                       <p className="text-xl font-bold text-slate-200">
@@ -552,7 +566,7 @@ const AccommodationCard = ({
 
                     {/* Total Price */}
                     <div className="flex flex-col items-center flex-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-0.5">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">
                         Total
                       </span>
                       <div className="text-xl font-bold text-amber-300">
@@ -562,7 +576,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Price per night info */}
-                  <div className="text-center mt-1.5 pt-1.5 border-t border-slate-600/30">
+                  <div className="text-center mt-2 pt-2 border-t border-slate-600/30">
                     <p className="text-[10px] text-slate-400">
                       {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
                     </p>

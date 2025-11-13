@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
       const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
       const totalAmountCents = Math.round(price * 100); // Convert to cents
 
+      // Calculate 10% deposit
+      const depositAmount = Math.round(price * 0.10); // 10% of total price
+      const depositAmountCents = Math.round(depositAmount * 100);
+
       // Prepare booking data
       bookingData = {
         checkIn,
@@ -56,28 +60,42 @@ export async function POST(request: NextRequest) {
         selectedActivities,
         participants,
         nights,
-        totalAmountCents
+        totalAmountCents,
+        depositAmountCents,
+        fullPrice: price,
+        depositPrice: depositAmount
       };
+
+      // Build dynamic title based on booking
+      const customerName = `${contactInfo.firstName} ${contactInfo.lastName}`;
+      const accommodationType = roomTypeId === 'casa-playa' ? 'Casa de Playa' :
+                                roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
+                                'Casas Deluxe';
+      const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
+      const guestsText = guests === 1 ? '1 guest' : `${guests} guests`;
+
+      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
 
       // Create WeTravel payload from booking data
       wetravelPayload = {
         data: {
           trip: wetravelData?.trip || {
-            title: "Surf & Yoga Retreat – Santa Teresa",
+            title: dynamicTitle,
+            trip_id: `booking_${Date.now()}`, // Unique reference for internal tracking
             start_date: checkIn,
             end_date: checkOut,
             currency: "USD",
             participant_fees: "all"
           },
           pricing: {
-            price: price,
+            price: depositAmount, // Only charge 10% deposit
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
               deposit: 0,
               installments: [
                 {
-                  price: installmentPrice,
+                  price: depositAmount, // 10% deposit payment
                   days_before_departure: daysBeforeDeparture
                 }
               ]
@@ -85,7 +103,11 @@ export async function POST(request: NextRequest) {
           },
           metadata: {
             customer_id: `cus_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            booking_data: bookingData
+            booking_data: bookingData,
+            full_price: price,
+            deposit_price: depositAmount,
+            deposit_percentage: 10,
+            remaining_balance: price - depositAmount
           }
         }
       };

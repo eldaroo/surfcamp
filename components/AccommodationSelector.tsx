@@ -22,6 +22,8 @@ export default function AccommodationSelector() {
     setSelectedRoom
   } = useBookingStore();
 
+  console.log('🏠 [AccommodationSelector] Component render - availableRooms from store:', availableRooms);
+
   // Tipo para las habitaciones que vienen de la API
   type RoomFromAPI = {
     roomTypeId: string;
@@ -39,6 +41,9 @@ export default function AccommodationSelector() {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const { checkIn, checkOut, guests } = bookingData;
 
+  console.log('🏠 [AccommodationSelector] Booking data:', { checkIn, checkOut, guests });
+  console.log('🏠 [AccommodationSelector] loadingRooms:', loadingRooms);
+
   // Redirect to dates if no dates are selected
   useEffect(() => {
     if (!checkIn || !checkOut) {
@@ -48,10 +53,13 @@ export default function AccommodationSelector() {
   }, [checkIn, checkOut, setCurrentStep]);
 
   const fetchAvailableRooms = useCallback(async () => {
+    console.log('🔄 [fetchAvailableRooms] Starting fetch...');
     if (!checkIn || !checkOut || !guests) {
+      console.log('❌ [fetchAvailableRooms] Missing required data:', { checkIn, checkOut, guests });
       return;
     }
 
+    console.log('📞 [fetchAvailableRooms] Calling API with:', { checkIn, checkOut, guests });
     setLoadingRooms(true);
     setError(null);
 
@@ -65,10 +73,14 @@ export default function AccommodationSelector() {
           guests,
         }),
       });
+      console.log('📡 [fetchAvailableRooms] Response status:', response.status, response.ok);
 
       const data = await response.json();
+      console.log('[AccommodationSelector] API Response:', data);
+      console.log('[AccommodationSelector] Available rooms:', data.availableRooms);
 
       if (!response.ok) {
+        console.log('[AccommodationSelector] Response not OK:', response.status);
         if (response.status === 404 && data.error && data.error.includes('suficientes camas')) {
           setAvailableRooms([]);
           setError(null);
@@ -78,24 +90,29 @@ export default function AccommodationSelector() {
       }
 
       if (!data.available || !data.availableRooms?.length) {
+        console.log('[AccommodationSelector] No rooms available or empty array');
         setAvailableRooms([]);
         setError(null);
         return;
       }
 
+      console.log('✅ [fetchAvailableRooms] Setting available rooms:', data.availableRooms);
       setAvailableRooms(data.availableRooms);
       setError(null);
+      console.log('✅ [fetchAvailableRooms] Rooms set successfully, setLoadingRooms(false)');
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+      console.error('❌ [fetchAvailableRooms] Error fetching rooms:', error);
       setError('Error getting available rooms. Please try again.');
       setAvailableRooms([]);
     } finally {
       setLoadingRooms(false);
+      console.log('🏁 [fetchAvailableRooms] Fetch completed, loadingRooms = false');
     }
   }, [checkIn, checkOut, guests, setAvailableRooms, setError]);
 
   useEffect(() => {
     if (checkIn && checkOut) {
+      console.log('[AccommodationSelector] useEffect triggered - fetching rooms');
       setAvailableRooms(null);
       setSelectedRoom(null);
       fetchAvailableRooms();
@@ -176,7 +193,15 @@ export default function AccommodationSelector() {
     }
   };
 
+  console.log('🔍 [AccommodationSelector] Render conditions check:', {
+    loadingRooms,
+    availableRoomsExists: !!availableRooms,
+    availableRoomsLength: availableRooms?.length,
+    availableRoomsIsArray: Array.isArray(availableRooms)
+  });
+
   if (loadingRooms) {
+    console.log('⏳ [AccommodationSelector] Showing loading screen');
     return (
       <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
         <motion.div
@@ -200,6 +225,8 @@ export default function AccommodationSelector() {
       </div>
     );
   }
+
+  console.log('📋 [AccommodationSelector] Rendering main content');
 
   return (
     <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
@@ -236,10 +263,22 @@ export default function AccommodationSelector() {
           role="radiogroup"
           aria-labelledby="accommodation-selection-heading"
         >
+          {(() => {
+            console.log('[AccommodationSelector] Rendering - availableRooms:', availableRooms);
+            console.log('[AccommodationSelector] Rendering - availableRooms length:', availableRooms?.length);
+            return null;
+          })()}
           {availableRooms?.map((room: RoomFromAPI) => {
+            console.log('[AccommodationSelector] Rendering room:', room);
             const features = getRoomFeatures(room.roomTypeId);
             const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
             const isUnavailable = room.availableRooms === 0;
+            console.log('[AccommodationSelector] Room details:', {
+              roomTypeId: room.roomTypeId,
+              isSelected,
+              isUnavailable,
+              availableRooms: room.availableRooms
+            });
 
             const roomsNeeded = room.roomsNeeded || 1;
 
@@ -287,6 +326,15 @@ export default function AccommodationSelector() {
         </div>
 
         {/* No rooms available - reduced from py-12 to py-8 */}
+        {(() => {
+          const shouldShowNoRooms = !availableRooms || availableRooms.length === 0;
+          console.log('🏠 [AccommodationSelector] No rooms check:', {
+            shouldShowNoRooms,
+            availableRooms,
+            availableRoomsLength: availableRooms?.length
+          });
+          return null;
+        })()}
         {(!availableRooms || availableRooms.length === 0) && (
           <div className="text-center py-8">
             <div className="text-6xl mb-4">🏠</div>
@@ -310,6 +358,15 @@ export default function AccommodationSelector() {
         )}
 
         {/* Global CTA */}
+        {(() => {
+          const shouldShowCTA = availableRooms && availableRooms.length > 0;
+          console.log('🎯 [AccommodationSelector] CTA check:', {
+            shouldShowCTA,
+            availableRooms,
+            availableRoomsLength: availableRooms?.length
+          });
+          return null;
+        })()}
         {availableRooms && availableRooms.length > 0 && (
           <div className="flex justify-center">
             <motion.button

@@ -660,6 +660,20 @@ export default function PaymentSection() {
               For now, I'll remove it as it's not in the new_code. */}
           {/* <div className="mb-4 text-warm-600 font-semibold">{t('payment.error.missingData')}</div> */}
 
+          {/* Deposit Notice */}
+          <div className="bg-blue-500/20 border border-blue-400/50 rounded-lg p-4 mb-4">
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-400 text-xl">ℹ️</span>
+              <div>
+                <h4 className="font-semibold text-blue-300 mb-1">10% Deposit Required</h4>
+                <p className="text-blue-200 text-sm">
+                  You only need to pay a 10% deposit now (${Math.round(total * 0.10)}) to secure your booking.
+                  The remaining balance (${Math.round(total * 0.90)}) will be due before your arrival.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Pay Button */}
           <button
             onClick={handlePayment}
@@ -834,6 +848,13 @@ export default function PaymentSection() {
                   <span className="font-semibold text-white">{t('payment.summary.total')}</span>
                   <span className="text-2xl font-bold text-yellow-300">${total}</span>
                 </div>
+                <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-400/30">
+                  <span className="text-sm text-blue-300">Deposit Required (10%)</span>
+                  <span className="text-lg font-bold text-green-400">${Math.round(total * 0.10)}</span>
+                </div>
+                <p className="text-xs text-blue-200 mt-2">
+                  Remaining balance: ${Math.round(total * 0.90)} due before arrival
+                </p>
               </div>
             </div>
           </div>
