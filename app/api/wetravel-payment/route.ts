@@ -50,6 +50,9 @@ export async function POST(request: NextRequest) {
       const depositAmount = Math.round(price * 0.10); // 10% of total price
       const depositAmountCents = Math.round(depositAmount * 100);
 
+      console.log('💰 Full price: $' + price + ' (' + totalAmountCents + ' cents)');
+      console.log('💰 10% Deposit: $' + depositAmount + ' (' + depositAmountCents + ' cents)');
+
       // Prepare booking data
       bookingData = {
         checkIn,
@@ -88,18 +91,23 @@ export async function POST(request: NextRequest) {
             participant_fees: "all"
           },
           pricing: {
-            price: depositAmount, // Only charge 10% deposit
+            price: depositAmount, // Only charge 10% deposit (in dollars)
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
               deposit: 0,
               installments: [
                 {
-                  price: depositAmount, // 10% deposit payment
+                  price: depositAmount, // 10% deposit payment (in dollars)
                   days_before_departure: daysBeforeDeparture
                 }
               ]
             }
+          },
+          customer: {
+            first_name: contactInfo.firstName,
+            last_name: contactInfo.lastName,
+            email: contactInfo.email
           },
           metadata: {
             customer_id: `cus_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -113,6 +121,11 @@ export async function POST(request: NextRequest) {
       };
 
       console.log('✅ Converted to WeTravel format successfully with price:', price);
+      console.log('👤 Customer info:', {
+        first_name: contactInfo.firstName,
+        last_name: contactInfo.lastName,
+        email: contactInfo.email
+      });
     }
     // OLD FORMAT: { data: { trip: { start_date, end_date }, pricing: { price } } }
     else if (body.data?.trip?.start_date && body.data?.trip?.end_date && body.data?.pricing?.price) {

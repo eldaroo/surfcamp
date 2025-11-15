@@ -84,7 +84,9 @@
       "Bash(npx pm2:*)",
       "Bash(/root/surfcamp/.env.local)",
       "Bash(pm2 describe:*)",
-      "Bash(ssh root@surfcampwidget.duckdns.org:*)"
+      "Bash(ssh root@surfcampwidget.duckdns.org:*)",
+      "WebFetch(domain:product.wetravel.com)",
+      "WebFetch(domain:developer.wetravel.com)"
     ],
     "deny": [],
     "ask": []

@@ -440,6 +440,18 @@ export default function PaymentSection() {
         dueDate: new Date(checkInDate.getTime() - (daysBeforeDeparture * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
       });
 
+      // Build dynamic title based on booking
+      const customerName = `${bookingData.contactInfo?.firstName || ''} ${bookingData.contactInfo?.lastName || ''}`.trim() || 'Guest';
+      const accommodationType = selectedRoom?.roomTypeId === 'casa-playa' ? 'Casa de Playa' :
+                                selectedRoom?.roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
+                                'Casas Deluxe';
+      const nights = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
+      const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
+      const guestsText = bookingData.guests === 1 ? '1 guest' : `${bookingData.guests} guests`;
+      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
+
+      console.log('📝 Generated dynamic title:', dynamicTitle);
+
       // 💾 Crear payload completo incluyendo datos para guardar en DB
       const paymentPayload = {
         checkIn: checkInFormatted,
@@ -465,30 +477,26 @@ export default function PaymentSection() {
         // WeTravel specific data
         wetravelData: {
           trip: {
-            title: "Surf & Yoga Retreat – Santa Teresa",
+            title: dynamicTitle,
             start_date: checkInFormatted,
             end_date: checkOutFormatted,
             currency: "USD",
             participant_fees: "all"
           },
           pricing: {
-            price: Math.round(total), // Precio en dólares
+            price: Math.round(total), // TOTAL price - backend will calculate 10% deposit
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
               deposit: 0,
-              installments: [
-                { 
-                  price: Math.round(total), // Precio en dólares
-                  days_before_departure: daysBeforeDeparture
-                }
-              ]
+              installments: []
             }
           }
         }
       };
 
-      console.log('💰 Total price being sent:', total);
+      console.log('💰 Total price:', total);
+      console.log('💰 10% Deposit will be charged by backend:', Math.round(total * 0.10));
       console.log('📤 Sending request to payment API with full booking data');
       console.log('👥 [PaymentSection] Serialized participants being sent:', JSON.stringify(serializedParticipants, null, 2));
       console.log('🏠 [PaymentSection] selectedRoom data:', {

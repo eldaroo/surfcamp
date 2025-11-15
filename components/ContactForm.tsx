@@ -471,6 +471,18 @@ const total = accommodationTotal + activitiesTotal;
       const checkInDate = new Date(checkInFormatted);
       const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
 
+      // Build dynamic title based on booking
+      const customerName = `${formData.firstName} ${formData.lastName}`.trim() || 'Guest';
+      const accommodationType = selectedRoom?.roomTypeId === 'casa-playa' ? 'Casa de Playa' :
+                                selectedRoom?.roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
+                                'Casas Deluxe';
+      const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
+      const nightsText = nightsCount === 1 ? '1 night' : `${nightsCount} nights`;
+      const guestsText = bookingData.guests === 1 ? '1 guest' : `${bookingData.guests} guests`;
+      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
+
+      console.log('📝 Generated dynamic title:', dynamicTitle);
+
       const paymentPayload = {
         checkIn: checkInFormatted,
         checkOut: checkOutFormatted,
@@ -494,28 +506,26 @@ const total = accommodationTotal + activitiesTotal;
         locale, // Pass locale for WhatsApp language
         wetravelData: {
           trip: {
-            title: "Surf & Yoga Retreat – Santa Teresa",
+            title: dynamicTitle,
             start_date: checkInFormatted,
             end_date: checkOutFormatted,
             currency: "USD",
             participant_fees: "all"
           },
           pricing: {
-            price: Math.round(total),
+            price: Math.round(total), // TOTAL price - backend will calculate 10% deposit
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
               deposit: 0,
-              installments: [
-                {
-                  price: Math.round(total),
-                  days_before_departure: daysBeforeDeparture
-                }
-              ]
+              installments: []
             }
           }
         }
       };
+
+      console.log('💰 Total price:', total);
+      console.log('💰 10% Deposit will be charged by backend:', Math.round(total * 0.10));
 
       const wetravelResponse = await fetch('/api/wetravel-payment', {
         method: 'POST',
