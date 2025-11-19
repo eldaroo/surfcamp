@@ -88,6 +88,15 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
     ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
+  // Format dates for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
+  };
+
   // Build list of all activity selections grouped by participant
   const allActivitySelections = useMemo(() => {
     const selections: Array<{
@@ -201,6 +210,14 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
                   style={{ color: 'var(--brand-text)' }}
                 >
                   {selectedRoom.roomTypeName}
+                  {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
+                    <span
+                      className="text-[13px] ml-1 font-normal"
+                      style={{ color: 'var(--brand-text-dim)' }}
+                    >
+                      ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
+                    </span>
+                  )}
                 </div>
                 <div
                   className="text-[12px] mt-1"

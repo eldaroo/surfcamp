@@ -150,7 +150,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-20 md:pt-8 pb-8">
         <div className="mx-auto max-w-6xl">
 
 

@@ -64,6 +64,7 @@ export interface LobbyPMSBooking {
   guests?: LobbyPMSGuestsInfo;
   registeredGuests?: number;
   registered_guests?: number;
+  rates_per_day?: Array<{ date: string; price: number }>; // Custom rates per day (with 10% discount applied)
   [key: string]: unknown;
 }
 

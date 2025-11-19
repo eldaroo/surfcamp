@@ -274,11 +274,16 @@ export async function GET(request: NextRequest) {
             checkOut: booking.checkOut,
             guests: booking.guests,
             roomTypeId: booking.roomTypeId,
-            isSharedRoom: booking.isSharedRoom || false,
+            isSharedRoom: booking.isSharedRoom ?? booking.selectedRoom?.isSharedRoom ?? false,
             contactInfo: booking.contactInfo,
             activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
             selectedActivities: booking.selectedActivities || [],
-            participants: booking.participants || []
+            participants: booking.participants || [],
+            locale: booking.locale || 'es',
+            priceBreakdown: booking.priceBreakdown || null,
+            selectedRoom: booking.selectedRoom || null,
+            nights: booking.nights,
+            discountedAccommodationTotal: booking.discountedAccommodationTotal || null
           };
           const reserveResponse = await fetch(reserveUrl, {
             method: 'POST',

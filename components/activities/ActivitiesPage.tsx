@@ -21,9 +21,26 @@ const quantityCategories = new Set<Activity["category"]>(["ice_bath", "transport
 const perGuestCategories = new Set<Activity["category"]>(["yoga", "surf", "transport"]);
 const timeSlotCategories = new Set<Activity["category"]>(["transport"]);
 
+const DEFAULT_SURF_PROGRAM: 'essential' | 'progression' | 'performance' = 'essential';
 const DEFAULT_SURF_CLASSES = 4;
 const DEFAULT_SURF_PACKAGE: SurfPackage = '4-classes';
 const DEFAULT_YOGA_PACKAGE = "1-class" as const;
+
+// Map surf classes to programs
+const surfClassesToProgram = (classes: number): 'essential' | 'progression' | 'performance' => {
+  if (classes <= 4) return 'essential';
+  if (classes <= 7) return 'progression';
+  return 'performance';
+};
+
+// Map programs to surf classes
+const surfProgramToClasses = (program: 'essential' | 'progression' | 'performance'): number => {
+  switch (program) {
+    case 'essential': return 4;
+    case 'progression': return 7;
+    case 'performance': return 10;
+  }
+};
 
 const ActivitiesPage = () => {
   const { locale } = useI18n();
@@ -270,6 +287,15 @@ const ActivitiesPage = () => {
       const normalizedClasses = Math.min(10, Math.max(3, Math.round(classes)));
       setSelectedSurfClasses(activityId, normalizedClasses);
       setSelectedSurfPackage(activityId, `${normalizedClasses}-classes` as SurfPackage);
+    },
+    [setSelectedSurfClasses, setSelectedSurfPackage]
+  );
+
+  const handleSurfProgramChange = useCallback(
+    (activityId: string, program: 'essential' | 'progression' | 'performance') => {
+      const classes = surfProgramToClasses(program);
+      setSelectedSurfClasses(activityId, classes);
+      setSelectedSurfPackage(activityId, `${classes}-classes` as SurfPackage);
     },
     [setSelectedSurfClasses, setSelectedSurfPackage]
   );
@@ -929,8 +955,8 @@ const ActivitiesPage = () => {
                   onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
                   yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
                   onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
-                  surfClasses={isSurf ? selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES : undefined}
-                  onSurfClassesChange={isSurf ? (classes) => handleSurfClassesChange(currentActivity.id, classes) : undefined}
+                  surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
+                  onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
                   hasQuantitySelector={supportsQuantity}
                   quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
                   onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
