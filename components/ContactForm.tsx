@@ -111,8 +111,8 @@ export default function ContactForm() {
   const nights = calculateNights();
 
   // Format dates for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
       month: 'short',
       day: 'numeric'
