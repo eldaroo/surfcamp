@@ -31,71 +31,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+const SURF_CLASSES_RANGE = { min: 3, max: 10 } as const;
 const YOGA_CLASSES_RANGE = { min: 1, max: 15 } as const;
-
-// Surf Programs - Pre-defined packages
-const SURF_PROGRAMS = {
-  essential: {
-    id: 'essential',
-    name: { es: 'Essential', en: 'Essential' },
-    price: 380,
-    sessions: 4,
-    features: {
-      es: [
-        '4 sesiones de surf',
-        '2 análisis en video',
-        'Equipo + transporte',
-        'Opcional: sesión de fotos disponible'
-      ],
-      en: [
-        '4 surf sessions',
-        '2 video analysis',
-        'Gear + transport',
-        'Optional: photo session available'
-      ]
-    }
-  },
-  progression: {
-    id: 'progression',
-    name: { es: 'Progression', en: 'Progression' },
-    price: 650,
-    sessions: 7,
-    features: {
-      es: [
-        '7 sesiones de surf',
-        '4 análisis en video',
-        '1 sesión de fotos',
-        'Plan de práctica final'
-      ],
-      en: [
-        '7 surf sessions',
-        '4 video analysis',
-        '1 photo session',
-        'Final practice plan'
-      ]
-    }
-  },
-  performance: {
-    id: 'performance',
-    name: { es: 'Performance', en: 'Performance' },
-    price: 880,
-    sessions: 10,
-    features: {
-      es: [
-        '10 sesiones de surf',
-        '5 análisis en video',
-        'Fotos + sesión de dron',
-        'Revisión final extendida'
-      ],
-      en: [
-        '10 surf sessions',
-        '5 video analysis',
-        'Photos + drone session',
-        'Extended final review'
-      ]
-    }
-  }
-} as const;
 
 type ActivityCardProps = {
   activity: Activity;
@@ -115,8 +52,8 @@ type ActivityCardProps = {
   onYogaClassesChange?: (value: number) => void;
   yogaUsePackDiscount?: boolean;
   onYogaPackDiscountChange?: (value: boolean) => void;
-  surfProgram?: 'essential' | 'progression' | 'performance';
-  onSurfProgramChange?: (value: 'essential' | 'progression' | 'performance') => void;
+  surfClasses?: number;
+  onSurfClassesChange?: (value: number) => void;
   hasQuantitySelector?: boolean;
   quantity?: number;
   onQuantityChange?: (value: number) => void;
@@ -148,7 +85,6 @@ const localeCopy = {
     selectPack: "Seleccionar Pack de 10",
     packSelected: "Pack de 10 Clases Seleccionado",
     regularPrice: "Precio regular",
-    chooseSurfProgram: "Elige tu Programa de Surf",
   },
   en: {
     add: "Add",
@@ -172,7 +108,6 @@ const localeCopy = {
     selectPack: "Select 10-Class Pack",
     packSelected: "10-Class Pack Selected",
     regularPrice: "Regular price",
-    chooseSurfProgram: "Choose Your Surf Program",
   },
 };
 
@@ -359,16 +294,24 @@ const activityImages = {
 const descriptiveContent = {
   surf: {
     es: {
-      description: "", // Not used - custom formatting below
-      descriptionBold: "Coaching de surf enfocado en tu progreso:",
-      descriptionRegular: " grupos pequeños para aprender más rápido, instructores certificados atentos a tu técnica, y equipo + transporte incluido.",
-      features: [],
+      description: "Aprende a surfear o mejora tu técnica con coaches certificados. Cada sesión incluye video análisis personalizado.",
+      features: [
+        { icon: Users, text: "Análisis de video personalizado" },
+        { icon: Users, text: "Todo el equipo incluido - tablas, rashguards y transporte" },
+        { icon: Users, text: "Surfea los mejores points locales con tu coach" },
+        { icon: Users, text: "Grupos pequeños (máx. 2 por instructor) para un progreso rápido" },
+        { icon: Users, text: "Coaches de surf certificados enfocados en tu técnica" },
+      ],
     },
     en: {
-      description: "", // Not used - custom formatting below
-      descriptionBold: "Progress-focused surf coaching:",
-      descriptionRegular: " small groups for faster learning, certified instructors on your technique, and all gear + transport included.",
-      features: [],
+      description: "Learn to surf or improve your technique with certified coaches. Each session includes personalized video analysis.",
+      features: [
+        { icon: Users, text: "Personalized video analysis" },
+        { icon: Users, text: "All gear included - boards, rashguards & transport" },
+        { icon: Users, text: "Surf top local breaks with your coach" },
+        { icon: Users, text: "Small groups (max 2 per instructor) for fast progress" },
+        { icon: Users, text: "Certified surf coaches focused on your technique" },
+      ],
     },
   },
   yoga: {
@@ -463,8 +406,8 @@ const ActivityCard = ({
   onYogaClassesChange,
   yogaUsePackDiscount,
   onYogaPackDiscountChange,
-  surfProgram,
-  onSurfProgramChange,
+  surfClasses,
+  onSurfClassesChange,
   hasQuantitySelector,
   quantity = 1,
   onQuantityChange,
@@ -605,13 +548,6 @@ const ActivityCard = ({
       if (newDiscountState) {
         onYogaClassesChange(10);
       }
-      setHasInteracted(true);
-    }
-  };
-
-  const handleSurfProgramChange = (programId: 'essential' | 'progression' | 'performance') => {
-    if (onSurfProgramChange) {
-      onSurfProgramChange(programId);
       setHasInteracted(true);
     }
   };
@@ -815,80 +751,42 @@ const ActivityCard = ({
     );
   };
 
-  const renderSurfProgramSelector = () => {
-    if (!onSurfProgramChange || !surfProgram) return null;
+  const handleSurfClassesChange = (newClasses: number) => {
+    if (onSurfClassesChange) {
+      onSurfClassesChange(newClasses);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
+  };
 
-    const programs = ['essential', 'progression', 'performance'] as const;
+  const renderSurfSelector = () => {
+    if (!onSurfClassesChange || typeof surfClasses !== "number") return null;
 
     return (
-      <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
-          {copy.chooseSurfProgram}
-        </span>
-
-        {/* Programs List - Reduced spacing */}
-        <div className="space-y-2 md:space-y-2.5">
-          {programs.map((programId) => {
-            const program = SURF_PROGRAMS[programId];
-            const isSelected = surfProgram === programId;
-
-            return (
-              <motion.button
-                key={programId}
-                type="button"
-                onClick={() => handleSurfProgramChange(programId)}
-                whileHover={{ scale: 1.005 }}
-                whileTap={{ scale: 0.995 }}
-                className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
-                  isSelected
-                    ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                    : "border-slate-600/50 bg-slate-800/40 hover:border-slate-500/60 hover:bg-slate-800/60"
-                }`}
-              >
-                {/* Header: Radio + Name + Price - Reduced spacing */}
-                <div className="flex items-center justify-between mb-1.5 md:mb-2">
-                  <div className="flex items-center gap-2.5">
-                    {/* Radio Button */}
-                    <div className={`flex-shrink-0 w-4.5 h-4.5 md:w-5 md:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                      isSelected
-                        ? "border-amber-300 bg-amber-300"
-                        : "border-slate-500 bg-slate-800"
-                    }`}>
-                      {isSelected && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-900"
-                        />
-                      )}
-                    </div>
-                    {/* Program Name */}
-                    <span className="text-sm md:text-base font-bold text-slate-200">
-                      {program.name[locale]}
-                    </span>
-                  </div>
-                  {/* Price - Reduced margin */}
-                  <span className="text-lg md:text-xl font-bold text-amber-300">
-                    ${program.price}
-                  </span>
-                </div>
-
-                {/* Features List - Reduced spacing */}
-                <div className="space-y-1 ml-7 md:ml-7.5">
-                  {program.features[locale].map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-1.5">
-                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                      <span className="text-[11px] md:text-[13.5px] text-slate-300 font-light leading-tight md:leading-[1.25]">
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </motion.button>
-            );
-          })}
+      <div className="relative space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400">
+            {copy.classTrack}
+          </span>
+          <span className="text-base md:text-lg font-bold text-amber-300">
+            {surfClasses}
+          </span>
+        </div>
+        <div className="px-1">
+          <input
+            type="range"
+            min={SURF_CLASSES_RANGE.min}
+            max={SURF_CLASSES_RANGE.max}
+            value={surfClasses}
+            onChange={(event) => handleSurfClassesChange(Number(event.target.value))}
+            className="h-2.5 md:h-3 w-full cursor-pointer rounded-full bg-slate-700/70 accent-amber-400 transition-all hover:accent-amber-300"
+            style={{
+              background: `linear-gradient(to right, rgb(251 191 36) 0%, rgb(251 191 36) ${((surfClasses - SURF_CLASSES_RANGE.min) / (SURF_CLASSES_RANGE.max - SURF_CLASSES_RANGE.min)) * 100}%, rgb(51 65 85 / 0.7) ${((surfClasses - SURF_CLASSES_RANGE.min) / (SURF_CLASSES_RANGE.max - SURF_CLASSES_RANGE.min)) * 100}%, rgb(51 65 85 / 0.7) 100%)`
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-500 px-1">
+          <span>{SURF_CLASSES_RANGE.min}</span>
+          <span>{SURF_CLASSES_RANGE.max}</span>
         </div>
       </div>
     );
@@ -1244,37 +1142,15 @@ const ActivityCard = ({
         {/* PASS 2: px-5/8 py-4/6 gap-4/5 → px-4/6 py-3/4 gap-3/4 */}
         <div className="flex flex-col flex-1 md:flex-[7] px-4 md:px-6 py-3 md:py-4 gap-3 md:gap-4">
 
-          {/* Mobile Title - Below image, above description */}
-          <h2 className="md:hidden text-xl font-bold text-white font-heading">
-            {activity.name}
-          </h2>
-
-          {/* 1. Description */}
-          {descriptive && (
-            <>
-              {/* Special formatting for surf with inline bold + regular text */}
-              {isSurf && 'descriptionBold' in descriptive && 'descriptionRegular' in descriptive ? (
-                <p className="text-sm md:text-[15px] leading-relaxed max-w-[95%] md:max-w-2xl mb-3 md:mb-4">
-                  <span className="font-bold text-white">
-                    {descriptive.descriptionBold}
-                  </span>
-                  <span className="font-normal text-[#F1F1F1]">
-                    {descriptive.descriptionRegular}
-                  </span>
-                </p>
-              ) : (
-                /* Standard description for other activities */
-                descriptive.description && (
-                  <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
-                    {descriptive.description}
-                  </p>
-                )
-              )}
-            </>
+          {/* 1. Description - only for non-surf activities to avoid redundancy */}
+          {descriptive && activity.category !== 'surf' && (
+            <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
+              {descriptive.description}
+            </p>
           )}
 
-          {/* 2. Features - Bullet Points with Golden Checkmarks (only if features exist) */}
-          {descriptive && descriptive.features && descriptive.features.length > 0 && (
+          {/* 2. Features - Bullet Points with Golden Checkmarks */}
+          {descriptive && (
             <div className="space-y-1.5 md:space-y-2.5">
               {descriptive.features.map((feature, index) => (
                 <div
@@ -1295,10 +1171,10 @@ const ActivityCard = ({
           )}
 
           {/* 3. Class/Session Selector */}
-          {(renderYogaSelector() || renderSurfProgramSelector() || renderQuantityControl() || renderTimeSlot()) && (
+          {(renderYogaSelector() || renderSurfSelector() || renderQuantityControl() || renderTimeSlot()) && (
             <div>
               {renderYogaSelector()}
-              {renderSurfProgramSelector()}
+              {renderSurfSelector()}
               {renderQuantityControl()}
               {renderTimeSlot()}
             </div>
@@ -1306,8 +1182,8 @@ const ActivityCard = ({
         </div>
 
         {/* PASS 2: px-5/6 py-4/6 gap-3/4 → px-4/5 py-3/4 gap-2.5/3 */}
-        <div className="md:flex-[3] md:border-l border-slate-700/40 px-4 md:px-5 py-3 md:py-4 bg-slate-800/10 md:bg-transparent md:flex md:flex-col md:min-h-full">
-          <div className="flex flex-col gap-2.5 md:gap-3 md:justify-center md:flex-1">
+        <div className="md:flex-[3] md:border-l border-slate-700/40 px-4 md:px-5 py-3 md:py-4 bg-slate-800/10 md:bg-transparent">
+          <div className="flex flex-col gap-2.5 md:gap-3 md:sticky md:top-8 h-full">
 
             {/* PASS 2: gap-3/4 → gap-2.5/3, space-y-1.5 → space-y-1 */}
             <div className="flex flex-col items-center gap-2.5 md:gap-3">
@@ -1401,7 +1277,7 @@ const ActivityCard = ({
                 {/* Testimonial */}
                 {testimonials && (
                   <div className="space-y-2.5">
-                    <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center">
+                    <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center line-clamp-2">
                       &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                     </p>
                     {/* Author & Country */}

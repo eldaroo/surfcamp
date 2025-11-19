@@ -80,15 +80,7 @@ export async function GET(request: NextRequest) {
       guests: booking.guests,
       roomTypeId: booking.roomTypeId,
       contactInfo: booking.contactInfo,
-      activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
-      isSharedRoom: booking.isSharedRoom ?? booking.selectedRoom?.isSharedRoom ?? false,
-      selectedActivities: booking.selectedActivities || [],
-      participants: booking.participants || [],
-      locale: booking.locale || 'es',
-      priceBreakdown: booking.priceBreakdown || null,
-      selectedRoom: booking.selectedRoom || null,
-      nights: booking.nights,
-      discountedAccommodationTotal: booking.discountedAccommodationTotal || null
+      activityIds: booking.selectedActivities?.map((a: any) => a.id) || []
     };
 
     console.log('🔵 [LOBBYPMS-DEBUG] 🏨 Creating reservation in LobbyPMS...');

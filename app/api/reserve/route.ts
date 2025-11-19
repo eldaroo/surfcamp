@@ -526,11 +526,7 @@ export async function POST(request: NextRequest) {
       activityIds = [],
       paymentIntentId,
       participants = [], // Array of participants with their info and activities
-      locale = 'es', // Language: 'en' or 'es', defaults to 'es'
-      priceBreakdown,
-      selectedRoom,
-      nights: payloadNights,
-      discountedAccommodationTotal
+      locale = 'es' // Language: 'en' or 'es', defaults to 'es'
     } = body;
     const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
     if (contactInfo?.phone) {
@@ -552,13 +548,12 @@ export async function POST(request: NextRequest) {
     // 🔍 DYNAMIC AVAILABILITY CHECK: Get real-time availability and select an available category
     console.log('🔍 [RESERVE] Checking real-time availability for dynamic category selection...');
     let categoryIdsToTry: number[] = [];
-    let rawAvailabilityData: any[] = []; // Declare outside try block to be accessible everywhere
 
     try {
       // Call LobbyPMS directly to get real-time availability
       console.log('🔍 [RESERVE] Calling LobbyPMS available-rooms API...');
 
-      rawAvailabilityData = await lobbyPMSClient.getAvailableRooms({
+      const rawAvailabilityData = await lobbyPMSClient.getAvailableRooms({
         start_date: formatDateForLobbyPMS(checkIn),
         end_date: formatDateForLobbyPMS(checkOut),
       });
@@ -569,15 +564,8 @@ export async function POST(request: NextRequest) {
         allCategories: rawAvailabilityData[0]?.categories?.map((c: any) => ({
           id: c.category_id,
           name: c.name,
-          available: c.available_rooms,
-          prices: c.prices
+          available: c.available_rooms
         })) || []
-      });
-
-      console.log('💰 [RESERVE] First day data for discount calculation:', {
-        date: rawAvailabilityData[0]?.date,
-        categoriesCount: rawAvailabilityData[0]?.categories?.length,
-        firstCategoryExample: rawAvailabilityData[0]?.categories?.[0]
       });
 
       // Extract ALL available category IDs for the requested room type
@@ -630,8 +618,6 @@ export async function POST(request: NextRequest) {
       });
     } catch (availabilityError) {
       console.error('❌ [RESERVE] Error checking availability:', availabilityError);
-      console.error('⚠️ [RESERVE] WARNING: Without availability data, rates_per_day will NOT be sent to LobbyPMS!');
-      console.error('⚠️ [RESERVE] This means the 10% discount will NOT be applied in LobbyPMS!');
     }
 
     // Fallback to static mapping if no categories found
@@ -654,108 +640,6 @@ export async function POST(request: NextRequest) {
 
     const formattedCheckIn = formatDateForLobbyPMS(checkIn);
     const formattedCheckOut = formatDateForLobbyPMS(checkOut);
-
-    const fallbackStayNights =
-      typeof payloadNights === 'number' && payloadNights > 0
-        ? payloadNights
-        : Math.max(
-            1,
-            Math.ceil(
-              (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
-                (1000 * 60 * 60 * 24)
-            )
-          );
-
-    console.log('📊 [DISCOUNT] Fallback nights + pricing context:', {
-      payloadNights,
-      fallbackStayNights,
-      hasPriceBreakdown: !!priceBreakdown,
-      hasSelectedRoom: !!selectedRoom
-    });
-
-    // 💰 CALCULATE RATES PER DAY WITH 10% DISCOUNT FOR LOBBYPMS
-    // Cache to avoid recalculating for the same category_id
-    const ratesCache = new Map<string, Array<{ date: string; price: number }> | undefined>();
-
-    const calculateRatesPerDayWithDiscount = (
-      availabilityData: any[],
-      categoryId: number,
-      guestCount: number,
-      isShared: boolean
-    ): Array<{ date: string; price: number }> | undefined => {
-      console.log('💰 [DISCOUNT] calculateRatesPerDayWithDiscount called:', {
-        categoryId,
-        guestCount,
-        isShared,
-        availabilityDataLength: availabilityData?.length || 0,
-        hasData: !!availabilityData && availabilityData.length > 0
-      });
-
-      // Check cache first
-      const cacheKey = `${categoryId}-${guestCount}-${isShared}`;
-      if (ratesCache.has(cacheKey)) {
-        console.log('💰 [DISCOUNT] Using cached result for:', cacheKey);
-        return ratesCache.get(cacheKey);
-      }
-
-      try {
-        if (!availabilityData || availabilityData.length === 0) {
-          console.log('💰 [DISCOUNT] No availability data, returning undefined');
-          ratesCache.set(cacheKey, undefined);
-          return undefined;
-        }
-
-        const ratesPerDay: Array<{ date: string; price: number }> = [];
-
-        // Process each day
-        for (const day of availabilityData) {
-          const dayDate = day.date;
-          if (!dayDate || !day.categories) continue;
-
-          // Find the category in this day's data
-          const category = day.categories.find((cat: any) => cat.category_id === categoryId);
-          if (!category || !category.prices || category.prices.length === 0) {
-            continue;
-          }
-
-          // Determine price based on room type and guest count
-          let priceForDay = 0;
-          if (isShared) {
-            // Shared room: price per person
-            const pricePerPerson = category.prices.find((p: any) => p.people === 1)?.value || 0;
-            priceForDay = pricePerPerson;
-          } else {
-            // Private room: price based on occupancy (1 or 2 people)
-            const occupancy = Math.min(2, guestCount);
-            const priceForOccupancy = category.prices.find((p: any) => p.people === occupancy)?.value;
-            priceForDay = priceForOccupancy || category.prices[0]?.value || 0;
-          }
-
-          if (priceForDay > 0) {
-            // Apply 10% discount (multiply by 0.9)
-            const discountedPrice = Math.round(priceForDay * 0.9);
-            ratesPerDay.push({
-              date: dayDate,
-              price: discountedPrice
-            });
-          }
-        }
-
-        const result = ratesPerDay.length > 0 ? ratesPerDay : undefined;
-        ratesCache.set(cacheKey, result);
-
-        if (result) {
-          console.log(`💰 [DISCOUNT] Calculated ${ratesPerDay.length} nights with 10% discount for category ${categoryId}`);
-        }
-
-        return result;
-      } catch (error) {
-        console.error('💰 [DISCOUNT] Error calculating rates with discount:', error);
-        ratesCache.set(cacheKey, undefined);
-        return undefined;
-      }
-    };
-
     // Prepare LobbyPMS reservation request with correct field names and date format
     const baseNotes = `ðŸ„â€â™‚ï¸ RESERVA DESDE SURFCAMP SANTA TERESA ðŸ„â€â™‚ï¸\n\nDetalles de la reserva:\n- Web: surfcamp-santa-teresa.com\n- Referencia: ${bookingReference}\n- HuÃ©sped: ${contactInfo.firstName} ${contactInfo.lastName}\n- DNI: ${contactInfo.dni}\n- Email: ${contactInfo.email}\n- TelÃ©fono: ${contactInfo.phone}\n- Pago: ${paymentIntentId}`;
     // FIX: guest_count should always be the number of guests, regardless of room type
@@ -801,110 +685,6 @@ export async function POST(request: NextRequest) {
       Array.isArray(selectedActivitiesPayload) ? selectedActivitiesPayload : [],
       fallbackActivityIds
     );
-
-    const totalGuestsForFallback = Math.max(1, calculatedGuestCount);
-
-    const buildFallbackRatesForGuestCount = (guestCountForReservation: number) => {
-      console.log('🔧 [DISCOUNT-FALLBACK] Called with:', {
-        guestCountForReservation,
-        fallbackStayNights,
-        hasSelectedRoom: !!selectedRoom,
-        selectedRoomPrice: selectedRoom?.pricePerNight,
-        hasPriceBreakdown: !!priceBreakdown,
-        priceBreakdownAccommodation: priceBreakdown?.accommodation,
-        isSharedRoom
-      });
-
-      if (!fallbackStayNights || fallbackStayNights <= 0) {
-        console.error('❌ [DISCOUNT-FALLBACK] No fallbackStayNights!', { fallbackStayNights });
-        return undefined;
-      }
-
-      const deriveNightlyPriceFromRoom = () => {
-        if (!selectedRoom?.pricePerNight) return null;
-        if (isSharedRoom) {
-          return selectedRoom.pricePerNight * guestCountForReservation;
-        }
-        return selectedRoom.pricePerNight;
-      };
-
-      const deriveNightlyPriceFromBreakdown = () => {
-        if (!priceBreakdown?.accommodation || typeof priceBreakdown.accommodation !== 'number') {
-          return null;
-        }
-        const perNightFull = priceBreakdown.accommodation / fallbackStayNights;
-        if (isSharedRoom) {
-          const perGuestNight = perNightFull / totalGuestsForFallback;
-          return perGuestNight * guestCountForReservation;
-        }
-        return perNightFull;
-      };
-
-      const priceFromRoom = deriveNightlyPriceFromRoom();
-      const priceFromBreakdown = deriveNightlyPriceFromBreakdown();
-      const perNightBase = priceFromRoom ?? priceFromBreakdown;
-
-      console.log('🔧 [DISCOUNT-FALLBACK] Price calculation:', {
-        priceFromRoom,
-        priceFromBreakdown,
-        perNightBase
-      });
-
-      if (!perNightBase || perNightBase <= 0) {
-        console.error('❌ [DISCOUNT-FALLBACK] No valid base price!', {
-          priceFromRoom,
-          priceFromBreakdown,
-          perNightBase
-        });
-        console.log('❌ [DISCOUNT] No fallback base price available for rates_per_day', {
-          hasPriceBreakdown: !!priceBreakdown,
-          hasSelectedRoom: !!selectedRoom
-        });
-        return undefined;
-      }
-
-      let discountedOverride: number | null = null;
-      if (typeof discountedAccommodationTotal === 'number' && discountedAccommodationTotal > 0) {
-        if (!isSharedRoom && guestCountForReservation >= totalGuestsForFallback) {
-          discountedOverride = discountedAccommodationTotal;
-        } else if (isSharedRoom && totalGuestsForFallback > 0) {
-          discountedOverride = Math.round(
-            (discountedAccommodationTotal / totalGuestsForFallback) * guestCountForReservation
-          );
-        }
-      }
-
-      const discountedTotal =
-        discountedOverride ??
-        Math.round(perNightBase * fallbackStayNights * 0.9);
-      const baseNightPrice = Math.floor(discountedTotal / fallbackStayNights);
-      const remainder = discountedTotal - baseNightPrice * fallbackStayNights;
-
-      const rates: Array<{ date: string; price: number }> = [];
-
-      for (let i = 0; i < fallbackStayNights; i++) {
-        const rateDate = new Date(formattedCheckIn);
-        rateDate.setDate(rateDate.getDate() + i);
-
-        let priceForDay = baseNightPrice;
-        if (i === fallbackStayNights - 1) {
-          priceForDay += remainder;
-        }
-
-        rates.push({
-          date: rateDate.toISOString().split('T')[0],
-          price: priceForDay
-        });
-      }
-
-      console.log('✅ [DISCOUNT] Built fallback rates_per_day:', {
-        guestCount: guestCountForReservation,
-        discountedTotal,
-        nights: fallbackStayNights
-      });
-
-      return rates;
-    };
     const hasDetailedActivityPayload =
       Array.isArray(selectedActivitiesPayload) && selectedActivitiesPayload.length > 0;
 
@@ -989,66 +769,10 @@ export async function POST(request: NextRequest) {
             console.log(`🔄 [RESERVE] Room ${roomIndex + 1} - Attempt ${categoryIdx + 1}/${categoryIdsToTry.length} with category_id: ${currentCategoryId}`);
 
             try {
-              // Calculate rates with 10% discount for LobbyPMS
-              let ratesWithDiscount = calculateRatesPerDayWithDiscount(
-                rawAvailabilityData,
-                currentCategoryId,
-                guestsInThisRoom,
-                roomTypeId === 'casa-playa'
-              );
-
-              // Try fallback if primary calculation failed
-              if ((!ratesWithDiscount || ratesWithDiscount.length === 0) && buildFallbackRatesForGuestCount) {
-                const fallbackRates = buildFallbackRatesForGuestCount(guestsInThisRoom);
-                if (fallbackRates && fallbackRates.length > 0) {
-                  console.log('🔄 [DISCOUNT] Using fallback rates_per_day for room reservation:', {
-                    roomIndex: roomIndex + 1,
-                    guestCount: guestsInThisRoom
-                  });
-                  ratesWithDiscount = fallbackRates;
-                }
-              }
-
-              // LAST RESORT: If both methods failed, calculate simple rates_per_day
-              if (!ratesWithDiscount || ratesWithDiscount.length === 0) {
-                console.log('🆘 [DISCOUNT] Both methods failed, using LAST RESORT calculation');
-                if (selectedRoom?.pricePerNight && fallbackStayNights > 0) {
-                  const basePrice = selectedRoom.isSharedRoom
-                    ? selectedRoom.pricePerNight * guestsInThisRoom
-                    : selectedRoom.pricePerNight;
-                  const discountedPrice = Math.round(basePrice * 0.9);
-
-                  ratesWithDiscount = [];
-                  for (let i = 0; i < fallbackStayNights; i++) {
-                    const rateDate = new Date(formattedCheckIn);
-                    rateDate.setDate(rateDate.getDate() + i);
-                    ratesWithDiscount.push({
-                      date: rateDate.toISOString().split('T')[0],
-                      price: discountedPrice
-                    });
-                  }
-                  console.log('✅ [DISCOUNT] LAST RESORT rates_per_day created:', ratesWithDiscount);
-                }
-              }
-
               const attemptData = {
                 ...roomBookingData,
-                category_id: currentCategoryId,
-                ...(ratesWithDiscount && ratesWithDiscount.length > 0 ? { rates_per_day: ratesWithDiscount } : {})
+                category_id: currentCategoryId
               };
-
-              console.log('💰 [DISCOUNT] Sending to LobbyPMS createBooking:', {
-                category_id: currentCategoryId,
-                has_rates_per_day: !!attemptData.rates_per_day,
-                rates_per_day: attemptData.rates_per_day
-              });
-
-              if (!attemptData.rates_per_day) {
-                console.error('⚠️ [DISCOUNT] CRITICAL: rates_per_day is NOT being sent! LobbyPMS will use full price without 10% discount!');
-              } else {
-                console.log('✅ [DISCOUNT] rates_per_day with 10% discount will be sent to LobbyPMS');
-              }
-
               roomReservation = await lobbyPMSClient.createBooking(attemptData);
               roomSuccess = true;
               console.log(`✅ [RESERVE] Room ${roomIndex + 1} SUCCESS with category_id: ${currentCategoryId}`);
@@ -1190,63 +914,10 @@ export async function POST(request: NextRequest) {
           console.log(`🔄 [RESERVE] Participant ${i + 1} - Attempt ${categoryIdx + 1}/${categoryIdsToTry.length} with category_id: ${currentCategoryId}`);
 
           try {
-            // Calculate rates with 10% discount for LobbyPMS
-            let ratesWithDiscount = calculateRatesPerDayWithDiscount(
-              rawAvailabilityData,
-              currentCategoryId,
-              1, // 1 guest for individual participant
-              roomTypeId === 'casa-playa'
-            );
-
-            // Try fallback if primary calculation failed
-            if ((!ratesWithDiscount || ratesWithDiscount.length === 0) && buildFallbackRatesForGuestCount) {
-              const fallbackRates = buildFallbackRatesForGuestCount(1);
-              if (fallbackRates && fallbackRates.length > 0) {
-                console.log('🔄 [DISCOUNT] Using fallback rates_per_day for participant booking');
-                ratesWithDiscount = fallbackRates;
-              }
-            }
-
-            // LAST RESORT: If both methods failed, calculate simple rates_per_day
-            if (!ratesWithDiscount || ratesWithDiscount.length === 0) {
-              console.log('🆘 [DISCOUNT] Both methods failed for participant, using LAST RESORT');
-              if (selectedRoom?.pricePerNight && fallbackStayNights > 0) {
-                const basePrice = selectedRoom.isSharedRoom
-                  ? selectedRoom.pricePerNight
-                  : selectedRoom.pricePerNight;
-                const discountedPrice = Math.round(basePrice * 0.9);
-
-                ratesWithDiscount = [];
-                for (let i = 0; i < fallbackStayNights; i++) {
-                  const rateDate = new Date(formattedCheckIn);
-                  rateDate.setDate(rateDate.getDate() + i);
-                  ratesWithDiscount.push({
-                    date: rateDate.toISOString().split('T')[0],
-                    price: discountedPrice
-                  });
-                }
-                console.log('✅ [DISCOUNT] LAST RESORT rates_per_day for participant:', ratesWithDiscount);
-              }
-            }
-
             const attemptData = {
               ...participantBookingData,
-              category_id: currentCategoryId,
-              ...(ratesWithDiscount && ratesWithDiscount.length > 0 ? { rates_per_day: ratesWithDiscount } : {})
+              category_id: currentCategoryId
             };
-
-            console.log('💰 [DISCOUNT] Participant booking - Sending to LobbyPMS:', {
-              category_id: currentCategoryId,
-              has_rates_per_day: !!attemptData.rates_per_day,
-              rates_count: attemptData.rates_per_day?.length || 0
-            });
-
-            if (!attemptData.rates_per_day) {
-              console.error('⚠️ [DISCOUNT] CRITICAL: rates_per_day is NOT being sent for participant! LobbyPMS will use full price without 10% discount!');
-            } else {
-              console.log('✅ [DISCOUNT] rates_per_day with 10% discount will be sent to LobbyPMS for participant');
-            }
-
             participantReservation = await lobbyPMSClient.createBooking(attemptData);
             participantSuccess = true;
             console.log(`✅ [RESERVE] Participant ${i + 1} SUCCESS with category_id: ${currentCategoryId}`);
@@ -1455,64 +1126,10 @@ export async function POST(request: NextRequest) {
       console.log(`🔄 [RESERVE] Attempt ${i + 1}/${categoryIdsToTry.length} - Trying with category_id: ${currentCategoryId}`);
 
       try {
-        // Calculate rates with 10% discount for LobbyPMS
-        let ratesWithDiscount = calculateRatesPerDayWithDiscount(
-          rawAvailabilityData,
-          currentCategoryId,
-          calculatedGuestCount,
-          roomTypeId === 'casa-playa'
-        );
-
-        // Try fallback if primary calculation failed
-        if ((!ratesWithDiscount || ratesWithDiscount.length === 0) && buildFallbackRatesForGuestCount) {
-          const fallbackRates = buildFallbackRatesForGuestCount(calculatedGuestCount);
-          if (fallbackRates && fallbackRates.length > 0) {
-            console.log('🔄 [DISCOUNT] Using fallback rates_per_day for single reservation');
-            ratesWithDiscount = fallbackRates;
-          }
-        }
-
-        // LAST RESORT: If both methods failed, calculate simple rates_per_day
-        if (!ratesWithDiscount || ratesWithDiscount.length === 0) {
-          console.log('🆘 [DISCOUNT] Both methods failed for single booking, using LAST RESORT');
-          if (selectedRoom?.pricePerNight && fallbackStayNights > 0) {
-            const basePrice = selectedRoom.isSharedRoom
-              ? selectedRoom.pricePerNight * calculatedGuestCount
-              : selectedRoom.pricePerNight;
-            const discountedPrice = Math.round(basePrice * 0.9);
-
-            ratesWithDiscount = [];
-            for (let i = 0; i < fallbackStayNights; i++) {
-              const rateDate = new Date(formattedCheckIn);
-              rateDate.setDate(rateDate.getDate() + i);
-              ratesWithDiscount.push({
-                date: rateDate.toISOString().split('T')[0],
-                price: discountedPrice
-              });
-            }
-            console.log('✅ [DISCOUNT] LAST RESORT rates_per_day for single booking:', ratesWithDiscount);
-          }
-        }
-
         const attemptBookingData = {
           ...bookingData,
-          category_id: currentCategoryId,
-          ...(ratesWithDiscount && ratesWithDiscount.length > 0 ? { rates_per_day: ratesWithDiscount } : {})
+          category_id: currentCategoryId
         };
-
-        console.log('💰 [DISCOUNT] Single booking - Sending to LobbyPMS:', {
-          category_id: currentCategoryId,
-          has_rates_per_day: !!attemptBookingData.rates_per_day,
-          rates_count: attemptBookingData.rates_per_day?.length || 0,
-          rates_sample: attemptBookingData.rates_per_day?.[0]
-        });
-
-        if (!attemptBookingData.rates_per_day) {
-          console.error('⚠️ [DISCOUNT] CRITICAL: rates_per_day is NOT being sent! LobbyPMS will use full price without 10% discount!');
-        } else {
-          console.log('✅ [DISCOUNT] rates_per_day with 10% discount will be sent to LobbyPMS');
-          console.log('💰 [DISCOUNT] Sample rate:', attemptBookingData.rates_per_day[0]);
-        }
 
         reservationData = await lobbyPMSClient.createBooking(attemptBookingData);
         successfulCategoryId = currentCategoryId;
@@ -1673,29 +1290,12 @@ export async function POST(request: NextRequest) {
       if (lobbyError.response?.data?.error_code === 'MAXIMUM_CAPACITY') {
         console.log('⚠️ [RESERVE] MAXIMUM_CAPACITY error detected, retrying with guest_count=1');
         // Reducir huÃ©spedes a 1 e intentar de nuevo
-        // Calculate rates with 10% discount for retry
-        let retryRatesWithDiscount = calculateRatesPerDayWithDiscount(
-          rawAvailabilityData,
-          bookingData.category_id,
-          1, // 1 guest for retry
-          roomTypeId === 'casa-playa'
-        );
-
-        if ((!retryRatesWithDiscount || retryRatesWithDiscount.length === 0) && buildFallbackRatesForGuestCount) {
-          const fallbackRates = buildFallbackRatesForGuestCount(1);
-          if (fallbackRates && fallbackRates.length > 0) {
-            console.log('🔄 [DISCOUNT] Using fallback rates_per_day for MAXIMUM_CAPACITY retry');
-            retryRatesWithDiscount = fallbackRates;
-          }
-        }
-
         const adjustedBookingData = {
           ...bookingData,
           guest_count: 1,
-          total_adults: 1,
-          ...(retryRatesWithDiscount && retryRatesWithDiscount.length > 0 ? { rates_per_day: retryRatesWithDiscount } : {})
+          total_adults: 1
         };
-
+        
         try {
           const retryReservationData = await lobbyPMSClient.createBooking(adjustedBookingData);
           const adjustedBookingId =

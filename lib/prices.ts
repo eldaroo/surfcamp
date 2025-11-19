@@ -26,7 +26,7 @@ export const ACTIVITY_PRICES = {
   
   // Otras actividades con precios fijos
   ice_bath: {
-    basePrice: 40, // Precio por sesión
+    basePrice: 50, // Precio por sesión
     packages: {}
   },
   
@@ -68,14 +68,21 @@ export const getActivityBasePrice = (category: string): number => {
   return ACTIVITY_PRICES[category as keyof typeof ACTIVITY_PRICES]?.basePrice || 0;
 };
 
-// Fixed pricing for surf programs
+// Progressive pricing calculation for surf classes
 export const calculateSurfPrice = (classes: number): number => {
-  // Essential program: 4 classes = $380
-  if (classes <= 4) return 380;
-  // Progression program: 7 classes = $650
-  if (classes <= 7) return 650;
-  // Performance program: 10 classes = $880
-  return 880;
+  // Price points: 3 classes = $300, 5 classes = $460, 10 classes = $890
+  if (classes <= 3) return 300;
+  if (classes <= 5) {
+    // Interpolate between 3 and 5 classes
+    const ratio = (classes - 3) / (5 - 3);
+    return Math.round(300 + (460 - 300) * ratio);
+  }
+  if (classes <= 10) {
+    // Interpolate between 5 and 10 classes
+    const ratio = (classes - 5) / (10 - 5);
+    return Math.round(460 + (890 - 460) * ratio);
+  }
+  return 890;
 };
 
 // Función para calcular el precio total de una actividad con paquete

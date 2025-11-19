@@ -28,7 +28,6 @@ export default function ContactForm() {
   const {
     bookingData,
     setBookingData,
-    currentStep,
     setCurrentStep,
     setPersonalizationName,
     personalizationName,
@@ -109,15 +108,6 @@ export default function ContactForm() {
   };
 
   const nights = calculateNights();
-
-  // Format dates for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  };
 
   const accommodationTotal = selectedRoom ? (
     selectedRoom.isSharedRoom
@@ -202,18 +192,6 @@ const activitiesTotal = allActivitySelections.reduce((sum, selection) => sum + s
 
 const total = accommodationTotal + activitiesTotal;
 
-const priceBreakdown = useMemo(
-  () => ({
-    accommodation: accommodationTotal,
-    activities: activitiesTotal,
-    subtotal: total,
-    tax: 0,
-    total,
-    currency: 'USD'
-  }),
-  [accommodationTotal, activitiesTotal, total]
-);
-
   const serializedParticipants = useMemo(
     () =>
       participants.map((participant, index) => {
@@ -281,16 +259,6 @@ const priceBreakdown = useMemo(
   // Payment status checking
   const checkPaymentStatus = async (orderId?: string, tripId?: string) => {
     try {
-      // Check if we've already shown success (prevent race conditions)
-      if (currentStep === 'success') {
-        console.log('⏭️ [PAYMENT-STATUS] Already on success page, skipping poll');
-        if (paymentStatusInterval.current) {
-          clearInterval(paymentStatusInterval.current);
-          paymentStatusInterval.current = null;
-        }
-        return null;
-      }
-
       const params = new URLSearchParams();
       if (orderId) params.append('order_id', orderId);
       if (tripId) params.append('trip_id', tripId);
@@ -309,15 +277,7 @@ const priceBreakdown = useMemo(
       });
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('✅ [PAYMENT-STATUS] Success detected! Stopping polling and showing success page...');
-
-        // STOP POLLING IMMEDIATELY
-        if (paymentStatusInterval.current) {
-          clearInterval(paymentStatusInterval.current);
-          paymentStatusInterval.current = null;
-          console.log('🛑 [PAYMENT-STATUS] Polling stopped');
-        }
-
+        console.log('✅ [PAYMENT-STATUS] Success detected! Showing success page...');
         const prices = {
           accommodation: accommodationTotal,
           activities: activitiesTotal,
@@ -328,6 +288,10 @@ const priceBreakdown = useMemo(
         };
         setPriceBreakdown(prices);
 
+        if (paymentStatusInterval.current) {
+          clearInterval(paymentStatusInterval.current);
+          paymentStatusInterval.current = null;
+        }
         setIsWaitingForPayment(false);
         setIsCheckingPaymentStatus(false);
         setCurrentStep('success');
@@ -524,11 +488,7 @@ const priceBreakdown = useMemo(
         checkOut: checkOutFormatted,
         guests: bookingData.guests,
         roomTypeId: selectedRoom?.roomTypeId,
-        isSharedRoom: selectedRoom?.isSharedRoom ?? false,
         contactInfo: formData,
-        selectedRoom: selectedRoom ? { ...selectedRoom } : null,
-        priceBreakdown,
-        nights,
         selectedActivities: selectedActivities.map((a: any) => ({
           id: a.id,
           name: a.name,
@@ -805,14 +765,7 @@ const priceBreakdown = useMemo(
                 <div className="space-y-3">
                   {selectedRoom && (
                     <div className="flex justify-between">
-                      <span className="text-gray-300">
-                        {selectedRoom.roomTypeName}
-                        {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
-                          <span className="text-sm text-gray-400 ml-1">
-                            ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
-                          </span>
-                        )}
-                      </span>
+                      <span className="text-gray-300">{selectedRoom.roomTypeName}</span>
                       <span className="font-medium text-yellow-400">${accommodationTotal}</span>
                     </div>
                   )}
@@ -857,7 +810,7 @@ const priceBreakdown = useMemo(
                 disabled={isProcessingPayment}
                 whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
                 whileTap={{ scale: isProcessingPayment ? 1 : 0.98 }}
-                className={`w-full py-4 px-6 rounded-xl font-bold text-xl md:text-2xl transition-all duration-200 ${
+                className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 ${
                   isProcessingPayment
                     ? 'bg-gray-600 cursor-not-allowed text-gray-400'
                     : 'bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 shadow-lg hover:shadow-yellow-500/25'

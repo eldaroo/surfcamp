@@ -368,10 +368,7 @@ const AccommodationCard = ({
             <div className="flex flex-1 flex-col px-3 md:px-3 py-3 md:py-2 gap-1.5 md:gap-1">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  {/* Mobile Title - Below image, above description */}
-                  <h3 className="md:hidden text-xl font-bold text-white font-heading mb-3">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
-
-                  <div className="hidden md:flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5">
+                  <div className="flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5">
                     <h3 className="text-lg md:text-xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
                     {isSelected && (
                       <CheckCircle2 className="h-5 md:h-6 w-5 md:w-6 text-amber-300" aria-hidden="true" />
@@ -449,7 +446,7 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm md:text-sm leading-snug md:leading-tight text-slate-300 mb-2 md:mb-1">
+                  <p className="text-xs md:text-xs leading-snug md:leading-tight text-slate-300 mb-2 md:mb-1">
                     <span className="md:hidden">{typeof description === 'object' ? description.mobile : description}</span>
                     <span className="hidden md:inline">{typeof description === 'object' ? description.desktop : description}</span>
                   </p>

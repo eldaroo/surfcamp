@@ -30,21 +30,7 @@ export async function POST(request: NextRequest) {
     if (body.checkIn && body.checkOut && body.contactInfo) {
       console.log('📝 New format detected - will save to DB and create payment');
 
-      const {
-        checkIn,
-        checkOut,
-        guests,
-        roomTypeId,
-        contactInfo,
-        selectedActivities,
-        participants = [],
-        wetravelData,
-        priceBreakdown,
-        selectedRoom = null,
-        isSharedRoom = false,
-        locale = 'es',
-        nights: payloadNights
-      } = body;
+      const { checkIn, checkOut, guests, roomTypeId, contactInfo, selectedActivities, participants = [], wetravelData } = body;
 
       // Get price from wetravelData if provided, otherwise use $1 for testing
       const price = wetravelData?.pricing?.price || 1;
@@ -57,8 +43,7 @@ export async function POST(request: NextRequest) {
       console.log('📅 Days before departure:', daysBeforeDeparture);
 
       // Calculate totals
-      const calculatedNights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
-      const nights = typeof payloadNights === 'number' && payloadNights > 0 ? payloadNights : calculatedNights;
+      const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
       const totalAmountCents = Math.round(price * 100); // Convert to cents
 
       // Calculate 10% deposit
@@ -81,17 +66,7 @@ export async function POST(request: NextRequest) {
         totalAmountCents,
         depositAmountCents,
         fullPrice: price,
-        depositPrice: depositAmount,
-        locale,
-        isSharedRoom,
-        selectedRoom,
-        priceBreakdown,
-        accommodationTotal: priceBreakdown?.accommodation ?? null,
-        activitiesTotal: priceBreakdown?.activities ?? null,
-        totalPrice: priceBreakdown?.total ?? price,
-        discountedAccommodationTotal: priceBreakdown?.accommodation
-          ? Math.round(priceBreakdown.accommodation * 0.9)
-          : null
+        depositPrice: depositAmount
       };
 
       // Build dynamic title based on booking

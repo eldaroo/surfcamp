@@ -833,16 +833,12 @@ async function handleBookingCreated(
               checkOut: booking.checkOut,
               guests: booking.guests,
               roomTypeId: booking.roomTypeId,
-              isSharedRoom: booking.isSharedRoom ?? booking.selectedRoom?.isSharedRoom ?? false,
+              isSharedRoom: booking.isSharedRoom || false,
               contactInfo: booking.contactInfo,
               activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
               selectedActivities: booking.selectedActivities || [],
               participants: booking.participants || [],
-              locale: booking.locale || 'es', // Pass locale for WhatsApp messages
-              priceBreakdown: booking.priceBreakdown || null,
-              selectedRoom: booking.selectedRoom || null,
-              nights: booking.nights,
-              discountedAccommodationTotal: booking.discountedAccommodationTotal || null
+              locale: booking.locale || 'es' // Pass locale for WhatsApp messages
             };
 
             console.log('📞 [WEBHOOK] Calling /api/reserve with FULL payload:', JSON.stringify(reservePayload, null, 2));
