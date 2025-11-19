@@ -9,7 +9,7 @@ import BookingConfirmation from './BookingConfirmation';
 import BackButton from './BackButton';
 
 export default function PaymentSection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const {
     bookingData,
     selectedRoom,
@@ -445,8 +445,8 @@ export default function PaymentSection() {
       const accommodationType = selectedRoom?.roomTypeId === 'casa-playa' ? 'Casa de Playa' :
                                 selectedRoom?.roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
                                 'Casas Deluxe';
-      const nights = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
-      const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
+      const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
+      const nightsText = nightsCount === 1 ? '1 night' : `${nightsCount} nights`;
       const guestsText = bookingData.guests === 1 ? '1 guest' : `${bookingData.guests} guests`;
       const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
 
@@ -460,6 +460,10 @@ export default function PaymentSection() {
         roomTypeId: selectedRoom?.roomTypeId,
         isSharedRoom: selectedRoom?.isSharedRoom, // Add isSharedRoom to payload
         contactInfo: bookingData.contactInfo,
+        selectedRoom: selectedRoom ? { ...selectedRoom } : null,
+        priceBreakdown,
+        nights: nightsCount,
+        locale,
         selectedActivities: selectedActivities.map((a: any) => ({
           id: a.id,
           name: a.name,
@@ -613,6 +617,18 @@ export default function PaymentSection() {
   });
 
   const total = accommodationTotal + activitiesTotal;
+
+  const priceBreakdown = useMemo(
+    () => ({
+      accommodation: accommodationTotal,
+      activities: activitiesTotal,
+      subtotal: total,
+      tax: 0,
+      total,
+      currency: 'USD'
+    }),
+    [accommodationTotal, activitiesTotal, total]
+  );
 
   // Debug log to check participants data
   console.log('🔍 [PaymentSection] RENDERING - Participants data:', {

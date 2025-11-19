@@ -86,7 +86,8 @@
       "Bash(pm2 describe:*)",
       "Bash(ssh root@surfcampwidget.duckdns.org:*)",
       "WebFetch(domain:product.wetravel.com)",
-      "WebFetch(domain:developer.wetravel.com)"
+      "WebFetch(domain:developer.wetravel.com)",
+      "WebFetch(domain:app.lobbypms.com)"
     ],
     "deny": [],
     "ask": []
