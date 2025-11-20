@@ -21,24 +21,24 @@ const quantityCategories = new Set<Activity["category"]>(["ice_bath", "transport
 const perGuestCategories = new Set<Activity["category"]>(["yoga", "surf", "transport"]);
 const timeSlotCategories = new Set<Activity["category"]>(["transport"]);
 
-const DEFAULT_SURF_PROGRAM: 'essential' | 'progression' | 'performance' = 'essential';
+const DEFAULT_SURF_PROGRAM: 'fundamental' | 'progressionPlus' | 'highPerformance' = 'fundamental';
 const DEFAULT_SURF_CLASSES = 4;
 const DEFAULT_SURF_PACKAGE: SurfPackage = '4-classes';
 const DEFAULT_YOGA_PACKAGE = "1-class" as const;
 
 // Map surf classes to programs
-const surfClassesToProgram = (classes: number): 'essential' | 'progression' | 'performance' => {
-  if (classes <= 4) return 'essential';
-  if (classes <= 7) return 'progression';
-  return 'performance';
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 7) return 'progressionPlus';
+  return 'highPerformance';
 };
 
 // Map programs to surf classes
-const surfProgramToClasses = (program: 'essential' | 'progression' | 'performance'): number => {
+const surfProgramToClasses = (program: 'fundamental' | 'progressionPlus' | 'highPerformance'): number => {
   switch (program) {
-    case 'essential': return 4;
-    case 'progression': return 7;
-    case 'performance': return 10;
+    case 'fundamental': return 4;
+    case 'progressionPlus': return 7;
+    case 'highPerformance': return 10;
   }
 };
 
@@ -292,7 +292,7 @@ const ActivitiesPage = () => {
   );
 
   const handleSurfProgramChange = useCallback(
-    (activityId: string, program: 'essential' | 'progression' | 'performance') => {
+    (activityId: string, program: 'fundamental' | 'progressionPlus' | 'highPerformance') => {
       const classes = surfProgramToClasses(program);
       setSelectedSurfClasses(activityId, classes);
       setSelectedSurfPackage(activityId, `${classes}-classes` as SurfPackage);

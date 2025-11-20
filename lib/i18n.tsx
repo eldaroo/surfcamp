@@ -227,7 +227,108 @@ const translations = {
       yogaSavings: "3 Clases - Ahorra 20%",
       yoga10Savings: "10 Clases - Ahorra 30%",
       iceBathSocialProof: "Usado por surfistas profesionales y atletas mundialmente - 4.9/5 satisfacción.",
-      iceBathAuthority: "Seguro y supervisado por entrenadores certificados."
+      iceBathAuthority: "Seguro y supervisado por entrenadores certificados.",
+      edit: "Editar Actividades"
+    },
+    surfPrograms: {
+      title: "Elige tu Programa de Surf",
+      subtitle: "Programas diseñados para llevar tu surf al siguiente nivel",
+      method: {
+        title: "Nuestro Método Integrado de Coaching de Surf",
+        subtitle: "En cada sesión trabajamos en:",
+        pillars: {
+          biomechanics: {
+            title: "Biomecánica & memoria muscular",
+            description: "Técnica correcta desde el inicio para maximizar tu progreso"
+          },
+          coaching: {
+            title: "Equipo de coaching de alto nivel",
+            description: "Instructores certificados con años de experiencia en Santa Teresa"
+          },
+          feedback: {
+            title: "Feedback técnico basado en video",
+            description: "Análisis visual de tus olas para acelerar tu aprendizaje"
+          },
+          mindset: {
+            title: "Mentalidad, seguridad & nutrición práctica",
+            description: "Enfoque integral para convertirte en un surfista completo"
+          }
+        }
+      },
+      programs: {
+        fundamental: {
+          name: "Fundamental",
+          level: "Principiante - Nivel 1.1, 1.2, 1.3",
+          tagline: "Construye una base sólida y evita malos hábitos desde el día uno",
+          price: "420",
+          includes: {
+            title: "Incluye:",
+            items: [
+              "4 sesiones de surf",
+              "Feedback básico en video",
+              "Tabla + lycra + transporte",
+              "Sesión de fotos opcional"
+            ]
+          },
+          sessions: {
+            title: "En cada sesión trabajaremos en:",
+            items: [
+              "Técnica & biomecánica: Popup, postura, balance en la tabla",
+              "Mentalidad & confianza en el océano: Lectura de olas, posicionamiento básico",
+              "Nutrición práctica & recuperación: Hidratación, comidas pre-surf",
+              "Feedback visual & seguimiento de progreso: Revisión de video de tus primeras olas"
+            ]
+          }
+        },
+        progression: {
+          name: "Progression Plus",
+          level: "Principiante con experiencia / Intermedio temprano - Nivel 1.2, 1.3, 2.1",
+          tagline: "Corrige patrones clave, lee mejor las olas y desbloquea tu siguiente nivel",
+          price: "670",
+          includes: {
+            title: "Incluye:",
+            items: [
+              "7 sesiones de surf",
+              "Análisis intermedio de video",
+              "1 sesión de fotos",
+              "Plan de práctica final"
+            ]
+          },
+          sessions: {
+            title: "En cada sesión trabajaremos en:",
+            items: [
+              "Técnica & biomecánica: Giros básicos, generación de velocidad, línea de olas",
+              "Mentalidad & confianza en el océano: Selección de olas, timing de take-off",
+              "Nutrición práctica & recuperación: Snacks energéticos, descanso activo",
+              "Feedback visual & seguimiento de progreso: Comparación antes/después, correcciones en tiempo real"
+            ]
+          }
+        },
+        highPerformance: {
+          name: "High-Performance Program",
+          level: "Intermedio-Avanzado - Nivel 2.1, 2.2",
+          tagline: "Entrena como un atleta y transforma tu manera de surfear",
+          price: "910",
+          includes: {
+            title: "Incluye:",
+            items: [
+              "10 sesiones de alto rendimiento",
+              "Análisis avanzado de video",
+              "Sesión de fotos + drone",
+              "Revisión final extendida"
+            ]
+          },
+          sessions: {
+            title: "En cada sesión trabajaremos en:",
+            items: [
+              "Técnica & biomecánica: Maniobras verticales, cutbacks, floaters",
+              "Mentalidad & confianza en el océano: Surf en olas más grandes, manejo de wipeouts",
+              "Nutrición práctica & recuperación: Planes de comidas, estiramientos específicos",
+              "Feedback visual & seguimiento de progreso: Análisis cuadro por cuadro, métricas de rendimiento"
+            ]
+          }
+        }
+      }
     },
     contact: {
       title: "Información de Contacto",
@@ -557,7 +658,108 @@ const translations = {
       yogaSavings: "3 Classes - Save 20%",
       yoga10Savings: "10 Classes - Save 30%",
       iceBathSocialProof: "Used by pro surfers & athletes worldwide - 4.9/5 satisfaction.",
-      iceBathAuthority: "Safe & supervised by certified coaches."
+      iceBathAuthority: "Safe & supervised by certified coaches.",
+      edit: "Edit Activities"
+    },
+    surfPrograms: {
+      title: "Choose Your Surf Program",
+      subtitle: "Programs designed to take your surfing to the next level",
+      method: {
+        title: "Our Integrated Surf Coaching Method",
+        subtitle: "In each session we work on:",
+        pillars: {
+          biomechanics: {
+            title: "Biomechanics & muscle memory",
+            description: "Correct technique from day one to maximize your progress"
+          },
+          coaching: {
+            title: "High-level coaching team",
+            description: "Certified instructors with years of experience in Santa Teresa"
+          },
+          feedback: {
+            title: "Video-based technical feedback",
+            description: "Visual analysis of your waves to accelerate your learning"
+          },
+          mindset: {
+            title: "Mindset, safety & practical nutrition",
+            description: "Comprehensive approach to become a complete surfer"
+          }
+        }
+      },
+      programs: {
+        fundamental: {
+          name: "Fundamental",
+          level: "Beginner - Level 1.1, 1.2, 1.3",
+          tagline: "Build a strong foundation and avoid bad habits from day one",
+          price: "420",
+          includes: {
+            title: "Includes:",
+            items: [
+              "4 surf sessions",
+              "Basic video feedback",
+              "Board + wetsuit + transport",
+              "Optional photo session"
+            ]
+          },
+          sessions: {
+            title: "In each session we'll work on:",
+            items: [
+              "Technique & biomechanics: Popup, posture, balance on board",
+              "Mindset & confidence in the ocean: Wave reading, basic positioning",
+              "Practical nutrition & recovery: Hydration, pre-surf meals",
+              "Visual feedback & progression tracking: Video review of your first waves"
+            ]
+          }
+        },
+        progression: {
+          name: "Progression Plus",
+          level: "Early Intermediate - Level 1.2, 1.3, 2.1",
+          tagline: "Correct key patterns, read waves better and unlock your next level",
+          price: "670",
+          includes: {
+            title: "Includes:",
+            items: [
+              "7 surf sessions",
+              "Intermediate video analysis",
+              "1 photo session",
+              "Final practice plan"
+            ]
+          },
+          sessions: {
+            title: "In each session we'll work on:",
+            items: [
+              "Technique & biomechanics: Basic turns, speed generation, wave line",
+              "Mindset & confidence in the ocean: Wave selection, take-off timing",
+              "Practical nutrition & recovery: Energy snacks, active rest",
+              "Visual feedback & progression tracking: Before/after comparison, real-time corrections"
+            ]
+          }
+        },
+        highPerformance: {
+          name: "High-Performance Program",
+          level: "Intermediate-Advanced - Level 2.1, 2.2",
+          tagline: "Train like an athlete and transform the way you surf",
+          price: "910",
+          includes: {
+            title: "Includes:",
+            items: [
+              "10 high-performance sessions",
+              "Advanced video analysis",
+              "Photo + drone session",
+              "Extended final review"
+            ]
+          },
+          sessions: {
+            title: "In each session we'll work on:",
+            items: [
+              "Technique & biomechanics: Vertical maneuvers, cutbacks, floaters",
+              "Mindset & confidence in the ocean: Bigger waves, wipeout management",
+              "Practical nutrition & recovery: Meal plans, specific stretching",
+              "Visual feedback & progression tracking: Frame-by-frame analysis, performance metrics"
+            ]
+          }
+        }
+      }
     },
     contact: {
       title: "Contact Information",

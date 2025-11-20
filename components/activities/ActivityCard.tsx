@@ -33,65 +33,133 @@ import {
 
 const YOGA_CLASSES_RANGE = { min: 1, max: 15 } as const;
 
-// Surf Programs - Pre-defined packages
+// Surf Programs - Duration-based packages (work for any level)
 const SURF_PROGRAMS = {
-  essential: {
-    id: 'essential',
-    name: { es: 'Essential', en: 'Essential' },
-    price: 380,
+  fundamental: {
+    id: 'fundamental',
+    name: { es: 'Programa de Surf de 4 Días', en: '4-Day Surf Coaching Program' },
+    tagline: {
+      es: 'Inicio rápido, base sólida, coaching personalizado',
+      en: 'Fast start, strong foundation, personalized coaching'
+    },
+    price: 420,
     sessions: 4,
-    features: {
+    includes: {
       es: [
         '4 sesiones de surf',
-        '2 análisis en video',
-        'Equipo + transporte',
-        'Opcional: sesión de fotos disponible'
+        'Feedback en video',
+        'Equipo (tabla + lycra)',
+        'Teoría del surf',
+        'Sesión de fotos opcional'
       ],
       en: [
         '4 surf sessions',
-        '2 video analysis',
-        'Gear + transport',
-        'Optional: photo session available'
+        'Video feedback',
+        'Gear (board + lycra)',
+        'Surf theory',
+        'Optional photo session'
+      ]
+    },
+    sessionWork: {
+      es: [
+        'Técnica & biomecánica: fundamentos sólidos, remada eficiente, pop-ups estables, alineación corporal clara',
+        'Mentalidad & confianza en el océano: comodidad, seguridad y lectura de condiciones básicas',
+        'Nutrición práctica & recuperación: alimentación e hidratación simple para energía estable',
+        'Feedback visual & seguimiento de progreso: video corto o revisión en playa después de cada sesión'
+      ],
+      en: [
+        'Technique & biomechanics: solid fundamentals, efficient paddling, stable pop-ups, clear body alignment',
+        'Mindset & confidence in the ocean: comfort, safety, and reading basic conditions',
+        'Practical nutrition & recovery: simple fueling and hydration for stable energy',
+        'Visual feedback & progression tracking: short video or beach review after each session'
       ]
     }
   },
-  progression: {
-    id: 'progression',
-    name: { es: 'Progression', en: 'Progression' },
-    price: 650,
+  progressionPlus: {
+    id: 'progressionPlus',
+    name: { es: 'Programa de Surf de 7 Días', en: '7-Day Surf Coaching Program' },
+    tagline: {
+      es: 'Progreso consistente mediante repetición, coaching y feedback',
+      en: 'Consistent progress through repetition, coaching and feedback'
+    },
+    price: 670,
     sessions: 7,
-    features: {
+    includes: {
       es: [
         '7 sesiones de surf',
-        '4 análisis en video',
+        'Análisis regular de video',
+        'Transporte a spots de surf cercanos',
+        'Equipo (tabla + lycra)',
+        'Teoría del surf',
         '1 sesión de fotos',
         'Plan de práctica final'
       ],
       en: [
         '7 surf sessions',
-        '4 video analysis',
+        'Regular video analysis',
+        'Transport to nearby surf spots',
+        'Gear (board + lycra)',
+        'Surf theory',
         '1 photo session',
         'Final practice plan'
       ]
+    },
+    sessionWork: {
+      es: [
+        'Técnica & biomecánica: refinamiento de patrones de movimiento mediante repetición',
+        'Mentalidad & confianza en el océano: mejores decisiones, comodidad en condiciones más variadas',
+        'Nutrición práctica & recuperación: rendimiento sostenido durante múltiples días',
+        'Feedback visual & seguimiento de progreso: análisis regular de video + plan de progresión final'
+      ],
+      en: [
+        'Technique & biomechanics: refining movement patterns through repetition',
+        'Mindset & confidence in the ocean: better decisions, comfort in more varied conditions',
+        'Practical nutrition & recovery: sustained performance across multiple days',
+        'Visual feedback & progression tracking: regular video analysis + final progression plan'
+      ]
     }
   },
-  performance: {
-    id: 'performance',
-    name: { es: 'Performance', en: 'Performance' },
-    price: 880,
+  highPerformance: {
+    id: 'highPerformance',
+    name: { es: 'Programa de Alto Rendimiento de 10 Días', en: '10-Day High-Performance Program' },
+    tagline: {
+      es: 'Transformación técnica profunda y análisis de alta calidad',
+      en: 'Deep technical transformation and high-quality analysis'
+    },
+    price: 910,
     sessions: 10,
-    features: {
+    includes: {
       es: [
         '10 sesiones de surf',
-        '5 análisis en video',
-        'Fotos + sesión de dron',
+        'Análisis avanzado de video',
+        'Transporte a spots de surf cercanos',
+        'Equipo (tabla + lycra)',
+        'Teoría del surf',
+        'Sesión de fotos + drone',
         'Revisión final extendida'
       ],
       en: [
         '10 surf sessions',
-        '5 video analysis',
-        'Photos + drone session',
+        'Advanced video analysis',
+        'Transport to nearby surf spots',
+        'Gear (board + lycra)',
+        'Surf theory',
+        'Photo + drone session',
         'Extended final review'
+      ]
+    },
+    sessionWork: {
+      es: [
+        'Técnica & biomecánica: correcciones detalladas, construcción de patrones a largo plazo',
+        'Mentalidad & confianza en el océano: mejores decisiones bajo presión, resiliencia, flow',
+        'Nutrición práctica & recuperación: optimización de energía, recuperación y consistencia',
+        'Feedback visual & seguimiento de progreso: análisis más profundo con drone/fotos + revisión final extendida'
+      ],
+      en: [
+        'Technique & biomechanics: detailed corrections, long-term pattern building',
+        'Mindset & confidence in the ocean: better decisions under pressure, resilience, flow',
+        'Practical nutrition & recovery: optimizing energy, recovery and consistency',
+        'Visual feedback & progression tracking: deeper analysis with drone/photo + extended final review'
       ]
     }
   }
@@ -115,8 +183,8 @@ type ActivityCardProps = {
   onYogaClassesChange?: (value: number) => void;
   yogaUsePackDiscount?: boolean;
   onYogaPackDiscountChange?: (value: boolean) => void;
-  surfProgram?: 'essential' | 'progression' | 'performance';
-  onSurfProgramChange?: (value: 'essential' | 'progression' | 'performance') => void;
+  surfProgram?: 'fundamental' | 'progressionPlus' | 'highPerformance';
+  onSurfProgramChange?: (value: 'fundamental' | 'progressionPlus' | 'highPerformance') => void;
   hasQuantitySelector?: boolean;
   quantity?: number;
   onQuantityChange?: (value: number) => void;
@@ -818,7 +886,7 @@ const ActivityCard = ({
   const renderSurfProgramSelector = () => {
     if (!onSurfProgramChange || !surfProgram) return null;
 
-    const programs = ['essential', 'progression', 'performance'] as const;
+    const programs = ['fundamental', 'progressionPlus', 'highPerformance'] as const;
 
     return (
       <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
@@ -875,7 +943,7 @@ const ActivityCard = ({
 
                 {/* Features List - Reduced spacing */}
                 <div className="space-y-1 ml-7 md:ml-7.5">
-                  {program.features[locale].map((feature, idx) => (
+                  {program.includes[locale].map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-1.5">
                       <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
@@ -988,7 +1056,7 @@ const ActivityCard = ({
 
   return (
     <motion.div
-      className="w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-slate-700/50 bg-slate-900/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)] hover:scale-[1.01]"
+      className="w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-slate-700/50 bg-slate-900/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)]"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
