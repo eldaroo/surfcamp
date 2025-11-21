@@ -165,6 +165,41 @@ const SURF_PROGRAMS = {
   }
 } as const;
 
+// Our Integrated Surf Coaching Method
+const COACHING_METHOD = {
+  title: {
+    es: 'Nuestro Método Integral de Coaching de Surf',
+    en: 'Our Integrated Surf Coaching Method'
+  },
+  subtitle: {
+    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA — toda esta experiencia se integra en cada sesión.',
+    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges — all this expertise is integrated into every session.'
+  },
+  pillars: [
+    {
+      title: { es: 'Biomecánica & memoria muscular', en: 'Biomechanics & muscle memory' },
+      description: {
+        es: 'Patrones de movimiento eficientes que apoyan la progresión a largo plazo.',
+        en: 'Efficient movement patterns that support long-term progression.'
+      }
+    },
+    {
+      title: { es: 'Feedback técnico basado en video', en: 'Video-based technical feedback' },
+      description: {
+        es: 'Análisis visual claro para entender exactamente qué mejorar.',
+        en: 'Clear visual analysis to understand exactly what to improve.'
+      }
+    },
+    {
+      title: { es: 'Mentalidad, seguridad & nutrición práctica', en: 'Mindset, safety & practical nutrition' },
+      description: {
+        es: 'Un enfoque completo para la confianza, conocimiento del océano y alimentación inteligente.',
+        en: 'A complete approach to confidence, ocean awareness and smart fueling.'
+      }
+    }
+  ]
+} as const;
+
 type ActivityCardProps = {
   activity: Activity;
   locale: "es" | "en";
@@ -325,13 +360,13 @@ const marketingContent = {
 const sellingPointsContent = {
   surf: {
     es: [
-      "Coaches certificados según tu nivel",
+      "Coaches certificados de alto rendimiento",
       "Video análisis + feedback personalizado",
       "Equipo completo incluido",
       "Horarios según mareas y condiciones",
     ],
     en: [
-      "Certified coaches for your level",
+      "Certified high-performance coaches",
       "Video analysis + personalized feedback",
       "All gear included",
       "Schedule aligned with tides",
@@ -427,15 +462,11 @@ const activityImages = {
 const descriptiveContent = {
   surf: {
     es: {
-      description: "", // Not used - custom formatting below
-      descriptionBold: "Coaching de surf enfocado en tu progreso:",
-      descriptionRegular: " grupos pequeños para aprender más rápido, instructores certificados atentos a tu técnica, y equipo + transporte incluido.",
+      description: "",
       features: [],
     },
     en: {
-      description: "", // Not used - custom formatting below
-      descriptionBold: "Progress-focused surf coaching:",
-      descriptionRegular: " small groups for faster learning, certified instructors on your technique, and all gear + transport included.",
+      description: "",
       features: [],
     },
   },
@@ -557,6 +588,7 @@ const ActivityCard = ({
   const [currentSurfImageIndex, setCurrentSurfImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [isCoachingMethodExpanded, setIsCoachingMethodExpanded] = useState(false);
   const imageData = activityImages[activity.category as keyof typeof activityImages] || {
     gradient: "from-slate-600 to-slate-800",
     hasImage: false,
@@ -677,7 +709,7 @@ const ActivityCard = ({
     }
   };
 
-  const handleSurfProgramChange = (programId: 'essential' | 'progression' | 'performance') => {
+  const handleSurfProgramChange = (programId: 'fundamental' | 'progressionPlus' | 'highPerformance') => {
     if (onSurfProgramChange) {
       onSurfProgramChange(programId);
       setHasInteracted(true);
@@ -941,6 +973,11 @@ const ActivityCard = ({
                   </span>
                 </div>
 
+                {/* Tagline */}
+                <p className="text-[10px] md:text-xs text-slate-400 font-light italic ml-7 md:ml-7.5 mb-2 md:mb-2.5">
+                  {program.tagline[locale]}
+                </p>
+
                 {/* Features List - Reduced spacing */}
                 <div className="space-y-1 ml-7 md:ml-7.5">
                   {program.includes[locale].map((feature, idx) => (
@@ -954,6 +991,37 @@ const ActivityCard = ({
                     </div>
                   ))}
                 </div>
+
+                {/* Session Work - Only show for selected program */}
+                {isSelected && (
+                  <div className="mt-3 md:mt-4 ml-7 md:ml-7.5 pt-3 md:pt-4 border-t border-slate-700/30">
+                    <h4 className="text-[10px] md:text-xs font-bold text-amber-300 mb-2 md:mb-2.5">
+                      {locale === 'es' ? 'En cada sesión trabajaremos en:' : "In each session we'll work on:"}
+                    </h4>
+                    <div className="space-y-2.5 md:space-y-3">
+                      {program.sessionWork[locale].map((item, idx) => {
+                        // Split by colon to separate title from description
+                        const [title, ...descParts] = item.split(':');
+                        const description = descParts.join(':').trim();
+
+                        return (
+                          <div key={idx}>
+                            {/* Golden Title - No bullet */}
+                            <p className="text-[11px] md:text-xs font-semibold text-amber-300 mb-0.5">
+                              {title.trim()}
+                            </p>
+                            {/* Description */}
+                            {description && (
+                              <p className="text-[10px] md:text-[11px] text-slate-300/90 font-light leading-relaxed">
+                                {description}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </motion.button>
             );
           })}
@@ -1306,6 +1374,68 @@ const ActivityCard = ({
 
       </div>
 
+      {/* Our Integrated Surf Coaching Method - Only for Surf - Collapsible */}
+      {isSurf && onSurfProgramChange && surfProgram && (
+        <div className="px-4 md:px-6 pt-4 md:pt-5">
+          <button
+            type="button"
+            onClick={() => setIsCoachingMethodExpanded(!isCoachingMethodExpanded)}
+            className="w-full p-4 md:p-6 bg-slate-800/40 rounded-xl border border-slate-700/40 text-left hover:bg-slate-800/50 transition-all cursor-pointer"
+          >
+            {/* Title with Chevron */}
+            <div className="flex items-center justify-between mb-2 md:mb-3">
+              <h3 className="text-base md:text-lg font-bold text-amber-300">
+                {COACHING_METHOD.title[locale]}
+              </h3>
+              <motion.div
+                animate={{ rotate: isCoachingMethodExpanded ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-amber-300" />
+              </motion.div>
+            </div>
+
+            {/* Subtitle - Always visible */}
+            <p className="text-[11px] md:text-[13px] text-slate-300 font-light leading-relaxed">
+              {COACHING_METHOD.subtitle[locale]}
+            </p>
+
+            {/* Pillars - Only visible when expanded */}
+            <AnimatePresence>
+              {isCoachingMethodExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-3 md:space-y-4 mt-4 md:mt-5 pt-4 md:pt-5 border-t border-slate-700/30">
+                    {COACHING_METHOD.pillars.map((pillar, idx) => (
+                      <div key={idx} className="flex items-start gap-2.5 md:gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xs md:text-sm font-bold text-slate-200 mb-1">
+                            {pillar.title[locale]}
+                          </h4>
+                          <p className="text-[10px] md:text-xs text-slate-400 font-light leading-relaxed">
+                            {pillar.description[locale]}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
+      )}
+
       {/* PASS 2: Further tightened */}
       <div className="flex flex-col md:flex-row md:items-start md:flex-1">
 
@@ -1318,27 +1448,10 @@ const ActivityCard = ({
           </h2>
 
           {/* 1. Description */}
-          {descriptive && (
-            <>
-              {/* Special formatting for surf with inline bold + regular text */}
-              {isSurf && 'descriptionBold' in descriptive && 'descriptionRegular' in descriptive ? (
-                <p className="text-sm md:text-[15px] leading-relaxed max-w-[95%] md:max-w-2xl mb-3 md:mb-4">
-                  <span className="font-bold text-white">
-                    {descriptive.descriptionBold}
-                  </span>
-                  <span className="font-normal text-[#F1F1F1]">
-                    {descriptive.descriptionRegular}
-                  </span>
-                </p>
-              ) : (
-                /* Standard description for other activities */
-                descriptive.description && (
-                  <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
-                    {descriptive.description}
-                  </p>
-                )
-              )}
-            </>
+          {descriptive && descriptive.description && (
+            <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
+              {descriptive.description}
+            </p>
           )}
 
           {/* 2. Features - Bullet Points with Golden Checkmarks (only if features exist) */}
