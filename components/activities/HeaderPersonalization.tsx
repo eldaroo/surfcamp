@@ -63,7 +63,7 @@ const HeaderPersonalization = ({
   };
 
   return (
-    <div className="mb-3 md:mb-4 rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden" style={{ boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.1), 0 4px 16px rgba(0,0,0,0.25)' }}>
+    <div className="mb-3 md:mb-4 rounded-3xl border border-[white]/50 bg-[white]/80 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden">
       {/* PASS 2: reduced padding p-4/6 → p-3/4, gaps 2.5/3 → 2/2.5 */}
       <div className="p-3 md:p-4 text-center">
         <motion.div
@@ -73,17 +73,17 @@ const HeaderPersonalization = ({
           className="flex flex-col items-center gap-2 md:gap-2.5"
         >
           {/* PASS 2: icon w-10/12 h-10/12 → w-8/10 h-8/10 */}
-          <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30">
+          <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
             <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-amber-300" />
           </div>
 
-          {/* PASS 2: text-xl/3xl → text-lg/2xl */}
-          <h1 className="text-lg md:text-2xl font-heading text-white tracking-tight">
+          {/* Title - Increased size */}
+          <h1 className="text-2xl md:text-3xl font-heading text-black tracking-tight">
             {t.title}
           </h1>
 
-          {/* PASS 2: tighter leading, smaller text */}
-          <p className="text-xs md:text-sm text-slate-300 max-w-2xl mx-auto leading-snug">
+          {/* Subtitle - Much larger */}
+          <p className="text-sm md:text-base text-[#8c8179] max-w-2xl mx-auto leading-snug">
             {locale === 'es'
               ? 'Elige las actividades que darán forma a tu experiencia perfecta.'
               : 'Choose the activities that will shape your perfect experience.'}

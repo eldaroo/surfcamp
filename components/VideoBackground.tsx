@@ -14,8 +14,8 @@ export default function VideoBackground({
   src,
   poster,
   className = "",
-  overlay = true,
-  overlayOpacity = 0.6,
+  overlay = false,
+  overlayOpacity = 0.4,
 }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -62,7 +62,7 @@ export default function VideoBackground({
         />
         {overlay && (
           <div
-            className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/70 to-slate-950/90"
+            className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/30 to-slate-950/50"
             style={{ opacity: overlayOpacity }}
           />
         )}
@@ -93,7 +93,7 @@ export default function VideoBackground({
 
       {overlay && (
         <div
-          className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/70 to-slate-950/90"
+          className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/30 to-slate-950/50"
           style={{ opacity: overlayOpacity }}
         />
       )}

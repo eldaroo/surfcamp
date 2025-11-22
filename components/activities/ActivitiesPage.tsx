@@ -627,8 +627,12 @@ const ActivitiesPage = () => {
   const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
 
   return (
-    <div className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4">
-      <HeaderPersonalization
+    <div className="relative">
+      {/* Overlay behind widgets */}
+      <div className="absolute inset-0 bg-black/75 rounded-3xl -z-10"></div>
+
+      <div className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4">
+        <HeaderPersonalization
         name={personalizationName}
         participants={participantCount}
         locale={(locale as "es" | "en") || "es"}
@@ -656,10 +660,10 @@ const ActivitiesPage = () => {
               >
                 <CheckCircle2 className="h-6 w-6 text-amber-300" />
               </motion.div>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-50 font-heading mb-1.5">
+              <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
                 {locale === "es" ? "¡Actividades completadas!" : "Activities completed!"}
               </h2>
-              <p className="text-slate-400 text-sm md:text-base">
+              <p className="text-[#8c8179] text-sm md:text-base">
                 {locale === "es"
                   ? "Revisa la selección de todos los participantes"
                   : "Review the selection for all participants"}
@@ -680,55 +684,49 @@ const ActivitiesPage = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + participantIndex * 0.1, duration: 0.4 }}
-                    className={`rounded-3xl border bg-slate-900/70 shadow-xl overflow-hidden transition-all ${
+                    className={`rounded-3xl border bg-[white]/70 shadow-xl overflow-hidden transition-all ${
                       isExpanded
                         ? 'border-amber-400/50'
-                        : 'border-slate-700/50 hover:border-slate-600/50'
+                        : 'border-[white]/50 hover:border-[white]/50'
                     }`}
                   >
                     {/* Participant Header - Clickable */}
                     <button
                       onClick={() => setExpandedParticipantId(isExpanded ? null : participant.id)}
-                      className="w-full px-3 py-3 md:py-2.5 border-b border-slate-700/50 bg-slate-800/30 flex items-center justify-between hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className="w-full px-3 py-3 md:py-2.5 border-b border-[white]/50 bg-[white]/30 flex items-center justify-between hover:bg-[white]/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5 md:gap-2">
-                        <div className={`flex items-center justify-center w-8 h-8 md:w-7 md:h-7 rounded-full border transition-colors ${
-                          isExpanded
-                            ? 'bg-amber-300/20 border-amber-400/30'
-                            : 'bg-cyan-500/20 border-cyan-400/30'
-                        }`}>
-                          <User className={`h-4 w-4 transition-colors ${
-                            isExpanded ? 'text-amber-300' : 'text-cyan-300'
-                          }`} />
+                        <div className="flex items-center justify-center w-8 h-8 md:w-7 md:h-7 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
+                          <User className="h-4 w-4 text-amber-300" />
                         </div>
                         <div className="text-left flex-1">
-                          <h3 className="text-base md:text-sm font-bold text-slate-200">
+                          <h3 className="text-base md:text-sm font-bold text-black">
                             {participant.name}
                             {participant.isYou && (
-                              <span className="ml-2 text-sm md:text-[11px] text-cyan-400">
+                              <span className="ml-2 text-sm md:text-[11px] text-[#8c8179]">
                                 ({locale === "es" ? "Tú" : "You"})
                               </span>
                             )}
                             {/* Desktop: show activities + price inline */}
-                            <span className="hidden md:inline ml-2 text-[11px] text-slate-400 font-normal">
+                            <span className="hidden md:inline ml-2 text-sm text-[#8c8179] font-normal">
                               • {participant.selectedActivities.length}{" "}
                               {participant.selectedActivities.length === 1
                                 ? (locale === "es" ? "actividad" : "activity")
                                 : (locale === "es" ? "actividades" : "activities")}
                               {" • "}
-                              <span className="text-amber-300 font-semibold">
+                              <span className="text-[#8c8179] font-semibold">
                                 {formatCurrency(participantTotal)}
                               </span>
                             </span>
                           </h3>
                           {/* Mobile: show activities + price on second line */}
-                          <p className="md:hidden text-xs text-slate-400">
+                          <p className="md:hidden text-xs text-[#8c8179]">
                             {participant.selectedActivities.length}{" "}
                             {participant.selectedActivities.length === 1
                               ? (locale === "es" ? "actividad" : "activity")
                               : (locale === "es" ? "actividades" : "activities")}
                             {" • "}
-                            <span className="text-amber-300 font-semibold">
+                            <span className="text-[#8c8179] font-semibold">
                               {formatCurrency(participantTotal)}
                             </span>
                           </p>
@@ -741,7 +739,7 @@ const ActivitiesPage = () => {
                             setActiveParticipant(participant.id);
                             resetActivityFlow();
                           }}
-                          className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-400 hover:text-amber-300"
+                          className="p-2 rounded-lg hover:bg-[white]/50 transition-colors text-[#8c8179] hover:text-amber-300"
                           title={locale === "es" ? "Editar actividades" : "Edit activities"}
                         >
                           <Edit2 className="w-4 h-4" />
@@ -752,7 +750,7 @@ const ActivitiesPage = () => {
                               e.stopPropagation();
                               setDeleteConfirmId(participant.id);
                             }}
-                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-slate-400 hover:text-red-400 group"
+                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-[#8c8179] hover:text-red-400 group"
                             title={locale === "es" ? "Eliminar participante" : "Remove participant"}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -761,7 +759,7 @@ const ActivitiesPage = () => {
                         <motion.div
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.3 }}
-                          className="text-slate-400"
+                          className="text-[#8c8179]"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -782,7 +780,7 @@ const ActivitiesPage = () => {
                         >
                           <div className="p-4 md:p-3 space-y-2 md:space-y-1.5">
                             {participant.selectedActivities.length === 0 ? (
-                              <p className="text-slate-400 text-center py-4">
+                              <p className="text-[#8c8179] text-center py-4">
                                 {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
                               </p>
                             ) : (
@@ -797,22 +795,22 @@ const ActivitiesPage = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.05, duration: 0.3 }}
-                                    className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-slate-800/40 border-slate-700/30 hover:bg-slate-800/60 transition-all"
+                                    className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-[white]/40 border-[white]/30 hover:bg-[white]/60 transition-all"
                                     style={{ borderWidth: '1px' }}
                                   >
-                                    <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-amber-300/10 border border-amber-300/20">
+                                    <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
                                       <Icon className="h-5 w-5 md:h-4 md:w-4 text-amber-300" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <h4 className="text-sm md:text-xs font-bold text-slate-100 truncate">
+                                      <h4 className="text-sm md:text-xs font-bold text-black truncate">
                                         {activity.name}
                                       </h4>
                                       {details && (
-                                        <p className="text-sm md:text-[10px] text-slate-400 mt-0.5 md:mt-0">{details}</p>
+                                        <p className="text-sm md:text-[10px] text-[#8c8179] mt-0.5 md:mt-0">{details}</p>
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-base md:text-sm font-bold text-amber-300">
+                                      <p className="text-base md:text-base font-bold text-[#8c8179]">
                                         {formatCurrency(price)}
                                       </p>
                                     </div>
@@ -824,12 +822,12 @@ const ActivitiesPage = () => {
 
                           {/* Participant Total */}
                           {participant.selectedActivities.length > 0 && (
-                            <div className="px-4 py-3 md:px-3 md:py-2 border-t border-slate-700/50 bg-slate-800/30">
+                            <div className="px-4 py-3 md:px-3 md:py-2 border-t border-[white]/50 bg-[white]/30">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm md:text-xs font-bold text-slate-200">
+                                <span className="text-sm md:text-xs font-bold text-black">
                                   {locale === "es" ? "Subtotal" : "Subtotal"}
                                 </span>
-                                <span className="text-lg md:text-sm font-bold text-amber-300">
+                                <span className="text-lg md:text-base font-bold text-[#8c8179]">
                                   {formatCurrency(participantTotal)}
                                 </span>
                               </div>
@@ -1007,7 +1005,7 @@ const ActivitiesPage = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+                className="bg-[white] rounded-2xl border border-[white] shadow-2xl p-6 md:p-8 max-w-md mx-4"
               >
                 <div className="flex flex-col gap-4">
                   {/* Title */}
@@ -1016,7 +1014,7 @@ const ActivitiesPage = () => {
                   </h3>
 
                   {/* Message */}
-                  <p className="text-slate-300 text-sm md:text-base">
+                  <p className="text-black text-sm md:text-base">
                     {locale === "es"
                       ? "¿Deseas eliminar a este participante? Esta acción no se puede deshacer."
                       : "Do you want to remove this participant? This action cannot be undone."}
@@ -1024,7 +1022,7 @@ const ActivitiesPage = () => {
 
                   {/* Participant name */}
                   {deleteConfirmId && (
-                    <div className="bg-slate-800/50 rounded-lg px-4 py-3 border border-slate-700/50">
+                    <div className="bg-[white]/50 rounded-lg px-4 py-3 border border-[white]/50">
                       <p className="text-cyan-400 font-semibold">
                         {storeParticipants.find(p => p.id === deleteConfirmId)?.name}
                       </p>
@@ -1037,7 +1035,7 @@ const ActivitiesPage = () => {
                       onClick={() => setDeleteConfirmId(null)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex-1 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700 hover:border-slate-600 transition-all font-semibold"
+                      className="flex-1 px-4 py-3 rounded-xl bg-[white] border border-[white] text-black hover:bg-[white] hover:border-[white] transition-all font-semibold"
                     >
                       {locale === "es" ? "Cancelar" : "Cancel"}
                     </motion.button>
@@ -1073,7 +1071,7 @@ const ActivitiesPage = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+                className="bg-[white] rounded-2xl border border-[white] shadow-2xl p-6 md:p-8 max-w-md mx-4"
               >
                 <div className="flex flex-col gap-6">
                   {/* Icon */}
@@ -1084,14 +1082,14 @@ const ActivitiesPage = () => {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl md:text-2xl font-bold text-white text-center">
+                  <h3 className="text-xl md:text-2xl font-bold text-black text-center">
                     {storeParticipants.length > 1
                       ? (locale === "es" ? "¿Agregar otro viajero?" : "Add another traveler?")
                       : (locale === "es" ? "¿Viajas con alguien?" : "Are you traveling with someone?")}
                   </h3>
 
                   {/* Description */}
-                  <p className="text-slate-300 text-sm md:text-base text-center">
+                  <p className="text-black text-sm md:text-base text-center">
                     {storeParticipants.length > 1
                       ? (locale === "es"
                           ? "Puedes seguir agregando viajeros con las mismas actividades o personalizarlas."
@@ -1107,7 +1105,7 @@ const ActivitiesPage = () => {
                       className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                         addPersonChoice === 'copy'
                           ? 'border-amber-400 bg-amber-400/10'
-                          : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
+                          : 'border-[white] bg-[white]/30 hover:border-[white]'
                       }`}
                     >
                       <input
@@ -1116,16 +1114,16 @@ const ActivitiesPage = () => {
                         value="copy"
                         checked={addPersonChoice === 'copy'}
                         onChange={(e) => setAddPersonChoice('copy')}
-                        className="mt-1 w-4 h-4 text-amber-400 border-slate-600 focus:ring-amber-400 focus:ring-offset-slate-900"
+                        className="mt-1 w-4 h-4 text-amber-400 border-[white] focus:ring-amber-400 focus:ring-offset-slate-900"
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Copy className="h-4 w-4 text-amber-300" />
-                          <span className="font-semibold text-slate-100">
+                          <span className="font-semibold text-black">
                             {locale === "es" ? "Copiar mis actividades" : "Copy my activities"}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-[#8c8179] mt-1">
                           {locale === "es"
                             ? "El nuevo viajero tendrá las mismas actividades seleccionadas"
                             : "The new traveler will have the same activities selected"}
@@ -1137,7 +1135,7 @@ const ActivitiesPage = () => {
                       className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
                         addPersonChoice === 'customize'
                           ? 'border-amber-400 bg-amber-400/10'
-                          : 'border-slate-700 bg-slate-800/30 hover:border-slate-600'
+                          : 'border-[white] bg-[white]/30 hover:border-[white]'
                       }`}
                     >
                       <input
@@ -1146,16 +1144,16 @@ const ActivitiesPage = () => {
                         value="customize"
                         checked={addPersonChoice === 'customize'}
                         onChange={(e) => setAddPersonChoice('customize')}
-                        className="mt-1 w-4 h-4 text-amber-400 border-slate-600 focus:ring-amber-400 focus:ring-offset-slate-900"
+                        className="mt-1 w-4 h-4 text-amber-400 border-[white] focus:ring-amber-400 focus:ring-offset-slate-900"
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Edit2 className="h-4 w-4 text-amber-300" />
-                          <span className="font-semibold text-slate-100">
+                          <span className="font-semibold text-black">
                             {locale === "es" ? "Personalizar actividades" : "Customize activities"}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-[#8c8179] mt-1">
                           {locale === "es"
                             ? "Elige actividades diferentes para el nuevo viajero"
                             : "Choose different activities for the new traveler"}
@@ -1178,7 +1176,7 @@ const ActivitiesPage = () => {
                       onClick={handleSkipAddPerson}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex-1 px-6 py-3.5 rounded-xl border border-slate-700 text-slate-400 hover:bg-slate-800/50 hover:text-slate-300 transition-all font-medium"
+                      className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#8c8179] hover:bg-[white]/50 hover:text-black transition-all font-medium"
                     >
                       {locale === "es" ? "Saltar" : "Skip"}
                     </motion.button>
@@ -1190,6 +1188,7 @@ const ActivitiesPage = () => {
         </AnimatePresence>,
         document.body
       )}
+      </div>
     </div>
   );
 };

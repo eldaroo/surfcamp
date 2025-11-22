@@ -34,9 +34,6 @@ export default function RootLayout({
             backgroundAttachment: 'fixed'
           }}
         >
-          {/* Overlay oscuro para legibilidad */}
-          <div className="absolute inset-0 bg-gray-900/60 z-0"></div>
-
           {/* Contenido principal */}
           <div className="relative z-10">
             <Providers>

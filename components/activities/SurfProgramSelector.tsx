@@ -208,7 +208,7 @@ export default function SurfProgramSelector({
               <div className="flex items-baseline gap-2">
                 <span
                   className="text-4xl md:text-5xl font-bold"
-                  style={{ color: 'var(--brand-gold)' }}
+                  style={{ color: '#8c8179' }}
                 >
                   ${program.price}
                 </span>

@@ -50,28 +50,28 @@ const SURF_PROGRAMS = {
         'Feedback en video',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
-        'Sesión de fotos opcional'
+        'Sesión de fotos'
       ],
       en: [
         '4 surf sessions',
         'Video feedback',
         'Gear (board + lycra)',
         'Surf theory',
-        'Optional photo session'
+        'Photo session'
       ]
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: fundamentos sólidos, remada eficiente, pop-ups estables, alineación corporal clara',
-        'Mentalidad & confianza en el océano: comodidad, seguridad y lectura de condiciones básicas',
-        'Nutrición práctica & recuperación: alimentación e hidratación simple para energía estable',
-        'Feedback visual & seguimiento de progreso: video corto o revisión en playa después de cada sesión'
+        'Técnica & biomecánica: Introducción intensiva a los fundamentos esenciales adaptados a tu nivel actual. Trabajamos remada, pop-up, postura y transiciones con enfoque directo y eficiente',
+        'Mentalidad & confianza en el océano: Desarrollar confianza en el agua según tu experiencia, desde seguridad básica hasta lectura de olas más complejas, todo en formato acelerado',
+        'Nutrición práctica & recuperación: Estrategias clave de alimentación e hidratación para mantener energía y recuperación durante sesiones intensivas en 4 días',
+        'Feedback visual & seguimiento de progreso: Análisis de video estratégico en momentos clave del programa para identificar patrones y ajustar enfoque rápidamente, maximizando resultados en formato intensivo'
       ],
       en: [
-        'Technique & biomechanics: solid fundamentals, efficient paddling, stable pop-ups, clear body alignment',
-        'Mindset & confidence in the ocean: comfort, safety, and reading basic conditions',
-        'Practical nutrition & recovery: simple fueling and hydration for stable energy',
-        'Visual feedback & progression tracking: short video or beach review after each session'
+        'Technique & biomechanics: Intensive introduction to essential fundamentals adapted to your current level. We work on paddling, pop-up, stance, and transitions with direct and efficient focus',
+        'Mindset & confidence in the ocean: Build confidence in the water based on your experience, from basic safety to reading more complex waves, all in accelerated format',
+        'Practical nutrition & recovery: Key fueling and hydration strategies to maintain energy and recovery during intensive sessions over 4 days',
+        'Visual feedback & progression tracking: Strategic video analysis at key moments in the program to identify patterns and adjust focus quickly, maximizing results in intensive format'
       ]
     }
   },
@@ -106,16 +106,16 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: refinamiento de patrones de movimiento mediante repetición',
-        'Mentalidad & confianza en el océano: mejores decisiones, comodidad en condiciones más variadas',
-        'Nutrición práctica & recuperación: rendimiento sostenido durante múltiples días',
-        'Feedback visual & seguimiento de progreso: análisis regular de video + plan de progresión final'
+        'Técnica & biomecánica: Mayor tiempo para trabajar y refinar tus patrones de movimiento específicos. Más repeticiones enfocadas en tus debilidades individuales, desde fundamentos hasta maniobras intermedias según tu nivel',
+        'Mentalidad & confianza en el océano: Profundizar en confianza y toma de decisiones con práctica extendida. Desarrollar intuición en condiciones variadas, sea que estés aprendiendo o perfeccionando',
+        'Nutrición práctica & recuperación: Semana completa de planificación nutricional personalizada para optimizar energía y recuperación, haciendo que cada sesión sea productiva independiente de tu experiencia',
+        'Feedback visual & seguimiento de progreso: Múltiples sesiones de análisis de video para rastrear evolución real, más plan personalizado que identifica exactamente qué practicar después del campamento'
       ],
       en: [
-        'Technique & biomechanics: refining movement patterns through repetition',
-        'Mindset & confidence in the ocean: better decisions, comfort in more varied conditions',
-        'Practical nutrition & recovery: sustained performance across multiple days',
-        'Visual feedback & progression tracking: regular video analysis + final progression plan'
+        'Technique & biomechanics: More time to work and refine your specific movement patterns. Increased focused repetitions on your individual weaknesses, from fundamentals to intermediate maneuvers based on your level',
+        'Mindset & confidence in the ocean: Deepen confidence and decision-making with extended practice. Develop intuition in varying conditions, whether you\'re learning or perfecting',
+        'Practical nutrition & recovery: Full week of personalized nutrition planning to optimize energy and recovery, making each session productive regardless of your experience',
+        'Visual feedback & progression tracking: Multiple video analysis sessions to track real evolution, plus personalized plan identifying exactly what to practice after camp'
       ]
     }
   },
@@ -150,16 +150,16 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: correcciones detalladas, construcción de patrones a largo plazo',
-        'Mentalidad & confianza en el océano: mejores decisiones bajo presión, resiliencia, flow',
-        'Nutrición práctica & recuperación: optimización de energía, recuperación y consistencia',
-        'Feedback visual & seguimiento de progreso: análisis más profundo con drone/fotos + revisión final extendida'
+        'Técnica & biomecánica: Máxima profundidad en análisis biomecánico personalizado con trabajo extensivo en tus patrones específicos para crear cambios duraderos, sea refinando lo básico o puliendo maniobras avanzadas',
+        'Mentalidad & confianza en el océano: Tiempo suficiente para transformación mental genuina. Desarrollar resiliencia, adaptabilidad y flow state a través de práctica sostenida en tu zona de desarrollo óptima',
+        'Nutrición práctica & recuperación: Protocolos completos de nutrición deportiva adaptados a ti, incluyendo periodización, recuperación optimizada y estrategias personalizadas para mantener rendimiento consistente durante 10 días',
+        'Feedback visual & seguimiento de progreso: Análisis técnico exhaustivo con drone, fotografía secuencial y múltiples revisiones. Documentación completa de tu evolución más plan de entrenamiento detallado para continuar mejorando'
       ],
       en: [
-        'Technique & biomechanics: detailed corrections, long-term pattern building',
-        'Mindset & confidence in the ocean: better decisions under pressure, resilience, flow',
-        'Practical nutrition & recovery: optimizing energy, recovery and consistency',
-        'Visual feedback & progression tracking: deeper analysis with drone/photo + extended final review'
+        'Technique & biomechanics: Maximum depth in personalized biomechanical analysis with extensive work on your specific patterns to create lasting changes, whether refining basics or polishing advanced maneuvers',
+        'Mindset & confidence in the ocean: Sufficient time for genuine mental transformation. Develop resilience, adaptability, and flow state through sustained practice in your optimal development zone',
+        'Practical nutrition & recovery: Complete sports nutrition protocols adapted to you, including periodization, optimized recovery, and personalized strategies to maintain consistent performance over 10 days',
+        'Visual feedback & progression tracking: Exhaustive technical analysis with drone, sequential photography, and multiple reviews. Complete documentation of your evolution plus detailed training plan to continue improving'
       ]
     }
   }
@@ -724,7 +724,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-4 md:space-y-5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
           {copy.yogaClasses}
         </span>
 
@@ -741,8 +741,8 @@ const ActivityCard = ({
                 whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
                   currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
-                    ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
-                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+                    ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
                 }`}
               >
                 <Minus className="h-5 w-5" />
@@ -754,11 +754,11 @@ const ActivityCard = ({
                   initial={{ scale: 0.85 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
-                  className="text-3xl font-bold text-slate-50"
+                  className="text-3xl font-bold text-[#8c8179]"
                 >
                   {currentClasses}
                 </motion.span>
-                <span className="text-sm text-slate-400 font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+                <span className="text-sm text-[#8c8179] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
               </div>
 
               <motion.button
@@ -769,8 +769,8 @@ const ActivityCard = ({
                 whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
                   currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
-                    ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
-                    : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+                    ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
                 }`}
               >
                 <Plus className="h-5 w-5" />
@@ -778,7 +778,7 @@ const ActivityCard = ({
             </div>
 
             {/* OR Divider */}
-            <span className="text-xs text-slate-500 font-medium uppercase px-2">or</span>
+            <span className="text-xs text-[#8c8179] font-medium uppercase px-2">or</span>
 
             {/* 10-Class Pack Option */}
             <motion.button
@@ -789,12 +789,12 @@ const ActivityCard = ({
               className={`flex-1 max-w-[250px] rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
                 yogaUsePackDiscount || isAtPackThreshold
                   ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                  : "border-slate-600/50 bg-slate-800/40 hover:border-amber-300/40 hover:bg-slate-800/60"
+                  : "border-[white]/50 bg-[white]/40 hover:border-amber-300/40 hover:bg-[white]/60"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="text-left">
-                  <p className="text-sm font-bold text-slate-200">
+                  <p className="text-sm font-bold text-black">
                     {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
                   </p>
                   <motion.p
@@ -831,8 +831,8 @@ const ActivityCard = ({
               whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
               className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
                 currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
-                  ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
-                  : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+                  ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                  : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
               }`}
             >
               <Minus className="h-5 w-5" />
@@ -844,11 +844,11 @@ const ActivityCard = ({
                 initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
-                className="text-3xl font-bold text-slate-50"
+                className="text-3xl font-bold text-[#8c8179]"
               >
                 {currentClasses}
               </motion.span>
-              <span className="text-sm text-slate-400 font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+              <span className="text-sm text-[#8c8179] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
             </div>
 
             <motion.button
@@ -859,8 +859,8 @@ const ActivityCard = ({
               whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
               className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
                 currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
-                  ? "border-slate-700/50 bg-slate-800/30 text-slate-600 cursor-not-allowed"
-                  : "border-slate-600/70 bg-slate-800/60 text-slate-200 hover:border-amber-300/70 hover:bg-amber-300/20"
+                  ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                  : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
               }`}
             >
               <Plus className="h-5 w-5" />
@@ -870,7 +870,7 @@ const ActivityCard = ({
           {/* OR Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-slate-700/50"></div>
-            <span className="text-xs text-slate-500 font-medium uppercase">or</span>
+            <span className="text-xs text-[#8c8179] font-medium uppercase">or</span>
             <div className="flex-1 h-px bg-slate-700/50"></div>
           </div>
 
@@ -883,12 +883,12 @@ const ActivityCard = ({
             className={`w-full rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
               yogaUsePackDiscount || isAtPackThreshold
                 ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                : "border-slate-600/50 bg-slate-800/40"
+                : "border-[white]/50 bg-[white]/40"
             }`}
           >
             <div className="flex items-center justify-between">
               <div className="text-left">
-                <p className="text-sm font-bold text-slate-200">
+                <p className="text-sm font-bold text-black">
                   {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
                 </p>
                 <motion.p
@@ -922,7 +922,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
           {copy.chooseSurfProgram}
         </span>
 
@@ -941,40 +941,40 @@ const ActivityCard = ({
                 whileTap={{ scale: 0.995 }}
                 className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
                   isSelected
-                    ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                    : "border-slate-600/50 bg-slate-800/40 hover:border-slate-500/60 hover:bg-slate-800/60"
+                    ? "border-amber-300 bg-[white]/40"
+                    : "border-[white]/50 bg-[white]/40 hover:border-[white]/60 hover:bg-[white]/60"
                 }`}
               >
                 {/* Header: Radio + Name + Price - Reduced spacing */}
                 <div className="flex items-center justify-between mb-1.5 md:mb-2">
                   <div className="flex items-center gap-2.5">
                     {/* Radio Button */}
-                    <div className={`flex-shrink-0 w-4.5 h-4.5 md:w-5 md:h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    <div className={`flex-shrink-0 w-3.5 h-3.5 md:w-4 md:h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                       isSelected
                         ? "border-amber-300 bg-amber-300"
-                        : "border-slate-500 bg-slate-800"
+                        : "border-amber-300 bg-amber-300"
                     }`}>
                       {isSelected && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-900"
+                          className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[white]"
                         />
                       )}
                     </div>
                     {/* Program Name */}
-                    <span className="text-sm md:text-base font-bold text-slate-200">
+                    <span className="text-sm md:text-base font-bold text-black font-heading">
                       {program.name[locale]}
                     </span>
                   </div>
                   {/* Price - Reduced margin */}
-                  <span className="text-lg md:text-xl font-bold text-amber-300">
+                  <span className="text-lg md:text-xl font-bold text-[#8c8179]">
                     ${program.price}
                   </span>
                 </div>
 
                 {/* Tagline */}
-                <p className="text-[10px] md:text-xs text-slate-400 font-light italic ml-7 md:ml-7.5 mb-2 md:mb-2.5">
+                <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light italic ml-7 md:ml-7.5 mb-2 md:mb-2.5">
                   {program.tagline[locale]}
                 </p>
 
@@ -985,7 +985,7 @@ const ActivityCard = ({
                       <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                       </svg>
-                      <span className="text-[11px] md:text-[13.5px] text-slate-300 font-light leading-tight md:leading-[1.25]">
+                      <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
                         {feature}
                       </span>
                     </div>
@@ -993,35 +993,42 @@ const ActivityCard = ({
                 </div>
 
                 {/* Session Work - Only show for selected program */}
-                {isSelected && (
-                  <div className="mt-3 md:mt-4 ml-7 md:ml-7.5 pt-3 md:pt-4 border-t border-slate-700/30">
-                    <h4 className="text-[10px] md:text-xs font-bold text-amber-300 mb-2 md:mb-2.5">
-                      {locale === 'es' ? 'En cada sesión trabajaremos en:' : "In each session we'll work on:"}
-                    </h4>
-                    <div className="space-y-2.5 md:space-y-3">
-                      {program.sessionWork[locale].map((item, idx) => {
-                        // Split by colon to separate title from description
-                        const [title, ...descParts] = item.split(':');
-                        const description = descParts.join(':').trim();
+                <AnimatePresence>
+                  {isSelected && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 md:mt-4 mx-auto p-3 md:p-4 border border-amber-400 rounded-xl bg-amber-400/5">
+                        <div className="space-y-2.5 md:space-y-3">
+                          {program.sessionWork[locale].map((item, idx) => {
+                            // Split by colon to separate title from description
+                            const [title, ...descParts] = item.split(':');
+                            const description = descParts.join(':').trim();
 
-                        return (
-                          <div key={idx}>
-                            {/* Golden Title - No bullet */}
-                            <p className="text-[11px] md:text-xs font-semibold text-amber-300 mb-0.5">
-                              {title.trim()}
-                            </p>
-                            {/* Description */}
-                            {description && (
-                              <p className="text-[10px] md:text-[11px] text-slate-300/90 font-light leading-relaxed">
-                                {description}
-                              </p>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                            return (
+                              <div key={idx}>
+                                {/* Black Title - No bullet */}
+                                <p className="text-xs md:text-sm font-bold text-black font-heading mb-1">
+                                  {title.trim()}
+                                </p>
+                                {/* Description */}
+                                {description && (
+                                  <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light leading-relaxed">
+                                    {description}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.button>
             );
           })}
@@ -1042,7 +1049,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
           {copy.quantity}
         </span>
         <div className="flex items-center justify-center gap-4 md:gap-5">
@@ -1056,15 +1063,15 @@ const ActivityCard = ({
             disabled={quantity <= 1}
             whileHover={{ scale: quantity > 1 ? 1.05 : 1 }}
             whileTap={{ scale: quantity > 1 ? 0.9 : 1 }}
-            className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all ${
+            className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-[white]/70 bg-[white]/60 text-black transition-all ${
               quantity > 1
-                ? "hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
+                ? "hover:border-amber-300/70 hover:bg-[white]/80 active:bg-amber-300/20"
                 : "cursor-not-allowed opacity-40"
             }`}
           >
             <Minus className="h-4 w-4 md:h-5 md:w-5" />
           </motion.button>
-          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-slate-50">
+          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-[#8c8179]">
             {quantity}
           </span>
           <motion.button
@@ -1072,7 +1079,7 @@ const ActivityCard = ({
             onClick={() => handleQuantityChange(quantity + 1)}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-slate-600/70 bg-slate-800/60 text-slate-200 transition-all hover:border-amber-300/70 hover:bg-slate-700/80 active:bg-amber-300/20"
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-[white]/70 bg-[white]/60 text-black transition-all hover:border-amber-300/70 hover:bg-[white]/80 active:bg-amber-300/20"
           >
             <Plus className="h-4 w-4 md:h-5 md:w-5" />
           </motion.button>
@@ -1093,7 +1100,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-slate-400 block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
           {copy.timeSlot}
         </span>
         <div className="flex gap-2 md:gap-3">
@@ -1109,7 +1116,7 @@ const ActivityCard = ({
                 className={`flex flex-1 items-center justify-center gap-2 md:gap-2.5 rounded-xl border px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base font-bold transition-all ${
                   active
                     ? "border-transparent bg-gradient-to-br from-amber-300 to-amber-400 text-slate-900 shadow-xl shadow-amber-300/40"
-                    : "border-slate-600/60 bg-slate-800/50 text-slate-200 hover:border-amber-300/60 hover:bg-slate-800/70"
+                    : "border-[white]/60 bg-[white]/50 text-black hover:border-amber-300/60 hover:bg-[white]/80"
                 }`}
               >
                 <Clock className="h-4 w-4 md:h-5 md:w-5" />
@@ -1124,18 +1131,18 @@ const ActivityCard = ({
 
   return (
     <motion.div
-      className="w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-slate-700/50 bg-slate-900/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)]"
+      className="w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-[white]/50 bg-[white]/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)]"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
       {/* Compact banner - clean horizontal band */}
-      <div className="relative w-full h-[155px] md:h-[180px] overflow-hidden group/hero">
+      <div className="relative w-full h-[260px] md:h-[220px] overflow-hidden group/hero">
         {/* Surf Mobile Carousel */}
         {isSurf ? (
           <>
             {/* Mobile: Carousel */}
-            <div className="md:hidden relative w-full h-full bg-slate-900">
+            <div className="md:hidden relative w-full h-full bg-[white]">
               <motion.div
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
@@ -1157,7 +1164,7 @@ const ActivityCard = ({
                   }}
                 />
               </motion.div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
 
               {/* Clickable overlay - opens modal when clicked */}
               <div
@@ -1228,7 +1235,7 @@ const ActivityCard = ({
             </div>
 
             {/* Desktop: Carousel also visible */}
-            <div className="hidden md:block relative w-full h-full bg-slate-900">
+            <div className="hidden md:block relative w-full h-full bg-[white]">
               <motion.div
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
@@ -1250,7 +1257,7 @@ const ActivityCard = ({
                   }}
                 />
               </motion.div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
 
               {/* Clickable overlay - opens modal when clicked */}
               <div
@@ -1354,7 +1361,7 @@ const ActivityCard = ({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
         >
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-amber-200 border border-amber-300/30 shadow-lg">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[white]/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#8c8179] border border-[#8c8179]/30 shadow-lg">
             <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
             {activity.category.replace("_", " ")}
           </span>
@@ -1363,7 +1370,7 @@ const ActivityCard = ({
         {/* Title Overlay - Centered - HIDDEN ON MOBILE, only desktop */}
         <div className="absolute inset-0 hidden md:flex items-center justify-center px-6 md:px-8">
           <motion.h2
-            className="text-[2rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
+            className="text-[2.5rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -1372,7 +1379,28 @@ const ActivityCard = ({
           </motion.h2>
         </div>
 
+        {/* Title Overlay - Bottom - MOBILE ONLY */}
+        <div className="absolute bottom-0 left-0 right-0 md:hidden bg-gradient-to-t from-black/80 via-black/60 to-transparent px-4 py-4">
+          <h2 className="text-xl font-bold text-white font-heading text-center leading-tight">
+            {activity.name}
+          </h2>
+        </div>
+
       </div>
+
+      {/* Mobile Title - Only for Surf - Above Coaching Method */}
+      {isSurf && onSurfProgramChange && surfProgram && (
+        <div className="md:hidden px-4 pt-4">
+          <h2 className="text-2xl font-bold text-black font-heading text-center">
+            {activity.name.split(' - ').map((part, idx) => (
+              <span key={idx}>
+                {part}
+                {idx < activity.name.split(' - ').length - 1 && <br />}
+              </span>
+            ))}
+          </h2>
+        </div>
+      )}
 
       {/* Our Integrated Surf Coaching Method - Only for Surf - Collapsible */}
       {isSurf && onSurfProgramChange && surfProgram && (
@@ -1380,11 +1408,11 @@ const ActivityCard = ({
           <button
             type="button"
             onClick={() => setIsCoachingMethodExpanded(!isCoachingMethodExpanded)}
-            className="w-full p-4 md:p-6 bg-slate-800/40 rounded-xl border border-slate-700/40 text-left hover:bg-slate-800/50 transition-all cursor-pointer"
+            className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40 text-left hover:bg-[white]/50 transition-all cursor-pointer"
           >
             {/* Title with Chevron */}
             <div className="flex items-center justify-between mb-2 md:mb-3">
-              <h3 className="text-base md:text-lg font-bold text-amber-300">
+              <h3 className="text-base md:text-lg font-bold text-black">
                 {COACHING_METHOD.title[locale]}
               </h3>
               <motion.div
@@ -1396,7 +1424,7 @@ const ActivityCard = ({
             </div>
 
             {/* Subtitle - Always visible */}
-            <p className="text-[11px] md:text-[13px] text-slate-300 font-light leading-relaxed">
+            <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
               {COACHING_METHOD.subtitle[locale]}
             </p>
 
@@ -1410,7 +1438,7 @@ const ActivityCard = ({
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="space-y-3 md:space-y-4 mt-4 md:mt-5 pt-4 md:pt-5 border-t border-slate-700/30">
+                  <div className="space-y-3 md:space-y-4 mt-4 md:mt-5 p-3 md:p-4 border border-amber-400 rounded-xl bg-amber-400/5">
                     {COACHING_METHOD.pillars.map((pillar, idx) => (
                       <div key={idx} className="flex items-start gap-2.5 md:gap-3">
                         <div className="flex-shrink-0 mt-0.5">
@@ -1419,10 +1447,10 @@ const ActivityCard = ({
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-xs md:text-sm font-bold text-slate-200 mb-1">
+                          <h4 className="text-xs md:text-sm font-bold text-black mb-1">
                             {pillar.title[locale]}
                           </h4>
-                          <p className="text-[10px] md:text-xs text-slate-400 font-light leading-relaxed">
+                          <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light leading-relaxed">
                             {pillar.description[locale]}
                           </p>
                         </div>
@@ -1442,14 +1470,9 @@ const ActivityCard = ({
         {/* PASS 2: px-5/8 py-4/6 gap-4/5 → px-4/6 py-3/4 gap-3/4 */}
         <div className="flex flex-col flex-1 md:flex-[7] px-4 md:px-6 py-3 md:py-4 gap-3 md:gap-4">
 
-          {/* Mobile Title - Below image, above description */}
-          <h2 className="md:hidden text-xl font-bold text-white font-heading">
-            {activity.name}
-          </h2>
-
           {/* 1. Description */}
           {descriptive && descriptive.description && (
-            <p className="text-sm md:text-[15px] leading-relaxed text-slate-300/90 font-light">
+            <p className="text-sm md:text-[15px] leading-relaxed text-black/90 font-light">
               {descriptive.description}
             </p>
           )}
@@ -1467,7 +1490,7 @@ const ActivityCard = ({
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                     </svg>
                   </div>
-                  <span className="text-sm md:text-[15px] text-slate-200 font-light leading-snug md:leading-relaxed">
+                  <span className="text-sm md:text-[15px] text-black font-light leading-snug md:leading-relaxed">
                     {feature.text}
                   </span>
                 </div>
@@ -1487,15 +1510,15 @@ const ActivityCard = ({
         </div>
 
         {/* PASS 2: px-5/6 py-4/6 gap-3/4 → px-4/5 py-3/4 gap-2.5/3 */}
-        <div className="md:flex-[3] md:border-l border-slate-700/40 px-4 md:px-5 py-3 md:py-4 bg-slate-800/10 md:bg-transparent md:flex md:flex-col md:min-h-full">
+        <div className="md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 py-3 md:py-4 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full">
           <div className="flex flex-col gap-2.5 md:gap-3 md:justify-center md:flex-1">
 
             {/* PASS 2: gap-3/4 → gap-2.5/3, space-y-1.5 → space-y-1 */}
             <div className="flex flex-col items-center gap-2.5 md:gap-3">
               <div className="w-full text-center space-y-1">
-                <p className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total</p>
+                <p className="text-xs uppercase tracking-wider text-[#8c8179] font-semibold">Total</p>
                 <motion.div
-                  className="text-3xl md:text-4xl font-bold text-slate-50"
+                  className="text-3xl md:text-4xl font-bold text-[#8c8179]"
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
@@ -1503,7 +1526,7 @@ const ActivityCard = ({
                   {formatPrice(price)}
                 </motion.div>
                 {participants > 1 && typeof pricePerPerson === "number" && (
-                  <p className="text-xs text-slate-400 font-medium">
+                  <p className="text-xs text-[#8c8179] font-medium">
                     {formatPrice(pricePerPerson)} {copy.perPerson}
                   </p>
                 )}
@@ -1523,7 +1546,7 @@ const ActivityCard = ({
                   transition={{ duration: 0.15 }}
                   className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
                     isChoosing
-                      ? "bg-[#164F3E] text-slate-50 cursor-wait shadow-md"
+                      ? "bg-[#8c8179] text-white cursor-wait shadow-md"
                       : hasInteracted
                         ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
                         : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
@@ -1537,7 +1560,7 @@ const ActivityCard = ({
                   ) : (
                     <>
                       <span>{copy.choose}</span>
-                      <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                      <ArrowRight className="h-4 md:h-5 w-4 md:w-5 text-white" />
                     </>
                   )}
                 </motion.button>
@@ -1553,7 +1576,7 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-slate-700/50 text-slate-200 shadow-md hover:bg-slate-600/70 hover:shadow-lg"
+                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:bg-black hover:shadow-lg"
                   >
                     <span>{copy.skip}</span>
                     <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
@@ -1564,7 +1587,7 @@ const ActivityCard = ({
 
             {/* PASS 2: pt-3/4 → pt-2.5/3, space-y-2/3 → space-y-1.5/2.5 */}
             {isSurf && ratingValue && (
-              <div className="w-full pt-2.5 md:pt-3 border-t border-slate-700/30 space-y-1.5 md:space-y-2.5">
+              <div className="w-full pt-2.5 md:pt-3 border-t border-[white]/30 space-y-1.5 md:space-y-2.5">
                 {/* Rating */}
                 <div className="flex items-center justify-center gap-2">
                   <div className="flex items-center gap-0.5">
@@ -1576,13 +1599,13 @@ const ActivityCard = ({
                     ))}
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-slate-100">{ratingValue}</span>
-                  <span className="text-[10px] md:text-xs text-slate-400">({reviewsText})</span>
+                  <span className="text-[10px] md:text-xs text-[#8c8179]">({reviewsText})</span>
                 </div>
 
                 {/* Testimonial */}
                 {testimonials && (
                   <div className="space-y-2.5">
-                    <p className="text-xs md:text-sm leading-relaxed text-slate-200/80 font-light italic text-center">
+                    <p className="text-xs md:text-sm leading-relaxed text-black/80 font-light italic text-center">
                       &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                     </p>
                     {/* Author & Country */}
@@ -1590,7 +1613,7 @@ const ActivityCard = ({
                       <p className="text-[11px] md:text-xs font-semibold text-amber-300/90">
                         {testimonials[currentTestimonialIndex].author}
                       </p>
-                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-500 font-medium">
+                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-[#8c8179] font-medium">
                         {testimonials[currentTestimonialIndex].country}
                       </p>
                     </div>
@@ -1618,7 +1641,7 @@ const ActivityCard = ({
 
                 {/* Trust message */}
                 {trustMessage && (
-                  <p className="text-xs md:text-sm text-slate-300/80 font-medium text-center">
+                  <p className="text-xs md:text-sm text-black/80 font-medium text-center">
                     {trustMessage}
                   </p>
                 )}
@@ -1628,7 +1651,7 @@ const ActivityCard = ({
 
             {/* Navigation Buttons for Surf (maintains original vertical layout) */}
             {isSurf && ((!isSurfMandatory && onSkip) || onBack) && (
-              <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-slate-700/30 flex-col gap-3">
+              <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-[white]/30 flex-col gap-3">
                 {/* Back Button */}
                 {!isFirstStep && onBack && (
                   <motion.button
@@ -1640,9 +1663,9 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center justify-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                    className="flex items-center justify-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
                     <span>{copy.back}</span>
                   </motion.button>
                 )}
@@ -1658,7 +1681,7 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                    className="text-sm font-medium text-white bg-[#8c8179] hover:bg-black transition-colors px-4 py-2 rounded-lg"
                   >
                     {copy.skip}
                   </motion.button>
@@ -1671,7 +1694,7 @@ const ActivityCard = ({
 
       {/* Desktop Footer - Navigation for non-Surf cards */}
       {(!isSurf || !isSurfMandatory) && (onSkip || onBack) && (
-        <div className="hidden md:block border-t border-slate-700/40 px-6 md:px-10 py-5 md:py-6">
+        <div className="hidden md:block border-t border-[white]/40 px-6 md:px-10 py-5 md:py-6">
           <div className="flex items-center justify-between">
             {/* Left Side - Back Button */}
             {!isFirstStep && onBack && (
@@ -1684,9 +1707,9 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
                 <span>{copy.back}</span>
               </motion.button>
             )}
@@ -1699,7 +1722,7 @@ const ActivityCard = ({
 
       {/* Navigation Buttons (Skip/Back) - Mobile only */}
       {(onSkip || onBack) && (
-        <div className="md:hidden border-t border-slate-700/40 bg-slate-800/10 px-6 py-4">
+        <div className="md:hidden border-t border-[white]/40 bg-[white]/10 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             {/* Back Button */}
             {!isFirstStep && onBack ? (
@@ -1712,9 +1735,9 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
                 <span>{copy.back}</span>
               </motion.button>
             ) : (
@@ -1732,7 +1755,7 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
               >
                 {copy.skip}
               </motion.button>
@@ -1751,7 +1774,7 @@ const ActivityCard = ({
           onClick={() => setShowTestimonialsPopup(false)}
         >
           <motion.div
-            className="w-full max-w-lg bg-slate-900 rounded-t-3xl border-t border-x border-slate-700/50 shadow-2xl"
+            className="w-full max-w-lg bg-[white] rounded-t-3xl border-t border-x border-[white]/50 shadow-2xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -1759,7 +1782,7 @@ const ActivityCard = ({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative flex items-center justify-between px-6 py-5 border-b border-slate-700/50">
+            <div className="relative flex items-center justify-between px-6 py-5 border-b border-[white]/50">
               <h3 className="text-lg font-bold text-slate-100 uppercase tracking-wide">
                 {locale === "es" ? "Testimonios" : "Testimonials"}
               </h3>
@@ -1768,15 +1791,15 @@ const ActivityCard = ({
                 onClick={() => setShowTestimonialsPopup(false)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors"
+                className="p-2 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors"
               >
-                <X className="h-5 w-5 text-slate-300" />
+                <X className="h-5 w-5 text-black" />
               </motion.button>
             </div>
 
             {/* Content */}
             <div className="px-6 py-8">
-              <div className="relative bg-slate-800/40 rounded-2xl p-6 border border-slate-700/40">
+              <div className="relative bg-[white]/40 rounded-2xl p-6 border border-[white]/40">
                 <Quote className="absolute top-4 left-4 h-8 w-8 text-amber-300/20" />
 
                 <div className="space-y-5 pt-3">
@@ -1791,16 +1814,16 @@ const ActivityCard = ({
                   </div>
 
                   {/* Testimonial Text */}
-                  <p className="text-sm leading-relaxed text-slate-200 italic text-center min-h-[100px] flex items-center justify-center">
+                  <p className="text-sm leading-relaxed text-black italic text-center min-h-[100px] flex items-center justify-center">
                     &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                   </p>
 
                   {/* Author */}
-                  <div className="text-center pt-3 border-t border-slate-700/30">
+                  <div className="text-center pt-3 border-t border-[white]/30">
                     <p className="text-sm font-bold text-amber-300">
                       {testimonials[currentTestimonialIndex].author}
                     </p>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">
+                    <p className="text-xs text-[#8c8179] uppercase tracking-wide mt-1">
                       {testimonials[currentTestimonialIndex].country}
                     </p>
                   </div>
@@ -1814,9 +1837,9 @@ const ActivityCard = ({
                   onClick={handlePrevTestimonial}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-3 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors border border-slate-700/40"
+                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
                 >
-                  <ChevronLeft className="h-5 w-5 text-slate-300" />
+                  <ChevronLeft className="h-5 w-5 text-black" />
                 </motion.button>
 
                 <div className="flex gap-2">
@@ -1837,9 +1860,9 @@ const ActivityCard = ({
                   onClick={handleNextTestimonial}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-3 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors border border-slate-700/40"
+                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
                 >
-                  <ChevronRight className="h-5 w-5 text-slate-300" />
+                  <ChevronRight className="h-5 w-5 text-black" />
                 </motion.button>
               </div>
             </div>
