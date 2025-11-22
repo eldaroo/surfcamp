@@ -64,16 +64,16 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: Introducción intensiva a los fundamentos esenciales adaptados a tu nivel actual. Trabajamos remada, pop-up, postura y transiciones con enfoque directo y eficiente',
-        'Mentalidad & confianza en el océano: Desarrollar confianza en el agua según tu experiencia, desde seguridad básica hasta lectura de olas más complejas, todo en formato acelerado',
-        'Nutrición práctica & recuperación: Estrategias clave de alimentación e hidratación para mantener energía y recuperación durante sesiones intensivas en 4 días',
-        'Feedback visual & seguimiento de progreso: Análisis de video estratégico en momentos clave del programa para identificar patrones y ajustar enfoque rápidamente, maximizando resultados en formato intensivo'
+        'Técnica & biomecánica: Fundamentos esenciales adaptados a tu nivel — remada, pop-up, postura y transiciones',
+        'Mentalidad & confianza: Desarrollo acelerado desde seguridad básica hasta lectura de olas complejas',
+        'Nutrición & recuperación: Estrategias de alimentación e hidratación para mantener energía en 4 días',
+        'Feedback visual: Análisis de video en momentos clave para ajustar enfoque y maximizar resultados'
       ],
       en: [
-        'Technique & biomechanics: Intensive introduction to essential fundamentals adapted to your current level. We work on paddling, pop-up, stance, and transitions with direct and efficient focus',
-        'Mindset & confidence in the ocean: Build confidence in the water based on your experience, from basic safety to reading more complex waves, all in accelerated format',
-        'Practical nutrition & recovery: Key fueling and hydration strategies to maintain energy and recovery during intensive sessions over 4 days',
-        'Visual feedback & progression tracking: Strategic video analysis at key moments in the program to identify patterns and adjust focus quickly, maximizing results in intensive format'
+        'Technique & biomechanics: Essential fundamentals adapted to your level — paddling, pop-up, stance, and transitions',
+        'Mindset & confidence: Accelerated development from basic safety to complex wave reading',
+        'Nutrition & recovery: Fueling and hydration strategies to maintain energy over 4 days',
+        'Visual feedback: Video analysis at key moments to adjust focus and maximize results'
       ]
     }
   },
@@ -108,16 +108,16 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: Mayor tiempo para trabajar y refinar tus patrones de movimiento específicos. Más repeticiones enfocadas en tus debilidades individuales, desde fundamentos hasta maniobras intermedias según tu nivel',
-        'Mentalidad & confianza en el océano: Profundizar en confianza y toma de decisiones con práctica extendida. Desarrollar intuición en condiciones variadas, sea que estés aprendiendo o perfeccionando',
-        'Nutrición práctica & recuperación: Semana completa de planificación nutricional personalizada para optimizar energía y recuperación, haciendo que cada sesión sea productiva independiente de tu experiencia',
-        'Feedback visual & seguimiento de progreso: Múltiples sesiones de análisis de video para rastrear evolución real, más plan personalizado que identifica exactamente qué practicar después del campamento'
+        'Técnica & biomecánica: Refinamiento de patrones de movimiento específicos, desde fundamentos hasta maniobras intermedias',
+        'Mentalidad & confianza: Desarrollo de intuición y toma de decisiones en condiciones variadas',
+        'Nutrición & recuperación: Planificación nutricional personalizada para optimizar cada sesión',
+        'Feedback visual: Múltiples análisis de video más plan personalizado post-campamento'
       ],
       en: [
-        'Technique & biomechanics: More time to work and refine your specific movement patterns. Increased focused repetitions on your individual weaknesses, from fundamentals to intermediate maneuvers based on your level',
-        'Mindset & confidence in the ocean: Deepen confidence and decision-making with extended practice. Develop intuition in varying conditions, whether you\'re learning or perfecting',
-        'Practical nutrition & recovery: Full week of personalized nutrition planning to optimize energy and recovery, making each session productive regardless of your experience',
-        'Visual feedback & progression tracking: Multiple video analysis sessions to track real evolution, plus personalized plan identifying exactly what to practice after camp'
+        'Technique & biomechanics: Refinement of specific movement patterns, from fundamentals to intermediate maneuvers',
+        'Mindset & confidence: Development of intuition and decision-making in varying conditions',
+        'Nutrition & recovery: Personalized nutrition planning to optimize each session',
+        'Visual feedback: Multiple video analyses plus personalized post-camp plan'
       ]
     }
   },
@@ -152,16 +152,16 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'Técnica & biomecánica: Máxima profundidad en análisis biomecánico personalizado con trabajo extensivo en tus patrones específicos para crear cambios duraderos, sea refinando lo básico o puliendo maniobras avanzadas',
-        'Mentalidad & confianza en el océano: Tiempo suficiente para transformación mental genuina. Desarrollar resiliencia, adaptabilidad y flow state a través de práctica sostenida en tu zona de desarrollo óptima',
-        'Nutrición práctica & recuperación: Protocolos completos de nutrición deportiva adaptados a ti, incluyendo periodización, recuperación optimizada y estrategias personalizadas para mantener rendimiento consistente durante 10 días',
-        'Feedback visual & seguimiento de progreso: Análisis técnico exhaustivo con drone, fotografía secuencial y múltiples revisiones. Documentación completa de tu evolución más plan de entrenamiento detallado para continuar mejorando'
+        'Técnica & biomecánica: Análisis biomecánico profundo para crear cambios duraderos en tus patrones específicos',
+        'Mentalidad & confianza: Desarrollo de resiliencia, adaptabilidad y flow state en tu zona óptima',
+        'Nutrición & recuperación: Protocolos deportivos completos con periodización y estrategias personalizadas',
+        'Feedback visual: Análisis exhaustivo con drone y fotografía, más plan detallado de continuidad'
       ],
       en: [
-        'Technique & biomechanics: Maximum depth in personalized biomechanical analysis with extensive work on your specific patterns to create lasting changes, whether refining basics or polishing advanced maneuvers',
-        'Mindset & confidence in the ocean: Sufficient time for genuine mental transformation. Develop resilience, adaptability, and flow state through sustained practice in your optimal development zone',
-        'Practical nutrition & recovery: Complete sports nutrition protocols adapted to you, including periodization, optimized recovery, and personalized strategies to maintain consistent performance over 10 days',
-        'Visual feedback & progression tracking: Exhaustive technical analysis with drone, sequential photography, and multiple reviews. Complete documentation of your evolution plus detailed training plan to continue improving'
+        'Technique & biomechanics: Deep biomechanical analysis to create lasting changes in your specific patterns',
+        'Mindset & confidence: Development of resilience, adaptability, and flow state in your optimal zone',
+        'Nutrition & recovery: Complete sports protocols with periodization and personalized strategies',
+        'Visual feedback: Comprehensive analysis with drone and photography, plus detailed continuity plan'
       ]
     }
   }
@@ -1238,7 +1238,7 @@ const ActivityCard = ({
               </div>
 
               {/* Image Counter */}
-              <div className="absolute top-3 right-3 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20">
+              <div className="absolute bottom-3 right-3 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20">
                 {currentSurfImageIndex + 1} / {surfImages.length}
               </div>
             </div>
@@ -1331,7 +1331,7 @@ const ActivityCard = ({
               </div>
 
               {/* Image Counter Desktop */}
-              <div className="absolute top-4 right-4 z-20 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-semibold border border-white/20">
+              <div className="absolute bottom-4 right-4 z-20 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-semibold border border-white/20">
                 {currentSurfImageIndex + 1} / {surfImages.length}
               </div>
             </div>
@@ -1411,65 +1411,20 @@ const ActivityCard = ({
         </div>
       )}
 
-      {/* Our Integrated Surf Coaching Method - Only for Surf - Collapsible */}
+      {/* Our Integrated Surf Coaching Method - Only for Surf */}
       {isSurf && onSurfProgramChange && surfProgram && (
         <div className="px-4 md:px-6 pt-4 md:pt-5">
-          <button
-            type="button"
-            onClick={() => setIsCoachingMethodExpanded(!isCoachingMethodExpanded)}
-            className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40 text-left hover:bg-[white]/50 transition-all cursor-pointer"
-          >
-            {/* Title with Chevron */}
-            <div className="flex items-center justify-between mb-2 md:mb-3">
-              <h3 className="text-base md:text-lg font-bold text-black">
-                {COACHING_METHOD.title[locale]}
-              </h3>
-              <motion.div
-                animate={{ rotate: isCoachingMethodExpanded ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-amber-300" />
-              </motion.div>
-            </div>
+          <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40">
+            {/* Title */}
+            <h3 className="text-base md:text-lg font-bold text-black mb-2 md:mb-3">
+              {COACHING_METHOD.title[locale]}
+            </h3>
 
-            {/* Subtitle - Always visible */}
+            {/* Subtitle */}
             <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
               {COACHING_METHOD.subtitle[locale]}
             </p>
-
-            {/* Pillars - Only visible when expanded */}
-            <AnimatePresence>
-              {isCoachingMethodExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden"
-                >
-                  <div className="space-y-3 md:space-y-4 mt-4 md:mt-5 p-3 md:p-4 border border-amber-400 rounded-xl bg-amber-400/5">
-                    {COACHING_METHOD.pillars.map((pillar, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 md:gap-3">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-xs md:text-sm font-bold text-black mb-1">
-                            {pillar.title[locale]}
-                          </h4>
-                          <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light leading-relaxed">
-                            {pillar.description[locale]}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
+          </div>
         </div>
       )}
 
@@ -1582,10 +1537,10 @@ const ActivityCard = ({
                       e.stopPropagation();
                       if (onSkip) onSkip();
                     }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:bg-black hover:shadow-lg"
+                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:shadow-xl"
                   >
                     <span>{copy.skip}</span>
                     <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
@@ -1687,10 +1642,10 @@ const ActivityCard = ({
                       e.stopPropagation();
                       if (onSkip) onSkip();
                     }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="text-sm font-medium text-white bg-[#8c8179] hover:bg-black transition-colors px-4 py-2 rounded-lg"
+                    className="text-sm font-medium text-white bg-[#8c8179] transition-all px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
                   >
                     {copy.skip}
                   </motion.button>
@@ -1761,10 +1716,10 @@ const ActivityCard = ({
                   e.stopPropagation();
                   if (onSkip) onSkip();
                 }}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ scale: 1.05, x: 3 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
+                className="text-sm font-medium text-[#8c8179] transition-all"
               >
                 {copy.skip}
               </motion.button>

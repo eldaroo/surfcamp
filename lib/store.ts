@@ -56,6 +56,7 @@ interface BookingStore {
   
   // UI state
   currentStep: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success';
+  previousStep: 'activities' | 'dates' | null; // Track where user came from before going to contact
   isLoading: boolean;
   error: string | null;
 
@@ -140,6 +141,7 @@ const initialState = {
   availableRooms: null,
   selectedRoom: null,
   currentStep: 'activities' as const,
+  previousStep: null,
   isLoading: false,
   error: null,
   activityFlowStep: 'surf' as const,
@@ -720,6 +722,16 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         selectedRoom: state.selectedRoom,
       });
 
+      // Track previous step when going to contact
+      let newPreviousStep = state.previousStep;
+      if (step === 'contact') {
+        // Remember where we came from (activities or dates)
+        if (state.currentStep === 'activities' || state.currentStep === 'dates') {
+          newPreviousStep = state.currentStep;
+          console.log('[STORE] setCurrentStep - tracking previousStep:', newPreviousStep);
+        }
+      }
+
       // Reset dates and accommodation when coming from activities OR when going back to dates/accommodation
       const shouldReset =
         // Going to dates from activities (fresh start)
@@ -733,6 +745,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         console.log('[STORE] setCurrentStep - RESETTING dates and accommodation');
         return {
           currentStep: step,
+          previousStep: newPreviousStep,
           bookingData: {
             ...state.bookingData,
             checkIn: undefined,
@@ -744,14 +757,21 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       }
 
       console.log('[STORE] setCurrentStep - NOT resetting (normal step change)');
-      return { currentStep: step };
+      return { currentStep: step, previousStep: newPreviousStep };
     }),
 
   goBack: () =>
     set((state) => {
       console.log('[STORE] goBack called', {
         currentStep: state.currentStep,
+        previousStep: state.previousStep,
       });
+
+      // Special handling for contact step - go back to where we came from
+      if (state.currentStep === 'contact' && state.previousStep) {
+        console.log('[STORE] goBack - returning to previousStep:', state.previousStep);
+        return { currentStep: state.previousStep };
+      }
 
       const stepOrder: Array<'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success'> = [
         'activities', 'dates', 'accommodation', 'contact', 'confirmation', 'payment', 'success'

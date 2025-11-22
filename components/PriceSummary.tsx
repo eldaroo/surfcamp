@@ -261,7 +261,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
             const classes = surfClasses !== undefined ? surfClasses : 4;
             const programId = surfClassesToProgram(classes);
             const program = SURF_PROGRAMS[programId];
-            displayName = program.name[locale === 'en' ? 'en' : 'es'];
+            displayName = program.name[locale === 'en' ? 'en' : 'es'].replace(/\s*\([^)]*\)/, '');
           }
 
           return (

@@ -387,6 +387,7 @@ export default function DateSelector() {
               className="h-fit"
             >
               <div className="space-y-3">
+                {/* Date Pickers Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Check-in Date */}
                   <div>
@@ -421,12 +422,13 @@ export default function DateSelector() {
                   </div>
                 </div>
 
-                {/* Guests Counter + Search */}
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">
-                    {t('dates.guests')}
-                  </label>
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+                {/* Guests Counter + Search Button Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Guests Counter */}
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      {t('dates.guests')}
+                    </label>
                     <div className="flex items-center space-x-4">
                       <button
                         type="button"
@@ -463,13 +465,17 @@ export default function DateSelector() {
                         {guests === 1 ? t('dates.guest') : t('dates.guests')}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Check Availability Button */}
+                  <div className="flex flex-col justify-end">
                     <motion.button
                       type="button"
                       onClick={handleAvailabilitySearch}
                       disabled={loadingRooms || !bookingData.checkIn || !bookingData.checkOut}
                       whileHover={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 1.02 }}
                       whileTap={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 0.98 }}
-                      className={`w-full md:w-auto md:flex-shrink-0 rounded-xl px-6 py-3 font-bold transition-all shadow-lg ${
+                      className={`w-full rounded-xl px-4 py-3 font-bold transition-all shadow-lg ${
                         loadingRooms
                           ? 'bg-gray-400 text-white cursor-not-allowed opacity-80'
                           : !bookingData.checkIn || !bookingData.checkOut

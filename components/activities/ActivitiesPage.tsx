@@ -1293,9 +1293,9 @@ const ActivitiesPage = () => {
                     </motion.button>
                     <motion.button
                       onClick={handleSkipAddPerson}
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#8c8179] hover:bg-[white]/50 hover:text-black transition-all font-medium"
+                      className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#8c8179] hover:bg-[white]/20 transition-all font-medium shadow-md hover:shadow-lg"
                     >
                       {locale === "es" ? "Saltar" : "Skip"}
                     </motion.button>

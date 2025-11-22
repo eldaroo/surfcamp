@@ -668,14 +668,16 @@ const priceBreakdown = useMemo(
         </div>
 
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-500/20">
-            <svg className="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
+        <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl mb-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-500/20">
+              <svg className="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-3 font-heading">{t('contact.title')}</h1>
+            <p className="text-xl text-yellow-400 font-heading">{t('contact.subtitle')}</p>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3 font-heading">{t('contact.title')}</h1>
-          <p className="text-xl text-yellow-400 font-heading">{t('contact.subtitle')}</p>
         </div>
 
         {/* Two Column Layout - Desktop */}
@@ -839,7 +841,7 @@ const priceBreakdown = useMemo(
                     <div key={key} className="flex justify-between">
                       <div className="flex flex-col">
                         <span className="text-gray-300">
-                          {activity.name}
+                          {activity.name.replace(/\s*\([^)]*\)/, '')}
                           {details && (
                             <span className="text-sm text-gray-400 ml-2">
                               {details}
