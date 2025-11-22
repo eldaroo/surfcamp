@@ -70,12 +70,22 @@ export const getActivityBasePrice = (category: string): number => {
 
 // Fixed pricing for surf programs
 export const calculateSurfPrice = (classes: number): number => {
-  // Essential program: 4 classes = $380
-  if (classes <= 4) return 380;
-  // Progression program: 7 classes = $650
-  if (classes <= 7) return 650;
-  // Performance program: 10 classes = $880
-  return 880;
+  // Core program: 4 classes = $450
+  if (classes <= 4) return 450;
+  // Intensive program: 6 classes = $650
+  if (classes <= 6) return 650;
+  // Elite program: 8 classes = $910
+  return 910;
+};
+
+// Private coaching upgrade pricing based on program
+export const calculatePrivateCoachingUpgrade = (classes: number): number => {
+  // Core program: +$90
+  if (classes <= 4) return 90;
+  // Intensive program: +$110
+  if (classes <= 6) return 110;
+  // Elite program: +$130
+  return 130;
 };
 
 // Función para calcular el precio total de una actividad con paquete

@@ -5,13 +5,14 @@ import { createPortal } from "react-dom";
 import { useBookingStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { getLocalizedActivities } from "@/lib/activities";
-import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice } from "@/lib/prices";
+import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice, calculatePrivateCoachingUpgrade } from "@/lib/prices";
 import { formatCurrency } from "@/lib/utils";
 import { Activity } from "@/types";
 import ActivityCard from "./ActivityCard";
 import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
 import ActiveParticipantBanner from "../ActiveParticipantBanner";
+import PrivateCoachingUpsellModal from "./PrivateCoachingUpsellModal";
 import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,10 +27,23 @@ const DEFAULT_SURF_CLASSES = 4;
 const DEFAULT_SURF_PACKAGE: SurfPackage = '4-classes';
 const DEFAULT_YOGA_PACKAGE = "1-class" as const;
 
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+  },
+} as const;
+
 // Map surf classes to programs
 const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
   if (classes <= 4) return 'fundamental';
-  if (classes <= 7) return 'progressionPlus';
+  if (classes <= 6) return 'progressionPlus';
   return 'highPerformance';
 };
 
@@ -37,8 +51,8 @@ const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus
 const surfProgramToClasses = (program: 'fundamental' | 'progressionPlus' | 'highPerformance'): number => {
   switch (program) {
     case 'fundamental': return 4;
-    case 'progressionPlus': return 7;
-    case 'highPerformance': return 10;
+    case 'progressionPlus': return 6;
+    case 'highPerformance': return 8;
   }
 };
 
@@ -55,6 +69,8 @@ const ActivitiesPage = () => {
     setSelectedYogaPackage,
     setSelectedSurfPackage,
     setSelectedSurfClasses,
+    isPrivateUpgrade,
+    setIsPrivateUpgrade,
     setActivityQuantity,
     setSelectedTimeSlot,
     setCurrentStep,
@@ -106,12 +122,15 @@ const ActivitiesPage = () => {
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [showTravelingWithModal, setShowTravelingWithModal] = useState(false);
+  const [showAccommodationModal, setShowAccommodationModal] = useState(false);
+  const [needsAccommodation, setNeedsAccommodation] = useState(true); // true = needs to book, false = already has
   const [isClient, setIsClient] = useState(false);
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | null>(
     storeParticipants[0]?.id || null
   );
   const [addPersonChoice, setAddPersonChoice] = useState<'copy' | 'customize'>('copy');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [showPrivateCoachingModal, setShowPrivateCoachingModal] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -269,6 +288,21 @@ const ActivitiesPage = () => {
     [localizedActivities, selectedActivities, setSelectedActivities, setYogaClasses]
   );
 
+  const handleShowPrivateCoachingModal = useCallback(() => {
+    // Only show modal if not already upgraded
+    if (!isPrivateUpgrade) {
+      setShowPrivateCoachingModal(true);
+    }
+  }, [isPrivateUpgrade]);
+
+  const handleAcceptPrivateCoaching = useCallback(() => {
+    setIsPrivateUpgrade(true);
+  }, []);
+
+  const handleClosePrivateCoachingModal = useCallback(() => {
+    setShowPrivateCoachingModal(false);
+  }, []);
+
   const handleYogaPackDiscountChange = useCallback(
     (activityId: string, useDiscount: boolean) => {
       setYogaUsePackDiscount(activityId, useDiscount);
@@ -333,7 +367,10 @@ const ActivitiesPage = () => {
       if (activity.category === "surf") {
         const classes = selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
         // Price per person only
-        return calculateSurfPrice(classes);
+        const basePrice = calculateSurfPrice(classes);
+        // Add private coaching upgrade if selected (Core: $90, Intensive: $110, Elite: $130)
+        const upgradePrice = calculatePrivateCoachingUpgrade(classes);
+        return isPrivateUpgrade ? basePrice + upgradePrice : basePrice;
       }
 
       const quantity = quantityCategories.has(activity.category)
@@ -466,7 +503,21 @@ const ActivitiesPage = () => {
 
   const handleSkipAddPerson = () => {
     setShowTravelingWithModal(false);
-    handleContinue();
+    // Show accommodation question modal
+    setShowAccommodationModal(true);
+  };
+
+  const handleAccommodationChoice = (needsAccom: boolean) => {
+    setNeedsAccommodation(needsAccom);
+    setShowAccommodationModal(false);
+
+    if (needsAccom) {
+      // User needs accommodation - continue to date selector
+      handleContinue();
+    } else {
+      // User already has accommodation - skip to contact form
+      setCurrentStep('contact');
+    }
   };
 
   const handleConfirmAddPerson = () => {
@@ -474,7 +525,7 @@ const ActivitiesPage = () => {
 
     // Safety check: don't add if we already have 2 participants
     if (storeParticipants.length >= 2) {
-      handleContinue();
+      setShowAccommodationModal(true);
       return;
     }
 
@@ -570,7 +621,10 @@ const ActivitiesPage = () => {
 
     if (activity.category === "surf") {
       const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
-      return calculateSurfPrice(classes);
+      const basePrice = calculateSurfPrice(classes);
+      // Add private coaching upgrade if selected (Core: $90, Intensive: $110, Elite: $130)
+      const upgradePrice = calculatePrivateCoachingUpgrade(classes);
+      return isPrivateUpgrade ? basePrice + upgradePrice : basePrice;
     }
 
     const quantity = quantityCategories.has(activity.category)
@@ -579,6 +633,46 @@ const ActivitiesPage = () => {
 
     const perGuest = perGuestCategories.has(activity.category) ? 1 : 1;
     return activity.price * quantity * perGuest;
+  };
+
+  // Calculate base price for display (without upgrade)
+  const computeActivityBasePriceForParticipant = (
+    activity: Activity,
+    participant: typeof storeParticipants[0]
+  ): number => {
+    if (activity.category === "yoga") {
+      const classes = participant.yogaClasses[activity.id] ?? 1;
+      const useDiscount = participant.yogaUsePackDiscount[activity.id] ?? false;
+      return calculateYogaPrice(classes, useDiscount);
+    }
+
+    if (activity.category === "surf") {
+      const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
+      return calculateSurfPrice(classes); // Base price only
+    }
+
+    const quantity = quantityCategories.has(activity.category)
+      ? participant.activityQuantities[activity.id] ?? 1
+      : 1;
+
+    const perGuest = perGuestCategories.has(activity.category) ? 1 : 1;
+    return activity.price * quantity * perGuest;
+  };
+
+  // Calculate private coaching upgrade for a participant
+  const computePrivateCoachingUpgradeForParticipant = (
+    participant: typeof storeParticipants[0]
+  ): number => {
+    if (!isPrivateUpgrade) return 0;
+
+    let total = 0;
+    participant.selectedActivities.forEach(activity => {
+      if (activity.category === 'surf') {
+        const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
+        total += calculatePrivateCoachingUpgrade(classes);
+      }
+    });
+    return total;
   };
 
   // Get details for a specific activity of a specific participant
@@ -596,8 +690,8 @@ const ActivitiesPage = () => {
     }
 
     if (activity.category === "surf") {
-      const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
-      return `${classes} ${classes === 1 ? (locale === "es" ? "clase" : "class") : (locale === "es" ? "clases" : "classes")}`;
+      // Don't show class count - program name will be shown as main title
+      return "";
     }
 
     if (quantityCategories.has(activity.category)) {
@@ -787,7 +881,17 @@ const ActivitiesPage = () => {
                               participant.selectedActivities.map((activity, index) => {
                                 const Icon = getActivityIcon(activity.category);
                                 const details = getActivityDetailsForParticipant(activity, participant);
-                                const price = computeActivityPriceForParticipant(activity, participant);
+                                const price = computeActivityBasePriceForParticipant(activity, participant);
+
+                                // For surf activities, show program name instead of generic name
+                                let displayName = activity.name;
+                                if (activity.category === 'surf') {
+                                  const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
+                                  const programId = surfClassesToProgram(classes);
+                                  const program = SURF_PROGRAMS[programId];
+                                  // Remove video analysis session info (everything in parentheses)
+                                  displayName = program.name[locale === 'en' ? 'en' : 'es'].replace(/\s*\([^)]*\)/, '');
+                                }
 
                                 return (
                                   <motion.div
@@ -803,7 +907,7 @@ const ActivitiesPage = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <h4 className="text-sm md:text-xs font-bold text-black truncate">
-                                        {activity.name}
+                                        {displayName}
                                       </h4>
                                       {details && (
                                         <p className="text-sm md:text-[10px] text-[#8c8179] mt-0.5 md:mt-0">{details}</p>
@@ -818,21 +922,35 @@ const ActivitiesPage = () => {
                                 );
                               })
                             )}
-                          </div>
 
-                          {/* Participant Total */}
-                          {participant.selectedActivities.length > 0 && (
-                            <div className="px-4 py-3 md:px-3 md:py-2 border-t border-[white]/50 bg-[white]/30">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm md:text-xs font-bold text-black">
-                                  {locale === "es" ? "Subtotal" : "Subtotal"}
-                                </span>
-                                <span className="text-lg md:text-base font-bold text-[#8c8179]">
-                                  {formatCurrency(participantTotal)}
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                            {/* 1:1 Private Coaching Upgrade - shown as separate line if selected */}
+                            {isPrivateUpgrade && computePrivateCoachingUpgradeForParticipant(participant) > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: participant.selectedActivities.length * 0.05, duration: 0.3 }}
+                                className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-amber-100/60 border border-amber-300/50 hover:bg-amber-100/80 transition-all"
+                                style={{ borderWidth: '1px' }}
+                              >
+                                <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-amber-400/70 backdrop-blur-md border border-amber-500/40">
+                                  <User className="h-5 w-5 md:h-4 md:w-4 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-sm md:text-xs font-bold text-black truncate">
+                                    {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
+                                  </h4>
+                                  <p className="text-sm md:text-[10px] text-amber-700 mt-0.5 md:mt-0">
+                                    {locale === 'es' ? 'Mejora' : 'Upgrade'}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-base md:text-base font-bold text-amber-700">
+                                    {formatCurrency(computePrivateCoachingUpgradeForParticipant(participant))}
+                                  </p>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -955,6 +1073,7 @@ const ActivitiesPage = () => {
                   onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
                   surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
                   onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
+                  onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
                   hasQuantitySelector={supportsQuantity}
                   quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
                   onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
@@ -1185,9 +1304,85 @@ const ActivitiesPage = () => {
               </motion.div>
             </motion.div>
           )}
+
+          {/* Accommodation Question Modal */}
+          {showAccommodationModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAccommodationModal(false)}
+              className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-2xl border border-gray-200 shadow-2xl p-6 md:p-8 max-w-md mx-4"
+              >
+                <div className="flex flex-col gap-6">
+                  {/* Icon */}
+                  <div className="flex justify-center">
+                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30">
+                      <svg className="h-8 w-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl md:text-2xl font-bold text-black text-center">
+                    {locale === "es" ? "¿Necesitas alojamiento?" : "Do you need accommodation?"}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-black text-sm md:text-base text-center">
+                    {locale === "es"
+                      ? "¿Ya tienes reservado tu alojamiento o necesitas reservar uno ahora en Zeneidas?"
+                      : "Do you already have your accommodation booked or do you need to book one now at Zeneidas?"}
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-3">
+                    <motion.button
+                      onClick={() => handleAccommodationChoice(true)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-black font-bold transition-all shadow-lg"
+                    >
+                      {locale === "es" ? "Sí, necesito reservar alojamiento" : "Yes, I need to book accommodation"}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => handleAccommodationChoice(false)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full px-6 py-3.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-black transition-all font-medium"
+                    >
+                      {locale === "es" ? "No, ya tengo alojamiento" : "No, I already have accommodation"}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>,
         document.body
       )}
+
+      {/* Private Coaching Upsell Modal */}
+      <PrivateCoachingUpsellModal
+        isOpen={showPrivateCoachingModal}
+        onClose={handleClosePrivateCoachingModal}
+        onAccept={handleAcceptPrivateCoaching}
+        locale={(locale as "es" | "en") || "es"}
+        upgradePrice={(() => {
+          const surfActivity = localizedActivities.find((activity) => activity.category === "surf");
+          if (!surfActivity) return 90;
+          const classes = selectedSurfClasses[surfActivity.id] ?? DEFAULT_SURF_CLASSES;
+          return calculatePrivateCoachingUpgrade(classes);
+        })()}
+      />
       </div>
     </div>
   );

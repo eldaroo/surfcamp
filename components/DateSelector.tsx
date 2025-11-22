@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice, calculatePrivateCoachingUpgrade } from '@/lib/prices';
 import CustomDatePicker from '@/components/CustomDatePicker';
 import BackButton from './BackButton';
 import AccommodationCard from './AccommodationCard';
@@ -39,27 +39,24 @@ const pluralize = (count: number, singular: string, plural: string): string => {
   return count === 1 ? singular : plural;
 };
 
-// Get activity price with package info for a specific participant
-const getActivityDetailsForParticipant = (activity: any, participant: any) => {
-  let price = 0;
-  let packageInfo = '';
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+  },
+} as const;
 
-  if (activity.category === 'yoga') {
-    const yogaPackage = participant.selectedYogaPackages[activity.id];
-    if (yogaPackage) {
-      price = getActivityTotalPrice('yoga', yogaPackage);
-      packageInfo = yogaPackage;
-    }
-  } else if (activity.category === 'surf') {
-    const surfClasses = participant.selectedSurfClasses[activity.id];
-    const classes = surfClasses !== undefined ? surfClasses : 4;
-    price = calculateSurfPrice(classes);
-    packageInfo = `${classes} classes`;
-  } else {
-    price = activity.price || 0;
-  }
-
-  return { price, packageInfo };
+// Map surf classes to program ID
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 6) return 'progressionPlus';
+  return 'highPerformance';
 };
 
 export default function DateSelector() {
@@ -75,8 +72,35 @@ export default function DateSelector() {
     setError: setGlobalError,
     error: globalError,
     priceBreakdown,
-    participants: participantList
+    participants: participantList,
+    isPrivateUpgrade
   } = useBookingStore();
+
+  // Get activity price with package info for a specific participant
+  const getActivityDetailsForParticipant = (activity: any, participant: any) => {
+    let price = 0;
+    let packageInfo = '';
+
+    if (activity.category === 'yoga') {
+      const yogaPackage = participant.selectedYogaPackages[activity.id];
+      if (yogaPackage) {
+        price = getActivityTotalPrice('yoga', yogaPackage);
+        packageInfo = yogaPackage;
+      }
+    } else if (activity.category === 'surf') {
+      const surfClasses = participant.selectedSurfClasses[activity.id];
+      const classes = surfClasses !== undefined ? surfClasses : 4;
+      const basePrice = calculateSurfPrice(classes);
+      // Add upgrade price based on program (Core: $90, Intensive: $110, Elite: $130)
+      const upgradePrice = calculatePrivateCoachingUpgrade(classes);
+      price = isPrivateUpgrade ? basePrice + upgradePrice : basePrice;
+      packageInfo = ''; // Will show program name as activity name
+    } else {
+      price = activity.price || 0;
+    }
+
+    return { price, packageInfo };
+  };
 
   console.log('🏠 [DateSelector] Render - availableRooms:', availableRooms);
   console.log('🏠 [DateSelector] Render - availableRooms length:', availableRooms?.length);
@@ -333,39 +357,40 @@ export default function DateSelector() {
   const total = subtotal + fees;
 
   return (
-    <div className="py-3 px-4 pb-8" style={{ backgroundColor: 'var(--brand-bg)' }}>
+    <div className="py-3 px-4 pb-8">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="max-w-7xl mx-auto"
       >
-        {/* PASS 2: mb-5 → mb-4, text-[28px] → text-[24px] */}
-        {/* Only show dates header when accommodation section is not visible */}
-        {!(hasRequestedAvailability && availableRooms && availableRooms.length > 0) && (
-          <div className="flex items-center space-x-4 mb-4">
-            <BackButton variant="minimal" />
-            <div>
-              <h1 className="text-[24px] font-bold text-white font-heading">{t('dates.title')}</h1>
-              <p className="text-[14px] text-[var(--brand-text-dim)]">{t('dates.subtitle')}</p>
+        {/* Main white container for date selector and price summary */}
+        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white/40 mb-6">
+          {/* Only show dates header when accommodation section is not visible */}
+          {!(hasRequestedAvailability && availableRooms && availableRooms.length > 0) && (
+            <div className="flex items-center space-x-4 mb-4">
+              <BackButton variant="minimal" />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-black font-heading">{t('dates.title')}</h1>
+                <p className="text-sm md:text-base text-[#8c8179]">{t('dates.subtitle')}</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 mb-6 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+          <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
           {/* Columna izquierda - Selector de fechas */}
           {!isDateSelectorCollapsed ? (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="card h-fit"
+              className="h-fit"
             >
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Check-in Date */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       {t('dates.checkIn')} *
                     </label>
                     <CustomDatePicker
@@ -381,7 +406,7 @@ export default function DateSelector() {
 
                   {/* Check-out Date */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-2">
+                    <label className="block text-sm font-medium text-black mb-2">
                       {t('dates.checkOut')} *
                     </label>
                     <CustomDatePicker
@@ -398,10 +423,10 @@ export default function DateSelector() {
 
                 {/* Guests Counter + Search */}
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className="block text-sm font-medium text-black mb-2">
                     {t('dates.guests')}
                   </label>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
                     <div className="flex items-center space-x-4">
                       <button
                         type="button"
@@ -411,13 +436,13 @@ export default function DateSelector() {
                           markAvailabilityAsStale();
                           setBookingData({ guests: newGuests });
                         }}
-                        className={`w-10 h-10 rounded-full border border-white/30 flex items-center justify-center transition-colors ${
-                          guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
+                        className={`w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors ${
+                          guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-100'
                         }`}
                       >
-                        <span className="text-white">-</span>
+                        <span className="text-black">-</span>
                       </button>
-                      <span className="text-2xl font-bold text-blue-400 w-12 text-center">
+                      <span className="text-2xl font-bold text-amber-400 w-12 text-center">
                         {guests}
                       </span>
                       <button
@@ -428,13 +453,13 @@ export default function DateSelector() {
                           markAvailabilityAsStale();
                           setBookingData({ guests: newGuests });
                         }}
-                        className={`w-10 h-10 rounded-full border border-white/30 flex items-center justify-center transition-colors ${
-                          guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/10'
+                        className={`w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors ${
+                          guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-100'
                         }`}
                       >
-                        <span className="text-white">+</span>
+                        <span className="text-black">+</span>
                       </button>
-                      <span className="text-yellow-300">
+                      <span className="text-black font-medium">
                         {guests === 1 ? t('dates.guest') : t('dates.guests')}
                       </span>
                     </div>
@@ -444,17 +469,13 @@ export default function DateSelector() {
                       disabled={loadingRooms || !bookingData.checkIn || !bookingData.checkOut}
                       whileHover={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 1.02 }}
                       whileTap={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 0.98 }}
-                      className={`w-full sm:w-auto rounded-xl px-5 py-3 font-semibold transition-all shadow-lg ${
+                      className={`w-full md:w-auto md:flex-shrink-0 rounded-xl px-6 py-3 font-bold transition-all shadow-lg ${
                         loadingRooms
-                          ? 'bg-slate-400 text-white cursor-not-allowed opacity-80'
+                          ? 'bg-gray-400 text-white cursor-not-allowed opacity-80'
                           : !bookingData.checkIn || !bookingData.checkOut
-                            ? 'bg-slate-600/60 text-slate-300 cursor-not-allowed'
-                            : ''
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-amber-400 hover:bg-amber-500 text-black'
                       }`}
-                      style={!loadingRooms && bookingData.checkIn && bookingData.checkOut ? {
-                        backgroundColor: 'var(--brand-gold)',
-                        color: 'black'
-                      } : {}}
                     >
                       {loadingRooms ? (
                         <span className="flex items-center justify-center gap-2 text-sm">
@@ -464,7 +485,7 @@ export default function DateSelector() {
                           {t('dates.searchingAvailability')}
                         </span>
                       ) : (
-                        <span>{t('dates.searchAvailability')}</span>
+                        <span className="whitespace-nowrap">{t('dates.searchAvailability')}</span>
                       )}
                     </motion.button>
                   </div>
@@ -472,15 +493,15 @@ export default function DateSelector() {
 
                 {/* Summary */}
                 {(bookingData.checkIn || bookingData.checkOut) && (
-                  <div className="bg-white/10 rounded-lg p-4 border border-white/20 relative">
+                  <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 relative">
                     <div className="flex items-start gap-3">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-yellow-300 mb-2 font-heading">{t('dates.summary.title')}</h3>
+                        <h3 className="font-semibold text-black mb-2 font-heading">{t('dates.summary.title')}</h3>
                         <div className="space-y-1 text-sm">
                           {bookingData.checkIn && (
                             <div>
-                              <span className="text-white">{t('dates.summary.checkIn')}:</span>
-                              <span className="ml-2 font-medium text-blue-300">
+                              <span className="text-black">{t('dates.summary.checkIn')}:</span>
+                              <span className="ml-2 font-medium text-[#8c8179]">
                                 {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                                   day: '2-digit',
                                   month: '2-digit',
@@ -491,8 +512,8 @@ export default function DateSelector() {
                           )}
                           {bookingData.checkOut && (
                             <div>
-                              <span className="text-white">{t('dates.summary.checkOut')}:</span>
-                              <span className="ml-2 font-medium text-blue-300">
+                              <span className="text-black">{t('dates.summary.checkOut')}:</span>
+                              <span className="ml-2 font-medium text-[#8c8179]">
                                 {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                                   day: '2-digit',
                                   month: '2-digit',
@@ -502,11 +523,11 @@ export default function DateSelector() {
                             </div>
                           )}
                           <div>
-                            <span className="text-white">{t('dates.summary.guests')}:</span>
-                            <span className="ml-2 font-medium text-blue-300">{guests}</span>
+                            <span className="text-black">{t('dates.summary.guests')}:</span>
+                            <span className="ml-2 font-medium text-[#8c8179]">{guests}</span>
                           </div>
                           {nights > 0 && (
-                            <div className="mt-2 text-sm text-yellow-300">
+                            <div className="mt-2 text-sm text-amber-600 font-medium">
                               {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                             </div>
                           )}
@@ -518,7 +539,7 @@ export default function DateSelector() {
                           markAvailabilityAsStale();
                           setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
                         }}
-                        className="px-3 py-1 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors"
+                        className="px-3 py-1 rounded-md text-xs font-medium text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
                       >
                         {t('common.edit')}
                       </button>
@@ -540,13 +561,13 @@ export default function DateSelector() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="card"
+              className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/40"
             >
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-[var(--brand-text-dim)]">{t('dates.checkIn')}:</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm text-[#8c8179]">{t('dates.checkIn')}:</span>
+                    <span className="text-sm font-medium text-black">
                       {bookingData.checkIn && new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                         day: '2-digit',
                         month: '2-digit',
@@ -555,8 +576,8 @@ export default function DateSelector() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-[var(--brand-text-dim)]">{t('dates.checkOut')}:</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm text-[#8c8179]">{t('dates.checkOut')}:</span>
+                    <span className="text-sm font-medium text-black">
                       {bookingData.checkOut && new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
                         day: '2-digit',
                         month: '2-digit',
@@ -565,12 +586,12 @@ export default function DateSelector() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-[var(--brand-text-dim)]">{t('dates.guests')}:</span>
-                    <span className="text-sm font-medium text-white">{guests}</span>
+                    <span className="text-sm text-[#8c8179]">{t('dates.guests')}:</span>
+                    <span className="text-sm font-medium text-black">{guests}</span>
                   </div>
                   {nights > 0 && (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-yellow-300">
+                      <span className="text-sm text-amber-600 font-medium">
                         {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                       </span>
                     </div>
@@ -579,7 +600,7 @@ export default function DateSelector() {
                 <button
                   type="button"
                   onClick={() => setIsDateSelectorCollapsed(false)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-amber-300 bg-amber-300/10 hover:bg-amber-300/20 transition-colors whitespace-nowrap"
+                  className="px-3 py-1.5 rounded-md text-xs font-medium text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors whitespace-nowrap"
                 >
                   {t('common.edit')}
                 </button>
@@ -595,37 +616,38 @@ export default function DateSelector() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="hidden lg:block w-full"
             >
-              <PriceSummary />
+              <PriceSummary showContainer={false} />
             </motion.div>
           )}
-        </div>
+          </div>
 
-        {/* Accommodation Section - Below date selector */}
-        {checkInDate && checkOutDate && (hasRequestedAvailability || loadingRooms) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
+          {/* Accommodation Section - Below date selector */}
+          {checkInDate && checkOutDate && (hasRequestedAvailability || loadingRooms) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mt-8"
+            >
             {/* Show BackButton with accommodation header when rooms are displayed */}
             {availableRooms && availableRooms.length > 0 ? (
               <div className="flex items-center space-x-4 mb-4">
                 <BackButton variant="minimal" />
                 <div>
-                  <h2 className="text-[24px] font-bold text-white font-heading">
+                  <h2 className="text-2xl md:text-3xl font-bold text-black font-heading">
                     {t('accommodation.title')}
                   </h2>
-                  <p className="text-[14px] text-[var(--brand-text-dim)]">
+                  <p className="text-sm md:text-base text-[#8c8179]">
                     {t('accommodation.subtitle')}
                   </p>
                 </div>
               </div>
             ) : (
               <div className="mb-3">
-                <h2 className="text-[20px] font-bold text-white font-heading mb-1">
+                <h2 className="text-xl md:text-2xl font-bold text-black font-heading mb-1">
                   {t('accommodation.title')}
                 </h2>
-                <p className="text-[15px] text-[var(--brand-text-dim)]">
+                <p className="text-sm md:text-base text-[#8c8179]">
                   {t('accommodation.subtitle')}
                 </p>
               </div>
@@ -643,11 +665,11 @@ export default function DateSelector() {
               </motion.div>
             )}
 
-            {/* Loading State - reduced from py-24 to py-12 */}
+            {/* Loading State */}
             {hasRequestedAvailability && loadingRooms && (
               <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4" style={{ borderColor: 'var(--brand-gold)' }}></div>
-                <p className="text-[var(--brand-text)] text-[15px]">{t('accommodation.searchingRooms')}</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mb-4"></div>
+                <p className="text-black text-base">{t('accommodation.searchingRooms')}</p>
               </div>
             )}
 
@@ -705,14 +727,14 @@ export default function DateSelector() {
               </>
             )}
 
-            {/* No rooms available - reduced from py-12 to py-8 */}
+            {/* No rooms available */}
             {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
-              <div className="text-center py-8">
+              <div className="text-center py-8 bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-white/40">
                 <div className="text-6xl mb-4">🏠</div>
-                <h3 className="text-[22px] font-bold text-white mb-3 font-heading">
+                <h3 className="text-xl md:text-2xl font-bold text-black mb-3 font-heading">
                   {t('accommodation.noRoomsAvailable')}
                 </h3>
-                <p className="text-[15px] text-[var(--brand-text-dim)] mb-6 max-w-md mx-auto">
+                <p className="text-sm md:text-base text-[#8c8179] mb-6 max-w-md mx-auto">
                   {t('accommodation.noAvailableMessage')}
                 </p>
               </div>
@@ -720,8 +742,9 @@ export default function DateSelector() {
 
             {/* Continue Button */}
 
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </div>
       </motion.div>
 
       {/* Collapsed Price Summary (Desktop) */}
@@ -732,10 +755,10 @@ export default function DateSelector() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
-          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-slate-800/90 backdrop-blur-md px-4 py-2 text-sm font-bold text-white shadow-lg border border-slate-700/50 hover:bg-slate-700/90 transition-all duration-300 ease-in-out"
+          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-white/90 backdrop-blur-md px-4 py-2 text-sm font-bold text-black shadow-lg border border-gray-200 hover:bg-white transition-all duration-300 ease-in-out"
         >
-          <ReceiptText className="h-5 w-5 text-amber-300" />
-          <span>{t('prices.total')}: {formatCurrency(total, locale)}</span>
+          <ReceiptText className="h-5 w-5 text-amber-400" />
+          <span className="text-black">{t('prices.total')}: {formatCurrency(total, locale)}</span>
         </motion.button>
       )}
 
@@ -747,19 +770,19 @@ export default function DateSelector() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
-          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-slate-800/90 backdrop-blur-md px-5 py-3 text-base font-bold text-white shadow-lg border border-slate-700/50 hover:bg-slate-700/90 transition-all duration-300 ease-in-out"
+          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-white/90 backdrop-blur-md px-5 py-3 text-base font-bold shadow-lg border border-gray-200 hover:bg-white transition-all duration-300 ease-in-out"
         >
           <div className="flex items-center gap-3">
-            <ReceiptText className="h-6 w-6 text-amber-300" />
-            <span>{t('prices.summary')}</span>
+            <ReceiptText className="h-6 w-6 text-amber-400" />
+            <span className="text-black font-bold">{t('prices.summary')}</span>
           </div>
-          <span>{formatCurrency(total, locale)}</span>
+          <span className="text-black font-bold">{formatCurrency(total, locale)}</span>
         </motion.button>
       )}
 
       {/* Price Summary Modal */}
       <Modal isOpen={showPriceSummaryModal} onClose={() => setShowPriceSummaryModal(false)} title={t('prices.summary')}>
-        <PriceSummary isCollapsed={false} />
+        <PriceSummary isCollapsed={false} showContainer={false} />
       </Modal>
     </div>
   );

@@ -257,17 +257,18 @@ const translations = {
       },
       programs: {
         fundamental: {
-          name: "Fundamental",
+          name: "Core Surf Program",
           level: "Principiante - Nivel 1.1, 1.2, 1.3",
           tagline: "Construye una base sólida y evita malos hábitos desde el día uno",
-          price: "420",
+          price: "450",
           includes: {
             title: "Incluye:",
             items: [
               "4 sesiones de surf",
-              "Feedback básico en video",
+              "2 sesiones de videoanálisis",
               "Tabla + lycra + transporte",
-              "Sesión de fotos opcional"
+              "Sesión de fotos opcional",
+              "Plan de continuidad"
             ]
           },
           sessions: {
@@ -281,15 +282,15 @@ const translations = {
           }
         },
         progression: {
-          name: "Progression Plus",
+          name: "Intensive Surf Program",
           level: "Principiante con experiencia / Intermedio temprano - Nivel 1.2, 1.3, 2.1",
           tagline: "Corrige patrones clave, lee mejor las olas y desbloquea tu siguiente nivel",
-          price: "670",
+          price: "650",
           includes: {
             title: "Incluye:",
             items: [
-              "7 sesiones de surf",
-              "Análisis intermedio de video",
+              "6 sesiones de surf",
+              "4 sesiones de videoanálisis",
               "1 sesión de fotos",
               "Plan de práctica final"
             ]
@@ -305,15 +306,15 @@ const translations = {
           }
         },
         highPerformance: {
-          name: "High-Performance Program",
+          name: "Elite Surf Program",
           level: "Intermedio-Avanzado - Nivel 2.1, 2.2",
           tagline: "Entrena como un atleta y transforma tu manera de surfear",
           price: "910",
           includes: {
             title: "Incluye:",
             items: [
-              "10 sesiones de alto rendimiento",
-              "Análisis avanzado de video",
+              "8 sesiones de alto rendimiento",
+              "5 sesiones de videoanálisis avanzado",
               "Sesión de fotos + drone",
               "Revisión final extendida"
             ]
@@ -688,17 +689,18 @@ const translations = {
       },
       programs: {
         fundamental: {
-          name: "Fundamental",
+          name: "Core Surf Program",
           level: "Beginner - Level 1.1, 1.2, 1.3",
           tagline: "Build a strong foundation and avoid bad habits from day one",
-          price: "420",
+          price: "450",
           includes: {
             title: "Includes:",
             items: [
               "4 surf sessions",
-              "Basic video feedback",
+              "2 video analysis sessions",
               "Board + wetsuit + transport",
-              "Optional photo session"
+              "Optional photo session",
+              "Continuity plan"
             ]
           },
           sessions: {
@@ -712,15 +714,15 @@ const translations = {
           }
         },
         progression: {
-          name: "Progression Plus",
+          name: "Intensive Surf Program",
           level: "Early Intermediate - Level 1.2, 1.3, 2.1",
           tagline: "Correct key patterns, read waves better and unlock your next level",
-          price: "670",
+          price: "650",
           includes: {
             title: "Includes:",
             items: [
-              "7 surf sessions",
-              "Intermediate video analysis",
+              "6 surf sessions",
+              "4 video analysis sessions",
               "1 photo session",
               "Final practice plan"
             ]
@@ -736,15 +738,15 @@ const translations = {
           }
         },
         highPerformance: {
-          name: "High-Performance Program",
+          name: "Elite Surf Program",
           level: "Intermediate-Advanced - Level 2.1, 2.2",
           tagline: "Train like an athlete and transform the way you surf",
           price: "910",
           includes: {
             title: "Includes:",
             items: [
-              "10 high-performance sessions",
-              "Advanced video analysis",
+              "8 high-performance sessions",
+              "5 advanced video analysis sessions",
               "Photo + drone session",
               "Extended final review"
             ]

@@ -24,7 +24,7 @@ export default function Modal({ isOpen, onClose, children, title, className }: M
           onClick={onClose}
         >
           <motion.div
-            className={`relative w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-slate-900 border border-slate-700/50 shadow-2xl ${className}`}
+            className={`relative w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white/95 backdrop-blur-md border border-gray-200 shadow-2xl ${className}`}
             initial={{ y: "100%", opacity: 0 }}
             animate={{ y: "0%", opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
@@ -32,16 +32,16 @@ export default function Modal({ isOpen, onClose, children, title, className }: M
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
           >
             {title && (
-              <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-slate-700/50 bg-slate-900">
-                <h3 className="text-lg font-bold text-slate-100 uppercase tracking-wide">{title}</h3>
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 bg-white/95 backdrop-blur-md">
+                <h3 className="text-lg font-bold text-black">{title}</h3>
                 <motion.button
                   type="button"
                   onClick={onClose}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-2 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors"
+                  className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
-                  <X className="h-5 w-5 text-slate-300" />
+                  <X className="h-5 w-5 text-gray-600" />
                 </motion.button>
               </div>
             )}
@@ -51,9 +51,9 @@ export default function Modal({ isOpen, onClose, children, title, className }: M
                   onClick={onClose}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-slate-800/60 hover:bg-slate-700/60 transition-colors"
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                 >
-                  <X className="h-5 w-5 text-slate-300" />
+                  <X className="h-5 w-5 text-gray-600" />
                 </motion.button>
             )}
             <div className="p-6">

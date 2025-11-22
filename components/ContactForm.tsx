@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice, calculatePrivateCoachingUpgrade } from '@/lib/prices';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
@@ -38,7 +38,8 @@ export default function ContactForm() {
     selectedSurfPackages,
     selectedSurfClasses,
     participants,
-    setPriceBreakdown
+    setPriceBreakdown,
+    isPrivateUpgrade
   } = useBookingStore();
   const [formData, setFormData] = useState({
     firstName: bookingData.contactInfo?.firstName || '',
@@ -146,7 +147,9 @@ const buildParticipantActivitySummary = useCallback((activity: any, participant:
     }
   } else if (activity.category === 'surf') {
     const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
-    price = calculateSurfPrice(surfClasses);
+    const basePrice = calculateSurfPrice(surfClasses);
+    // Show base price only (upgrade will be shown separately)
+    price = basePrice;
     detailParts.push(`${surfClasses} ${surfClasses === 1 ? 'class' : 'classes'}`);
   } else {
     const quantity = participant.activityQuantities?.[activity.id] ?? 1;
@@ -200,7 +203,23 @@ const allActivitySelections = useMemo(() => {
 
 const activitiesTotal = allActivitySelections.reduce((sum, selection) => sum + selection.price, 0);
 
-const total = accommodationTotal + activitiesTotal;
+// Calculate 1:1 coaching upgrade total if selected
+const privateCoachingUpgradeTotal = useMemo(() => {
+  if (!isPrivateUpgrade) return 0;
+
+  let total = 0;
+  participants.forEach(participant => {
+    participant.selectedActivities.forEach((activity: any) => {
+      if (activity.category === 'surf') {
+        const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
+        total += calculatePrivateCoachingUpgrade(surfClasses);
+      }
+    });
+  });
+  return total;
+}, [participants, isPrivateUpgrade]);
+
+const total = accommodationTotal + activitiesTotal + privateCoachingUpgradeTotal;
 
 const priceBreakdown = useMemo(
   () => ({
@@ -832,6 +851,25 @@ const priceBreakdown = useMemo(
                       <span className="font-medium text-yellow-400">${price}</span>
                     </div>
                   ))}
+                  {/* 1:1 Private Coaching Upgrade - shown as separate line if selected */}
+                  {isPrivateUpgrade && privateCoachingUpgradeTotal > 0 && (
+                    <div className="flex justify-between bg-yellow-500/10 rounded-lg p-2 border border-yellow-500/20">
+                      <div className="flex flex-col">
+                        <span className="text-gray-300 font-medium">
+                          {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
+                          <span className="text-xs ml-2 px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
+                            {locale === 'es' ? 'Mejora' : 'Upgrade'}
+                          </span>
+                        </span>
+                        {participants.length > 1 && (
+                          <span className="text-xs text-gray-400">
+                            {locale === 'es' ? 'Para todos los participantes' : 'For all participants'}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-medium text-yellow-400">${privateCoachingUpgradeTotal}</span>
+                    </div>
+                  )}
                   <div className="border-t border-gray-600 pt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-white">{t('payment.summary.total')}</span>

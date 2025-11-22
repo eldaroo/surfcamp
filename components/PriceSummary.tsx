@@ -3,7 +3,27 @@
 import { useMemo } from 'react';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
-import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice } from '@/lib/prices';
+import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice, calculatePrivateCoachingUpgrade } from '@/lib/prices';
+
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+  },
+} as const;
+
+// Map surf classes to program ID
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 6) return 'progressionPlus';
+  return 'highPerformance';
+};
 
 // Helper function for currency formatting
 const formatCurrency = (amount: number, locale: string = 'en-US'): string => {
@@ -20,45 +40,7 @@ const pluralize = (count: number, singular: string, plural: string): string => {
   return count === 1 ? singular : plural;
 };
 
-// Get activity price with package info for a specific participant
-const getActivityDetailsForParticipant = (activity: any, participant: any) => {
-  let price = 0;
-  let packageInfo = '';
-  let unitLabel = '';
-
-  if (activity.category === 'yoga') {
-    const yogaPackage = participant.selectedYogaPackages[activity.id];
-    const yogaClassCount = participant.yogaClasses[activity.id] ?? 1;
-    const useDiscount = participant.yogaUsePackDiscount[activity.id] ?? false;
-
-    if (yogaPackage) {
-      price = getActivityTotalPrice('yoga', yogaPackage);
-      packageInfo = yogaPackage;
-      // Extract number from package (e.g., "4-classes" -> "4 classes")
-      const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
-      unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
-    } else {
-      // Calculate price based on yoga classes and discount
-      price = calculateYogaPrice(yogaClassCount, useDiscount);
-      packageInfo = `${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'}`;
-      unitLabel = `${yogaClassCount} × ${formatCurrency(price / yogaClassCount)} / class`;
-    }
-  } else if (activity.category === 'surf') {
-    const surfClasses = participant.selectedSurfClasses[activity.id];
-    // If surfClasses is not defined for this participant, default to 4
-    const classes = surfClasses !== undefined ? surfClasses : 4;
-    price = calculateSurfPrice(classes);
-    packageInfo = `${classes} classes`;
-    unitLabel = `${classes} × ${formatCurrency(calculateSurfPrice(classes) / classes)} / class`;
-  } else {
-    price = activity.price || 0;
-    unitLabel = `1 × ${formatCurrency(price)} / activity`;
-  }
-
-  return { price, packageInfo, unitLabel };
-};
-
-export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: boolean }) {
+export default function PriceSummary({ isCollapsed = false, showContainer = true }: { isCollapsed?: boolean; showContainer?: boolean }) {
   const { t, locale } = useI18n();
   const {
     bookingData,
@@ -69,8 +51,49 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
     selectedSurfPackages,
     selectedSurfClasses,
     participants,
+    isPrivateUpgrade,
     setCurrentStep
   } = useBookingStore();
+
+  // Get activity price with package info for a specific participant
+  const getActivityDetailsForParticipant = (activity: any, participant: any) => {
+    let price = 0;
+    let packageInfo = '';
+    let unitLabel = '';
+
+    if (activity.category === 'yoga') {
+      const yogaPackage = participant.selectedYogaPackages[activity.id];
+      const yogaClassCount = participant.yogaClasses[activity.id] ?? 1;
+      const useDiscount = participant.yogaUsePackDiscount[activity.id] ?? false;
+
+      if (yogaPackage) {
+        price = getActivityTotalPrice('yoga', yogaPackage);
+        packageInfo = yogaPackage;
+        // Extract number from package (e.g., "4-classes" -> "4 classes")
+        const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
+        unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
+      } else {
+        // Calculate price based on yoga classes and discount
+        price = calculateYogaPrice(yogaClassCount, useDiscount);
+        packageInfo = `${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'}`;
+        unitLabel = `${yogaClassCount} × ${formatCurrency(price / yogaClassCount)} / class`;
+      }
+    } else if (activity.category === 'surf') {
+      const surfClasses = participant.selectedSurfClasses[activity.id];
+      // If surfClasses is not defined for this participant, default to 4
+      const classes = surfClasses !== undefined ? surfClasses : 4;
+      const basePrice = calculateSurfPrice(classes);
+      // Show base price only (upgrade will be shown separately)
+      price = basePrice;
+      packageInfo = ''; // Will show program name as activity name
+      unitLabel = '';
+    } else {
+      price = activity.price || 0;
+      unitLabel = `1 × ${formatCurrency(price)} / activity`;
+    }
+
+    return { price, packageInfo, unitLabel };
+  };
 
   // Default translations with fallbacks
   const getText = (key: string, fallback: string): string => {
@@ -153,7 +176,24 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
     return sum + selection.price;
   }, 0);
 
-  const subtotal = accommodationTotal + activitiesTotal;
+  // Calculate 1:1 coaching upgrade total if selected
+  const privateCoachingUpgradeTotal = useMemo(() => {
+    if (!isPrivateUpgrade) return 0;
+
+    let total = 0;
+    participants.forEach(participant => {
+      participant.selectedActivities.forEach(activity => {
+        if (activity.category === 'surf') {
+          const surfClasses = participant.selectedSurfClasses[activity.id];
+          const classes = surfClasses !== undefined ? surfClasses : 4;
+          total += calculatePrivateCoachingUpgrade(classes);
+        }
+      });
+    });
+    return total;
+  }, [participants, isPrivateUpgrade]);
+
+  const subtotal = accommodationTotal + activitiesTotal + privateCoachingUpgradeTotal;
   const fees = priceBreakdown?.tax || 0;
   const discounts = 0; // Placeholder for future discounts
   const total = subtotal + fees - discounts;
@@ -163,38 +203,20 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
 
   if (isCollapsed) {
     return (
-      <div
-        className="flex items-center justify-between p-4 rounded-xl border"
-        style={{
-          backgroundColor: 'var(--brand-surface)',
-          borderColor: 'var(--brand-border)'
-        }}
-      >
-        <span className="text-[15px] font-semibold" style={{ color: 'var(--brand-text)' }}>
+      <div className="flex items-center justify-between p-4 rounded-xl border bg-white/80 backdrop-blur-md border-white/40">
+        <span className="text-base font-semibold text-black">
           {getText('prices.total', 'Total')}
         </span>
-        <span className="text-[20px] font-bold" style={{ color: 'var(--brand-gold)' }}>
+        <span className="text-xl font-bold text-amber-600">
           {formatCurrency(total, locale)}
         </span>
       </div>
     );
   }
 
-  return (
-    <div
-      className="rounded-2xl p-3 md:p-4 border lg:sticky lg:top-6"
-      style={{
-        backgroundColor: 'var(--brand-surface)',
-        borderColor: 'var(--brand-border)'
-      }}
-      role="complementary"
-      aria-label="Booking Summary"
-    >
-      {/* PASS 2: mb-4 → mb-3, text-[18px] → text-[16px] */}
-      <h3
-        className="text-[16px] font-semibold mb-3 font-heading"
-        style={{ color: 'var(--brand-text)' }}
-      >
+  const content = (
+    <>
+      <h3 className="text-base md:text-lg font-semibold mb-3 font-heading text-black">
         {getText('prices.summary', 'Price Summary')}
       </h3>
 
@@ -205,34 +227,22 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
           <li>
             <div className="flex justify-between items-start">
               <div className="flex-1 pr-4">
-                <div
-                  className="text-[15px] font-medium"
-                  style={{ color: 'var(--brand-text)' }}
-                >
+                <div className="text-sm md:text-base font-medium text-black">
                   {selectedRoom.roomTypeName}
                   {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
-                    <span
-                      className="text-[13px] ml-1 font-normal"
-                      style={{ color: 'var(--brand-text-dim)' }}
-                    >
+                    <span className="text-xs md:text-sm ml-1 font-normal text-[#8c8179]">
                       ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
                     </span>
                   )}
                 </div>
-                <div
-                  className="text-[12px] mt-1"
-                  style={{ color: 'var(--brand-text-dim)' }}
-                >
+                <div className="text-xs mt-1 text-[#8c8179]">
                   {selectedRoom.isSharedRoom
                     ? `${bookingData.guests} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                     : `${nights} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                   }
                 </div>
               </div>
-              <div
-                className="text-[15px] font-medium text-right"
-                style={{ color: 'var(--brand-text)' }}
-              >
+              <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
                 {formatCurrency(accommodationTotal, locale)}
               </div>
             </div>
@@ -244,46 +254,65 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
           const { activity, participant, price, packageInfo } = selection;
           const showParticipantName = participants.length > 1;
 
+          // For surf activities, show program name instead of generic activity name
+          let displayName = activity.name;
+          if (activity.category === 'surf') {
+            const surfClasses = participant.selectedSurfClasses[activity.id];
+            const classes = surfClasses !== undefined ? surfClasses : 4;
+            const programId = surfClassesToProgram(classes);
+            const program = SURF_PROGRAMS[programId];
+            displayName = program.name[locale === 'en' ? 'en' : 'es'];
+          }
+
           return (
             <li key={`${participant.id}-${activity.id}-${index}`}>
               <div className="flex justify-between items-start">
                 <div className="flex-1 pr-4">
-                  <div
-                    className="text-[15px] font-medium"
-                    style={{ color: 'var(--brand-text)' }}
-                  >
-                    {activity.name}
-                    {packageInfo && (
-                      <span
-                        className="text-[12px] ml-2 px-2 py-1 rounded-full"
-                        style={{
-                          backgroundColor: 'color-mix(in srgb, var(--brand-aqua) 20%, transparent)',
-                          color: 'var(--brand-aqua)'
-                        }}
-                      >
+                  <div className="text-sm md:text-base font-medium text-black">
+                    {displayName}
+                    {packageInfo && activity.category !== 'surf' && (
+                      <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-600">
                         {packageInfo.replace('-', ' ')}
                       </span>
                     )}
                   </div>
                   {showParticipantName && (
-                    <div
-                      className="text-[12px] mt-1"
-                      style={{ color: 'var(--brand-text-dim)' }}
-                    >
+                    <div className="text-xs mt-1 text-[#8c8179]">
                       {participant.name}
                     </div>
                   )}
                 </div>
-                <div
-                  className="text-[15px] font-medium text-right"
-                  style={{ color: 'var(--brand-text)' }}
-                >
+                <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
                   {formatCurrency(price, locale)}
                 </div>
               </div>
             </li>
           );
         })}
+
+        {/* 1:1 Private Coaching Upgrade - shown as separate line if selected */}
+        {isPrivateUpgrade && privateCoachingUpgradeTotal > 0 && (
+          <li>
+            <div className="flex justify-between items-start">
+              <div className="flex-1 pr-4">
+                <div className="text-sm md:text-base font-medium text-black">
+                  {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
+                  <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-600">
+                    {locale === 'es' ? 'Mejora' : 'Upgrade'}
+                  </span>
+                </div>
+                {participants.length > 1 && (
+                  <div className="text-xs mt-1 text-[#8c8179]">
+                    {locale === 'es' ? 'Para todos los participantes' : 'For all participants'}
+                  </div>
+                )}
+              </div>
+              <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
+                {formatCurrency(privateCoachingUpgradeTotal, locale)}
+              </div>
+            </div>
+          </li>
+        )}
       </ul>
 
       {/* PASS 2: mb-4 → mb-3 */}
@@ -291,11 +320,7 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
         <div className="flex justify-end mb-3">
           <button
             onClick={() => setCurrentStep('activities')}
-            className="text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent hover:bg-[color-mix(in_srgb,var(--brand-gold)_10%,transparent)] transition-colors"
-            style={{
-              color: 'var(--brand-gold)',
-              borderColor: 'var(--brand-gold)'
-            }}
+            className="text-[12px] font-medium px-3 py-1 rounded-full border border-amber-400 bg-transparent hover:bg-amber-50 transition-colors text-amber-600"
           >
             {getText('activities.edit', 'Edit Activities')}
           </button>
@@ -305,21 +330,12 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       {/* PASS 2: mb-2.5 → mb-2, mb-4 → mb-3 */}
       {((accommodationTotal > 0) && (activitiesTotal > 0)) && (
         <>
-          <div
-            className="h-px mb-2"
-            style={{ backgroundColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
-          />
+          <div className="h-px mb-2 bg-gray-200" />
           <div className="flex justify-between items-center mb-3">
-            <span
-              className="text-[14px] font-medium"
-              style={{ color: 'var(--brand-text-dim)' }}
-            >
+            <span className="text-[14px] font-medium text-black">
               {getText('prices.subtotal', 'Subtotal')}
             </span>
-            <span
-              className="text-[14px] font-medium text-right"
-              style={{ color: 'var(--brand-text)' }}
-            >
+            <span className="text-[14px] font-medium text-right text-[#8c8179]">
               {formatCurrency(subtotal, locale)}
             </span>
           </div>
@@ -329,16 +345,10 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       {/* PASS 2: mb-4 → mb-3 */}
       {fees > 0 && (
         <div className="flex justify-between items-center mb-3">
-          <span
-            className="text-[14px] font-medium"
-            style={{ color: 'var(--brand-text-dim)' }}
-          >
+          <span className="text-[14px] font-medium text-black">
             {getText('prices.tax', 'Taxes & Fees')}
           </span>
-          <span
-            className="text-[14px] font-medium text-right"
-            style={{ color: 'var(--brand-text)' }}
-          >
+          <span className="text-[14px] font-medium text-right text-[#8c8179]">
             {formatCurrency(fees, locale)}
           </span>
         </div>
@@ -347,16 +357,10 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       {/* PASS 2: mb-4 → mb-3 */}
       {discounts > 0 && (
         <div className="flex justify-between items-center mb-3">
-          <span
-            className="text-[14px] font-medium"
-            style={{ color: 'var(--brand-text-dim)' }}
-          >
+          <span className="text-[14px] font-medium text-black">
             {getText('prices.discount', 'Discount')}
           </span>
-          <span
-            className="text-[14px] font-medium text-right"
-            style={{ color: 'var(--brand-aqua)' }}
-          >
+          <span className="text-[14px] font-medium text-right text-amber-600">
             −{formatCurrency(discounts, locale)}
           </span>
         </div>
@@ -364,21 +368,12 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
 
       {/* PASS 2: pt-4 → pt-3 */}
       {(accommodationTotal > 0 || activitiesTotal > 0) && (
-        <div
-          className="border-t pt-3"
-          style={{ borderColor: 'color-mix(in srgb, var(--brand-border) 50%, transparent)' }}
-        >
+        <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between items-center" aria-live="polite">
-            <span
-              className="text-[18px] font-semibold"
-              style={{ color: 'var(--brand-text)' }}
-            >
+            <span className="text-[18px] font-semibold text-black">
               {getText('prices.total', 'Total')}
             </span>
-            <span
-              className="text-[24px] font-bold text-right"
-              style={{ color: 'var(--brand-gold)' }}
-            >
+            <span className="text-[24px] font-bold text-right text-amber-600">
               {formatCurrency(total, locale)}
             </span>
           </div>
@@ -389,10 +384,7 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       {!bookingData.checkIn && !bookingData.checkOut && activitiesTotal === 0 && (
         <div className="text-center py-8">
           <div className="text-[32px] mb-3">📅</div>
-          <p
-            className="text-[15px]"
-            style={{ color: 'var(--brand-text-dim)' }}
-          >
+          <p className="text-[15px] text-black">
             {getText('prices.selectDatesToStart', 'Select dates to see pricing')}
           </p>
         </div>
@@ -401,14 +393,33 @@ export default function PriceSummary({ isCollapsed = false }: { isCollapsed?: bo
       {bookingData.checkIn && bookingData.checkOut && !selectedRoom && activitiesTotal === 0 && (
         <div className="text-center py-8">
           <div className="text-[32px] mb-3">🏠</div>
-          <p
-            className="text-[15px]"
-            style={{ color: 'var(--brand-text-dim)' }}
-          >
+          <p className="text-[15px] text-black">
             {getText('prices.selectAccommodationToSeeTotal', 'Select accommodation to see total')}
           </p>
         </div>
       )}
+    </>
+  );
+
+  if (showContainer) {
+    return (
+      <div
+        className="rounded-2xl p-3 md:p-4 border bg-white/80 backdrop-blur-md border-white/40"
+        role="complementary"
+        aria-label="Booking Summary"
+      >
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="lg:sticky lg:top-6"
+      role="complementary"
+      aria-label="Booking Summary"
+    >
+      {content}
     </div>
   );
 }

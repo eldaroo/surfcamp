@@ -37,27 +37,29 @@ const YOGA_CLASSES_RANGE = { min: 1, max: 15 } as const;
 const SURF_PROGRAMS = {
   fundamental: {
     id: 'fundamental',
-    name: { es: 'Programa de Surf de 4 Días', en: '4-Day Surf Coaching Program' },
+    name: { es: 'Core Surf Program', en: 'Core Surf Program' },
     tagline: {
       es: 'Inicio rápido, base sólida, coaching personalizado',
       en: 'Fast start, strong foundation, personalized coaching'
     },
-    price: 420,
+    price: 450,
     sessions: 4,
     includes: {
       es: [
         '4 sesiones de surf',
-        'Feedback en video',
+        '2 sesiones de videoanálisis',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
-        'Sesión de fotos'
+        'Sesión de fotos',
+        'Plan de continuidad'
       ],
       en: [
         '4 surf sessions',
-        'Video feedback',
+        '2 video analysis sessions',
         'Gear (board + lycra)',
         'Surf theory',
-        'Photo session'
+        'Photo session',
+        'Continuity plan'
       ]
     },
     sessionWork: {
@@ -77,17 +79,17 @@ const SURF_PROGRAMS = {
   },
   progressionPlus: {
     id: 'progressionPlus',
-    name: { es: 'Programa de Surf de 7 Días', en: '7-Day Surf Coaching Program' },
+    name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
     tagline: {
       es: 'Progreso consistente mediante repetición, coaching y feedback',
       en: 'Consistent progress through repetition, coaching and feedback'
     },
-    price: 670,
-    sessions: 7,
+    price: 650,
+    sessions: 6,
     includes: {
       es: [
-        '7 sesiones de surf',
-        'Análisis regular de video',
+        '6 sesiones de surf',
+        '4 sesiones de videoanálisis',
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
@@ -95,8 +97,8 @@ const SURF_PROGRAMS = {
         'Plan de práctica final'
       ],
       en: [
-        '7 surf sessions',
-        'Regular video analysis',
+        '6 surf sessions',
+        '4 video analysis sessions',
         'Transport to nearby surf spots',
         'Gear (board + lycra)',
         'Surf theory',
@@ -121,17 +123,17 @@ const SURF_PROGRAMS = {
   },
   highPerformance: {
     id: 'highPerformance',
-    name: { es: 'Programa de Alto Rendimiento de 10 Días', en: '10-Day High-Performance Program' },
+    name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
     tagline: {
       es: 'Transformación técnica profunda y análisis de alta calidad',
       en: 'Deep technical transformation and high-quality analysis'
     },
     price: 910,
-    sessions: 10,
+    sessions: 8,
     includes: {
       es: [
-        '10 sesiones de surf',
-        'Análisis avanzado de video',
+        '8 sesiones de surf',
+        '5 sesiones de videoanálisis avanzado',
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
@@ -139,8 +141,8 @@ const SURF_PROGRAMS = {
         'Revisión final extendida'
       ],
       en: [
-        '10 surf sessions',
-        'Advanced video analysis',
+        '8 surf sessions',
+        '5 advanced video analysis sessions',
         'Transport to nearby surf spots',
         'Gear (board + lycra)',
         'Surf theory',
@@ -172,8 +174,8 @@ const COACHING_METHOD = {
     en: 'Our Integrated Surf Coaching Method'
   },
   subtitle: {
-    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA — toda esta experiencia se integra en cada sesión.',
-    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges — all this expertise is integrated into every session.'
+    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA — toda esta experiencia se integra en cada sesión. Todos los programas se adaptan a tu nivel, sin restricciones — las sesiones ocurren con un máximo de 2-3 personas por coach.',
+    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges — all this expertise is integrated into every session. All programs adapt to your level, no restrictions — sessions occur with a maximum of 2-3 people per coach.'
   },
   pillars: [
     {
@@ -220,6 +222,7 @@ type ActivityCardProps = {
   onYogaPackDiscountChange?: (value: boolean) => void;
   surfProgram?: 'fundamental' | 'progressionPlus' | 'highPerformance';
   onSurfProgramChange?: (value: 'fundamental' | 'progressionPlus' | 'highPerformance') => void;
+  onShowPrivateCoachingModal?: () => void;
   hasQuantitySelector?: boolean;
   quantity?: number;
   onQuantityChange?: (value: number) => void;
@@ -564,6 +567,7 @@ const ActivityCard = ({
   onYogaPackDiscountChange,
   surfProgram,
   onSurfProgramChange,
+  onShowPrivateCoachingModal,
   hasQuantitySelector,
   quantity = 1,
   onQuantityChange,
@@ -678,6 +682,11 @@ const ActivityCard = ({
     await new Promise(resolve => setTimeout(resolve, 600));
 
     setIsChoosing(false);
+
+    // Show private coaching modal for surf activities
+    if (isSurf && onShowPrivateCoachingModal) {
+      onShowPrivateCoachingModal();
+    }
 
     // Auto-advance to next activity
     if (onAutoAdvance) {

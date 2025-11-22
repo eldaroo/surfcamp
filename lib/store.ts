@@ -44,6 +44,7 @@ interface BookingStore {
   selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // deprecated - for backwards compatibility
   selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>; // activityId -> surfPackage
   selectedSurfClasses: Record<string, number>; // activityId -> number of classes
+  isPrivateUpgrade: boolean; // Whether user selected 1:1 private coaching upgrade
 
   personalizationName: string;
   priceBreakdown: PriceBreakdown | null;
@@ -84,6 +85,7 @@ interface BookingStore {
   setSelectedYogaPackage: (activityId: string, yogaPackage: '1-class' | '3-classes' | '10-classes') => void; // deprecated
   setSelectedSurfPackage: (activityId: string, surfPackage: '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes') => void;
   setSelectedSurfClasses: (activityId: string, classes: number) => void;
+  setIsPrivateUpgrade: (isUpgrade: boolean) => void;
   setPersonalizationName: (name: string) => void;
 
   setPriceBreakdown: (breakdown: PriceBreakdown | null) => void;
@@ -131,6 +133,7 @@ const initialState = {
   selectedYogaPackages: {},
   selectedSurfPackages: {},
   selectedSurfClasses: {},
+  isPrivateUpgrade: false,
   personalizationName: '',
   priceBreakdown: null,
   availabilityCheck: null,
@@ -670,7 +673,11 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         participants: updatedParticipants,
       };
     }),
-  
+
+  setIsPrivateUpgrade: (isUpgrade) =>
+    set(() => ({
+      isPrivateUpgrade: isUpgrade,
+    })),
 
   setPersonalizationName: (name) =>
     set((state) => {
