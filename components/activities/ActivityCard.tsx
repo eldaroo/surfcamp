@@ -1551,33 +1551,33 @@ const ActivityCard = ({
 
             {/* PASS 2: pt-3/4 → pt-2.5/3, space-y-2/3 → space-y-1.5/2.5 */}
             {isSurf && ratingValue && (
-              <div className="w-full pt-2.5 md:pt-3 border-t border-[white]/30 space-y-1.5 md:space-y-2.5">
+              <div className="w-full mt-3 md:mt-4 p-3 md:p-4 bg-amber-400/10 border-2 border-amber-400/30 rounded-xl space-y-2 md:space-y-3">
                 {/* Rating */}
                 <div className="flex items-center justify-center gap-2">
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className="h-3.5 md:h-4 w-3.5 md:w-4 fill-amber-300 text-amber-300"
+                        className="h-4 md:h-5 w-4 md:w-5 fill-amber-400 text-amber-400"
                       />
                     ))}
                   </div>
-                  <span className="text-xs md:text-sm font-semibold text-slate-100">{ratingValue}</span>
-                  <span className="text-[10px] md:text-xs text-[#8c8179]">({reviewsText})</span>
+                  <span className="text-sm md:text-base font-bold text-black">{ratingValue}</span>
+                  <span className="text-xs md:text-sm text-[#8c8179] font-medium">({reviewsText})</span>
                 </div>
 
                 {/* Testimonial */}
                 {testimonials && (
                   <div className="space-y-2.5">
-                    <p className="text-xs md:text-sm leading-relaxed text-black/80 font-light italic text-center">
+                    <p className="text-xs md:text-sm leading-relaxed text-black font-light italic text-center">
                       &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
                     </p>
                     {/* Author & Country */}
                     <div className="flex flex-col items-center gap-0.5">
-                      <p className="text-[11px] md:text-xs font-semibold text-amber-300/90">
+                      <p className="text-xs md:text-sm font-semibold text-black">
                         {testimonials[currentTestimonialIndex].author}
                       </p>
-                      <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-[#8c8179] font-medium">
+                      <p className="text-[10px] md:text-xs uppercase tracking-wider text-[#8c8179] font-medium">
                         {testimonials[currentTestimonialIndex].country}
                       </p>
                     </div>
@@ -1593,8 +1593,8 @@ const ActivityCard = ({
                           }}
                           className={`h-1.5 rounded-full transition-all ${
                             idx === currentTestimonialIndex
-                              ? "bg-amber-300 w-4"
-                              : "bg-slate-600 w-1.5 hover:bg-slate-500"
+                              ? "bg-amber-400 w-4"
+                              : "bg-gray-400 w-1.5 hover:bg-gray-500"
                           }`}
                           aria-label={`Go to testimonial ${idx + 1}`}
                         />

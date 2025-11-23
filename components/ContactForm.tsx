@@ -445,6 +445,12 @@ const priceBreakdown = useMemo(
       return;
     }
 
+    // Validate that dates exist
+    if (!bookingData.checkIn || !bookingData.checkOut) {
+      setPaymentError(locale === 'es' ? 'Por favor selecciona las fechas de check-in y check-out' : 'Please select check-in and check-out dates');
+      return;
+    }
+
     // Save contact info
     setBookingData({
       ...bookingData,
@@ -514,7 +520,8 @@ const priceBreakdown = useMemo(
         `);
       }
 
-      const formatDateForAPI = (date: Date | string) => {
+      const formatDateForAPI = (date: Date | string | undefined) => {
+        if (!date) return '';
         if (typeof date === 'string') return date;
         return date.toISOString().split('T')[0];
       };
