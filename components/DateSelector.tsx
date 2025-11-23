@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -77,7 +77,7 @@ export default function DateSelector() {
   } = useBookingStore();
 
   // Get activity price with package info for a specific participant
-  const getActivityDetailsForParticipant = (activity: any, participant: any) => {
+  const getActivityDetailsForParticipant = useCallback((activity: any, participant: any) => {
     let price = 0;
     let packageInfo = '';
 
@@ -100,7 +100,7 @@ export default function DateSelector() {
     }
 
     return { price, packageInfo };
-  };
+  }, [isPrivateUpgrade]);
 
   console.log('🏠 [DateSelector] Render - availableRooms:', availableRooms);
   console.log('🏠 [DateSelector] Render - availableRooms length:', availableRooms?.length);
