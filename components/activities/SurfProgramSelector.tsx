@@ -176,12 +176,11 @@ export default function SurfProgramSelector({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 + index * 0.1 }}
             className={`rounded-2xl p-6 md:p-8 border-2 transition-all cursor-pointer ${
-              selectedProgram === program.id ? 'ring-2 ring-offset-2' : ''
+              selectedProgram === program.id ? 'ring-2 ring-offset-2 ring-[var(--brand-gold)]' : ''
             }`}
             style={{
               backgroundColor: 'var(--brand-surface)',
               borderColor: selectedProgram === program.id ? 'var(--brand-gold)' : 'var(--brand-border)',
-              ringColor: selectedProgram === program.id ? 'var(--brand-gold)' : undefined,
             }}
             onClick={() => handleSelectProgram(program)}
           >
