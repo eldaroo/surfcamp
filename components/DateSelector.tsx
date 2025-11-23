@@ -339,7 +339,7 @@ export default function DateSelector() {
     });
 
     return selections;
-  }, [participantList]);
+  }, [participantList, getActivityDetailsForParticipant]);
 
   // Calculate totals
   const accommodationTotal = selectedRoom && nights > 0

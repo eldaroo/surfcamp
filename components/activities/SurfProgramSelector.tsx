@@ -203,7 +203,7 @@ export default function SurfProgramSelector({
                 className="text-sm md:text-base mb-4 italic"
                 style={{ color: 'var(--brand-text)' }}
               >
-                "{program.tagline}"
+                &ldquo;{program.tagline}&rdquo;
               </p>
               <div className="flex items-baseline gap-2">
                 <span

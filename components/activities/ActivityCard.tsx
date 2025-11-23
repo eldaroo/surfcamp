@@ -1627,9 +1627,9 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center justify-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
+                    className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
                   >
-                    <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
+                    <ArrowLeft className="h-4 w-4 text-gray-600" />
                     <span>{copy.back}</span>
                   </motion.button>
                 )}
@@ -1671,9 +1671,9 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
               >
-                <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
+                <ArrowLeft className="h-4 w-4 text-gray-600" />
                 <span>{copy.back}</span>
               </motion.button>
             )}
@@ -1699,9 +1699,9 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-[#8c8179] hover:text-black transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
               >
-                <ArrowLeft className="h-4 w-4 text-[#8c8179]" />
+                <ArrowLeft className="h-4 w-4 text-gray-600" />
                 <span>{copy.back}</span>
               </motion.button>
             ) : (

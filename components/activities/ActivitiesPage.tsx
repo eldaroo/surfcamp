@@ -272,6 +272,7 @@ const ActivitiesPage = () => {
       selectedTimeSlots,
       setSelectedTimeSlot,
       activeParticipantId,
+      storeParticipants,
     ]
   );
 
@@ -297,7 +298,7 @@ const ActivitiesPage = () => {
 
   const handleAcceptPrivateCoaching = useCallback(() => {
     setIsPrivateUpgrade(true);
-  }, []);
+  }, [setIsPrivateUpgrade]);
 
   const handleClosePrivateCoachingModal = useCallback(() => {
     setShowPrivateCoachingModal(false);
@@ -387,6 +388,7 @@ const ActivitiesPage = () => {
       selectedSurfClasses,
       yogaClasses,
       yogaUsePackDiscount,
+      isPrivateUpgrade,
     ]
   );
 
