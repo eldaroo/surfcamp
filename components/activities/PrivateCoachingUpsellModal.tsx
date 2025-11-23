@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check } from "lucide-react";
 
@@ -54,27 +56,40 @@ export default function PrivateCoachingUpsellModal({
   upgradePrice
 }: PrivateCoachingUpsellModalProps) {
   const CONTENT = getContent(upgradePrice);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state for portal (SSR safety)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleAccept = () => {
     onAccept();
     onClose();
   };
 
-  return (
+  if (!isMounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
+            data-modal-id="private-coaching-modal-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
             onClick={onClose}
+            style={{ pointerEvents: 'auto' }}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+          <div
+            data-modal-id="private-coaching-modal"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -151,6 +166,7 @@ export default function PrivateCoachingUpsellModal({
           </div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

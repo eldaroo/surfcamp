@@ -89,6 +89,7 @@ const AccommodationCard = ({
   onSelect,
   getFeatureChipStyle,
 }: AccommodationCardProps) => {
+  console.log('[ACCOMMODATION CARD] Rendering, lightboxOpen:', useState(false)[0]);
   const { t } = useI18n();
   const [isFlipped, setIsFlipped] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -102,12 +103,15 @@ const AccommodationCard = ({
   const visibleFeatures = features.slice(0, 3);
   const hiddenCount = features.length - 3;
 
+  console.log('[ACCOMMODATION CARD] State:', {
+    isFlipped,
+    lightboxOpen,
+    lightboxImageIndex,
+    lightboxDimensions,
+    isClient
+  });
+
   const handleFlip = () => {
-    console.log('[AccommodationCard] handleFlip', {
-      isUnavailable,
-      currentFlipped: isFlipped,
-      ignoreNext: ignoreNextFlipRef.current,
-    });
     if (ignoreNextFlipRef.current) {
       ignoreNextFlipRef.current = false;
       return;
@@ -122,29 +126,23 @@ const AccommodationCard = ({
 
   const openLightbox = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('[AccommodationCard] openLightbox', { index });
+    console.log('[LIGHTBOX] Opening lightbox at index:', index);
     setLightboxImageIndex(index);
     setLightboxOpen(true);
   };
 
   const closeLightbox = () => {
-    console.log('[AccommodationCard] closeLightbox');
+    console.log('[LIGHTBOX] Closing lightbox');
     setLightboxOpen(false);
   };
 
   const nextLightboxImage = () => {
-    console.log('[AccommodationCard] nextLightboxImage', {
-      previousIndex: lightboxImageIndex,
-      nextIndex: (lightboxImageIndex + 1) % gallery.length,
-    });
+    console.log('[LIGHTBOX] Next image');
     setLightboxImageIndex((prev) => (prev + 1) % gallery.length);
   };
 
   const prevLightboxImage = () => {
-    console.log('[AccommodationCard] prevLightboxImage', {
-      previousIndex: lightboxImageIndex,
-      nextIndex: (lightboxImageIndex - 1 + gallery.length) % gallery.length,
-    });
+    console.log('[LIGHTBOX] Previous image');
     setLightboxImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
   };
 
@@ -153,15 +151,20 @@ const AccommodationCard = ({
   }, []);
 
   useEffect(() => {
+    console.log('[LIGHTBOX EFFECT] Running, lightboxOpen:', lightboxOpen);
     if (!lightboxOpen) return undefined;
 
     const previousOverflow = document.body.style.overflow;
+    const previousPointerEvents = document.body.style.pointerEvents;
+
     document.body.style.overflow = 'hidden';
-    console.log('[AccommodationCard] lightbox effect mounted');
+    document.body.style.pointerEvents = 'none'; // Disable pointer events on body
+    console.log('[LIGHTBOX EFFECT] Disabled pointer-events on body');
 
     const aspectRatio = 16 / 10;
 
     const computeDimensions = () => {
+      console.log('[LIGHTBOX] Computing dimensions');
       const maxWidth = Math.min(window.innerWidth - 64, 1280);
       const maxHeight = window.innerHeight - 120;
 
@@ -178,46 +181,52 @@ const AccommodationCard = ({
 
       setLightboxDimensions((prev) => {
         if (prev && prev.width === roundedWidth && prev.height === roundedHeight) {
+          console.log('[LIGHTBOX] Dimensions unchanged:', prev);
           return prev;
         }
-        console.log('[AccommodationCard] computeDimensions', {
-          width: roundedWidth,
-          height: roundedHeight,
-          windowWidth: window.innerWidth,
-          windowHeight: window.innerHeight,
-        });
+        console.log('[LIGHTBOX] Setting new dimensions:', { width: roundedWidth, height: roundedHeight });
         return { width: roundedWidth, height: roundedHeight };
       });
     };
 
+    // Add global mouse move listener to detect hover issues
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (lightboxOverlayRef.current && !lightboxOverlayRef.current.contains(target)) {
+        console.log('[LIGHTBOX HOVER ISSUE] Mouse over element outside lightbox:', {
+          tagName: target.tagName,
+          className: target.className,
+          id: target.id
+        });
+      }
+    };
+
     computeDimensions();
     window.addEventListener('resize', computeDimensions);
+    document.addEventListener('mousemove', handleGlobalMouseMove);
 
     return () => {
+      console.log('[LIGHTBOX EFFECT] Cleanup - Restoring pointer-events on body');
       document.body.style.overflow = previousOverflow;
+      document.body.style.pointerEvents = previousPointerEvents;
       window.removeEventListener('resize', computeDimensions);
-      console.log('[AccommodationCard] lightbox effect cleaned up');
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [lightboxOpen, lightboxImageIndex]);
-
-  useEffect(() => {
-    console.log('[AccommodationCard] isFlipped state changed', { isFlipped });
-  }, [isFlipped]);
-
-  useEffect(() => {
-    console.log('[AccommodationCard] lightboxOpen state changed', { lightboxOpen });
   }, [lightboxOpen]);
 
   useEffect(() => {
-    if (lightboxDimensions) {
-      console.log('[AccommodationCard] lightboxDimensions updated', lightboxDimensions);
-    }
-  }, [lightboxDimensions]);
-
-  useEffect(() => {
+    console.log('[CLICK OUTSIDE EFFECT] Running, isFlipped:', isFlipped, 'lightboxOpen:', lightboxOpen);
     if (!isFlipped) return;
 
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      console.log('[CLICK OUTSIDE] Event fired, lightboxOpen:', lightboxOpen);
+
+      // Don't close if lightbox is open
+      if (lightboxOpen) {
+        console.log('[CLICK OUTSIDE] Ignoring - lightbox is open');
+        return;
+      }
+
       const target = event.target as Node | null;
       if (
         !target ||
@@ -227,12 +236,7 @@ const AccommodationCard = ({
         return;
       }
 
-      console.log('[AccommodationCard] handleClickOutside', {
-        lightboxOpen,
-        hasCardRef: Boolean(cardRef.current),
-        hasOverlayRef: Boolean(lightboxOverlayRef.current),
-      });
-
+      console.log('[CLICK OUTSIDE] Closing card');
       if (cardRef.current) {
         ignoreNextFlipRef.current = true;
         setLightboxOpen(false);
@@ -245,12 +249,11 @@ const AccommodationCard = ({
 
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchstart', handleClickOutside);
-    console.log('[AccommodationCard] registered outside click handler');
 
     return () => {
+      console.log('[CLICK OUTSIDE EFFECT] Cleanup');
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
-      console.log('[AccommodationCard] removed outside click handler');
     };
   }, [isFlipped, lightboxOpen]);
 
@@ -268,7 +271,9 @@ const AccommodationCard = ({
         style={{
           perspective: '1000px',
           height: 'auto',
-          isolation: 'isolate'
+          isolation: 'isolate',
+          // Disable pointer events when lightbox is open
+          pointerEvents: lightboxOpen ? 'none' : 'auto'
         }}
       >
         <motion.div
@@ -623,8 +628,12 @@ const AccommodationCard = ({
       {isClient && lightboxOpen && gallery.length > 0 && createPortal(
         <div
           ref={lightboxOverlayRef}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:p-8"
-          onClick={closeLightbox}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4 md:p-8"
+          onClick={(e) => {
+            console.log('[LIGHTBOX OVERLAY] Clicked');
+            closeLightbox();
+          }}
+          style={{ pointerEvents: 'auto', isolation: 'isolate' }}
         >
           {/* Compact Container - Auto-adjusts to image */}
           <div

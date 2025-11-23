@@ -722,12 +722,94 @@ const ActivitiesPage = () => {
   // Get active participant info
   const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
 
+  // Check if any modal is open
+  const isAnyModalOpen = deleteConfirmId !== null || showTravelingWithModal || showAccommodationModal || showPrivateCoachingModal;
+
+  // Add global mouse move listener to detect hover issues when any modal is open
+  // Also disable pointer-events on body to prevent hover effects on background elements
+  useEffect(() => {
+    console.log('[ACTIVITIES PAGE] isAnyModalOpen:', isAnyModalOpen, {
+      deleteConfirmId,
+      showTravelingWithModal,
+      showAccommodationModal,
+      showPrivateCoachingModal
+    });
+
+    if (!isAnyModalOpen) return;
+
+    // Store original pointer-events value
+    const originalBodyPointerEvents = document.body.style.pointerEvents;
+    const originalHtmlPointerEvents = document.documentElement.style.pointerEvents;
+
+    // Disable pointer-events on body and html (except for modal children rendered via portal)
+    document.body.style.pointerEvents = 'none';
+    document.documentElement.style.pointerEvents = 'none';
+    console.log('[ACTIVITIES PAGE] Disabled pointer-events on body and html');
+
+    let lastLogTime = 0;
+    const LOG_THROTTLE_MS = 500; // Only log once every 500ms to avoid spam
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const now = Date.now();
+      const target = e.target as HTMLElement;
+
+      // Check if mouse is inside any modal using data attributes
+      const isInsideModal = target.closest('[data-modal-id="private-coaching-modal"]') ||
+                           target.closest('[data-modal-id="private-coaching-modal-backdrop"]') ||
+                           target.closest('[data-modal-id="surf-image-modal"]') ||
+                           target.closest('[data-modal-id]'); // Any other modal with data-modal-id
+
+      // Log if outside modals (throttled)
+      if (!isInsideModal && now - lastLogTime > LOG_THROTTLE_MS) {
+        console.log('[ACTIVITIES PAGE HOVER ISSUE] Mouse over element outside modals while modal is open:', {
+          tagName: target.tagName,
+          className: target.className,
+          id: target.id,
+          pointerEvents: window.getComputedStyle(target).pointerEvents,
+          modals: {
+            deleteConfirmId,
+            showTravelingWithModal,
+            showAccommodationModal,
+            showPrivateCoachingModal
+          }
+        });
+
+        // Check elements at mouse position
+        const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
+        console.log('[ACTIVITIES PAGE] Elements at mouse position (top to bottom):',
+          elementsAtPoint.slice(0, 5).map(el => ({
+            tag: el.tagName,
+            id: el.id || '(no id)',
+            classes: el.className ? (typeof el.className === 'string' ? el.className.split(' ').slice(0, 3).join(' ') : '(object)') : '(no class)',
+            dataModalId: el.getAttribute('data-modal-id')
+          }))
+        );
+
+        lastLogTime = now;
+      }
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+
+    return () => {
+      console.log('[ACTIVITIES PAGE] Cleanup - Restoring pointer-events on body and html');
+      document.body.style.pointerEvents = originalBodyPointerEvents;
+      document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [isAnyModalOpen, deleteConfirmId, showTravelingWithModal, showAccommodationModal, showPrivateCoachingModal]);
+
   return (
     <div className="relative">
       {/* Overlay behind widgets */}
       <div className="absolute inset-0 bg-black/75 rounded-3xl -z-10"></div>
 
-      <div className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4">
+      <div
+        className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4"
+        style={{
+          pointerEvents: isAnyModalOpen ? 'none' : 'auto'
+        }}
+      >
         <HeaderPersonalization
         name={personalizationName}
         participants={participantCount}
@@ -1120,6 +1202,7 @@ const ActivitiesPage = () => {
               exit={{ opacity: 0 }}
               onClick={() => setDeleteConfirmId(null)}
               className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              style={{ pointerEvents: 'auto' }}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -1186,6 +1269,7 @@ const ActivitiesPage = () => {
               exit={{ opacity: 0 }}
               onClick={() => setShowTravelingWithModal(false)}
               className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              style={{ pointerEvents: 'auto' }}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -1315,6 +1399,7 @@ const ActivitiesPage = () => {
               exit={{ opacity: 0 }}
               onClick={() => setShowAccommodationModal(false)}
               className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              style={{ pointerEvents: 'auto' }}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
