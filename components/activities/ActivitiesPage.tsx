@@ -122,8 +122,7 @@ const ActivitiesPage = () => {
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [showTravelingWithModal, setShowTravelingWithModal] = useState(false);
-  const [showAccommodationModal, setShowAccommodationModal] = useState(false);
-  const [needsAccommodation, setNeedsAccommodation] = useState(true); // true = needs to book, false = already has
+  const [needsAccommodation] = useState(true); // Accommodation is now mandatory
   const [isClient, setIsClient] = useState(false);
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | null>(
     storeParticipants[0]?.id || null
@@ -505,21 +504,8 @@ const ActivitiesPage = () => {
 
   const handleSkipAddPerson = () => {
     setShowTravelingWithModal(false);
-    // Show accommodation question modal
-    setShowAccommodationModal(true);
-  };
-
-  const handleAccommodationChoice = (needsAccom: boolean) => {
-    setNeedsAccommodation(needsAccom);
-    setShowAccommodationModal(false);
-
-    if (needsAccom) {
-      // User needs accommodation - continue to date selector
-      handleContinue();
-    } else {
-      // User already has accommodation - skip to contact form
-      setCurrentStep('contact');
-    }
+    // Accommodation is now mandatory, so continue directly
+    handleContinue();
   };
 
   const handleConfirmAddPerson = () => {
@@ -527,7 +513,8 @@ const ActivitiesPage = () => {
 
     // Safety check: don't add if we already have 2 participants
     if (storeParticipants.length >= 2) {
-      setShowAccommodationModal(true);
+      // Accommodation is now mandatory, so continue directly
+      handleContinue();
       return;
     }
 
@@ -723,7 +710,7 @@ const ActivitiesPage = () => {
   const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
 
   // Check if any modal is open
-  const isAnyModalOpen = deleteConfirmId !== null || showTravelingWithModal || showAccommodationModal || showPrivateCoachingModal;
+  const isAnyModalOpen = deleteConfirmId !== null || showTravelingWithModal || showPrivateCoachingModal;
 
   // Add global mouse move listener to detect hover issues when any modal is open
   // Also disable pointer-events on body to prevent hover effects on background elements
@@ -731,7 +718,6 @@ const ActivitiesPage = () => {
     console.log('[ACTIVITIES PAGE] isAnyModalOpen:', isAnyModalOpen, {
       deleteConfirmId,
       showTravelingWithModal,
-      showAccommodationModal,
       showPrivateCoachingModal
     });
 
@@ -769,7 +755,6 @@ const ActivitiesPage = () => {
           modals: {
             deleteConfirmId,
             showTravelingWithModal,
-            showAccommodationModal,
             showPrivateCoachingModal
           }
         });
@@ -797,7 +782,7 @@ const ActivitiesPage = () => {
       document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
       document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [isAnyModalOpen, deleteConfirmId, showTravelingWithModal, showAccommodationModal, showPrivateCoachingModal]);
+  }, [isAnyModalOpen, deleteConfirmId, showTravelingWithModal, showPrivateCoachingModal]);
 
   return (
     <div className="relative">
@@ -1384,69 +1369,6 @@ const ActivitiesPage = () => {
                       className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#8c8179] hover:bg-[white]/20 transition-all font-medium shadow-md hover:shadow-lg"
                     >
                       {locale === "es" ? "Saltar" : "Skip"}
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Accommodation Question Modal */}
-          {showAccommodationModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAccommodationModal(false)}
-              className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-2xl border border-gray-200 shadow-2xl p-6 md:p-8 max-w-md mx-4"
-              >
-                <div className="flex flex-col gap-6">
-                  {/* Icon */}
-                  <div className="flex justify-center">
-                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30">
-                      <svg className="h-8 w-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl md:text-2xl font-bold text-black text-center">
-                    {locale === "es" ? "¿Necesitas alojamiento?" : "Do you need accommodation?"}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-black text-sm md:text-base text-center">
-                    {locale === "es"
-                      ? "¿Ya tienes reservado tu alojamiento o necesitas reservar uno ahora en Zeneidas?"
-                      : "Do you already have your accommodation booked or do you need to book one now at Zeneidas?"}
-                  </p>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-3">
-                    <motion.button
-                      onClick={() => handleAccommodationChoice(true)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-black font-bold transition-all shadow-lg"
-                    >
-                      {locale === "es" ? "Sí, necesito reservar alojamiento" : "Yes, I need to book accommodation"}
-                    </motion.button>
-                    <motion.button
-                      onClick={() => handleAccommodationChoice(false)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full px-6 py-3.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-black transition-all font-medium"
-                    >
-                      {locale === "es" ? "No, ya tengo alojamiento" : "No, I already have accommodation"}
                     </motion.button>
                   </div>
                 </div>

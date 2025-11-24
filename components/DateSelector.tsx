@@ -357,274 +357,290 @@ export default function DateSelector() {
   const total = subtotal + fees;
 
   return (
-    <div className="py-3 px-4 pb-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-7xl mx-auto"
-      >
-        {/* Main white container for date selector and price summary */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-white/40 mb-6">
-          {/* Only show dates header when accommodation section is not visible */}
+    <div className="relative">
+      {/* Overlay behind widget */}
+      <div className="absolute inset-0 bg-black/75 rounded-3xl -z-10"></div>
+
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-3 md:py-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          {/* Header Section */}
           {!(hasRequestedAvailability && availableRooms && availableRooms.length > 0) && (
-            <div className="flex items-center space-x-4 mb-4">
-              <BackButton variant="minimal" />
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-black font-heading">{t('dates.title')}</h1>
-                <p className="text-sm md:text-base text-[#8c8179]">{t('dates.subtitle')}</p>
+            <div className="mb-5">
+              <div className="flex items-center gap-3 mb-4">
+                <BackButton variant="minimal" />
+              </div>
+              <div className="text-center">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                  className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
+                >
+                  <svg className="h-6 w-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </motion.div>
+                <h1 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">{t('dates.title')}</h1>
+                <p className="text-[#8c8179] text-sm md:text-base">{t('dates.subtitle')}</p>
               </div>
             </div>
           )}
 
-          <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-4 transition-all duration-300 ease-in-out`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
-          {/* Columna izquierda - Selector de fechas */}
-          {!isDateSelectorCollapsed ? (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="h-fit"
-            >
-              <div className="space-y-3">
-                {/* Date Pickers Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Check-in Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      {t('dates.checkIn')} *
-                    </label>
-                    <CustomDatePicker
-                      selected={checkInDate}
-                      onChange={(date) => {
-                        markAvailabilityAsStale();
-                        setBookingData({ checkIn: date || undefined });
-                      }}
-                      placeholderText={t('dates.checkIn')}
-                      minDate={new Date()}
-                    />
-                  </div>
+          {/* Main Content Container */}
+          <div className={`rounded-3xl border border-[white]/50 bg-[white]/70 shadow-xl overflow-visible mb-3 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`}>
+            <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+              {/* Columna izquierda - Selector de fechas */}
+              {!isDateSelectorCollapsed ? (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className={`p-4 md:p-6 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''} ${!isPriceSummaryCollapsed ? 'border-r border-[white]/50' : ''}`}
+                >
+                  <div className="space-y-4">
+                    {/* Date Pickers Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Check-in Date */}
+                      <div className="relative z-30">
+                        <label className="block text-xs font-semibold text-black/70 uppercase tracking-wider mb-2">
+                          {t('dates.checkIn')} *
+                        </label>
+                        <CustomDatePicker
+                          selected={checkInDate}
+                          onChange={(date) => {
+                            markAvailabilityAsStale();
+                            setBookingData({ checkIn: date || undefined });
+                          }}
+                          placeholderText={t('dates.checkIn')}
+                          minDate={new Date()}
+                        />
+                      </div>
 
-                  {/* Check-out Date */}
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      {t('dates.checkOut')} *
-                    </label>
-                    <CustomDatePicker
-                      selected={checkOutDate}
-                      onChange={(date) => {
-                        markAvailabilityAsStale();
-                        setBookingData({ checkOut: date || undefined });
-                      }}
-                      placeholderText={t('dates.checkOut')}
-                      minDate={checkInDate || new Date()}
-                    />
-                  </div>
-                </div>
-
-                {/* Guests Counter + Search Button Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {/* Guests Counter */}
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      {t('dates.guests')}
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <button
-                        type="button"
-                        disabled={guests <= participantCount}
-                        onClick={() => {
-                          const newGuests = Math.max(participantCount, guests - 1);
-                          markAvailabilityAsStale();
-                          setBookingData({ guests: newGuests });
-                        }}
-                        className={`w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors ${
-                          guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <span className="text-black">-</span>
-                      </button>
-                      <span className="text-2xl font-bold text-amber-400 w-12 text-center">
-                        {guests}
-                      </span>
-                      <button
-                        type="button"
-                        disabled={guests >= 2}
-                        onClick={() => {
-                          const newGuests = Math.min(2, guests + 1);
-                          markAvailabilityAsStale();
-                          setBookingData({ guests: newGuests });
-                        }}
-                        className={`w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center transition-colors ${
-                          guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-100'
-                        }`}
-                      >
-                        <span className="text-black">+</span>
-                      </button>
-                      <span className="text-black font-medium">
-                        {guests === 1 ? t('dates.guest') : t('dates.guests')}
-                      </span>
+                      {/* Check-out Date */}
+                      <div className="relative z-20">
+                        <label className="block text-xs font-semibold text-black/70 uppercase tracking-wider mb-2">
+                          {t('dates.checkOut')} *
+                        </label>
+                        <CustomDatePicker
+                          selected={checkOutDate}
+                          onChange={(date) => {
+                            markAvailabilityAsStale();
+                            setBookingData({ checkOut: date || undefined });
+                          }}
+                          placeholderText={t('dates.checkOut')}
+                          minDate={checkInDate || new Date()}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Check Availability Button */}
-                  <div className="flex flex-col justify-end">
-                    <motion.button
-                      type="button"
-                      onClick={handleAvailabilitySearch}
-                      disabled={loadingRooms || !bookingData.checkIn || !bookingData.checkOut}
-                      whileHover={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 1.02 }}
-                      whileTap={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 0.98 }}
-                      className={`w-full rounded-xl px-4 py-3 font-bold transition-all shadow-lg ${
-                        loadingRooms
-                          ? 'bg-gray-400 text-white cursor-not-allowed opacity-80'
-                          : !bookingData.checkIn || !bookingData.checkOut
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-amber-400 hover:bg-amber-500 text-black'
-                      }`}
-                    >
-                      {loadingRooms ? (
-                        <span className="flex items-center justify-center gap-2 text-sm">
-                          <span className="inline-flex h-4 w-4 items-center justify-center">
-                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                    {/* Guests Counter + Search Button Row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Guests Counter */}
+                      <div>
+                        <label className="block text-xs font-semibold text-black/70 uppercase tracking-wider mb-2">
+                          {t('dates.guests')}
+                        </label>
+                        <div className="flex items-center space-x-3">
+                          <button
+                            type="button"
+                            disabled={guests <= participantCount}
+                            onClick={() => {
+                              const newGuests = Math.max(participantCount, guests - 1);
+                              markAvailabilityAsStale();
+                              setBookingData({ guests: newGuests });
+                            }}
+                            className={`w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center transition-all shadow-sm ${
+                              guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/70 hover:border-amber-400/50'
+                            }`}
+                          >
+                            <span className="text-black text-lg font-bold">-</span>
+                          </button>
+                          <span className="text-2xl font-bold text-amber-400 w-12 text-center">
+                            {guests}
                           </span>
-                          {t('dates.searchingAvailability')}
-                        </span>
-                      ) : (
-                        <span className="whitespace-nowrap">{t('dates.searchAvailability')}</span>
-                      )}
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                {(bookingData.checkIn || bookingData.checkOut) && (
-                  <div className="bg-amber-50 rounded-xl p-4 border border-amber-200 relative">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-black mb-2 font-heading">{t('dates.summary.title')}</h3>
-                        <div className="space-y-1 text-sm">
-                          {bookingData.checkIn && (
-                            <div>
-                              <span className="text-black">{t('dates.summary.checkIn')}:</span>
-                              <span className="ml-2 font-medium text-[#8c8179]">
-                                {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric'
-                                })}
-                              </span>
-                            </div>
-                          )}
-                          {bookingData.checkOut && (
-                            <div>
-                              <span className="text-black">{t('dates.summary.checkOut')}:</span>
-                              <span className="ml-2 font-medium text-[#8c8179]">
-                                {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric'
-                                })}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <span className="text-black">{t('dates.summary.guests')}:</span>
-                            <span className="ml-2 font-medium text-[#8c8179]">{guests}</span>
-                          </div>
-                          {nights > 0 && (
-                            <div className="mt-2 text-sm text-amber-600 font-medium">
-                              {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                            </div>
-                          )}
+                          <button
+                            type="button"
+                            disabled={guests >= 2}
+                            onClick={() => {
+                              const newGuests = Math.min(2, guests + 1);
+                              markAvailabilityAsStale();
+                              setBookingData({ guests: newGuests });
+                            }}
+                            className={`w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center transition-all shadow-sm ${
+                              guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/70 hover:border-amber-400/50'
+                            }`}
+                          >
+                            <span className="text-black text-lg font-bold">+</span>
+                          </button>
+                          <span className="text-black font-medium text-sm">
+                            {guests === 1 ? t('dates.guest') : t('dates.guests')}
+                          </span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          markAvailabilityAsStale();
-                          setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
-                        }}
-                        className="px-3 py-1 rounded-md text-xs font-medium text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
-                      >
-                        {t('common.edit')}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {/* Error Message */}
-                {error && (
-                  <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-4">
-                    <p className="text-red-300 text-sm">{error}</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ) : (
-            /* Collapsed Date Selector - Compact Version */
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white/80 backdrop-blur-md rounded-2xl p-4 border border-white/40"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#8c8179]">{t('dates.checkIn')}:</span>
-                    <span className="text-sm font-medium text-black">
-                      {bookingData.checkIn && new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#8c8179]">{t('dates.checkOut')}:</span>
-                    <span className="text-sm font-medium text-black">
-                      {bookingData.checkOut && new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#8c8179]">{t('dates.guests')}:</span>
-                    <span className="text-sm font-medium text-black">{guests}</span>
-                  </div>
-                  {nights > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-amber-600 font-medium">
-                        {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                      </span>
+                      {/* Check Availability Button */}
+                      <div className="flex flex-col justify-end">
+                        <motion.button
+                          type="button"
+                          onClick={handleAvailabilitySearch}
+                          disabled={loadingRooms || !bookingData.checkIn || !bookingData.checkOut}
+                          whileHover={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 1.02 }}
+                          whileTap={{ scale: loadingRooms || !bookingData.checkIn || !bookingData.checkOut ? 1 : 0.98 }}
+                          className={`w-full rounded-xl px-6 py-3 font-bold transition-all shadow-lg ${
+                            loadingRooms
+                              ? 'bg-gray-400 text-white cursor-not-allowed opacity-80'
+                              : !bookingData.checkIn || !bookingData.checkOut
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-amber-300 to-amber-400 text-black hover:from-amber-200 hover:to-amber-300 shadow-amber-300/40'
+                          }`}
+                        >
+                          {loadingRooms ? (
+                            <span className="flex items-center justify-center gap-2 text-sm">
+                              <span className="inline-flex h-4 w-4 items-center justify-center">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                              </span>
+                              {t('dates.searchingAvailability')}
+                            </span>
+                          ) : (
+                            <span className="whitespace-nowrap">{t('dates.searchAvailability')}</span>
+                          )}
+                        </motion.button>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsDateSelectorCollapsed(false)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors whitespace-nowrap"
+
+                    {/* Summary */}
+                    {(bookingData.checkIn || bookingData.checkOut) && (
+                      <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-4 border border-white/40 relative">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-black mb-2 font-heading text-sm">{t('dates.summary.title')}</h3>
+                            <div className="space-y-1.5 text-sm">
+                              {bookingData.checkIn && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkIn')}:</span>
+                                  <span className="font-semibold text-black">
+                                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                              {bookingData.checkOut && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkOut')}:</span>
+                                  <span className="font-semibold text-black">
+                                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <span className="text-black/70 font-medium text-xs">{t('dates.summary.guests')}:</span>
+                                <span className="font-semibold text-black">{guests}</span>
+                              </div>
+                              {nights > 0 && (
+                                <div className="mt-2 text-sm text-amber-600 font-bold">
+                                  {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              markAvailabilityAsStale();
+                              setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
+                            }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
+                          >
+                            {t('common.edit')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Error Message */}
+                    {error && (
+                      <div className="bg-red-500/20 border border-red-400/30 rounded-xl p-4">
+                        <p className="text-red-900 text-sm font-medium">{error}</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ) : (
+                /* Collapsed Date Selector - Compact Version */
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-4 md:p-6"
                 >
-                  {t('common.edit')}
-                </button>
-              </div>
-            </motion.div>
-          )}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-black/70 font-semibold uppercase tracking-wider">{t('dates.checkIn')}:</span>
+                        <span className="text-sm font-bold text-black">
+                          {bookingData.checkIn && new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-black/70 font-semibold uppercase tracking-wider">{t('dates.checkOut')}:</span>
+                        <span className="text-sm font-bold text-black">
+                          {bookingData.checkOut && new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-black/70 font-semibold uppercase tracking-wider">{t('dates.guests')}:</span>
+                        <span className="text-sm font-bold text-black">{guests}</span>
+                      </div>
+                      {nights > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-amber-600 font-bold">
+                            {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsDateSelectorCollapsed(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors whitespace-nowrap"
+                    >
+                      {t('common.edit')}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
 
-          {/* Right Column - Full Price Summary (Desktop only, when not collapsed) */}
-          {!isPriceSummaryCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="hidden lg:block w-full"
-            >
-              <PriceSummary showContainer={false} />
-            </motion.div>
-          )}
+              {/* Right Column - Full Price Summary (Desktop only, when not collapsed) */}
+              {!isPriceSummaryCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="hidden lg:block w-full p-4 md:p-6 bg-white/10"
+                >
+                  <PriceSummary showContainer={false} />
+                </motion.div>
+              )}
+            </div>
           </div>
 
           {/* Accommodation Section - Below date selector */}
@@ -633,51 +649,53 @@ export default function DateSelector() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-8"
+              className="mt-3"
             >
-            {/* Show BackButton with accommodation header when rooms are displayed */}
-            {availableRooms && availableRooms.length > 0 ? (
-              <div className="flex items-center space-x-4 mb-4">
-                <BackButton variant="minimal" />
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-black font-heading">
-                    {t('accommodation.title')}
-                  </h2>
-                  <p className="text-sm md:text-base text-[#8c8179]">
-                    {t('accommodation.subtitle')}
-                  </p>
+              {/* Accommodation Header */}
+              {availableRooms && availableRooms.length > 0 && (
+                <div className="mb-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <BackButton variant="minimal" />
+                  </div>
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.4 }}
+                      className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
+                    >
+                      <svg className="h-6 w-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                    </motion.div>
+                    <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
+                      {t('accommodation.title')}
+                    </h2>
+                    <p className="text-[#8c8179] text-sm md:text-base">
+                      {t('accommodation.subtitle')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="mb-3">
-                <h2 className="text-xl md:text-2xl font-bold text-black font-heading mb-1">
-                  {t('accommodation.title')}
-                </h2>
-                <p className="text-sm md:text-base text-[#8c8179]">
-                  {t('accommodation.subtitle')}
-                </p>
-              </div>
-            )}
+              )}
 
-            {/* Error Message */}
-            {hasRequestedAvailability && globalError && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mb-6 p-4 rounded-lg border"
-                style={{ backgroundColor: '#7f1d1d', borderColor: '#dc2626' }}
-              >
-                <p className="text-red-300 text-[15px]">{globalError}</p>
-              </motion.div>
-            )}
+              {/* Error Message */}
+              {hasRequestedAvailability && globalError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mb-4 p-4 rounded-2xl bg-red-500/20 border border-red-400/30"
+                >
+                  <p className="text-red-900 font-medium text-sm">{globalError}</p>
+                </motion.div>
+              )}
 
-            {/* Loading State */}
-            {hasRequestedAvailability && loadingRooms && (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mb-4"></div>
-                <p className="text-black text-base">{t('accommodation.searchingRooms')}</p>
-              </div>
-            )}
+              {/* Loading State */}
+              {hasRequestedAvailability && loadingRooms && (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mb-4"></div>
+                  <p className="text-white font-medium text-base">{t('accommodation.searchingRooms')}</p>
+                </div>
+              )}
 
             {/* Room Cards */}
             {(() => {
@@ -733,25 +751,22 @@ export default function DateSelector() {
               </>
             )}
 
-            {/* No rooms available */}
-            {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
-              <div className="text-center py-8 bg-white/80 backdrop-blur-md rounded-2xl p-8 border border-white/40">
-                <div className="text-6xl mb-4">🏠</div>
-                <h3 className="text-xl md:text-2xl font-bold text-black mb-3 font-heading">
-                  {t('accommodation.noRoomsAvailable')}
-                </h3>
-                <p className="text-sm md:text-base text-[#8c8179] mb-6 max-w-md mx-auto">
-                  {t('accommodation.noAvailableMessage')}
-                </p>
-              </div>
-            )}
-
-            {/* Continue Button */}
-
+              {/* No rooms available */}
+              {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
+                <div className="text-center py-8 bg-[white]/70 backdrop-blur-md rounded-3xl p-8 border border-[white]/50 shadow-xl">
+                  <div className="text-6xl mb-4">🏠</div>
+                  <h3 className="text-xl md:text-2xl font-bold text-black mb-3 font-heading">
+                    {t('accommodation.noRoomsAvailable')}
+                  </h3>
+                  <p className="text-sm md:text-base text-[#8c8179] mb-6 max-w-md mx-auto">
+                    {t('accommodation.noAvailableMessage')}
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Collapsed Price Summary (Desktop) */}
       {isPriceSummaryCollapsed && (bookingData.checkIn && bookingData.checkOut) && (
@@ -761,9 +776,9 @@ export default function DateSelector() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
-          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-white/90 backdrop-blur-md px-4 py-2 text-sm font-bold text-black shadow-lg border border-gray-200 hover:bg-white transition-all duration-300 ease-in-out"
+          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
         >
-          <ReceiptText className="h-5 w-5 text-amber-400" />
+          <ReceiptText className="h-5 w-5 text-black" />
           <span className="text-black">{t('prices.total')}: {formatCurrency(total, locale)}</span>
         </motion.button>
       )}
@@ -776,10 +791,10 @@ export default function DateSelector() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
-          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-white/90 backdrop-blur-md px-5 py-3 text-base font-bold shadow-lg border border-gray-200 hover:bg-white transition-all duration-300 ease-in-out"
+          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-4 text-base font-bold shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
         >
           <div className="flex items-center gap-3">
-            <ReceiptText className="h-6 w-6 text-amber-400" />
+            <ReceiptText className="h-6 w-6 text-black" />
             <span className="text-black font-bold">{t('prices.summary')}</span>
           </div>
           <span className="text-black font-bold">{formatCurrency(total, locale)}</span>

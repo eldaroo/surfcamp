@@ -726,10 +726,17 @@ const ActivityCard = ({
         const path = [];
         let current: HTMLElement | null = el;
         while (current && current !== document.documentElement) {
+          const className = current.className;
+          let classString = '';
+          try {
+            classString = typeof className === 'string' ? className : String(className);
+          } catch (e) {
+            classString = '(error getting classes)';
+          }
           const info = {
             tag: current.tagName,
             id: current.id || '(no id)',
-            classes: current.className ? current.className.split(' ').slice(0, 3).join(' ') : '(no class)',
+            classes: classString ? classString.split(' ').slice(0, 3).join(' ') : '(no class)',
             pointerEvents: window.getComputedStyle(current).pointerEvents
           };
           path.push(info);
