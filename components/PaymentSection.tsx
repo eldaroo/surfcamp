@@ -8,6 +8,26 @@ import { getActivityTotalPrice } from '@/lib/prices';
 import BookingConfirmation from './BookingConfirmation';
 import BackButton from './BackButton';
 
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program', en: 'Core Surf Program' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
+  },
+} as const;
+
+// Map surf classes to program ID
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 6) return 'progressionPlus';
+  return 'highPerformance';
+};
+
 export default function PaymentSection() {
   const { t, locale } = useI18n();
   const {
@@ -838,17 +858,29 @@ export default function PaymentSection() {
                     const surfClasses = participant.selectedSurfClasses[activity.id];
                     if (!surfClasses) return null; // No hay clases seleccionadas
                     activityPrice = getActivityTotalPrice('surf', undefined, 1, surfClasses);
-                    activityDetails = `(${surfClasses} ${surfClasses === 1 ? 'clase' : 'clases'})`;
+                    // No mostramos detalles adicionales, el nombre del programa es suficiente
+                    activityDetails = '';
                   } else {
                     const quantity = participant.activityQuantities[activity.id] || 1;
                     activityPrice = (activity.price || 0) * quantity;
+                  }
+
+                  // For surf activities, show program name instead of generic activity name
+                  let displayName = activity.name;
+                  if (activity.category === 'surf') {
+                    const surfClasses = participant.selectedSurfClasses[activity.id];
+                    if (surfClasses) {
+                      const programId = surfClassesToProgram(surfClasses);
+                      const program = SURF_PROGRAMS[programId];
+                      displayName = program.name[locale === 'en' ? 'en' : 'es'];
+                    }
                   }
 
                   return (
                     <div key={`${participant.id}-${activity.id}-${pIndex}-${aIndex}`} className="flex justify-between items-start gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="text-white">
-                          {activity.name}
+                          {displayName}
                           {activityDetails && (
                             <span className="text-sm text-blue-300 ml-2">
                               {activityDetails}

@@ -46,7 +46,8 @@ export default function ContactForm() {
     lastName: bookingData.contactInfo?.lastName || '',
     email: bookingData.contactInfo?.email || '',
     phone: bookingData.contactInfo?.phone || '',
-    dni: bookingData.contactInfo?.dni || ''
+    dni: bookingData.contactInfo?.dni || '',
+    nationality: bookingData.contactInfo?.nationality || 'AR' // Default Argentina
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -783,7 +784,13 @@ const priceBreakdown = useMemo(
               <PhoneSelector
                 label={t('contact.phone')}
                 value={formData.phone}
-                onChange={(phone) => handleInputChange('phone', phone)}
+                onChange={(phone, countryCode) => {
+                  handleInputChange('phone', phone);
+                  if (countryCode) {
+                    setFormData(prev => ({ ...prev, nationality: countryCode }));
+                    console.log('🌍 [ContactForm] Country selected:', countryCode);
+                  }
+                }}
                 placeholder={t('contact.placeholder.phone')}
                 error={errors.phone}
               />

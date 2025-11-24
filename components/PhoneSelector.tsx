@@ -198,7 +198,7 @@ const countryCodes: CountryCode[] = [
 
 interface PhoneSelectorProps {
   value: string;
-  onChange: (fullPhone: string) => void;
+  onChange: (fullPhone: string, countryCode?: string) => void;
   placeholder?: string;
   error?: string;
   label?: string;
@@ -242,7 +242,7 @@ export default function PhoneSelector({
 
   const handleCountrySelect = (country: CountryCode) => {
     const newValue = country.dialCode + (phoneNumber ? ' ' + phoneNumber : '');
-    onChange(newValue);
+    onChange(newValue, country.code); // Pasar también el código del país
     setIsOpen(false);
     setSearchTerm('');
   };
@@ -250,7 +250,7 @@ export default function PhoneSelector({
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const phone = e.target.value;
     const newValue = selectedCountry.dialCode + (phone ? ' ' + phone : '');
-    onChange(newValue);
+    onChange(newValue, selectedCountry.code); // Pasar también el código del país
   };
 
   return (

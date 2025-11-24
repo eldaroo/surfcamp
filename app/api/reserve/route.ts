@@ -92,6 +92,88 @@ const normalizePhoneNumber = (phone?: string | null) => {
   return digitsOnly;
 };
 
+// Detectar código de país ISO 3166-1 alpha-2 desde código de área del teléfono
+const getCountryFromPhoneCode = (phone?: string | null): string => {
+  if (!phone) {
+    console.log('🌍 [NATIONALITY] No phone provided, using default ES');
+    return 'ES'; // Default España
+  }
+
+  const digitsOnly = phone.replace(/\D+/g, "");
+  console.log('🌍 [NATIONALITY] Processing phone:', { original: phone, digitsOnly });
+
+  if (!digitsOnly || digitsOnly.length < 8) {
+    console.log('🌍 [NATIONALITY] Phone too short, using default ES');
+    return 'ES';
+  }
+
+  // Mapeo de códigos de área a códigos ISO 3166-1 alpha-2
+  const phoneCodeToCountry: Record<string, string> = {
+    // América
+    '1': 'US',      // USA/Canadá
+    '52': 'MX',     // México
+    '54': 'AR',     // Argentina
+    '55': 'BR',     // Brasil
+    '56': 'CL',     // Chile
+    '57': 'CO',     // Colombia
+    '58': 'VE',     // Venezuela
+    '51': 'PE',     // Perú
+    '593': 'EC',    // Ecuador
+    '598': 'UY',    // Uruguay
+    '595': 'PY',    // Paraguay
+    '591': 'BO',    // Bolivia
+    '506': 'CR',    // Costa Rica
+    '507': 'PA',    // Panamá
+    '505': 'NI',    // Nicaragua
+
+    // Europa
+    '34': 'ES',     // España
+    '33': 'FR',     // Francia
+    '39': 'IT',     // Italia
+    '49': 'DE',     // Alemania
+    '44': 'GB',     // Reino Unido
+    '351': 'PT',    // Portugal
+    '31': 'NL',     // Países Bajos
+    '32': 'BE',     // Bélgica
+    '41': 'CH',     // Suiza
+    '43': 'AT',     // Austria
+    '45': 'DK',     // Dinamarca
+    '46': 'SE',     // Suecia
+    '47': 'NO',     // Noruega
+    '48': 'PL',     // Polonia
+    '420': 'CZ',    // República Checa
+
+    // Otros
+    '61': 'AU',     // Australia
+    '64': 'NZ',     // Nueva Zelanda
+    '81': 'JP',     // Japón
+    '82': 'KR',     // Corea del Sur
+    '86': 'CN',     // China
+    '91': 'IN',     // India
+    '972': 'IL',    // Israel
+  };
+
+  // 🔧 CORRECCIÓN: Detectar números argentinos mal formateados
+  // Ejemplo: +101153695627 → debería ser +541153695627
+  // Si empieza con "1011" o "1015", probablemente es Argentina
+  if (digitsOnly.startsWith('1011') || digitsOnly.startsWith('1015')) {
+    console.log('🌍 [NATIONALITY] Detected malformed Argentine number (1011/1015), correcting to AR');
+    return 'AR';
+  }
+
+  // Intentar match con códigos de 3 dígitos primero, luego 2, luego 1
+  for (const length of [3, 2, 1]) {
+    const code = digitsOnly.substring(0, length);
+    if (phoneCodeToCountry[code]) {
+      console.log(`🌍 [NATIONALITY] Matched code "${code}" → ${phoneCodeToCountry[code]}`);
+      return phoneCodeToCountry[code];
+    }
+  }
+
+  console.log('🌍 [NATIONALITY] No match found, using default ES');
+  return 'ES'; // Default España si no se encuentra
+};
+
 // Helper: Extract activities data for instructor notifications
 const extractActivitiesForInstructors = (
   resolvedActivities: ResolvedActivityConsumption[],
@@ -673,6 +755,45 @@ export async function POST(request: NextRequest) {
       hasSelectedRoom: !!selectedRoom
     });
 
+    // 🌍 DETERMINE NATIONALITY AND CREATE CUSTOMER BEFORE BUILDING BOOKING DATA
+    // Obtener nacionalidad desde contactInfo (seleccionada en el widget)
+    // Si no está disponible, intentar detectar desde el teléfono como fallback
+    const nationality = contactInfo?.nationality || getCountryFromPhoneCode(contactInfo?.phone);
+    console.log('🌍 [RESERVE] Nationality for customer:', {
+      fromContactInfo: contactInfo?.nationality,
+      fromPhoneFallback: !contactInfo?.nationality ? getCountryFromPhoneCode(contactInfo?.phone) : null,
+      finalNationality: nationality
+    });
+
+    // Ensure customer exists in LobbyPMS before booking
+    let customerCreatedSuccessfully = false;
+    try {
+      if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
+        const customerPayload: LobbyPMSCustomerPayload = {
+          customer_document: contactInfo.dni,
+          customer_nationality: nationality, // Usar nacionalidad desde widget
+          name: contactInfo.firstName,
+          surname: contactInfo.lastName,
+          email: contactInfo.email,
+          note: `Cliente creado desde Surfcamp Santa Teresa`
+        };
+
+        if (phoneForLobby) {
+          customerPayload.phone = phoneForLobby;
+        }
+
+        const customerResult = await lobbyPMSClient.createCustomer(customerPayload);
+        customerCreatedSuccessfully = true;
+        console.log('✅ [RESERVE] Customer created successfully in LobbyPMS');
+      } else {
+        console.log('⚠️ [RESERVE] Missing customer data, skipping customer creation');
+      }
+    } catch (customerError) {
+      console.log('❌ [RESERVE] Customer creation failed, will use holder_name in booking:', customerError);
+      customerCreatedSuccessfully = false;
+      // Continue with booking even if customer creation failed (LobbyPMS may auto-create)
+    }
+
     // 💰 CALCULATE RATES PER DAY WITH 10% DISCOUNT FOR LOBBYPMS
     // Cache to avoid recalculating for the same category_id
     const ratesCache = new Map<string, Array<{ date: string; price: number }> | undefined>();
@@ -762,31 +883,46 @@ export async function POST(request: NextRequest) {
     // The logic of creating multiple reservations is handled separately below
     // If guests is not provided, use participants.length as fallback
     const calculatedGuestCount = guests || (Array.isArray(participants) && participants.length > 0 ? participants.length : 1);
-    const bookingData = {
+
+    // Construir bookingData según si el cliente fue creado o no
+    const bookingData: any = {
       start_date: formattedCheckIn,     // Y-m-d format as required by LobbyPMS
       end_date: formattedCheckOut,      // Y-m-d format as required by LobbyPMS
       guest_count: calculatedGuestCount,
-      total_adults: calculatedGuestCount,             // Required field by LobbyPMS
-      total_children: 0,                // Default to 0 children
+      total_adults: calculatedGuestCount,
+      total_children: 0,
       guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-      holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`, // Required when customer document is not present
       guest_email: contactInfo.email,
-      guest_document: contactInfo.dni,  // DNI del huÃ©sped
-      customer_document: contactInfo.dni, // TambiÃ©n como customer_document por si LobbyPMS lo requiere asÃ­
-      customer_nationality: 'ES',       // Nacionalidad por defecto EspaÃ±a (requerido cuando hay documento)
-      customer_email: contactInfo.email,
       category_id: categoryIdsToTry[0], // Use first category ID, will retry with others if this fails
       room_type_id: roomTypeId,
       booking_reference: bookingReference,
-      source: 'Surfcamp Santa Teresa',     // Fuente mÃ¡s clara
+      source: 'Surfcamp Santa Teresa',
       payment_intent_id: paymentIntentId,
       status: 'confirmed',
       notes: `${baseNotes}\n- Nota Surfcamp: Surfcamp`,
       special_requests: `Reserva realizada a travÃ©s de la pÃ¡gina web oficial de Surfcamp Santa Teresa. Referencia de pago: ${paymentIntentId}`
     };
+
+    // Si el cliente fue creado exitosamente, usar customer_document y customer_nationality
+    if (customerCreatedSuccessfully && contactInfo.dni) {
+      bookingData.customer_document = contactInfo.dni;
+      bookingData.customer_nationality = nationality;
+      console.log('✅ [RESERVE] Using customer_document (cliente creado):', {
+        customer_document: contactInfo.dni,
+        customer_nationality: nationality
+      });
+    } else {
+      // Si no se creó el cliente, usar holder_name
+      bookingData.holder_name = `${contactInfo.firstName} ${contactInfo.lastName}`;
+      console.log('⚠️ [RESERVE] Using holder_name (cliente NO creado):', bookingData.holder_name);
+    }
+
+    // Agregar teléfonos si están disponibles
     if (phoneForLobby) {
-      (bookingData as any).guest_phone = phoneForLobby;
-      (bookingData as any).customer_phone = phoneForLobby;
+      bookingData.guest_phone = phoneForLobby;
+      if (customerCreatedSuccessfully) {
+        bookingData.customer_phone = phoneForLobby;
+      }
     }
 
     const fallbackActivityIds = Array.isArray(activityIds) && activityIds.length > 0
@@ -934,28 +1070,7 @@ export async function POST(request: NextRequest) {
     const shouldCreateMultipleReservations =
       (Array.isArray(participants) && participants.length > 1 && (isSharedRoom || roomTypeId === 'casa-playa')) ||
       needsMultiplePrivateRooms;
-    // Ensure customer exists in LobbyPMS before booking
-    try {
-      if (contactInfo?.dni && contactInfo.firstName && contactInfo.lastName) {
-        const customerPayload: LobbyPMSCustomerPayload = {
-          customer_document: contactInfo.dni,
-          customer_nationality: contactInfo?.nationality || 'ES',
-          name: contactInfo.firstName,
-          surname: contactInfo.lastName,
-          email: contactInfo.email,
-          note: `Cliente creado desde Surfcamp Santa Teresa (${bookingReference})`
-        };
 
-        if (phoneForLobby) {
-          customerPayload.phone = phoneForLobby;
-        }
-
-        const customerResult = await lobbyPMSClient.createCustomer(customerPayload);
-      } else {
-      }
-    } catch (customerError) {
-      // Continue with booking even if customer creation failed (LobbyPMS may auto-create)
-    }
     // If we need to create multiple reservations
     if (shouldCreateMultipleReservations) {
       const createdReservations: any[] = [];
@@ -1172,14 +1287,18 @@ export async function POST(request: NextRequest) {
       for (let i = 0; i < uniqueParticipants.length; i++) {
         const participant = uniqueParticipants[i];
         // Build participant-specific booking data
-        const participantBookingData = {
+        const participantBookingData: any = {
           ...bookingData,
           guest_count: 1,
           total_adults: 1,
-          guest_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
-          holder_name: `${contactInfo.firstName} ${contactInfo.lastName}`,
           notes: `${baseNotes}\n- Participante ${i + 1}/${uniqueParticipants.length}: ${participant.name}\n- Nota Surfcamp: Surfcamp`,
         };
+
+        // NO sobrescribir holder_name - ya viene correctamente desde bookingData
+        // Solo sobrescribir customer_nationality si el cliente fue creado
+        if (customerCreatedSuccessfully && nationality) {
+          participantBookingData.customer_nationality = nationality;
+        }
 
         // Try each category_id for this participant
         let participantReservation: any = null;
