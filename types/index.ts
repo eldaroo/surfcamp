@@ -79,6 +79,7 @@ export interface LobbyPMSReservationRequest {
     email: string;
     phone: string;
     dni: string;
+    nationality?: string;
   };
   notes?: string;
   source?: string;
@@ -96,6 +97,7 @@ export interface BookingRequest {
     email: string;
     phone: string;
     dni: string;
+    nationality?: string;
   };
 }
 
@@ -133,6 +135,7 @@ export interface ContactFormData {
   email: string;
   phone: string;
   dni: string;
+  nationality?: string;
 }
 
 export interface BookingData {
