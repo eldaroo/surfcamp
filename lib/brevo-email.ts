@@ -1,9 +1,11 @@
 import * as brevo from '@getbrevo/brevo';
 
-// Initialize Brevo API client
-const apiInstance = new brevo.TransactionalEmailsApi();
-const apiKey = apiInstance.authentications['apiKey'];
+// Initialize Brevo API client with configuration
+const defaultClient = brevo.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
 apiKey.apiKey = process.env.BREVO_API_KEY || '';
+
+const apiInstance = new brevo.TransactionalEmailsApi();
 
 // Template IDs for confirmation emails
 const TEMPLATES = {
