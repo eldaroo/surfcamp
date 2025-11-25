@@ -1,16 +1,7 @@
-import * as brevo from '@getbrevo/brevo';
-
-// Initialize Brevo API client with configuration
-const defaultClient = brevo.ApiClient.instance;
-const apiKey = defaultClient.authentications['api-key'];
-apiKey.apiKey = process.env.BREVO_API_KEY || '';
-
-const apiInstance = new brevo.TransactionalEmailsApi();
-
 // Template IDs for confirmation emails
 const TEMPLATES = {
-  en: parseInt(process.env.BREVO_TEMPLATE_EN || ''), // English template
-  es: parseInt(process.env.BREVO_TEMPLATE_ES || '')  // Spanish template
+  en: parseInt(process.env.BREVO_TEMPLATE_EN || '0'),
+  es: parseInt(process.env.BREVO_TEMPLATE_ES || '0')
 };
 
 interface BookingEmailParams {
@@ -39,6 +30,13 @@ export async function sendBookingConfirmationEmail({
   bookingData
 }: BookingEmailParams): Promise<boolean> {
   try {
+    const apiKey = process.env.BREVO_API_KEY;
+
+    if (!apiKey) {
+      console.error('❌ [BREVO] BREVO_API_KEY not configured');
+      return false;
+    }
+
     console.log('📧 [BREVO] Sending booking confirmation email:', {
       email: recipientEmail,
       locale,
@@ -48,7 +46,7 @@ export async function sendBookingConfirmationEmail({
     // Select template based on locale
     const templateId = TEMPLATES[locale] || TEMPLATES.es;
 
-    if (!templateId) {
+    if (!templateId || templateId === 0) {
       console.error('❌ [BREVO] No template ID configured for locale:', locale);
       return false;
     }
@@ -80,25 +78,41 @@ export async function sendBookingConfirmationEmail({
       })
     };
 
-    // Create email request
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
-    sendSmtpEmail.to = [{ email: recipientEmail, name: recipientName }];
-    sendSmtpEmail.templateId = templateId;
-    sendSmtpEmail.params = params;
+    // Send email using Brevo REST API
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        to: [{ email: recipientEmail, name: recipientName }],
+        templateId: templateId,
+        params: params
+      })
+    });
 
-    // Send email
-    const response = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ [BREVO] Error sending email:', {
+        status: response.status,
+        error: errorData
+      });
+      return false;
+    }
+
+    const result = await response.json();
 
     console.log('✅ [BREVO] Email sent successfully:', {
-      messageId: response.messageId,
+      messageId: result.messageId,
       recipient: recipientEmail
     });
 
     return true;
   } catch (error: any) {
     console.error('❌ [BREVO] Error sending email:', {
-      error: error.message,
-      response: error.response?.body
+      error: error.message
     });
     return false;
   }
