@@ -1299,7 +1299,7 @@ const ActivityCard = ({
       transition={{ duration: 0.4 }}
     >
       {/* Compact banner - clean horizontal band */}
-      <div className="relative w-full h-[260px] md:h-[220px] overflow-hidden group/hero">
+      <div className={`relative w-full overflow-hidden group/hero ${isSurf ? 'h-[260px] md:h-[220px]' : 'h-[200px] md:h-[180px]'}`}>
         {/* Surf Mobile Carousel */}
         {isSurf ? (
           <>
@@ -1571,29 +1571,29 @@ const ActivityCard = ({
       <div className="flex flex-col md:flex-row md:items-start md:flex-1">
 
         {/* PASS 2: px-5/8 py-4/6 gap-4/5 → px-4/6 py-3/4 gap-3/4 */}
-        <div className="flex flex-col flex-1 md:flex-[7] px-4 md:px-6 py-3 md:py-4 gap-3 md:gap-4">
+        <div className={`flex flex-col flex-1 md:flex-[7] px-4 md:px-6 ${isSurf ? 'py-3 md:py-4 gap-3 md:gap-4' : 'py-2.5 md:py-3 gap-2 md:gap-3'}`}>
 
           {/* 1. Description */}
           {descriptive && descriptive.description && (
-            <p className="text-sm md:text-[15px] leading-relaxed text-black/90 font-light">
+            <p className={`text-black/90 font-light ${isSurf ? 'text-sm md:text-[15px] leading-relaxed' : 'text-xs md:text-sm leading-snug'}`}>
               {descriptive.description}
             </p>
           )}
 
           {/* 2. Features - Bullet Points with Golden Checkmarks (only if features exist) */}
           {descriptive && descriptive.features && descriptive.features.length > 0 && (
-            <div className="space-y-1.5 md:space-y-2.5">
+            <div className={isSurf ? "space-y-1.5 md:space-y-2.5" : "space-y-1 md:space-y-1.5"}>
               {descriptive.features.map((feature, index) => (
                 <div
                   key={index}
                   className="flex items-start gap-2 md:gap-3"
                 >
                   <div className="flex-shrink-0 mt-0.5">
-                    <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className={`text-amber-300 ${isSurf ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5 md:w-4 md:h-4'}`} fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                     </svg>
                   </div>
-                  <span className="text-sm md:text-[15px] text-black font-light leading-snug md:leading-relaxed">
+                  <span className={`text-black font-light ${isSurf ? 'text-sm md:text-[15px] leading-snug md:leading-relaxed' : 'text-xs md:text-sm leading-snug'}`}>
                     {feature.text}
                   </span>
                 </div>
@@ -1613,15 +1613,15 @@ const ActivityCard = ({
         </div>
 
         {/* PASS 2: px-5/6 py-4/6 gap-3/4 → px-4/5 py-3/4 gap-2.5/3 */}
-        <div className="md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 py-3 md:py-4 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full">
-          <div className="flex flex-col gap-2.5 md:gap-3 md:justify-center md:flex-1">
+        <div className={`md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full ${isSurf ? 'py-3 md:py-4' : 'py-2.5 md:py-3'}`}>
+          <div className={`flex flex-col md:justify-center md:flex-1 ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
 
             {/* PASS 2: gap-3/4 → gap-2.5/3, space-y-1.5 → space-y-1 */}
-            <div className="flex flex-col items-center gap-2.5 md:gap-3">
+            <div className={`flex flex-col items-center ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
               <div className="w-full text-center space-y-1">
                 <p className="text-xs uppercase tracking-wider text-[#8c8179] font-semibold">Total</p>
                 <motion.div
-                  className="text-3xl md:text-4xl font-bold text-[#8c8179]"
+                  className={`font-bold text-[#8c8179] ${isSurf ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
@@ -1647,7 +1647,9 @@ const ActivityCard = ({
                     scale: [1, 1.05, 1],
                   } : {}}
                   transition={{ duration: 0.15 }}
-                  className={`w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                  className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                    isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
+                  } ${
                     isChoosing
                       ? "bg-[#8c8179] text-white cursor-wait shadow-md"
                       : hasInteracted
@@ -1679,7 +1681,9 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="w-full rounded-2xl px-6 md:px-8 py-3.5 md:py-4 text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:shadow-xl"
+                    className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:shadow-xl ${
+                      isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
+                    }`}
                   >
                     <span>{copy.skip}</span>
                     <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />

@@ -123,7 +123,7 @@ export default function SuccessPage() {
             {/* Booking Reference */}
             <div>
               <h2 className="text-2xl font-bold text-yellow-400 mb-6 font-heading">{t('success.bookingReference')}</h2>
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
                 <h3 className="font-semibold text-white font-heading mb-4">{t('payment.client')}</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center">
@@ -148,7 +148,7 @@ export default function SuccessPage() {
 
             {/* Stay Details */}
             <div>
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
                 <h3 className="font-semibold text-white font-heading mb-4">{t('dates.summary.title')}</h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center">
@@ -178,7 +178,7 @@ export default function SuccessPage() {
             {/* Accommodation */}
             {selectedRoom && (
               <div>
-                <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
+                <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
                   <h3 className="font-semibold text-white font-heading mb-4">{t('prices.accommodation')}</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
@@ -196,7 +196,7 @@ export default function SuccessPage() {
           <div className="space-y-6">
             {/* Notifications */}
             <div className="space-y-4">
-              <div className="flex items-start space-x-4 p-5 bg-green-900/30 border border-green-700 rounded-lg shadow-lg">
+              <div className="flex items-start space-x-4 p-5 bg-green-900/30 border border-green-700 rounded-2xl shadow-lg">
                 <span className="text-green-400 text-2xl">📧</span>
                 <div>
                   <p className="font-semibold text-white font-heading mb-2">{t('success.confirmationSent')}</p>
@@ -206,7 +206,7 @@ export default function SuccessPage() {
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4 p-5 bg-green-900/30 border border-green-700 rounded-lg shadow-lg">
+              <div className="flex items-start space-x-4 p-5 bg-green-900/30 border border-green-700 rounded-2xl shadow-lg">
                 <span className="text-green-400 text-2xl">📱</span>
                 <div>
                   <p className="font-semibold text-white font-heading mb-2">{t('success.whatsappSent')}</p>
@@ -218,7 +218,7 @@ export default function SuccessPage() {
             </div>
 
             {/* Contact Information */}
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
+            <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
               <h3 className="font-semibold text-yellow-400 font-heading mb-4">{t('success.needHelp')}</h3>
               <p className="text-gray-300 text-sm mb-6">{t('success.helpText')}</p>
               <div className="space-y-4">
@@ -257,7 +257,7 @@ export default function SuccessPage() {
 
         {/* Price Summary */}
         <div className="mt-8">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 shadow-lg">
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg">
             <h3 className="font-semibold text-yellow-400 font-heading mb-6">{t('prices.summary')}</h3>
             <div className="space-y-4">
               {selectedRoom && (

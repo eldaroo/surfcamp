@@ -261,17 +261,17 @@ export default function PhoneSelector({
         </label>
       )}
 
-      <div className="flex">
+      <div className="flex w-full">
         {/* Country Code Selector */}
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center px-4 py-3 border border-gray-600 rounded-l-xl bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200"
+            className="flex items-center px-2 md:px-4 py-3 border border-gray-600 rounded-l-xl bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200"
           >
-            <span className="text-lg mr-2">{selectedCountry.flag}</span>
-            <span className="text-white text-sm font-medium">{selectedCountry.dialCode}</span>
-            <svg className="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span className="text-base md:text-lg mr-1 md:mr-2">{selectedCountry.flag}</span>
+            <span className="text-white text-xs md:text-sm font-medium">{selectedCountry.dialCode}</span>
+            <svg className="w-3 h-3 md:w-4 md:h-4 ml-1 md:ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
@@ -321,7 +321,7 @@ export default function PhoneSelector({
           value={phoneNumber}
           onChange={handlePhoneChange}
           placeholder={placeholder}
-          className={`flex-1 px-4 py-3 border rounded-r-xl bg-gray-700 text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+          className={`flex-1 min-w-0 px-2 md:px-4 py-3 border rounded-r-xl bg-gray-700 text-white placeholder-gray-400 text-sm md:text-base transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
             error
               ? 'border-red-500 focus:ring-red-400'
               : 'border-gray-600 hover:border-gray-500'

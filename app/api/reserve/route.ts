@@ -17,6 +17,7 @@ import {
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
+import { sendBookingConfirmationEmailWithRetry } from '@/lib/brevo-email';
 
 // Mapeo de roomTypeId a category_id de LobbyPMS (múltiples opciones por tipo)
 // TODO: Verificar los category_ids correctos para cada casita en LobbyPMS
@@ -1260,6 +1261,25 @@ export async function POST(request: NextRequest) {
           console.error('WhatsApp notification error:', whatsappError);
         }
 
+        // Send confirmation email
+        try {
+          await sendBookingConfirmationEmailWithRetry({
+            recipientEmail: contactInfo.email,
+            recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+            locale: locale as 'en' | 'es',
+            bookingData: {
+              bookingReference,
+              checkIn,
+              checkOut,
+              guests: calculatedGuestCount,
+              roomTypeName: selectedRoom?.roomTypeName,
+              totalAmount: priceBreakdown?.total
+            }
+          });
+        } catch (emailError) {
+          console.error('Email notification error:', emailError);
+        }
+
         return NextResponse.json({
           success: true,
           reservationIds: bookingIds,
@@ -1541,6 +1561,26 @@ export async function POST(request: NextRequest) {
         }
       } catch (whatsappError) {
       }
+
+      // Send confirmation email
+      try {
+        await sendBookingConfirmationEmailWithRetry({
+          recipientEmail: contactInfo.email,
+          recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          locale: locale as 'en' | 'es',
+          bookingData: {
+            bookingReference,
+            checkIn,
+            checkOut,
+            guests: calculatedGuestCount,
+            roomTypeName: selectedRoom?.roomTypeName,
+            totalAmount: priceBreakdown?.total
+          }
+        });
+      } catch (emailError) {
+        console.error('Email notification error:', emailError);
+      }
+
       return NextResponse.json({
         success: true,
         reservationIds: bookingIds,
@@ -1768,6 +1808,25 @@ export async function POST(request: NextRequest) {
 
       } catch (whatsappError) {
         console.error('WhatsApp notification error:', whatsappError);
+      }
+
+      // Send confirmation email
+      try {
+        await sendBookingConfirmationEmailWithRetry({
+          recipientEmail: contactInfo.email,
+          recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
+          locale: locale as 'en' | 'es',
+          bookingData: {
+            bookingReference,
+            checkIn,
+            checkOut,
+            guests: calculatedGuestCount,
+            roomTypeName: selectedRoom?.roomTypeName,
+            totalAmount: priceBreakdown?.total
+          }
+        });
+      } catch (emailError) {
+        console.error('Email notification error:', emailError);
       }
 
       return NextResponse.json({
