@@ -39,7 +39,7 @@ const DEFAULT_INVENTORY_CENTER_ID = process.env.LOBBYPMS_DEFAULT_INVENTORY_CENTE
 const normalizeActivityKey = (value: string) =>
   value.replace(/[^a-z0-9]/gi, '_').toUpperCase();
 
-const getEnvProductId = (activityId: string, activityPackage?: string, classCount?: number) => {
+const getEnvProductId = (activityId: string, activityPackage?: string, classCount?: number, surfProgram?: string) => {
   const baseKey = `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}`;
   const packageKey = activityPackage
     ? `LOBBYPMS_PRODUCT_${normalizeActivityKey(activityId)}_${normalizeActivityKey(activityPackage)}`
@@ -55,7 +55,8 @@ const getEnvProductId = (activityId: string, activityPackage?: string, classCoun
 
   return lookupActivityProductId(activityId, {
     package: activityPackage,
-    classCount: classCount ?? undefined
+    classCount: classCount ?? undefined,
+    surfProgram: surfProgram ?? undefined
   });
 };
 
@@ -233,6 +234,7 @@ interface ResolvedActivityConsumption {
   quantity?: number;
   participantId?: string;
   participantName?: string;
+  surfProgram?: string; // Add support for surf program (fundamental, progressionPlus, highPerformance)
 }
 
 const resolveActivitiesForConsumption = (
@@ -340,7 +342,7 @@ const buildConsumptionItems = (
       ? Math.max(1, Math.round(activity.classCount))
       : undefined;
 
-    const productId = getEnvProductId(activity.id, activity.package, normalizedClassCount);
+    const productId = getEnvProductId(activity.id, activity.package, normalizedClassCount, activity.surfProgram);
 
     if (!productId) {
       return;
@@ -409,8 +411,18 @@ const buildParticipantConsumptionItems = (participant: any) => {
     const category = (activity.category || baseActivity?.category) as Activity['category'] | undefined;
     let packageName = activity.package;
     let classCount = activity.classCount;
+    let surfProgram: string | undefined;
 
     if (category === 'surf') {
+      // NEW: Check for surf program (fundamental, progressionPlus, highPerformance)
+      if (participant.selectedSurfProgram) {
+        surfProgram = participant.selectedSurfProgram[activity.id];
+      }
+      // Also check activity itself for surfProgram
+      if (!surfProgram && activity.surfProgram) {
+        surfProgram = activity.surfProgram;
+      }
+
       if (participant.selectedSurfPackages) {
         const participantPackage = participant.selectedSurfPackages[activity.id];
         if (participantPackage) {
@@ -497,7 +509,7 @@ const buildParticipantConsumptionItems = (participant: any) => {
       quantity = 1;
     }
 
-    const productId = getEnvProductId(activity.id, packageName, classCount);
+    const productId = getEnvProductId(activity.id, packageName, classCount, surfProgram);
     if (!productId) {
       return;
     }

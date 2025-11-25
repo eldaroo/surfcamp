@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { config, isConfigValid, getWeTravelAccessToken } from '@/lib/config';
+import {
+  calculateWeTravelPayment,
+  detectSurfProgram,
+  hasPrivateCoaching,
+  getAccommodationTotal
+} from '@/lib/wetravel-pricing';
 
 // 🔒 SUPABASE: Use @supabase/supabase-js for better integration
 import { createClient } from '@supabase/supabase-js';
@@ -61,12 +67,43 @@ export async function POST(request: NextRequest) {
       const nights = typeof payloadNights === 'number' && payloadNights > 0 ? payloadNights : calculatedNights;
       const totalAmountCents = Math.round(price * 100); // Convert to cents
 
-      // Calculate 10% deposit
-      const depositAmount = Math.round(price * 0.10); // 10% of total price
+      // NEW: Calculate WeTravel payment based on surf program and coaching
+      const surfProgram = detectSurfProgram(participants, selectedActivities);
+      const hasCoaching = hasPrivateCoaching(participants, selectedActivities);
+      const accommodationTotal = getAccommodationTotal(priceBreakdown);
+
+      let depositAmount: number;
+      let paymentBreakdown: any = null;
+
+      if (surfProgram && accommodationTotal > 0) {
+        // Use new pricing formula
+        paymentBreakdown = calculateWeTravelPayment({
+          surfProgram,
+          hasCoaching,
+          accommodationTotal
+        });
+        depositAmount = paymentBreakdown.total;
+
+        console.log('💰 [NEW PRICING] WeTravel payment calculated:', {
+          surfProgram,
+          hasCoaching,
+          accommodationTotal,
+          programDifference: paymentBreakdown.programDifference,
+          accommodationDeposit: paymentBreakdown.accommodationDeposit,
+          coachingCost: paymentBreakdown.coachingCost,
+          total: depositAmount
+        });
+      } else {
+        // Fallback to old 10% logic if we can't detect surf program
+        depositAmount = Math.round(price * 0.10);
+        console.log('⚠️ [FALLBACK] Using old 10% pricing - could not detect surf program or accommodation');
+        console.log('💰 10% Deposit: $' + depositAmount);
+      }
+
       const depositAmountCents = Math.round(depositAmount * 100);
 
       console.log('💰 Full price: $' + price + ' (' + totalAmountCents + ' cents)');
-      console.log('💰 10% Deposit: $' + depositAmount + ' (' + depositAmountCents + ' cents)');
+      console.log('💰 WeTravel Deposit: $' + depositAmount + ' (' + depositAmountCents + ' cents)');
 
       // Prepare booking data
       bookingData = {

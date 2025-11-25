@@ -38,6 +38,7 @@ type ActivityProductMapping = {
   defaultProductId?: string;
   packages?: Record<string, string>;
   classCounts?: Partial<Record<number, string>>;
+  programs?: Record<string, string>; // For surf program mapping (fundamental, progressionPlus, highPerformance)
 };
 
 export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> = {
@@ -49,10 +50,17 @@ export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> 
     }
   },
   'surf-package': {
+    // Program-based mapping (new system)
+    programs: {
+      'fundamental': '488396',        // Core Surf program
+      'progressionPlus': '489528',    // Intensive Surf Program
+      'highPerformance': '489529'     // Elite Surf Program
+    },
+    // Legacy class-count mapping (for backwards compatibility)
     classCounts: {
-      3: '488396',
-      4: '489528',
-      5: '489529',
+      3: '488396',  // Core Surf program
+      4: '489528',  // Intensive Surf Program
+      5: '489529',  // Elite Surf Program
       6: '489530',
       7: '489532',
       8: '489533',
@@ -71,15 +79,25 @@ export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> 
 interface LookupOptions {
   package?: string | null;
   classCount?: number | null;
+  surfProgram?: string | null; // Add support for surf program names
 }
 
 export function lookupActivityProductId(
   activityId: string,
-  { package: packageName, classCount }: LookupOptions = {}
+  { package: packageName, classCount, surfProgram }: LookupOptions = {}
 ): string | undefined {
   const mapping = LOBBYPMS_ACTIVITY_PRODUCTS[activityId];
   if (!mapping) {
     return undefined;
+  }
+
+  // NEW: Check for surf program mapping first (fundamental, progressionPlus, highPerformance)
+  if (surfProgram && 'programs' in mapping && mapping.programs) {
+    const programMatch = mapping.programs[surfProgram];
+    if (programMatch) {
+      console.log(`✅ [LOBBYPMS-PRODUCTS] Mapped surf program "${surfProgram}" → product ID ${programMatch}`);
+      return programMatch;
+    }
   }
 
   const normalizedPackage = packageName?.toLowerCase();
