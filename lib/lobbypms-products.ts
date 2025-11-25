@@ -52,20 +52,21 @@ export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> 
   'surf-package': {
     // Program-based mapping (new system)
     programs: {
-      'fundamental': '488396',        // Core Surf program
-      'progressionPlus': '489528',    // Intensive Surf Program
-      'highPerformance': '489529'     // Elite Surf Program
+      'fundamental': '488396',        // Core Surf program (1-4 classes)
+      'progressionPlus': '489528',    // Intensive Surf Program (5-6 classes)
+      'highPerformance': '489529'     // Elite Surf Program (8+ classes)
     },
     // Legacy class-count mapping (for backwards compatibility)
+    // Matches classCountToProgram logic: <=4 → fundamental, <=6 → progressionPlus, >=8 → highPerformance
     classCounts: {
-      3: '488396',  // Core Surf program
-      4: '489528',  // Intensive Surf Program
-      5: '489529',  // Elite Surf Program
-      6: '489530',
-      7: '489532',
-      8: '489533',
-      9: '489534',
-      10: '489536'
+      3: '488396',  // fundamental (Core)
+      4: '488396',  // fundamental (Core)
+      5: '489528',  // progressionPlus (Intensive)
+      6: '489528',  // progressionPlus (Intensive)
+      // 7 is a gap in the logic (returns null)
+      8: '489529',  // highPerformance (Elite)
+      9: '489529',  // highPerformance (Elite)
+      10: '489529'  // highPerformance (Elite)
     }
   },
   'ice-bath-session': {
