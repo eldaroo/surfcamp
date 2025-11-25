@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config, isConfigValid, getWeTravelAccessToken } from '@/lib/config';
 import {
   calculateWeTravelPayment,
-  detectSurfProgram,
-  hasPrivateCoaching,
+  detectSurfPrograms,
+  countPrivateCoaching,
   getAccommodationTotal
 } from '@/lib/wetravel-pricing';
 
@@ -67,26 +67,27 @@ export async function POST(request: NextRequest) {
       const nights = typeof payloadNights === 'number' && payloadNights > 0 ? payloadNights : calculatedNights;
       const totalAmountCents = Math.round(price * 100); // Convert to cents
 
-      // NEW: Calculate WeTravel payment based on surf program and coaching
-      const surfProgram = detectSurfProgram(participants, selectedActivities);
-      const hasCoaching = hasPrivateCoaching(participants, selectedActivities);
+      // NEW: Calculate WeTravel payment based on surf programs and coaching (multiple participants)
+      const surfPrograms = detectSurfPrograms(participants, selectedActivities);
+      const coachingCount = countPrivateCoaching(participants, selectedActivities);
       const accommodationTotal = getAccommodationTotal(priceBreakdown);
 
       let depositAmount: number;
       let paymentBreakdown: any = null;
 
-      if (surfProgram && accommodationTotal > 0) {
+      if (surfPrograms.length > 0 && accommodationTotal > 0) {
         // Use new pricing formula
         paymentBreakdown = calculateWeTravelPayment({
-          surfProgram,
-          hasCoaching,
+          surfPrograms,
+          coachingCount,
           accommodationTotal
         });
         depositAmount = paymentBreakdown.total;
 
         console.log('💰 [NEW PRICING] WeTravel payment calculated:', {
-          surfProgram,
-          hasCoaching,
+          surfPrograms,
+          participantCount: paymentBreakdown.participantCount,
+          coachingCount: paymentBreakdown.coachingParticipants,
           accommodationTotal,
           programDifference: paymentBreakdown.programDifference,
           accommodationDeposit: paymentBreakdown.accommodationDeposit,
@@ -94,9 +95,9 @@ export async function POST(request: NextRequest) {
           total: depositAmount
         });
       } else {
-        // Fallback to old 10% logic if we can't detect surf program
+        // Fallback to old 10% logic if we can't detect surf programs
         depositAmount = Math.round(price * 0.10);
-        console.log('⚠️ [FALLBACK] Using old 10% pricing - could not detect surf program or accommodation');
+        console.log('⚠️ [FALLBACK] Using old 10% pricing - could not detect surf programs or accommodation');
         console.log('💰 10% Deposit: $' + depositAmount);
       }
 
