@@ -1304,13 +1304,14 @@ const ActivityCard = ({
         {isSurf ? (
           <>
             {/* Mobile: Carousel */}
-            <div className="md:hidden relative w-full h-full bg-[white]">
+            <div className="md:hidden relative w-full h-full bg-[white]" style={{ touchAction: 'manipulation' }}>
               <motion.div
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
                 className="absolute inset-0"
+                style={{ touchAction: 'manipulation' }}
               >
                 <Image
                   src={surfImagesMobile[currentSurfImageIndex]}
@@ -1322,7 +1323,10 @@ const ActivityCard = ({
                   quality={90}
                   style={{
                     objectPosition: 'center center',
-                    objectFit: 'cover'
+                    objectFit: 'cover',
+                    touchAction: 'manipulation',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none'
                   }}
                 />
               </motion.div>

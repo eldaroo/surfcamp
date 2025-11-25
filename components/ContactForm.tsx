@@ -313,6 +313,7 @@ const priceBreakdown = useMemo(
           activityQuantities: filteredActivityQuantities,
           selectedYogaPackages: filteredYogaPackages,
           selectedSurfClasses: filteredSurfClasses,
+          hasPrivateCoaching: participant.hasPrivateCoaching ?? false,
         };
       }),
     [participants]
