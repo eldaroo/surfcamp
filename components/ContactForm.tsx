@@ -23,6 +23,26 @@ const normalizePhoneForStore = (value: string) =>
 const buildLeadGuestName = (firstName: string, lastName: string) =>
   `${firstName.trim()} ${lastName.trim()}`.trim();
 
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program', en: 'Core Surf Program' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
+  },
+} as const;
+
+// Map surf classes to program ID
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 6) return 'progressionPlus';
+  return 'highPerformance';
+};
+
 export default function ContactForm() {
   const { t, locale } = useI18n();
   const {
@@ -851,22 +871,39 @@ const priceBreakdown = useMemo(
                       <span className="font-medium text-yellow-400">${accommodationTotal}</span>
                     </div>
                   )}
-                  {allActivitySelections.map(({ key, activity, participantName, price, details }) => (
-                    <div key={key} className="flex justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-gray-300">
-                          {activity.name.replace(/\s*\([^)]*\)/, '')}
-                          {details && (
-                            <span className="text-sm text-gray-400 ml-2">
-                              {details}
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-xs text-gray-400">{participantName}</span>
+                  {allActivitySelections.map(({ key, activity, participantName, price, details }) => {
+                    // For surf activities, show program name instead of generic activity name
+                    let displayName = activity.name;
+                    if (activity.category === 'surf') {
+                      // Find the participant to get their surf class count
+                      const participant = participants.find(p => {
+                        return p.selectedActivities.some((a: any) => a.id === activity.id);
+                      });
+                      if (participant) {
+                        const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
+                        const programId = surfClassesToProgram(surfClasses);
+                        const program = SURF_PROGRAMS[programId];
+                        displayName = program.name[locale === 'en' ? 'en' : 'es'];
+                      }
+                    }
+
+                    return (
+                      <div key={key} className="flex justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-gray-300">
+                            {displayName}
+                            {details && (
+                              <span className="text-sm text-gray-400 ml-2">
+                                {details}
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-400">{participantName}</span>
+                        </div>
+                        <span className="font-medium text-yellow-400">${price}</span>
                       </div>
-                      <span className="font-medium text-yellow-400">${price}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {/* 1:1 Private Coaching Upgrade - shown as separate line if selected */}
                   {isPrivateUpgrade && privateCoachingUpgradeTotal > 0 && (
                     <div className="flex justify-between bg-yellow-500/10 rounded-lg p-2 border border-yellow-500/20">

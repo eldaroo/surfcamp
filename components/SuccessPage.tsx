@@ -5,6 +5,26 @@ import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice, calculateSurfPrice } from '@/lib/prices';
 
+// Surf program names
+const SURF_PROGRAMS = {
+  fundamental: {
+    name: { es: 'Core Surf Program', en: 'Core Surf Program' },
+  },
+  progressionPlus: {
+    name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
+  },
+  highPerformance: {
+    name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
+  },
+} as const;
+
+// Map surf classes to program ID
+const surfClassesToProgram = (classes: number): 'fundamental' | 'progressionPlus' | 'highPerformance' => {
+  if (classes <= 4) return 'fundamental';
+  if (classes <= 6) return 'progressionPlus';
+  return 'highPerformance';
+};
+
 export default function SuccessPage() {
   const { t, locale } = useI18n();
   const { bookingData, selectedRoom, priceBreakdown, participants } = useBookingStore();
@@ -252,11 +272,21 @@ export default function SuccessPage() {
                 <>
                   {allActivities.map(({ activity, participant }, index) => {
                     const showParticipantName = participants.length > 1;
+
+                    // For surf activities, show program name instead of generic activity name
+                    let displayName = activity.name;
+                    if (activity.category === 'surf') {
+                      const surfClasses = participant.selectedSurfClasses?.[activity.id] ?? 4;
+                      const programId = surfClassesToProgram(surfClasses);
+                      const program = SURF_PROGRAMS[programId];
+                      displayName = program.name[locale === 'en' ? 'en' : 'es'];
+                    }
+
                     return (
                       <div key={`${participant.id}-${activity.id}-${index}`}>
                         <div className="flex justify-between items-center">
                           <div className="flex-1">
-                            <span className="text-gray-300">{activity.name}</span>
+                            <span className="text-gray-300">{displayName}</span>
                             {showParticipantName && (
                               <span className="text-gray-500 text-sm ml-2">({participant.name})</span>
                             )}

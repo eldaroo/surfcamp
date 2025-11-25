@@ -218,7 +218,56 @@ const AccommodationCard = ({
     console.log('[CLICK OUTSIDE EFFECT] Running, isFlipped:', isFlipped, 'lightboxOpen:', lightboxOpen);
     if (!isFlipped) return;
 
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+    let touchStartY = 0;
+    let touchStartX = 0;
+    const scrollThreshold = 10; // pixels
+
+    const handleTouchStart = (event: TouchEvent) => {
+      touchStartY = event.touches[0].clientY;
+      touchStartX = event.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      console.log('[TOUCH END] Event fired, lightboxOpen:', lightboxOpen);
+
+      // Don't close if lightbox is open
+      if (lightboxOpen) {
+        console.log('[TOUCH END] Ignoring - lightbox is open');
+        return;
+      }
+
+      const touchEndY = event.changedTouches[0].clientY;
+      const touchEndX = event.changedTouches[0].clientX;
+      const deltaY = Math.abs(touchEndY - touchStartY);
+      const deltaX = Math.abs(touchEndX - touchStartX);
+
+      // If the user scrolled, don't close the card
+      if (deltaY > scrollThreshold || deltaX > scrollThreshold) {
+        console.log('[TOUCH END] Ignoring - user was scrolling');
+        return;
+      }
+
+      const target = event.target as Node | null;
+      if (
+        !target ||
+        (cardRef.current && cardRef.current.contains(target)) ||
+        (lightboxOverlayRef.current && lightboxOverlayRef.current.contains(target))
+      ) {
+        return;
+      }
+
+      console.log('[TOUCH END] Closing card');
+      if (cardRef.current) {
+        ignoreNextFlipRef.current = true;
+        setLightboxOpen(false);
+        setIsFlipped(false);
+        setTimeout(() => {
+          ignoreNextFlipRef.current = false;
+        }, 0);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
       console.log('[CLICK OUTSIDE] Event fired, lightboxOpen:', lightboxOpen);
 
       // Don't close if lightbox is open
@@ -248,12 +297,14 @@ const AccommodationCard = ({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
       console.log('[CLICK OUTSIDE EFFECT] Cleanup');
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isFlipped, lightboxOpen]);
 

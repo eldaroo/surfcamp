@@ -437,7 +437,7 @@ const testimonialsContent = {
   }
 } as const;
 
-const CACHE_VERSION = '20251017-1900';
+const CACHE_VERSION = '20251124-2200';
 
 const activityImages = {
   surf: {
@@ -615,23 +615,34 @@ const ActivityCard = ({
 
   const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
 
-  // Surf image carousel for mobile
-  const surfImages = [
-    '/assets/Surf.jpg',
-    '/assets/Surf (2).jpg',
-    '/assets/Surf (3).jpg',
-    '/assets/Surf (4).png',
-    '/assets/Surf (5).jpg',
-    '/assets/Surfcamp - day2 - 49.jpg',
-    '/assets/Surfcamp_-_day2_-_43.jpg',
+  // Surf image carousel - Mobile version
+  const surfImagesMobile = [
+    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (2) Mobile.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
+  ];
+
+  // Surf image carousel - Desktop version
+  const surfImagesDesktop = [
+    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (2).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
   ];
 
   const handleNextSurfImage = () => {
-    setCurrentSurfImageIndex((prev) => (prev + 1) % surfImages.length);
+    setCurrentSurfImageIndex((prev) => (prev + 1) % surfImagesMobile.length);
   };
 
   const handlePrevSurfImage = () => {
-    setCurrentSurfImageIndex((prev) => (prev - 1 + surfImages.length) % surfImages.length);
+    setCurrentSurfImageIndex((prev) => (prev - 1 + surfImagesMobile.length) % surfImagesMobile.length);
   };
 
   const handleOpenImageModal = (index: number) => {
@@ -651,12 +662,12 @@ const ActivityCard = ({
 
   const handleNextModalImage = () => {
     console.log('[ACTIVITY CARD] Next modal image');
-    setModalImageIndex((prev) => (prev + 1) % surfImages.length);
+    setModalImageIndex((prev) => (prev + 1) % surfImagesDesktop.length);
   };
 
   const handlePrevModalImage = () => {
     console.log('[ACTIVITY CARD] Previous modal image');
-    setModalImageIndex((prev) => (prev - 1 + surfImages.length) % surfImages.length);
+    setModalImageIndex((prev) => (prev - 1 + surfImagesDesktop.length) % surfImagesDesktop.length);
   };
 
   const handleNextTestimonial = () => {
@@ -687,11 +698,11 @@ const ActivityCard = ({
     if (!isSurf) return;
 
     const interval = setInterval(() => {
-      setCurrentSurfImageIndex((prev) => (prev + 1) % surfImages.length);
+      setCurrentSurfImageIndex((prev) => (prev + 1) % surfImagesMobile.length);
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isSurf, surfImages.length]);
+  }, [isSurf, surfImagesMobile.length]);
 
   // Add global mouse move listener to detect hover issues when image modal is open
   // Also disable pointer-events on body to prevent hover effects on background elements
@@ -1302,7 +1313,7 @@ const ActivityCard = ({
                 className="absolute inset-0"
               >
                 <Image
-                  src={surfImages[currentSurfImageIndex]}
+                  src={surfImagesMobile[currentSurfImageIndex]}
                   alt={`Surf ${currentSurfImageIndex + 1}`}
                   fill
                   className="object-cover"
@@ -1354,7 +1365,7 @@ const ActivityCard = ({
 
               {/* Pagination Dots - Minimal & Elegant */}
               <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 bg-black/30 backdrop-blur-sm px-1 py-0.5 rounded-full">
-                {surfImages.map((_, index) => (
+                {surfImagesMobile.map((_, index) => (
                   <button
                     key={index}
                     type="button"
@@ -1381,7 +1392,7 @@ const ActivityCard = ({
 
               {/* Image Counter */}
               <div className="absolute bottom-3 right-3 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20">
-                {currentSurfImageIndex + 1} / {surfImages.length}
+                {currentSurfImageIndex + 1} / {surfImagesMobile.length}
               </div>
             </div>
 
@@ -1395,7 +1406,7 @@ const ActivityCard = ({
                 className="absolute inset-0"
               >
                 <Image
-                  src={surfImages[currentSurfImageIndex]}
+                  src={surfImagesDesktop[currentSurfImageIndex]}
                   alt={`Surf ${currentSurfImageIndex + 1}`}
                   fill
                   className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
@@ -1447,7 +1458,7 @@ const ActivityCard = ({
 
               {/* Pagination Dots Desktop */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
-                {surfImages.map((_, index) => (
+                {surfImagesDesktop.map((_, index) => (
                   <button
                     key={index}
                     type="button"
@@ -1474,7 +1485,7 @@ const ActivityCard = ({
 
               {/* Image Counter Desktop */}
               <div className="absolute bottom-4 right-4 z-20 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-semibold border border-white/20">
-                {currentSurfImageIndex + 1} / {surfImages.length}
+                {currentSurfImageIndex + 1} / {surfImagesDesktop.length}
               </div>
             </div>
           </>
@@ -1538,20 +1549,6 @@ const ActivityCard = ({
         </div>
 
       </div>
-
-      {/* Mobile Title - Only for Surf - Above Coaching Method */}
-      {isSurf && onSurfProgramChange && surfProgram && (
-        <div className="md:hidden px-4 pt-4">
-          <h2 className="text-2xl font-bold text-black font-heading text-center">
-            {activity.name.split(' - ').map((part, idx) => (
-              <span key={idx}>
-                {part}
-                {idx < activity.name.split(' - ').length - 1 && <br />}
-              </span>
-            ))}
-          </h2>
-        </div>
-      )}
 
       {/* Our Integrated Surf Coaching Method - Only for Surf */}
       {isSurf && onSurfProgramChange && surfProgram && (
@@ -2015,7 +2012,7 @@ const ActivityCard = ({
 
               {/* Image Counter */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-semibold border border-white/20">
-                {modalImageIndex + 1} / {surfImages.length}
+                {modalImageIndex + 1} / {surfImagesDesktop.length}
               </div>
 
               {/* Main Image */}
@@ -2028,7 +2025,7 @@ const ActivityCard = ({
                   className="relative w-full h-full"
                 >
                   <Image
-                    src={surfImages[modalImageIndex]}
+                    src={surfImagesDesktop[modalImageIndex]}
                     alt={`Surf ${modalImageIndex + 1}`}
                     fill
                     className="object-contain"
@@ -2066,7 +2063,7 @@ const ActivityCard = ({
               {/* Thumbnail Strip */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-full overflow-x-auto">
                 <div className="flex gap-2 bg-black/80 backdrop-blur-md px-3 py-2 rounded-full border border-white/20">
-                  {surfImages.map((img, index) => (
+                  {surfImagesDesktop.map((img, index) => (
                     <button
                       key={index}
                       type="button"

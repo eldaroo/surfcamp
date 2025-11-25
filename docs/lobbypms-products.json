@@ -30,22 +30,22 @@
     },
     {
       "service_id": 488396,
-      "name": "Programa de Surf de 3 clases y videoanalisis ",
-      "value": "300.00",
+      "name": "Core Surf program",
+      "value": "360.00",
       "infinite_inventory": 1,
       "stock": null
     },
     {
       "service_id": 489528,
-      "name": "Programa de Surf de 4 clases y videoanalisis ",
-      "value": "380.00",
+      "name": "Intensive Surf Program",
+      "value": "540.00",
       "infinite_inventory": 1,
       "stock": null
     },
     {
       "service_id": 489529,
-      "name": "Programa de Surf de 5 clases y videoanalisis ",
-      "value": "460.00",
+      "name": "Elite Surf Program",
+      "value": "780.00",
       "infinite_inventory": 1,
       "stock": null
     },

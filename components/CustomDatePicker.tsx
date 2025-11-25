@@ -36,6 +36,8 @@ export default function CustomDatePicker({
         maxDate={maxDate}
         disabled={disabled}
         dateFormat="dd/MM/yyyy"
+        readOnly
+        autoComplete="off"
         className={`w-full px-4 py-3 border border-white/40 rounded-xl
                    bg-white/50 backdrop-blur-sm
                    focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50
