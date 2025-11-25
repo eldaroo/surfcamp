@@ -86,6 +86,17 @@ export function calculateWeTravelPayment({
 }
 
 /**
+ * Convert class count to surf program
+ * Frontend stores class count, not program name
+ */
+function classCountToProgram(classCount: number): SurfProgram | null {
+  if (classCount <= 4) return 'fundamental';
+  if (classCount <= 6) return 'progressionPlus';
+  if (classCount >= 8) return 'highPerformance';
+  return null;
+}
+
+/**
  * Get surf program from various possible formats
  */
 export function detectSurfProgram(
@@ -103,7 +114,7 @@ export function detectSurfProgram(
         }
       }
 
-      // Check selectedActivities for surfProgram
+      // Check selectedActivities for surfProgram or classCount
       if (participant.selectedActivities) {
         for (const activity of participant.selectedActivities) {
           if (activity.surfProgram) {
@@ -111,6 +122,26 @@ export function detectSurfProgram(
           }
           if (activity.category === 'surf' && activity.program) {
             return activity.program as SurfProgram;
+          }
+          // NEW: Check for classCount and convert to program
+          if (activity.category === 'surf' && activity.classCount) {
+            const program = classCountToProgram(activity.classCount);
+            if (program) {
+              console.log(`🏄 [DETECT] Found surf program from classCount ${activity.classCount} → ${program}`);
+              return program;
+            }
+          }
+        }
+      }
+
+      // NEW: Check selectedSurfClasses (stored as object like { activityId: classCount })
+      if (participant.selectedSurfClasses) {
+        const classCounts = Object.values(participant.selectedSurfClasses);
+        if (classCounts.length > 0 && typeof classCounts[0] === 'number') {
+          const program = classCountToProgram(classCounts[0] as number);
+          if (program) {
+            console.log(`🏄 [DETECT] Found surf program from selectedSurfClasses ${classCounts[0]} → ${program}`);
+            return program;
           }
         }
       }
@@ -126,9 +157,18 @@ export function detectSurfProgram(
       if (activity.category === 'surf' && activity.program) {
         return activity.program as SurfProgram;
       }
+      // NEW: Check for classCount in selectedActivities
+      if (activity.category === 'surf' && activity.classCount) {
+        const program = classCountToProgram(activity.classCount);
+        if (program) {
+          console.log(`🏄 [DETECT] Found surf program from activity classCount ${activity.classCount} → ${program}`);
+          return program;
+        }
+      }
     }
   }
 
+  console.log('⚠️ [DETECT] Could not detect surf program from participants or activities');
   return null;
 }
 

@@ -33,8 +33,6 @@ export async function GET(request: NextRequest) {
     const tripId = searchParams.get('trip_id');
     const tripUuid = searchParams.get('trip_uuid');
 
-    console.log('🔍 [PAYMENT-STATUS] Endpoint called with:', { orderId, tripId, tripUuid });
-
     if (!orderId && !tripId && !tripUuid) {
       return NextResponse.json(
         { error: 'Either order_id, trip_id, or trip_uuid is required' },
@@ -45,23 +43,10 @@ export async function GET(request: NextRequest) {
     let paymentError;
 
     if (orderId) {
-      // Try DIRECT connection to PRIMARY database first (if DATABASE_URL_DIRECT is configured)
-      console.log('🔍 [PAYMENT-STATUS] Attempting PRIMARY database query by order_id:', orderId);
-
       try {
         payment = await getPaymentByOrderId(orderId);
 
-        if (payment) {
-          console.log('📊 [PAYMENT-STATUS] Direct PRIMARY DB response:', {
-            found: true,
-            status: payment.status,
-            updated_at: payment.updated_at,
-            created_at: payment.created_at,
-            id: payment.id
-          });
-        } else {
-          // Fallback to Supabase client (may have replica lag)
-          console.log('⚠️ [PAYMENT-STATUS] No direct DB connection, using Supabase client (may have replica lag)');
+        if (!payment) {
           const { data, error } = await supabase
             .from('payments')
             .select('id, order_id, status, wetravel_data, created_at, updated_at')
@@ -70,23 +55,12 @@ export async function GET(request: NextRequest) {
 
           payment = data;
           paymentError = error;
-
-          if (payment) {
-            console.log('📊 [PAYMENT-STATUS] Supabase client response:', {
-              found: true,
-              status: payment.status,
-              updated_at: payment.updated_at,
-              created_at: payment.created_at,
-              id: payment.id
-            });
-          }
         }
       } catch (error) {
         console.error('❌ [PAYMENT-STATUS] Error querying database:', error);
         paymentError = error;
       }
     } else if (tripId && tripId !== '') {
-      // Search by trip_id in the wetravel_data JSONB field
       const { data, error } = await supabase
         .from('payments')
         .select('id, order_id, status, wetravel_data, created_at, updated_at')
@@ -95,9 +69,7 @@ export async function GET(request: NextRequest) {
       payment = data && data.length > 0 ? data[0] : null;
       paymentError = error;
 
-      // If trip_id search failed and we have trip_uuid, try that
       if (!payment && tripUuid && tripUuid !== '') {
-        console.log('🔄 [PAYMENT-STATUS] trip_id search failed, trying trip_uuid:', tripUuid);
         const { data: uuidData, error: uuidError } = await supabase
           .from('payments')
           .select('id, order_id, status, wetravel_data, created_at, updated_at')
@@ -107,8 +79,6 @@ export async function GET(request: NextRequest) {
         paymentError = uuidError;
       }
     } else if (tripUuid && tripUuid !== '') {
-      // Search by trip_uuid in the wetravel_data JSONB field
-      console.log('🔍 [PAYMENT-STATUS] Searching by trip_uuid:', tripUuid);
       const { data, error } = await supabase
         .from('payments')
         .select('id, order_id, status, wetravel_data, created_at, updated_at')
@@ -133,33 +103,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('💾 [PAYMENT-STATUS] Payment found with status:', payment.status);
-    console.log('🕐 [PAYMENT-STATUS] Payment updated_at:', payment.updated_at);
-    console.log('🔢 [PAYMENT-STATUS] Payment ID:', payment.id);
-
     // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry multiple times with delays
     if (payment.status === 'pending' && payment.updated_at) {
       const updatedAt = new Date(payment.updated_at);
       const now = new Date();
       const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
 
-      console.log('⏱️ [PAYMENT-STATUS] Seconds since last update:', secondsSinceUpdate);
-
       // If updated in last 60 seconds, might be read-after-write issue / replica lag
       if (secondsSinceUpdate < 60) {
-        console.log('⏳ [PAYMENT-STATUS] Recent update detected, retrying payment query up to 6 times...');
-
         // Try up to 6 times with shorter delays: 1s, 1.5s, 2s, 2.5s, 3s, 3.5s (total ~13.5s)
         for (let attempt = 1; attempt <= 6; attempt++) {
-          const delay = 500 + (attempt * 500); // 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
-          console.log(`⏳ [PAYMENT-STATUS] Payment retry attempt ${attempt}/6, waiting ${delay}ms...`);
+          const delay = 500 + (attempt * 500);
           await new Promise(resolve => setTimeout(resolve, delay));
 
           // Retry the query from PRIMARY database (with fallback)
           let retryPayment;
           if (orderId) {
             retryPayment = await getPaymentByOrderId(orderId);
-            // Fallback to Supabase if direct connection not available
             if (!retryPayment) {
               const { data } = await supabase
                 .from('payments')
@@ -169,7 +129,6 @@ export async function GET(request: NextRequest) {
               retryPayment = data;
             }
           } else if (tripId) {
-            // For tripId search, use Supabase (JSONB queries)
             const { data } = await supabase
               .from('payments')
               .select('id, order_id, status, wetravel_data, created_at, updated_at')
@@ -177,17 +136,9 @@ export async function GET(request: NextRequest) {
             retryPayment = data && data.length > 0 ? data[0] : null;
           }
 
-          console.log(`🔄 [PAYMENT-STATUS] Payment retry ${attempt}/6 - status:`, retryPayment?.status || 'not_found', {
-            paymentId: retryPayment?.id,
-            orderId: retryPayment?.order_id,
-            updatedAt: retryPayment?.updated_at
-          });
-
           if (retryPayment) {
             payment = retryPayment as typeof payment;
-            // If status changed from pending, break early
             if (retryPayment.status !== 'pending') {
-              console.log(`✅ [PAYMENT-STATUS] Payment status changed to ${retryPayment.status} on attempt ${attempt}!`);
               break;
             }
           }
@@ -222,31 +173,19 @@ export async function GET(request: NextRequest) {
           .eq('id', payment.order_id);
         // Update the payment object to reflect the new status
         payment.status = 'booking_created';
-        console.log('🔄 [PAYMENT-STATUS] Status updated to booking_created after fixing orphaned events');
       }
     }
 
-    console.log('🎯 [PAYMENT-STATUS] About to check reservation creation. Current status:', payment.status);
-
     // Check if booking_created but no LobbyPMS reservation yet
     if (payment.status === 'booking_created') {
-      console.log('📊 [PAYMENT-STATUS] Status is booking_created, checking if reservation needed');
-
       const { data: orderData } = await supabase
         .from('orders')
         .select('booking_data, lobbypms_reservation_id')
         .eq('id', payment.order_id)
         .single();
 
-      console.log('📊 [PAYMENT-STATUS] Order check:', {
-        hasBookingData: !!orderData?.booking_data,
-        hasReservationId: !!orderData?.lobbypms_reservation_id,
-        reservationId: orderData?.lobbypms_reservation_id
-      });
-
       if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
         // 🔒 RACE CONDITION PROTECTION: Use optimistic locking
-        // Try to claim this order for reservation creation by setting a temporary marker
         const claimTimestamp = new Date().toISOString();
         const { data: claimResult, error: claimError } = await supabase
           .from('orders')
@@ -254,20 +193,14 @@ export async function GET(request: NextRequest) {
             lobbypms_reservation_id: `CREATING_${claimTimestamp}`
           })
           .eq('id', payment.order_id)
-          .is('lobbypms_reservation_id', null)  // Only update if still null
+          .is('lobbypms_reservation_id', null)
           .select();
 
-        if (claimError || !claimResult || claimResult.length === 0) {
-          console.log('⚠️ [PAYMENT-STATUS] Could not claim order (already claimed or error)');
-          // Another process claimed it, skip
-        } else {
-          console.log('✅ [PAYMENT-STATUS] Successfully claimed order, creating reservation');
-
+        if (!claimError && claimResult && claimResult.length > 0) {
           const booking = orderData.booking_data;
 
           try {
             const reserveUrl = `${request.nextUrl.origin}/api/reserve`;
-            console.log('📞 [PAYMENT-STATUS] Calling /api/reserve:', reserveUrl);
 
           const reservePayload = {
             checkIn: booking.checkIn,
@@ -294,28 +227,18 @@ export async function GET(request: NextRequest) {
           });
 
           const reserveData = await reserveResponse.json();
-          console.log('📥 [PAYMENT-STATUS] /api/reserve responded:', {
-            ok: reserveResponse.ok,
-            status: reserveResponse.status,
-            success: reserveData.success
-          });
 
           if (reserveResponse.ok) {
-            // Handle both single and multiple reservations
             let reservationId;
             if (reserveData.multipleReservations && reserveData.reservationIds) {
-              // Multiple reservations: use the first ID or join them
               reservationId = Array.isArray(reserveData.reservationIds)
                 ? reserveData.reservationIds[0]
                 : reserveData.reservationIds;
-              console.log('✅ [PAYMENT-STATUS] Multiple reservations created:', reserveData.reservationIds);
             } else {
-              // Single reservation
               reservationId = reserveData.reservationId ||
                              reserveData.reservation?.id ||
                              reserveData.lobbyPMSResponse?.booking?.booking_id ||
                              reserveData.lobbyPMSResponse?.id;
-              console.log('✅ [PAYMENT-STATUS] Single reservation created:', reservationId);
             }
 
             if (reservationId) {
@@ -326,29 +249,23 @@ export async function GET(request: NextRequest) {
                   lobbypms_data: reserveData
                 })
                 .eq('id', payment.order_id);
-              console.log('💾 [PAYMENT-STATUS] Reservation ID saved to database:', reservationId);
             } else {
-              console.error('❌ [PAYMENT-STATUS] Could not extract reservation ID from response');
+              console.error('❌ [PAYMENT-STATUS] Could not extract reservation ID');
             }
           } else {
-            console.error('❌ [PAYMENT-STATUS] /api/reserve failed:', reserveData);
+            console.error('❌ [PAYMENT-STATUS] /api/reserve failed:', reserveData.error);
           }
         } catch (lobbyError) {
           console.error('❌ [PAYMENT-STATUS] Error calling /api/reserve:', lobbyError);
         }
-        }  // End of claim success block
-      } else {
+        }
       }
-    } else {
     }
 
-    // Get order details if available using DIRECT connection to PRIMARY database
-    console.log('🔍 [PAYMENT-STATUS] Attempting PRIMARY database query for order_id:', payment.order_id);
+    // Get order details
     let order = await getOrderById(payment.order_id);
 
-    // Fallback to Supabase if direct connection not available
     if (!order) {
-      console.log('⚠️ [PAYMENT-STATUS] No direct DB connection for orders, using Supabase client');
       const { data } = await supabase
         .from('orders')
         .select('id, status, booking_data, lobbypms_reservation_id')
@@ -357,33 +274,20 @@ export async function GET(request: NextRequest) {
       order = data;
     }
 
-    console.log('🏨 [PAYMENT-STATUS] Order data (first read):', {
-      orderId: order?.id,
-      orderStatus: order?.status,
-      lobbypmsReservationId: order?.lobbypms_reservation_id
-    });
-
-    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry multiple times with longer delays
+    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry
     if (!order?.lobbypms_reservation_id && payment.updated_at) {
       const updatedAt = new Date(payment.updated_at);
       const now = new Date();
       const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
 
-      // Increased time window from 30s to 60s
       if (secondsSinceUpdate < 60) {
-        console.log('⏳ [PAYMENT-STATUS] No reservation yet but recent update, retrying up to 6 times with shorter delays...');
-
-        // Try up to 6 times with shorter delays: 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
         for (let attempt = 1; attempt <= 6; attempt++) {
-          const delay = 500 + (attempt * 500); // 1s, 1.5s, 2s, 2.5s, 3s, 3.5s
-          console.log(`⏳ [PAYMENT-STATUS] Retry attempt ${attempt}/6, waiting ${delay}ms...`);
+          const delay = 500 + (attempt * 500);
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          // Re-query both payment and order from PRIMARY database (with fallback)
           let retryPayment = await getPaymentByOrderId(payment.order_id);
           let retryOrder = await getOrderById(payment.order_id);
 
-          // Fallback to Supabase if direct connection not available
           if (!retryPayment) {
             const { data } = await supabase
               .from('payments')
@@ -402,23 +306,13 @@ export async function GET(request: NextRequest) {
             retryOrder = data;
           }
 
-          console.log(`🔄 [PAYMENT-STATUS] Retry ${attempt}/6 results:`, {
-            paymentStatus: retryPayment?.status || 'not_found',
-            orderStatus: retryOrder?.status || 'not_found',
-            lobbypmsReservationId: retryOrder?.lobbypms_reservation_id || null,
-            paymentUpdatedAt: retryPayment?.updated_at
-          });
-
-          // Update local variables if we got better data
           if (retryPayment && retryPayment.status !== 'pending') {
-            console.log(`✅ [PAYMENT-STATUS] Payment status updated to ${retryPayment.status} on retry!`);
             payment = { ...payment, ...retryPayment } as typeof payment;
           }
 
           if (retryOrder) {
             order = retryOrder;
             if (retryOrder.lobbypms_reservation_id) {
-              console.log('✅ [PAYMENT-STATUS] Reservation ID found on retry:', retryOrder.lobbypms_reservation_id);
               break;
             }
           }
@@ -426,15 +320,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check if reservation exists (even if status shows pending due to cache)
+    // Check if reservation exists
     const hasReservation = order?.lobbypms_reservation_id &&
                           !order.lobbypms_reservation_id.startsWith('CREATING_');
-
-    console.log('✨ [PAYMENT-STATUS] Final decision:', {
-      hasReservation,
-      paymentStatus: payment.status,
-      willShowSuccess: payment.status === 'booking_created' || payment.status === 'completed' || hasReservation
-    });
 
     const response = {
       found: true,
