@@ -25,6 +25,7 @@ interface ParticipantData {
   selectedYogaPackages: Record<string, '1-class' | '3-classes' | '10-classes'>; // deprecated - for backwards compatibility
   selectedSurfPackages: Record<string, '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes'>;
   selectedSurfClasses: Record<string, number>;
+  hasPrivateCoaching: boolean; // Whether this participant selected 1:1 private coaching
 }
 
 interface BookingStore {
@@ -120,6 +121,7 @@ const createEmptyParticipant = (id: string, name: string, isYou: boolean): Parti
   selectedYogaPackages: {},
   selectedSurfPackages: {},
   selectedSurfClasses: {},
+  hasPrivateCoaching: false,
 });
 
 const initialState = {
@@ -257,6 +259,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
           selectedYogaPackages: {},
           selectedSurfClasses: {},
           selectedSurfPackages: {},
+          hasPrivateCoaching: false,
         };
         return {
           participants: [newParticipant],
@@ -677,9 +680,19 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
     }),
 
   setIsPrivateUpgrade: (isUpgrade) =>
-    set(() => ({
-      isPrivateUpgrade: isUpgrade,
-    })),
+    set((state) => {
+      // Update hasPrivateCoaching for the active participant
+      const updatedParticipants = state.participants.map((p) =>
+        p.id === state.activeParticipantId
+          ? { ...p, hasPrivateCoaching: isUpgrade }
+          : p
+      );
+
+      return {
+        isPrivateUpgrade: isUpgrade, // Keep for backward compatibility
+        participants: updatedParticipants,
+      };
+    }),
 
   setPersonalizationName: (name) =>
     set((state) => {

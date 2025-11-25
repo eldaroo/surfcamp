@@ -94,7 +94,7 @@ const ActivitiesPage = () => {
     goToActivityStep,
   } = useBookingStore();
 
-  const { selectedActivities, yogaClasses, yogaUsePackDiscount, selectedYogaPackages, selectedSurfPackages, selectedSurfClasses, activityQuantities, selectedTimeSlots } = useMemo(() => {
+  const { selectedActivities, yogaClasses, yogaUsePackDiscount, selectedYogaPackages, selectedSurfPackages, selectedSurfClasses, activityQuantities, selectedTimeSlots, hasPrivateCoaching } = useMemo(() => {
     const activeParticipant = storeParticipants.find(p => p.id === activeParticipantId);
     return {
       selectedActivities: activeParticipant?.selectedActivities ?? [],
@@ -105,6 +105,7 @@ const ActivitiesPage = () => {
       selectedSurfClasses: activeParticipant?.selectedSurfClasses ?? {},
       activityQuantities: activeParticipant?.activityQuantities ?? {},
       selectedTimeSlots: activeParticipant?.selectedTimeSlots ?? {},
+      hasPrivateCoaching: activeParticipant?.hasPrivateCoaching ?? false,
     };
   }, [storeParticipants, activeParticipantId]);
 
@@ -290,10 +291,10 @@ const ActivitiesPage = () => {
 
   const handleShowPrivateCoachingModal = useCallback(() => {
     // Only show modal if not already upgraded
-    if (!isPrivateUpgrade) {
+    if (!hasPrivateCoaching) {
       setShowPrivateCoachingModal(true);
     }
-  }, [isPrivateUpgrade]);
+  }, [hasPrivateCoaching]);
 
   const handleAcceptPrivateCoaching = useCallback(() => {
     setIsPrivateUpgrade(true);
@@ -370,7 +371,7 @@ const ActivitiesPage = () => {
         const basePrice = calculateSurfPrice(classes);
         // Add private coaching upgrade if selected (Core: $90, Intensive: $110, Elite: $130)
         const upgradePrice = calculatePrivateCoachingUpgrade(classes);
-        return isPrivateUpgrade ? basePrice + upgradePrice : basePrice;
+        return hasPrivateCoaching ? basePrice + upgradePrice : basePrice;
       }
 
       const quantity = quantityCategories.has(activity.category)
@@ -387,7 +388,7 @@ const ActivitiesPage = () => {
       selectedSurfClasses,
       yogaClasses,
       yogaUsePackDiscount,
-      isPrivateUpgrade,
+      hasPrivateCoaching,
     ]
   );
 
@@ -613,7 +614,7 @@ const ActivitiesPage = () => {
       const basePrice = calculateSurfPrice(classes);
       // Add private coaching upgrade if selected (Core: $90, Intensive: $110, Elite: $130)
       const upgradePrice = calculatePrivateCoachingUpgrade(classes);
-      return isPrivateUpgrade ? basePrice + upgradePrice : basePrice;
+      return participant.hasPrivateCoaching ? basePrice + upgradePrice : basePrice;
     }
 
     const quantity = quantityCategories.has(activity.category)
@@ -652,7 +653,7 @@ const ActivitiesPage = () => {
   const computePrivateCoachingUpgradeForParticipant = (
     participant: typeof storeParticipants[0]
   ): number => {
-    if (!isPrivateUpgrade) return 0;
+    if (!participant.hasPrivateCoaching) return 0;
 
     let total = 0;
     participant.selectedActivities.forEach(activity => {
