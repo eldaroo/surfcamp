@@ -29,6 +29,19 @@ export default function SuccessPage() {
   const { t, locale } = useI18n();
   const { bookingData, selectedRoom, priceBreakdown, participants } = useBookingStore();
 
+  // Get locale-aware accommodation name
+  const getAccommodationName = () => {
+    if (!selectedRoom) return '';
+
+    const accommodationNames = {
+      'casa-playa': locale === 'es' ? 'Casa de Playa (Cuarto Compartido)' : 'Beach House (Shared Room)',
+      'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
+      'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+    };
+
+    return accommodationNames[selectedRoom.roomTypeId as keyof typeof accommodationNames] || selectedRoom.roomTypeName;
+  };
+
   // Collect all activities from all participants
   const allActivities: Array<{ activity: any; participant: any }> = [];
   participants.forEach(participant => {
@@ -183,7 +196,7 @@ export default function SuccessPage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">{t('accommodation.roomTypes.' + selectedRoom.roomTypeId + '.name')}:</span>
-                      <span className="font-medium text-white">{selectedRoom.roomTypeName}</span>
+                      <span className="font-medium text-white">{getAccommodationName()}</span>
                     </div>
                   </div>
                 </div>
@@ -262,7 +275,7 @@ export default function SuccessPage() {
             <div className="space-y-4">
               {selectedRoom && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-300">{selectedRoom.roomTypeName}</span>
+                  <span className="text-gray-300">{getAccommodationName()}</span>
                   <span className="font-medium text-white">${priceBreakdown?.accommodation || 0}</span>
                 </div>
               )}

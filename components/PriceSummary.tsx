@@ -214,6 +214,19 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
     );
   }
 
+  // Get locale-aware accommodation name
+  const getAccommodationName = () => {
+    if (!selectedRoom) return '';
+
+    const accommodationNames = {
+      'casa-playa': locale === 'es' ? 'Casa de Playa (Cuarto Compartido)' : 'Beach House (Shared Room)',
+      'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
+      'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+    };
+
+    return accommodationNames[selectedRoom.roomTypeId as keyof typeof accommodationNames] || selectedRoom.roomTypeName;
+  };
+
   const content = (
     <>
       <h3 className="text-base md:text-lg font-semibold mb-3 font-heading text-black">
@@ -228,7 +241,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
             <div className="flex justify-between items-start">
               <div className="flex-1 pr-4">
                 <div className="text-sm md:text-base font-medium text-black">
-                  {selectedRoom.roomTypeName}
+                  {getAccommodationName()}
                   {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
                     <span className="text-xs md:text-sm ml-1 font-normal text-[#8c8179]">
                       ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
