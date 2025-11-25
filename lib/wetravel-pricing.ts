@@ -40,7 +40,7 @@ const SURF_PROGRAM_PRICING: Record<SurfProgram, SurfProgramPricing> = {
 
 interface CalculateWeTravelPaymentParams {
   surfPrograms: SurfProgram[];  // Array of programs, one per participant
-  coachingCount: number;        // Number of participants with coaching
+  coachingPrograms: SurfProgram[];  // Array of programs for participants WITH coaching
   accommodationTotal: number;
 }
 
@@ -55,11 +55,11 @@ interface WeTravelPaymentBreakdown {
 
 /**
  * Calculate the WeTravel payment amount based on surf program selections
- * Now supports multiple participants with different programs
+ * Now supports multiple participants with different programs and individual coaching costs
  */
 export function calculateWeTravelPayment({
   surfPrograms,
-  coachingCount,
+  coachingPrograms,
   accommodationTotal
 }: CalculateWeTravelPaymentParams): WeTravelPaymentBreakdown {
   // Calculate total program difference (sum of all participants' programs)
@@ -71,16 +71,11 @@ export function calculateWeTravelPayment({
     totalProgramDifference += programPricing.difference;
   }
 
-  // Calculate coaching cost (for each participant that selected it)
-  if (coachingCount > 0) {
-    // Use the highest program's coaching cost if multiple programs exist
-    const highestProgram = surfPrograms.includes('highPerformance')
-      ? 'highPerformance'
-      : surfPrograms.includes('progressionPlus')
-      ? 'progressionPlus'
-      : 'fundamental';
-
-    totalCoachingCost = coachingCount * SURF_PROGRAM_PRICING[highestProgram].coachingCost;
+  // Calculate coaching cost per participant based on THEIR program
+  for (const program of coachingPrograms) {
+    const programPricing = SURF_PROGRAM_PRICING[program];
+    totalCoachingCost += programPricing.coachingCost;
+    console.log(`💰 [COACHING] Participant with ${program} + coaching = $${programPricing.coachingCost}`);
   }
 
   const accommodationDeposit = Math.round(accommodationTotal * 0.10);
@@ -89,7 +84,8 @@ export function calculateWeTravelPayment({
   console.log('💰 [WETRAVEL-PRICING] Calculation breakdown:', {
     surfPrograms,
     participantCount: surfPrograms.length,
-    coachingCount,
+    coachingPrograms,
+    coachingCount: coachingPrograms.length,
     accommodationTotal,
     programDifference: totalProgramDifference,
     accommodationDeposit,
@@ -103,7 +99,7 @@ export function calculateWeTravelPayment({
     coachingCost: totalCoachingCost,
     total,
     participantCount: surfPrograms.length,
-    coachingParticipants: coachingCount
+    coachingParticipants: coachingPrograms.length
   };
 }
 
@@ -196,14 +192,14 @@ export function detectSurfProgram(
 }
 
 /**
- * Count how many participants selected 1:1 coaching
- * Returns the number of participants with private coaching
+ * Get surf programs for participants WITH coaching
+ * Returns an array of programs for participants who selected 1:1 coaching
  */
-export function countPrivateCoaching(
+export function getCoachingPrograms(
   participants: any[],
   selectedActivities?: any[]
-): number {
-  let count = 0;
+): SurfProgram[] {
+  const coachingPrograms: SurfProgram[] = [];
 
   // Check participants
   if (participants && participants.length > 0) {
@@ -226,14 +222,66 @@ export function countPrivateCoaching(
       }
 
       if (hasCoaching) {
-        console.log(`👨‍🏫 [DETECT] Participant "${participant.name || participant.id}" has coaching`);
-        count++;
+        // Find this participant's surf program
+        let participantProgram: SurfProgram | null = null;
+
+        // Check selectedSurfProgram
+        if (participant.selectedSurfProgram) {
+          const progs = Object.values(participant.selectedSurfProgram);
+          if (progs.length > 0 && progs[0]) {
+            participantProgram = progs[0] as SurfProgram;
+          }
+        }
+
+        // Check selectedActivities for surfProgram or classCount
+        if (!participantProgram && participant.selectedActivities) {
+          for (const activity of participant.selectedActivities) {
+            if (activity.surfProgram) {
+              participantProgram = activity.surfProgram as SurfProgram;
+              break;
+            }
+            if (activity.category === 'surf' && activity.program) {
+              participantProgram = activity.program as SurfProgram;
+              break;
+            }
+            if (activity.category === 'surf' && activity.classCount) {
+              participantProgram = classCountToProgram(activity.classCount);
+              break;
+            }
+          }
+        }
+
+        // Check selectedSurfClasses
+        if (!participantProgram && participant.selectedSurfClasses) {
+          const classCounts = Object.values(participant.selectedSurfClasses);
+          if (classCounts.length > 0 && typeof classCounts[0] === 'number') {
+            participantProgram = classCountToProgram(classCounts[0] as number);
+          }
+        }
+
+        if (participantProgram) {
+          console.log(`👨‍🏫 [DETECT] Participant "${participant.name || participant.id}" has ${participantProgram} + coaching`);
+          coachingPrograms.push(participantProgram);
+        } else {
+          console.log(`⚠️ [DETECT] Participant "${participant.name || participant.id}" has coaching but no program detected`);
+        }
       }
     }
   }
 
-  console.log(`✅ [DETECT] Found ${count} participant(s) with coaching`);
-  return count;
+  console.log(`✅ [DETECT] Found ${coachingPrograms.length} participant(s) with coaching:`, coachingPrograms);
+  return coachingPrograms;
+}
+
+/**
+ * Count how many participants selected 1:1 coaching
+ * Returns the number of participants with private coaching
+ */
+export function countPrivateCoaching(
+  participants: any[],
+  selectedActivities?: any[]
+): number {
+  return getCoachingPrograms(participants, selectedActivities).length;
 }
 
 /**

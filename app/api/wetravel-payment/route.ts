@@ -3,7 +3,7 @@ import { config, isConfigValid, getWeTravelAccessToken } from '@/lib/config';
 import {
   calculateWeTravelPayment,
   detectSurfPrograms,
-  countPrivateCoaching,
+  getCoachingPrograms,
   getAccommodationTotal
 } from '@/lib/wetravel-pricing';
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
 
       // NEW: Calculate WeTravel payment based on surf programs and coaching (multiple participants)
       const surfPrograms = detectSurfPrograms(participants, selectedActivities);
-      const coachingCount = countPrivateCoaching(participants, selectedActivities);
+      const coachingPrograms = getCoachingPrograms(participants, selectedActivities);
       const accommodationTotal = getAccommodationTotal(priceBreakdown);
 
       let depositAmount: number;
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         // Use new pricing formula
         paymentBreakdown = calculateWeTravelPayment({
           surfPrograms,
-          coachingCount,
+          coachingPrograms,
           accommodationTotal
         });
         depositAmount = paymentBreakdown.total;
@@ -87,6 +87,7 @@ export async function POST(request: NextRequest) {
         console.log('💰 [NEW PRICING] WeTravel payment calculated:', {
           surfPrograms,
           participantCount: paymentBreakdown.participantCount,
+          coachingPrograms,
           coachingCount: paymentBreakdown.coachingParticipants,
           accommodationTotal,
           programDifference: paymentBreakdown.programDifference,
@@ -139,8 +140,9 @@ export async function POST(request: NextRequest) {
                                 'Casas Deluxe';
       const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
       const guestsText = guests === 1 ? '1 guest' : `${guests} guests`;
+      const depositLabel = locale === 'es' ? 'Monto Inicial de Reserva' : 'Initial Reservation Amount';
 
-      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
+      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
 
       // Create WeTravel payload from booking data
       wetravelPayload = {
