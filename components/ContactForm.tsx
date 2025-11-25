@@ -557,13 +557,20 @@ const priceBreakdown = useMemo(
 
       // Build dynamic title based on booking
       const customerName = `${formData.firstName} ${formData.lastName}`.trim() || 'Guest';
-      const accommodationType = selectedRoom?.roomTypeId === 'casa-playa' ? 'Casa de Playa' :
-                                selectedRoom?.roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
-                                'Casas Deluxe';
+
+      // Get accommodation name based on locale
+      const accommodationNames = {
+        'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
+        'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
+        'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+      };
+      const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
+
       const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
-      const nightsText = nightsCount === 1 ? '1 night' : `${nightsCount} nights`;
-      const guestsText = bookingData.guests === 1 ? '1 guest' : `${bookingData.guests} guests`;
-      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - 10% Deposit`;
+      const nightsText = nightsCount === 1 ? (locale === 'es' ? '1 noche' : '1 night') : `${nightsCount} ${locale === 'es' ? 'noches' : 'nights'}`;
+      const guestsText = bookingData.guests === 1 ? (locale === 'es' ? '1 huésped' : '1 guest') : `${bookingData.guests} ${locale === 'es' ? 'huéspedes' : 'guests'}`;
+      const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
+      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
 
       console.log('📝 Generated dynamic title:', dynamicTitle);
 

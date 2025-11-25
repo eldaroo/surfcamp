@@ -552,7 +552,7 @@ const translations = {
           features: ["Shared", "Affordable", "Social"]
         },
         "casitas-privadas": {
-          name: "Private Cottages",
+          name: "Private House",
           description: "Independent cottages with total privacy, ideal for couples or travelers seeking tranquility.",
           features: ["Private", "Quiet", "Independent"]
         },

@@ -135,11 +135,17 @@ export async function POST(request: NextRequest) {
 
       // Build dynamic title based on booking
       const customerName = `${contactInfo.firstName} ${contactInfo.lastName}`;
-      const accommodationType = roomTypeId === 'casa-playa' ? 'Casa de Playa' :
-                                roomTypeId === 'casitas-privadas' ? 'Casitas Privadas' :
-                                'Casas Deluxe';
-      const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
-      const guestsText = guests === 1 ? '1 guest' : `${guests} guests`;
+
+      // Get accommodation name based on locale
+      const accommodationNames = {
+        'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
+        'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
+        'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+      };
+      const accommodationType = accommodationNames[roomTypeId as keyof typeof accommodationNames] || roomTypeId;
+
+      const nightsText = nights === 1 ? (locale === 'es' ? '1 noche' : '1 night') : `${nights} ${locale === 'es' ? 'noches' : 'nights'}`;
+      const guestsText = guests === 1 ? (locale === 'es' ? '1 huésped' : '1 guest') : `${guests} ${locale === 'es' ? 'huéspedes' : 'guests'}`;
       const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
 
       const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
