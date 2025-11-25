@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
                                 'Casas Deluxe';
       const nightsText = nights === 1 ? '1 night' : `${nights} nights`;
       const guestsText = guests === 1 ? '1 guest' : `${guests} guests`;
-      const depositLabel = locale === 'es' ? 'Monto Inicial de Reserva' : 'Initial Reservation Amount';
+      const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
 
       const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
 
