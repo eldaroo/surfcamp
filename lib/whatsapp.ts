@@ -461,6 +461,5 @@ Si tenés alguna duda, escribinos a este número. ¡Estamos para ayudarte!
 
 *Zeneida's Garden*`;
 
-  // TESTING: Send to test number instead of real client
-  return sendWhatsAppMessage('+541153695627', message);
+  return sendWhatsAppMessage(bookingData.clientPhone, message);
 }; 
