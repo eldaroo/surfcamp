@@ -57,6 +57,13 @@ const normalizePhoneForStore = (value: string) =>
 const buildLeadGuestName = (firstName: string, lastName: string) =>
   `${firstName.trim()} ${lastName.trim()}`.trim();
 
+// Accommodation names
+const ACCOMMODATION_NAMES = {
+  'casa-playa': { es: 'Casa de Playa', en: 'Beach House' },
+  'casitas-privadas': { es: 'Casitas Privadas', en: 'Private House' },
+  'casas-deluxe': { es: 'Casas Deluxe', en: 'Deluxe Studio' }
+} as const;
+
 // Surf program names
 const SURF_PROGRAMS = {
   fundamental: {
@@ -888,7 +895,7 @@ const priceBreakdown = useMemo(
           </div>
 
           {/* Right Column - Payment Section */}
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl h-full">
+          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 md:p-6 lg:p-8 shadow-2xl h-full">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-white mb-2 font-heading">{t('payment.title')}</h2>
             <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
@@ -897,13 +904,13 @@ const priceBreakdown = useMemo(
           <div className="space-y-6">
             {/* Payment Summary */}
             <div>
-              <div className="bg-gray-700/50 rounded-lg p-6 border border-gray-600">
+              <div className="bg-gray-700/50 rounded-lg p-3 md:p-4 lg:p-6 border border-gray-600">
                 <h3 className="text-lg font-semibold text-white mb-4 font-heading">{t('payment.summary.title')}</h3>
                 <div className="space-y-3">
                   {selectedRoom && (
                     <div className="flex justify-between">
                       <span className="text-gray-300">
-                        {selectedRoom.roomTypeName}
+                        {ACCOMMODATION_NAMES[selectedRoom.roomTypeId as keyof typeof ACCOMMODATION_NAMES]?.[locale === 'en' ? 'en' : 'es'] || selectedRoom.roomTypeName}
                         {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
                           <span className="text-sm text-gray-400 ml-1">
                             ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})

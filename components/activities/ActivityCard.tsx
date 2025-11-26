@@ -903,7 +903,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-4 md:space-y-5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
           {copy.yogaClasses}
         </span>
 
@@ -920,7 +920,7 @@ const ActivityCard = ({
                 whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
                   currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
-                    ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
                     : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
                 }`}
               >
@@ -933,11 +933,11 @@ const ActivityCard = ({
                   initial={{ scale: 0.85 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
-                  className="text-3xl font-bold text-[#8c8179]"
+                  className="text-3xl font-bold text-[#6d5f57]"
                 >
                   {currentClasses}
                 </motion.span>
-                <span className="text-sm text-[#8c8179] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+                <span className="text-sm text-[#6d5f57] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
               </div>
 
               <motion.button
@@ -948,7 +948,7 @@ const ActivityCard = ({
                 whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
                   currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
-                    ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
                     : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
                 }`}
               >
@@ -957,7 +957,7 @@ const ActivityCard = ({
             </div>
 
             {/* OR Divider */}
-            <span className="text-xs text-[#8c8179] font-medium uppercase px-2">or</span>
+            <span className="text-xs text-[#6d5f57] font-medium uppercase px-2">or</span>
 
             {/* 10-Class Pack Option */}
             <motion.button
@@ -1010,7 +1010,7 @@ const ActivityCard = ({
               whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
               className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
                 currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
-                  ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                  ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
                   : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
               }`}
             >
@@ -1023,11 +1023,11 @@ const ActivityCard = ({
                 initial={{ scale: 0.85 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
-                className="text-3xl font-bold text-[#8c8179]"
+                className="text-3xl font-bold text-[#6d5f57]"
               >
                 {currentClasses}
               </motion.span>
-              <span className="text-sm text-[#8c8179] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+              <span className="text-sm text-[#6d5f57] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
             </div>
 
             <motion.button
@@ -1038,7 +1038,7 @@ const ActivityCard = ({
               whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
               className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
                 currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
-                  ? "border-[white]/50 bg-[white]/30 text-[#8c8179] cursor-not-allowed"
+                  ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
                   : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
               }`}
             >
@@ -1049,7 +1049,7 @@ const ActivityCard = ({
           {/* OR Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-slate-700/50"></div>
-            <span className="text-xs text-[#8c8179] font-medium uppercase">or</span>
+            <span className="text-xs text-[#6d5f57] font-medium uppercase">or</span>
             <div className="flex-1 h-px bg-slate-700/50"></div>
           </div>
 
@@ -1101,7 +1101,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
           {copy.chooseSurfProgram}
         </span>
 
@@ -1142,18 +1142,18 @@ const ActivityCard = ({
                       )}
                     </div>
                     {/* Program Name */}
-                    <span className="text-sm md:text-base font-bold text-black font-heading">
+                    <span className="text-sm md:text-base font-extrabold text-black font-heading">
                       {program.name[locale]}
                     </span>
                   </div>
                   {/* Price - Reduced margin */}
-                  <span className="text-lg md:text-xl font-bold text-[#8c8179]">
+                  <span className="text-lg md:text-xl font-bold text-[#6d5f57]">
                     ${program.price}
                   </span>
                 </div>
 
                 {/* Tagline */}
-                <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light italic ml-7 md:ml-7.5 mb-2 md:mb-2.5">
+                <p className="text-[11px] md:text-[13px] text-black/70 font-light italic ml-7 md:ml-7.5 mt-0.5 mb-2">
                   {program.tagline[locale]}
                 </p>
 
@@ -1161,7 +1161,7 @@ const ActivityCard = ({
                 <div className="space-y-1 ml-7 md:ml-7.5">
                   {program.includes[locale].map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-1.5">
-                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                       </svg>
                       <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
@@ -1196,7 +1196,7 @@ const ActivityCard = ({
                                 </p>
                                 {/* Description */}
                                 {description && (
-                                  <p className="text-[10px] md:text-[11px] text-[#8c8179] font-light leading-relaxed">
+                                  <p className="text-[10px] md:text-[11px] text-[#6d5f57] font-light leading-relaxed">
                                     {description}
                                   </p>
                                 )}
@@ -1228,7 +1228,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
           {copy.quantity}
         </span>
         <div className="flex items-center justify-center gap-4 md:gap-5">
@@ -1250,7 +1250,7 @@ const ActivityCard = ({
           >
             <Minus className="h-4 w-4 md:h-5 md:w-5" />
           </motion.button>
-          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-[#8c8179]">
+          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-[#6d5f57]">
             {quantity}
           </span>
           <motion.button
@@ -1279,7 +1279,7 @@ const ActivityCard = ({
 
     return (
       <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
-        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#8c8179] block">
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
           {copy.timeSlot}
         </span>
         <div className="flex gap-2 md:gap-3">
@@ -1546,7 +1546,7 @@ const ActivityCard = ({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
         >
-          <span className="inline-flex items-center gap-2 rounded-full bg-[white]/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#8c8179] border border-[#8c8179]/30 shadow-lg">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[white]/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#6d5f57] border border-[#6d5f57]/30 shadow-lg">
             <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
             {activity.category.replace("_", " ")}
           </span>
@@ -1612,7 +1612,7 @@ const ActivityCard = ({
                   className="flex items-start gap-2 md:gap-3"
                 >
                   <div className="flex-shrink-0 mt-0.5">
-                    <svg className={`text-amber-300 ${isSurf ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5 md:w-4 md:h-4'}`} fill="currentColor" viewBox="0 0 20 20">
+                    <svg className={`text-amber-500 ${isSurf ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5 md:w-4 md:h-4'}`} fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
                     </svg>
                   </div>
@@ -1642,9 +1642,9 @@ const ActivityCard = ({
             {/* PASS 2: gap-3/4 → gap-2.5/3, space-y-1.5 → space-y-1 */}
             <div className={`flex flex-col items-center ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
               <div className="w-full text-center space-y-1">
-                <p className="text-xs uppercase tracking-wider text-[#8c8179] font-semibold">Total</p>
+                <p className="text-xs uppercase tracking-wider text-[#6d5f57] font-semibold">Total</p>
                 <motion.div
-                  className={`font-bold text-[#8c8179] ${isSurf ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
+                  className={`font-bold text-[#6d5f57] ${isSurf ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
@@ -1652,7 +1652,7 @@ const ActivityCard = ({
                   {formatPrice(price)}
                 </motion.div>
                 {participants > 1 && typeof pricePerPerson === "number" && (
-                  <p className="text-xs text-[#8c8179] font-medium">
+                  <p className="text-xs text-[#6d5f57] font-medium">
                     {formatPrice(pricePerPerson)} {copy.perPerson}
                   </p>
                 )}
@@ -1674,7 +1674,7 @@ const ActivityCard = ({
                     isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
                   } ${
                     isChoosing
-                      ? "bg-[#8c8179] text-white cursor-wait shadow-md"
+                      ? "bg-[#6d5f57] text-white cursor-wait shadow-md"
                       : hasInteracted
                         ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
                         : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
@@ -1704,7 +1704,7 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#8c8179] text-white shadow-md hover:shadow-xl ${
+                    className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#6d5f57] text-white shadow-md hover:shadow-xl ${
                       isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
                     }`}
                   >
@@ -1729,7 +1729,7 @@ const ActivityCard = ({
                     ))}
                   </div>
                   <span className="text-sm md:text-base font-bold text-black">{ratingValue}</span>
-                  <span className="text-xs md:text-sm text-[#8c8179] font-medium">({reviewsText})</span>
+                  <span className="text-xs md:text-sm text-[#6d5f57] font-medium">({reviewsText})</span>
                 </div>
 
                 {/* Testimonial */}
@@ -1743,7 +1743,7 @@ const ActivityCard = ({
                       <p className="text-xs md:text-sm font-semibold text-black">
                         {testimonials[currentTestimonialIndex].author}
                       </p>
-                      <p className="text-[10px] md:text-xs uppercase tracking-wider text-[#8c8179] font-medium">
+                      <p className="text-[10px] md:text-xs uppercase tracking-wider text-[#6d5f57] font-medium">
                         {testimonials[currentTestimonialIndex].country}
                       </p>
                     </div>
@@ -1811,7 +1811,7 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="text-sm font-medium text-white bg-[#8c8179] transition-all px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+                    className="text-sm font-medium text-white bg-[#6d5f57] transition-all px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
                   >
                     {copy.skip}
                   </motion.button>
@@ -1885,7 +1885,7 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.05, x: 3 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="text-sm font-medium text-[#8c8179] transition-all"
+                className="text-sm font-medium text-[#6d5f57] transition-all"
               >
                 {copy.skip}
               </motion.button>
@@ -1953,7 +1953,7 @@ const ActivityCard = ({
                     <p className="text-sm font-bold text-amber-300">
                       {testimonials[currentTestimonialIndex].author}
                     </p>
-                    <p className="text-xs text-[#8c8179] uppercase tracking-wide mt-1">
+                    <p className="text-xs text-[#6d5f57] uppercase tracking-wide mt-1">
                       {testimonials[currentTestimonialIndex].country}
                     </p>
                   </div>

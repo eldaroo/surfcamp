@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -30,13 +30,13 @@ const DEFAULT_YOGA_PACKAGE = "1-class" as const;
 // Surf program names
 const SURF_PROGRAMS = {
   fundamental: {
-    name: { es: 'Core Surf Program (2 sesiones de videoanÃ¡lisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
   },
   progressionPlus: {
-    name: { es: 'Intensive Surf Program (4 sesiones de videoanÃ¡lisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
   },
   highPerformance: {
-    name: { es: 'Elite Surf Program (5 sesiones de videoanÃ¡lisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
   },
 } as const;
 
@@ -574,14 +574,14 @@ const ActivitiesPage = () => {
       const pkg = selectedYogaPackages[activity.id] ?? DEFAULT_YOGA_PACKAGE;
       const count = pkg.replace("-classes", "").replace("-class", "");
       return locale === "es"
-        ? `${count} ${count === "1" ? 'sesiÃ³n' : 'sesiones'}`
+        ? `${count} ${count === "1" ? 'sesión' : 'sesiones'}`
         : `${count} ${count === "1" ? 'session' : 'sessions'}`;
     }
 
     if (quantityCategories.has(activity.category)) {
       const qty = activityQuantities[activity.id] ?? 1;
       return locale === "es"
-        ? `${qty} ${qty === 1 ? 'sesiÃ³n' : 'sesiones'}`
+        ? `${qty} ${qty === 1 ? 'sesión' : 'sesiones'}`
         : `${qty} ${qty === 1 ? 'session' : 'sessions'}`;
     }
 
@@ -814,7 +814,7 @@ const ActivitiesPage = () => {
             transition={{ duration: 0.4 }}
             className="max-w-3xl mx-auto"
           >
-            {/* PASS 2: mb-8 â†’ mb-5, icon w-16/h-16 mb-4 â†’ w-12/h-12 mb-2.5, text-2xl/3xl mb-2 â†’ text-xl/2xl mb-1.5 */}
+            {/* PASS 2: mb-8 ? mb-5, icon w-16/h-16 mb-4 ? w-12/h-12 mb-2.5, text-2xl/3xl mb-2 ? text-xl/2xl mb-1.5 */}
             <div className="text-center mb-5">
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -825,11 +825,11 @@ const ActivitiesPage = () => {
                 <CheckCircle2 className="h-6 w-6 text-amber-300" />
               </motion.div>
               <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
-                {locale === "es" ? "Â¡Actividades completadas!" : "Activities completed!"}
+                {locale === "es" ? "¡Actividades completadas!" : "Activities completed!"}
               </h2>
-              <p className="text-[#8c8179] text-sm md:text-base">
+              <p className="text-[#6d5f57] text-sm md:text-base">
                 {locale === "es"
-                  ? "Revisa la selecciÃ³n de todos los participantes"
+                  ? "Revisa la selección de todos los participantes"
                   : "Review the selection for all participants"}
               </p>
             </div>
@@ -867,30 +867,30 @@ const ActivitiesPage = () => {
                           <h3 className="text-base md:text-sm font-bold text-black">
                             {participant.name}
                             {participant.isYou && (
-                              <span className="ml-2 text-sm md:text-[11px] text-[#8c8179]">
-                                ({locale === "es" ? "TÃº" : "You"})
+                              <span className="ml-2 text-sm md:text-[11px] text-[#6d5f57]">
+                                ({locale === "es" ? "Tú" : "You"})
                               </span>
                             )}
                             {/* Desktop: show activities + price inline */}
-                            <span className="hidden md:inline ml-2 text-sm text-[#8c8179] font-normal">
-                              â€¢ {participant.selectedActivities.length}{" "}
+                            <span className="hidden md:inline ml-2 text-sm text-[#6d5f57] font-normal">
+                              • {participant.selectedActivities.length}{" "}
                               {participant.selectedActivities.length === 1
                                 ? (locale === "es" ? "actividad" : "activity")
                                 : (locale === "es" ? "actividades" : "activities")}
-                              {" â€¢ "}
-                              <span className="text-[#8c8179] font-semibold">
+                              {" • "}
+                              <span className="text-[#6d5f57] font-semibold">
                                 {formatCurrency(participantTotal)}
                               </span>
                             </span>
                           </h3>
                           {/* Mobile: show activities + price on second line */}
-                          <p className="md:hidden text-xs text-[#8c8179]">
+                          <p className="md:hidden text-xs text-[#6d5f57]">
                             {participant.selectedActivities.length}{" "}
                             {participant.selectedActivities.length === 1
                               ? (locale === "es" ? "actividad" : "activity")
                               : (locale === "es" ? "actividades" : "activities")}
-                            {" â€¢ "}
-                            <span className="text-[#8c8179] font-semibold">
+                            {" • "}
+                            <span className="text-[#6d5f57] font-semibold">
                               {formatCurrency(participantTotal)}
                             </span>
                           </p>
@@ -901,9 +901,10 @@ const ActivitiesPage = () => {
                           onClick={(e) => {
                             e.stopPropagation();
                             setActiveParticipant(participant.id);
+                            setIsPrivateUpgrade(false); // Reset private coaching when editing
                             resetActivityFlow();
                           }}
-                          className="p-2 rounded-lg hover:bg-[white]/50 transition-colors text-[#8c8179] hover:text-amber-300"
+                          className="p-2 rounded-lg hover:bg-[white]/50 transition-colors text-[#6d5f57] hover:text-amber-300"
                           title={locale === "es" ? "Editar actividades" : "Edit activities"}
                         >
                           <Edit2 className="w-4 h-4" />
@@ -914,7 +915,7 @@ const ActivitiesPage = () => {
                               e.stopPropagation();
                               setDeleteConfirmId(participant.id);
                             }}
-                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-[#8c8179] hover:text-red-400 group"
+                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-[#6d5f57] hover:text-red-400 group"
                             title={locale === "es" ? "Eliminar participante" : "Remove participant"}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -923,7 +924,7 @@ const ActivitiesPage = () => {
                         <motion.div
                           animate={{ rotate: isExpanded ? 180 : 0 }}
                           transition={{ duration: 0.3 }}
-                          className="text-[#8c8179]"
+                          className="text-[#6d5f57]"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -944,7 +945,7 @@ const ActivitiesPage = () => {
                         >
                           <div className="p-4 md:p-3 space-y-2 md:space-y-1.5">
                             {participant.selectedActivities.length === 0 ? (
-                              <p className="text-[#8c8179] text-center py-4">
+                              <p className="text-[#6d5f57] text-center py-4">
                                 {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
                               </p>
                             ) : (
@@ -980,11 +981,11 @@ const ActivitiesPage = () => {
                                         {displayName}
                                       </h4>
                                       {details && (
-                                        <p className="text-sm md:text-[10px] text-[#8c8179] mt-0.5 md:mt-0">{details}</p>
+                                        <p className="text-sm md:text-[10px] text-[#6d5f57] mt-0.5 md:mt-0">{details}</p>
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-base md:text-base font-bold text-[#8c8179]">
+                                      <p className="text-base md:text-base font-bold text-[#6d5f57]">
                                         {formatCurrency(price)}
                                       </p>
                                     </div>
@@ -1116,7 +1117,7 @@ const ActivitiesPage = () => {
                       <span className="text-xs font-bold text-white">
                         {activeParticipant.name}
                         {activeParticipant.isYou && (
-                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "TÃº" : "You"})</span>
+                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
                         )}
                       </span>
                     </motion.div>
@@ -1200,13 +1201,13 @@ const ActivitiesPage = () => {
                 <div className="flex flex-col gap-4">
                   {/* Title */}
                   <h3 className="text-xl md:text-2xl font-bold text-white">
-                    {locale === "es" ? "Â¿EstÃ¡s seguro?" : "Are you sure?"}
+                    {locale === "es" ? "¿Estás seguro?" : "Are you sure?"}
                   </h3>
 
                   {/* Message */}
                   <p className="text-black text-sm md:text-base">
                     {locale === "es"
-                      ? "Â¿Deseas eliminar a este participante? Esta acciÃ³n no se puede deshacer."
+                      ? "¿Deseas eliminar a este participante? Esta acción no se puede deshacer."
                       : "Do you want to remove this participant? This action cannot be undone."}
                   </p>
 
@@ -1275,8 +1276,8 @@ const ActivitiesPage = () => {
                   {/* Title */}
                   <h3 className="text-xl md:text-2xl font-bold text-black text-center">
                     {storeParticipants.length > 1
-                      ? (locale === "es" ? "Â¿Agregar otro viajero?" : "Add another traveler?")
-                      : (locale === "es" ? "Â¿Viajas con alguien?" : "Are you traveling with someone?")}
+                      ? (locale === "es" ? "¿Agregar otro viajero?" : "Add another traveler?")
+                      : (locale === "es" ? "¿Viajas con alguien?" : "Are you traveling with someone?")}
                   </h3>
 
                   {/* Description */}
@@ -1286,7 +1287,7 @@ const ActivitiesPage = () => {
                           ? "Puedes seguir agregando viajeros con las mismas actividades o personalizarlas."
                           : "You can keep adding travelers with the same activities or customize them.")
                       : (locale === "es"
-                          ? "Puedes agregar mÃ¡s personas con las mismas actividades o personalizarlas individualmente."
+                          ? "Puedes agregar más personas con las mismas actividades o personalizarlas individualmente."
                           : "You can add more people with the same activities or customize them individually.")}
                   </p>
 
@@ -1314,9 +1315,9 @@ const ActivitiesPage = () => {
                             {locale === "es" ? "Copiar mis actividades" : "Copy my activities"}
                           </span>
                         </div>
-                        <p className="text-xs text-[#8c8179] mt-1">
+                        <p className="text-xs text-[#6d5f57] mt-1">
                           {locale === "es"
-                            ? "El nuevo viajero tendrÃ¡ las mismas actividades seleccionadas"
+                            ? "El nuevo viajero tendrá las mismas actividades seleccionadas"
                             : "The new traveler will have the same activities selected"}
                         </p>
                       </div>
@@ -1344,7 +1345,7 @@ const ActivitiesPage = () => {
                             {locale === "es" ? "Personalizar actividades" : "Customize activities"}
                           </span>
                         </div>
-                        <p className="text-xs text-[#8c8179] mt-1">
+                        <p className="text-xs text-[#6d5f57] mt-1">
                           {locale === "es"
                             ? "Elige actividades diferentes para el nuevo viajero"
                             : "Choose different activities for the new traveler"}
@@ -1367,7 +1368,7 @@ const ActivitiesPage = () => {
                       onClick={handleSkipAddPerson}
                       whileHover={{ scale: 1.02, y: -2 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#8c8179] hover:bg-[white]/20 transition-all font-medium shadow-md hover:shadow-lg"
+                      className="flex-1 px-6 py-3.5 rounded-xl border border-[white] text-[#6d5f57] hover:bg-[white]/20 transition-all font-medium shadow-md hover:shadow-lg"
                     >
                       {locale === "es" ? "Saltar" : "Skip"}
                     </motion.button>

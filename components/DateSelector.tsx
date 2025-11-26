@@ -385,7 +385,7 @@ export default function DateSelector() {
                   </svg>
                 </motion.div>
                 <h1 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">{t('dates.title')}</h1>
-                <p className="text-[#8c8179] text-sm md:text-base">{t('dates.subtitle')}</p>
+                <p className="text-[#6d5f57] text-sm md:text-base">{t('dates.subtitle')}</p>
               </div>
             </div>
           )}
@@ -671,7 +671,7 @@ export default function DateSelector() {
                     <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
                       {t('accommodation.title')}
                     </h2>
-                    <p className="text-[#8c8179] text-sm md:text-base">
+                    <p className="text-[#6d5f57] text-sm md:text-base">
                       {t('accommodation.subtitle')}
                     </p>
                   </div>
@@ -758,7 +758,7 @@ export default function DateSelector() {
                   <h3 className="text-xl md:text-2xl font-bold text-black mb-3 font-heading">
                     {t('accommodation.noRoomsAvailable')}
                   </h3>
-                  <p className="text-sm md:text-base text-[#8c8179] mb-6 max-w-md mx-auto">
+                  <p className="text-sm md:text-base text-[#6d5f57] mb-6 max-w-md mx-auto">
                     {t('accommodation.noAvailableMessage')}
                   </p>
                 </div>
@@ -791,7 +791,7 @@ export default function DateSelector() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
-          className="lg:hidden fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-4 text-base font-bold shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
+          className="lg:hidden fixed bottom-24 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-4 text-base font-bold shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
         >
           <div className="flex items-center gap-3">
             <ReceiptText className="h-6 w-6 text-black" />

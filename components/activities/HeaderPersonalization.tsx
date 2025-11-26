@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { ChangeEvent, useMemo } from "react";
 import { motion } from "framer-motion";
@@ -24,11 +24,11 @@ const PARTICIPANT_OPTIONS = [1, 2, 3, 4, 5];
 const translations = {
   es: {
     title: "Personaliza tu experiencia",
-    nameLabel: "Nombre del huésped principal",
+    nameLabel: "Nombre del hu�sped principal",
     namePlaceholder: "Tu nombre",
     participantLabel: "Participantes",
     participantSuffix: (count: number) =>
-      count === 1 ? "huésped" : "huéspedes",
+      count === 1 ? "hu�sped" : "hu�spedes",
     summaryPrefix: "Personalizando para",
     defaultGroup: "tu grupo",
   },
@@ -64,7 +64,7 @@ const HeaderPersonalization = ({
 
   return (
     <div className="mb-3 md:mb-4 rounded-3xl border border-[white]/50 bg-[white]/80 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden">
-      {/* PASS 2: reduced padding p-4/6 → p-3/4, gaps 2.5/3 → 2/2.5 */}
+      {/* PASS 2: reduced padding p-4/6 ? p-3/4, gaps 2.5/3 ? 2/2.5 */}
       <div className="p-3 md:p-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -72,7 +72,7 @@ const HeaderPersonalization = ({
           transition={{ duration: 0.6 }}
           className="flex flex-col items-center gap-2 md:gap-2.5"
         >
-          {/* PASS 2: icon w-10/12 h-10/12 → w-8/10 h-8/10 */}
+          {/* PASS 2: icon w-10/12 h-10/12 ? w-8/10 h-8/10 */}
           <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
             <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-amber-300" />
           </div>
@@ -83,9 +83,9 @@ const HeaderPersonalization = ({
           </h1>
 
           {/* Subtitle - Much larger */}
-          <p className="text-sm md:text-base text-[#8c8179] max-w-2xl mx-auto leading-snug">
+          <p className="text-sm md:text-base text-[#6d5f57] max-w-2xl mx-auto leading-snug">
             {locale === 'es'
-              ? 'Elige las actividades que darán forma a tu experiencia perfecta.'
+              ? 'Elige las actividades que dar�n forma a tu experiencia perfecta.'
               : 'Choose the activities that will shape your perfect experience.'}
           </p>
         </motion.div>

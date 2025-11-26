@@ -243,19 +243,19 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                 <div className="text-sm md:text-base font-medium text-black">
                   {getAccommodationName()}
                   {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
-                    <span className="text-xs md:text-sm ml-1 font-normal text-[#8c8179]">
+                    <span className="text-xs md:text-sm ml-1 font-normal text-[#6d5f57]">
                       ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
                     </span>
                   )}
                 </div>
-                <div className="text-xs mt-1 text-[#8c8179]">
+                <div className="text-xs mt-1 text-[#6d5f57]">
                   {selectedRoom.isSharedRoom
                     ? `${bookingData.guests} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                     : `${nights} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                   }
                 </div>
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
+              <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
                 {formatCurrency(accommodationTotal, locale)}
               </div>
             </div>
@@ -290,12 +290,12 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                     )}
                   </div>
                   {showParticipantName && (
-                    <div className="text-xs mt-1 text-[#8c8179]">
+                    <div className="text-xs mt-1 text-[#6d5f57]">
                       {participant.name}
                     </div>
                   )}
                 </div>
-                <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
+                <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
                   {formatCurrency(price, locale)}
                 </div>
               </div>
@@ -315,12 +315,12 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                   </span>
                 </div>
                 {participants.length > 1 && (
-                  <div className="text-xs mt-1 text-[#8c8179]">
+                  <div className="text-xs mt-1 text-[#6d5f57]">
                     {locale === 'es' ? 'Para todos los participantes' : 'For all participants'}
                   </div>
                 )}
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-[#8c8179]">
+              <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
                 {formatCurrency(privateCoachingUpgradeTotal, locale)}
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
             <span className="text-[14px] font-medium text-black">
               {getText('prices.subtotal', 'Subtotal')}
             </span>
-            <span className="text-[14px] font-medium text-right text-[#8c8179]">
+            <span className="text-[14px] font-medium text-right text-[#6d5f57]">
               {formatCurrency(subtotal, locale)}
             </span>
           </div>
@@ -361,7 +361,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
           <span className="text-[14px] font-medium text-black">
             {getText('prices.tax', 'Taxes & Fees')}
           </span>
-          <span className="text-[14px] font-medium text-right text-[#8c8179]">
+          <span className="text-[14px] font-medium text-right text-[#6d5f57]">
             {formatCurrency(fees, locale)}
           </span>
         </div>

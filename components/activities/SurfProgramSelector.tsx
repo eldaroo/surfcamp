@@ -131,7 +131,7 @@ export default function SurfProgramSelector({
         </h2>
         <p
           className="text-center mb-6 md:mb-8 text-base"
-          style={{ color: 'var(--brand-text-dim)' }}
+          style={{ color: 'var(--brand-text)', opacity: 0.85 }}
         >
           {t('surfPrograms.method.subtitle')}
         </p>
@@ -157,8 +157,8 @@ export default function SurfProgramSelector({
                 {pillar.title}
               </h3>
               <p
-                className="text-sm md:text-base"
-                style={{ color: 'var(--brand-text-dim)' }}
+                className="text-base md:text-lg"
+                style={{ color: 'var(--brand-text)', opacity: 0.8 }}
               >
                 {pillar.description}
               </p>
@@ -194,7 +194,7 @@ export default function SurfProgramSelector({
               </h3>
               <p
                 className="text-xs md:text-sm mb-3"
-                style={{ color: 'var(--brand-text-dim)' }}
+                style={{ color: 'var(--brand-text)', opacity: 0.8 }}
               >
                 {program.level}
               </p>
@@ -207,7 +207,7 @@ export default function SurfProgramSelector({
               <div className="flex items-baseline gap-2">
                 <span
                   className="text-4xl md:text-5xl font-bold"
-                  style={{ color: '#8c8179' }}
+                  style={{ color: '#6d5f57' }}
                 >
                   ${program.price}
                 </span>
@@ -227,9 +227,9 @@ export default function SurfProgramSelector({
                   <li
                     key={idx}
                     className="flex items-start gap-2 text-sm md:text-base"
-                    style={{ color: 'var(--brand-text-dim)' }}
+                    style={{ color: 'var(--brand-text)', opacity: 0.85 }}
                   >
-                    <span style={{ color: 'var(--brand-aqua)' }}>✓</span>
+                    <span style={{ color: 'color-mix(in srgb, var(--brand-aqua) 70%, white 30%)', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -263,7 +263,7 @@ export default function SurfProgramSelector({
                       </span>
                       <span
                         className="ml-1"
-                        style={{ color: 'var(--brand-text-dim)' }}
+                        style={{ color: 'var(--brand-text)', opacity: 0.85 }}
                       >
                         {details.join(':')}
                       </span>
