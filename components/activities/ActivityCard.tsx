@@ -171,32 +171,32 @@ const SURF_PROGRAMS = {
 // Our Integrated Surf Coaching Method
 const COACHING_METHOD = {
   title: {
-    es: 'Nuestro MÃ©todo Integral de Coaching de Surf',
+    es: 'Nuestro Método Integral de Coaching de Surf',
     en: 'Our Integrated Surf Coaching Method'
   },
   subtitle: {
-    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicÃ³logos deportivos, especialistas en nutriciÃ³n y jueces ISA â€” toda esta experiencia se integra en cada sesiÃ³n. Todos los programas se adaptan a tu nivel, sin restricciones â€” las sesiones ocurren con un mÃ¡ximo de 2-3 personas por coach.',
-    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges â€” all this expertise is integrated into every session. All programs adapt to your level, no restrictions â€” sessions occur with a maximum of 2-3 people per coach.'
+    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA - toda esta experiencia se integra en cada sesión. Todos los programas se adaptan a tu nivel, sin restricciones - las sesiones ocurren con un máximo de 2-3 personas por coach.',
+    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges - all this expertise is integrated into every session. All programs adapt to your level, no restrictions - sessions occur with a maximum of 2-3 people per coach.'
   },
   pillars: [
     {
-      title: { es: 'BiomecÃ¡nica & memoria muscular', en: 'Biomechanics & muscle memory' },
+      title: { es: 'Biomecánica & memoria muscular', en: 'Biomechanics & muscle memory' },
       description: {
-        es: 'Patrones de movimiento eficientes que apoyan la progresiÃ³n a largo plazo.',
+        es: 'Patrones de movimiento eficientes que apoyan la progresión a largo plazo.',
         en: 'Efficient movement patterns that support long-term progression.'
       }
     },
     {
-      title: { es: 'Feedback tÃ©cnico basado en video', en: 'Video-based technical feedback' },
+      title: { es: 'Feedback técnico basado en video', en: 'Video-based technical feedback' },
       description: {
-        es: 'AnÃ¡lisis visual claro para entender exactamente quÃ© mejorar.',
+        es: 'Análisis visual claro para entender exactamente qué mejorar.',
         en: 'Clear visual analysis to understand exactly what to improve.'
       }
     },
     {
-      title: { es: 'Mentalidad, seguridad & nutriciÃ³n prÃ¡ctica', en: 'Mindset, safety & practical nutrition' },
+      title: { es: 'Mentalidad, seguridad & nutrición práctica', en: 'Mindset, safety & practical nutrition' },
       description: {
-        es: 'Un enfoque completo para la confianza, conocimiento del ocÃ©ano y alimentaciÃ³n inteligente.',
+        es: 'Un enfoque completo para la confianza, conocimiento del océano y alimentación inteligente.',
         en: 'A complete approach to confidence, ocean awareness and smart fueling.'
       }
     }
