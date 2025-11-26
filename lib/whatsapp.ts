@@ -12,9 +12,13 @@ export const sendWhatsAppMessage = async (
   let cleaned = phone.replace(/[^0-9]/g, '');
   console.log('📱 [WHATSAPP] Phone cleaned:', cleaned);
 
-  if (!cleaned.startsWith('54')) {
+  // Don't modify numbers that already have a country code
+  // Only add Argentina code (54) if number has 10 digits and no country code
+  if (cleaned.length === 10 && !cleaned.startsWith('54')) {
     cleaned = '54' + cleaned;
+    console.log('📱 [WHATSAPP] Added Argentina country code:', cleaned);
   }
+
   const chatId = cleaned + '@c.us';
   console.log('📱 [WHATSAPP] ChatId:', chatId);
 
