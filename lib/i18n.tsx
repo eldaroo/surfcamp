@@ -356,7 +356,7 @@ const translations = {
       },
       required: "Campo requerido",
       invalidEmail: "Email inválido",
-      invalidPhone: "Teléfono inválido"
+      invalidPhone: "Formato inválido. Debe incluir código de país (ej: +54 11 1234 5678)"
     },
     payment: {
       title: "Pago Seguro",
@@ -788,7 +788,7 @@ const translations = {
       },
       required: "Required field",
       invalidEmail: "Invalid email",
-      invalidPhone: "Invalid phone number"
+      invalidPhone: "Invalid format. Must include country code (e.g., +1 786 224 7287)"
     },
     payment: {
       title: "Secure Payment",

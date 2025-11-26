@@ -10,9 +10,43 @@ import PhoneSelector from './PhoneSelector';
 
 const isValidPhoneNumber = (value: string) => {
   const trimmed = value.trim();
+
+  // Must not be empty
   if (!trimmed) return false;
+
+  // Must start with + (country code required)
+  if (!trimmed.startsWith('+')) return false;
+
+  // Extract all digits (including country code)
   const digitsOnly = trimmed.replace(/\D+/g, '');
+
+  // Must have between 8 and 15 total digits
   if (digitsOnly.length < 8 || digitsOnly.length > 15) return false;
+
+  // Valid country codes from PhoneSelector (most common ones)
+  const validCountryCodes = [
+    '+1', '+7', '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36', '+39', '+40', '+41', '+43', '+44', '+45', '+46', '+47', '+48', '+49',
+    '+51', '+52', '+53', '+54', '+55', '+56', '+57', '+58', '+60', '+61', '+62', '+63', '+64', '+65', '+66', '+81', '+82', '+84', '+86', '+90', '+91', '+92', '+94', '+95', '+98',
+    '+212', '+213', '+216', '+218', '+220', '+221', '+223', '+225', '+226', '+227', '+228', '+229', '+230', '+231', '+233', '+234', '+249', '+250', '+251', '+252', '+253', '+254', '+255', '+256', '+257', '+258', '+260', '+261', '+263', '+264', '+265', '+266', '+267', '+268',
+    '+350', '+351', '+352', '+353', '+354', '+355', '+356', '+357', '+358', '+359', '+370', '+371', '+372', '+375', '+380', '+381', '+382', '+385', '+386', '+387', '+389',
+    '+420', '+421', '+501', '+502', '+503', '+504', '+505', '+506', '+507', '+591', '+592', '+593', '+595', '+597', '+598',
+    '+673', '+675', '+676', '+677', '+678', '+679', '+680', '+685', '+687', '+850', '+852', '+853', '+855', '+856', '+880', '+886', '+960', '+961', '+962', '+963', '+964', '+965', '+966', '+967', '+968', '+970', '+971', '+972', '+973', '+974', '+975', '+976', '+977',
+    '+1246', '+1268', '+1284', '+1345', '+1441', '+1473', '+1649', '+1664', '+1671', '+1758', '+1767', '+1784', '+1787', '+1809', '+1829', '+1849', '+1868', '+1869', '+1876'
+  ];
+
+  // Check if starts with a valid country code
+  const hasValidCountryCode = validCountryCodes.some(code => trimmed.startsWith(code));
+  if (!hasValidCountryCode) return false;
+
+  // After country code, must have at least 4 digits for the actual phone number
+  // Find which country code it starts with to get its length
+  const matchedCode = validCountryCodes.find(code => trimmed.startsWith(code));
+  if (!matchedCode) return false;
+
+  const phoneNumberPart = trimmed.substring(matchedCode.length).replace(/\D+/g, '');
+  if (phoneNumberPart.length < 4) return false;
+
+  // Only allow digits, spaces, parentheses, hyphens, and plus sign
   const allowedCharsPattern = /^[+\d\s()-]+$/;
   return allowedCharsPattern.test(trimmed);
 };

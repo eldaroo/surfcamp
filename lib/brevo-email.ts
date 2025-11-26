@@ -59,14 +59,13 @@ export async function sendBookingConfirmationEmail({
       return false;
     }
 
-    // Format dates for display
+    // Format dates for display in dd/mm/yyyy format
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     };
 
     // Prepare template parameters matching Brevo template variable names
@@ -169,14 +168,13 @@ export async function addContactToBrevoList({
       listId: listId
     });
 
-    // Format dates for display
+    // Format dates for display in dd/mm/yyyy format
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
-      return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
     };
 
     // Prepare contact attributes matching template variable names

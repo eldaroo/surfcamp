@@ -380,8 +380,11 @@ export const sendIceBathInstructorNotification = async (
 ${participantsList}
 Coordiná horarios directamente con el cliente.`;
 
-  // TESTING: Send to test number instead of real instructor
-  return sendWhatsAppMessage('+541153695627', message);
+  // Get ice bath instructor phone from environment
+  const instructorPhone = process.env.ICEBATH_INSTRUCTOR_PHONE || '+541153695627';
+  console.log('🧊 [WHATSAPP] Sending ice bath notification to instructor:', instructorPhone);
+
+  return sendWhatsAppMessage(instructorPhone, message);
 };
 
 // Mensaje al instructor de Surf
@@ -414,8 +417,11 @@ export const sendSurfInstructorNotification = async (
 ${participantsList}
 Coordiná horarios directamente con el cliente.`;
 
-  // TESTING: Send to test number instead of real instructor
-  return sendWhatsAppMessage('+541153695627', message);
+  // Get surf instructor phone from environment
+  const instructorPhone = process.env.SURF_INSTRUCTOR_PHONE || '+541153695627';
+  console.log('🏄 [WHATSAPP] Sending surf notification to instructor:', instructorPhone);
+
+  return sendWhatsAppMessage(instructorPhone, message);
 };
 
 // Mensaje de confirmación al cliente
