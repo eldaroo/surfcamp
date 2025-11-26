@@ -63,28 +63,21 @@ export async function sendBookingConfirmationEmail({
       });
     };
 
-    // Prepare template parameters (using multiple naming conventions to ensure compatibility)
+    // Prepare template parameters matching Brevo template variable names
     const params = {
-      // Standard naming
+      // Match template variables: {{ params.FIRSTNAME }}, {{ params.FROM }}, etc.
+      FIRSTNAME: recipientName.split(' ')[0], // First name only
+      FROM: formatDate(bookingData.checkIn),
+      TO: formatDate(bookingData.checkOut),
+      TOTALAMOUNT: bookingData.totalAmount?.toString() || '0',
+      DEPOSIT: bookingData.depositAmount?.toString() || '0',
+      REMAINING: bookingData.remainingBalance?.toString() || '0',
+
+      // Additional fields
       BOOKING_REFERENCE: bookingData.bookingReference,
       CUSTOMER_NAME: recipientName,
-      CHECK_IN_DATE: formatDate(bookingData.checkIn),
-      CHECK_OUT_DATE: formatDate(bookingData.checkOut),
       GUESTS: bookingData.guests.toString(),
       ROOM_TYPE: bookingData.roomTypeName || '',
-      TOTAL_AMOUNT: bookingData.totalAmount?.toString() || '0',
-      DEPOSIT_AMOUNT: bookingData.depositAmount?.toString() || '0',
-      REMAINING_BALANCE: bookingData.remainingBalance?.toString() || '0',
-
-      // Alternative naming (lowercase)
-      customerName: recipientName,
-      checkInDate: formatDate(bookingData.checkIn),
-      checkOutDate: formatDate(bookingData.checkOut),
-      guests: bookingData.guests.toString(),
-      roomType: bookingData.roomTypeName || '',
-      totalAmount: bookingData.totalAmount?.toString() || '0',
-      depositAmount: bookingData.depositAmount?.toString() || '0',
-      remainingBalance: bookingData.remainingBalance?.toString() || '0',
 
       // Add activities if present
       ...(bookingData.activities && bookingData.activities.length > 0 && {
