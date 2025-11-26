@@ -1275,6 +1275,11 @@ export async function POST(request: NextRequest) {
 
         // Send confirmation email
         try {
+          // Calculate deposit and remaining balance
+          const totalAmount = priceBreakdown?.total || 0;
+          const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+          const remainingBalance = totalAmount - depositAmount;
+
           await sendBookingConfirmationEmailWithRetry({
             recipientEmail: contactInfo.email,
             recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
@@ -1285,7 +1290,9 @@ export async function POST(request: NextRequest) {
               checkOut,
               guests: calculatedGuestCount,
               roomTypeName: selectedRoom?.roomTypeName,
-              totalAmount: priceBreakdown?.total
+              totalAmount,
+              depositAmount,
+              remainingBalance
             }
           });
         } catch (emailError) {
@@ -1576,6 +1583,11 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email
       try {
+        // Calculate deposit and remaining balance
+        const totalAmount = priceBreakdown?.total || 0;
+        const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+        const remainingBalance = totalAmount - depositAmount;
+
         await sendBookingConfirmationEmailWithRetry({
           recipientEmail: contactInfo.email,
           recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
@@ -1586,7 +1598,9 @@ export async function POST(request: NextRequest) {
             checkOut,
             guests: calculatedGuestCount,
             roomTypeName: selectedRoom?.roomTypeName,
-            totalAmount: priceBreakdown?.total
+            totalAmount,
+            depositAmount,
+            remainingBalance
           }
         });
       } catch (emailError) {
@@ -1824,6 +1838,11 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email
       try {
+        // Calculate deposit and remaining balance
+        const totalAmount = priceBreakdown?.total || 0;
+        const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+        const remainingBalance = totalAmount - depositAmount;
+
         await sendBookingConfirmationEmailWithRetry({
           recipientEmail: contactInfo.email,
           recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
@@ -1834,7 +1853,9 @@ export async function POST(request: NextRequest) {
             checkOut,
             guests: calculatedGuestCount,
             roomTypeName: selectedRoom?.roomTypeName,
-            totalAmount: priceBreakdown?.total
+            totalAmount,
+            depositAmount,
+            remainingBalance
           }
         });
       } catch (emailError) {

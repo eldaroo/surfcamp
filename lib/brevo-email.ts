@@ -20,6 +20,8 @@ interface BookingEmailParams {
       classCount?: number;
     }>;
     totalAmount?: number;
+    depositAmount?: number;
+    remainingBalance?: number;
   };
 }
 
@@ -61,8 +63,9 @@ export async function sendBookingConfirmationEmail({
       });
     };
 
-    // Prepare template parameters
+    // Prepare template parameters (using multiple naming conventions to ensure compatibility)
     const params = {
+      // Standard naming
       BOOKING_REFERENCE: bookingData.bookingReference,
       CUSTOMER_NAME: recipientName,
       CHECK_IN_DATE: formatDate(bookingData.checkIn),
@@ -70,6 +73,19 @@ export async function sendBookingConfirmationEmail({
       GUESTS: bookingData.guests.toString(),
       ROOM_TYPE: bookingData.roomTypeName || '',
       TOTAL_AMOUNT: bookingData.totalAmount?.toString() || '0',
+      DEPOSIT_AMOUNT: bookingData.depositAmount?.toString() || '0',
+      REMAINING_BALANCE: bookingData.remainingBalance?.toString() || '0',
+
+      // Alternative naming (lowercase)
+      customerName: recipientName,
+      checkInDate: formatDate(bookingData.checkIn),
+      checkOutDate: formatDate(bookingData.checkOut),
+      guests: bookingData.guests.toString(),
+      roomType: bookingData.roomTypeName || '',
+      totalAmount: bookingData.totalAmount?.toString() || '0',
+      depositAmount: bookingData.depositAmount?.toString() || '0',
+      remainingBalance: bookingData.remainingBalance?.toString() || '0',
+
       // Add activities if present
       ...(bookingData.activities && bookingData.activities.length > 0 && {
         ACTIVITIES: bookingData.activities.map(act =>
@@ -77,6 +93,8 @@ export async function sendBookingConfirmationEmail({
         ).join(', ')
       })
     };
+
+    console.log('📧 [BREVO] Template parameters being sent:', JSON.stringify(params, null, 2));
 
     // Send email using Brevo REST API
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -92,6 +110,12 @@ export async function sendBookingConfirmationEmail({
         params: params
       })
     });
+
+    console.log('📧 [BREVO] Request body:', JSON.stringify({
+      to: [{ email: recipientEmail, name: recipientName }],
+      templateId: templateId,
+      params: params
+    }, null, 2));
 
     if (!response.ok) {
       const errorData = await response.json();
