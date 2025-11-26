@@ -693,6 +693,23 @@ const ActivityCard = ({
     return () => clearInterval(interval);
   }, [isSurf, testimonials]);
 
+  // Preload all surf images on mount to prevent loading delay
+  useEffect(() => {
+    if (!isSurf) return;
+
+    // Preload mobile images
+    surfImagesMobile.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+
+    // Preload desktop images
+    surfImagesDesktop.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, [isSurf]);
+
   // Auto-rotate surf carousel every 4 seconds (mobile only)
   useEffect(() => {
     if (!isSurf) return;
@@ -1309,7 +1326,7 @@ const ActivityCard = ({
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
                 className="absolute inset-0"
                 style={{ touchAction: 'manipulation' }}
               >
@@ -1319,7 +1336,8 @@ const ActivityCard = ({
                   fill
                   className="object-cover"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
-                  priority={currentSurfImageIndex === 0}
+                  priority={true}
+                  loading="eager"
                   quality={90}
                   style={{
                     objectPosition: 'center center',
@@ -1406,7 +1424,7 @@ const ActivityCard = ({
                 key={currentSurfImageIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
                 className="absolute inset-0"
               >
                 <Image
@@ -1415,7 +1433,8 @@ const ActivityCard = ({
                   fill
                   className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
-                  priority={currentSurfImageIndex === 0}
+                  priority={true}
+                  loading="eager"
                   quality={90}
                   style={{
                     objectPosition: 'center center',

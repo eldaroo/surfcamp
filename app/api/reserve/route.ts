@@ -13,7 +13,8 @@ import {
   getRoomTypeName,
   sendIceBathInstructorNotification,
   sendSurfInstructorNotification,
-  sendClientConfirmationMessage
+  sendClientConfirmationMessage,
+  sendAdminNewBookingNotification
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
@@ -1275,6 +1276,28 @@ export async function POST(request: NextRequest) {
             checkOut,
             locale
           });
+
+          // Send notification to admin
+          await sendAdminNewBookingNotification({
+            bookingReference,
+            clientFullName,
+            clientEmail: contactInfo.email,
+            clientPhone,
+            checkIn,
+            checkOut,
+            guests: calculatedGuestCount,
+            roomTypeName: selectedRoom?.roomTypeName,
+            totalAmount: priceBreakdown?.total,
+            depositAmount: undefined, // Will be calculated below
+            activities: resolvedActivities.map(act => {
+              const activity = getActivityById(act.id);
+              return {
+                name: activity?.name || act.id,
+                participants: [clientFullName],
+                quantity: act.quantity
+              };
+            })
+          });
         } catch (whatsappError) {
           console.error('WhatsApp notification error:', whatsappError);
         }
@@ -1609,6 +1632,27 @@ export async function POST(request: NextRequest) {
             locale
           });
         }
+
+        // Send notification to admin
+        await sendAdminNewBookingNotification({
+          bookingReference,
+          clientFullName,
+          clientEmail: contactInfo.email,
+          clientPhone,
+          checkIn,
+          checkOut,
+          guests: calculatedGuestCount,
+          roomTypeName: selectedRoom?.roomTypeName,
+          totalAmount: priceBreakdown?.total,
+          depositAmount: undefined,
+          activities: uniqueParticipants.flatMap((p: any) =>
+            p.selectedActivities.map((act: any) => ({
+              name: act.name,
+              participants: [p.name],
+              quantity: p.activityQuantities?.[act.id]
+            }))
+          )
+        });
       } catch (whatsappError) {
       }
 
@@ -1887,6 +1931,36 @@ export async function POST(request: NextRequest) {
             locale
           });
         }
+
+        // Send notification to admin
+        await sendAdminNewBookingNotification({
+          bookingReference,
+          clientFullName,
+          clientEmail: contactInfo.email,
+          clientPhone,
+          checkIn,
+          checkOut,
+          guests: calculatedGuestCount,
+          roomTypeName: selectedRoom?.roomTypeName,
+          totalAmount: priceBreakdown?.total,
+          depositAmount: undefined,
+          activities: hasMultipleParticipantsWithActivities
+            ? participants.flatMap((p: any) =>
+                p.selectedActivities.map((act: any) => ({
+                  name: act.name,
+                  participants: [p.name],
+                  quantity: p.activityQuantities?.[act.id]
+                }))
+              )
+            : resolvedActivities.map(act => {
+                const activity = getActivityById(act.id);
+                return {
+                  name: activity?.name || act.id,
+                  participants: [clientFullName],
+                  quantity: act.quantity
+                };
+              })
+        });
 
       } catch (whatsappError) {
         console.error('WhatsApp notification error:', whatsappError);

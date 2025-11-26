@@ -501,4 +501,68 @@ Si tenés alguna duda, escribinos a este número. ¡Estamos para ayudarte!
   console.log('📧 [WHATSAPP] sendWhatsAppMessage result:', result);
 
   return result;
+};
+
+// Mensaje de notificación al administrador sobre nueva reserva
+export const sendAdminNewBookingNotification = async (
+  bookingData: {
+    bookingReference: string;
+    clientFullName: string;
+    clientEmail: string;
+    clientPhone: string;
+    checkIn: string;
+    checkOut: string;
+    guests: number;
+    roomTypeName?: string;
+    totalAmount?: number;
+    depositAmount?: number;
+    activities?: Array<{
+      name: string;
+      participants: string[];
+      quantity?: number;
+    }>;
+  }
+) => {
+  console.log('📋 [WHATSAPP] Sending admin notification for booking:', bookingData.bookingReference);
+
+  // Build activities list
+  let activitiesList = '';
+  if (bookingData.activities && bookingData.activities.length > 0) {
+    activitiesList = '\n\n🎯 *Actividades:*\n';
+    bookingData.activities.forEach((activity) => {
+      const participantNames = activity.participants.join(', ');
+      const quantityInfo = activity.quantity ? ` x${activity.quantity}` : '';
+      activitiesList += `   • ${activity.name}${quantityInfo}\n     👥 ${participantNames}\n`;
+    });
+  }
+
+  // Build pricing info
+  let pricingInfo = '';
+  if (bookingData.totalAmount) {
+    pricingInfo = `\n💰 *Total:* $${bookingData.totalAmount}`;
+    if (bookingData.depositAmount) {
+      pricingInfo += `\n💳 *Depósito WeTravel:* $${bookingData.depositAmount}`;
+      const remaining = bookingData.totalAmount - bookingData.depositAmount;
+      pricingInfo += `\n💵 *Pendiente:* $${remaining}`;
+    }
+  }
+
+  const message = `🔔 *NUEVA RESERVA - ${bookingData.bookingReference}*
+
+📇 *Cliente:* ${bookingData.clientFullName}
+📧 *Email:* ${bookingData.clientEmail}
+📞 *Teléfono:* ${bookingData.clientPhone}
+
+📅 *Check-in:* ${formatDateForWhatsApp(bookingData.checkIn)}
+📅 *Check-out:* ${formatDateForWhatsApp(bookingData.checkOut)}
+👥 *Huéspedes:* ${bookingData.guests}
+${bookingData.roomTypeName ? `🏠 *Alojamiento:* ${bookingData.roomTypeName}` : ''}${activitiesList}${pricingInfo}
+
+✅ Reserva confirmada en LobbyPMS`;
+
+  // Get admin phone from environment
+  const adminPhone = process.env.ADMIN_PHONE || '+541153695627';
+  console.log('📋 [WHATSAPP] Sending to admin:', adminPhone);
+
+  return sendWhatsAppMessage(adminPhone, message);
 }; 

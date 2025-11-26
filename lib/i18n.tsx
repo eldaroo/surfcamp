@@ -428,7 +428,7 @@ const translations = {
       email: "Email",
       location: "Ubicación",
       newReservation: "Hacer Nueva Reserva",
-      thankYou: "¡Gracias por elegir SurfCamp Santa Teresa!",
+      thankYou: "¡Gracias por elegir Zeneidas Surf Garden!",
       loading: "Cargando confirmación..."
     },
     prices: {
@@ -860,7 +860,7 @@ const translations = {
       email: "Email",
       location: "Location",
       newReservation: "Make New Reservation",
-      thankYou: "Thank you for choosing SurfCamp Santa Teresa!",
+      thankYou: "Thank you for choosing Zeneidas Surf Garden!",
       loading: "Loading confirmation..."
     },
     prices: {
