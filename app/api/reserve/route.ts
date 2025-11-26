@@ -18,6 +18,12 @@ import {
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
 import { sendBookingConfirmationEmailWithRetry } from '@/lib/brevo-email';
+import {
+  calculateWeTravelPayment,
+  detectSurfPrograms,
+  getCoachingPrograms,
+  getAccommodationTotal
+} from '@/lib/wetravel-pricing';
 
 // Mapeo de roomTypeId a category_id de LobbyPMS (múltiples opciones por tipo)
 // TODO: Verificar los category_ids correctos para cada casita en LobbyPMS
@@ -1275,10 +1281,35 @@ export async function POST(request: NextRequest) {
 
         // Send confirmation email
         try {
-          // Calculate deposit and remaining balance
+          // Calculate actual WeTravel deposit amount using the same formula
           const totalAmount = priceBreakdown?.total || 0;
-          const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
-          const remainingBalance = totalAmount - depositAmount;
+          let depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+          let remainingBalance = totalAmount - depositAmount;
+
+          // Try to calculate actual deposit based on surf programs
+          try {
+            const surfPrograms = detectSurfPrograms(participants, selectedActivitiesPayload);
+            const coachingPrograms = getCoachingPrograms(participants, selectedActivitiesPayload);
+            const accommodationTotal = getAccommodationTotal(priceBreakdown);
+
+            if (surfPrograms.length > 0 && accommodationTotal > 0) {
+              const paymentBreakdown = calculateWeTravelPayment({
+                surfPrograms,
+                coachingPrograms,
+                accommodationTotal
+              });
+              depositAmount = paymentBreakdown.total;
+              remainingBalance = totalAmount - depositAmount;
+
+              console.log('💰 [EMAIL] Using actual WeTravel deposit:', {
+                depositAmount,
+                remainingBalance,
+                totalAmount
+              });
+            }
+          } catch (depositCalcError) {
+            console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
+          }
 
           await sendBookingConfirmationEmailWithRetry({
             recipientEmail: contactInfo.email,
@@ -1583,10 +1614,35 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email
       try {
-        // Calculate deposit and remaining balance
+        // Calculate actual WeTravel deposit amount using the same formula
         const totalAmount = priceBreakdown?.total || 0;
-        const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
-        const remainingBalance = totalAmount - depositAmount;
+        let depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+        let remainingBalance = totalAmount - depositAmount;
+
+        // Try to calculate actual deposit based on surf programs
+        try {
+          const surfPrograms = detectSurfPrograms(participants, selectedActivitiesPayload);
+          const coachingPrograms = getCoachingPrograms(participants, selectedActivitiesPayload);
+          const accommodationTotal = getAccommodationTotal(priceBreakdown);
+
+          if (surfPrograms.length > 0 && accommodationTotal > 0) {
+            const paymentBreakdown = calculateWeTravelPayment({
+              surfPrograms,
+              coachingPrograms,
+              accommodationTotal
+            });
+            depositAmount = paymentBreakdown.total;
+            remainingBalance = totalAmount - depositAmount;
+
+            console.log('💰 [EMAIL] Using actual WeTravel deposit:', {
+              depositAmount,
+              remainingBalance,
+              totalAmount
+            });
+          }
+        } catch (depositCalcError) {
+          console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
+        }
 
         await sendBookingConfirmationEmailWithRetry({
           recipientEmail: contactInfo.email,
@@ -1838,10 +1894,35 @@ export async function POST(request: NextRequest) {
 
       // Send confirmation email
       try {
-        // Calculate deposit and remaining balance
+        // Calculate actual WeTravel deposit amount using the same formula
         const totalAmount = priceBreakdown?.total || 0;
-        const depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
-        const remainingBalance = totalAmount - depositAmount;
+        let depositAmount = Math.round(totalAmount * 0.10); // 10% deposit as fallback
+        let remainingBalance = totalAmount - depositAmount;
+
+        // Try to calculate actual deposit based on surf programs
+        try {
+          const surfPrograms = detectSurfPrograms(participants, selectedActivitiesPayload);
+          const coachingPrograms = getCoachingPrograms(participants, selectedActivitiesPayload);
+          const accommodationTotal = getAccommodationTotal(priceBreakdown);
+
+          if (surfPrograms.length > 0 && accommodationTotal > 0) {
+            const paymentBreakdown = calculateWeTravelPayment({
+              surfPrograms,
+              coachingPrograms,
+              accommodationTotal
+            });
+            depositAmount = paymentBreakdown.total;
+            remainingBalance = totalAmount - depositAmount;
+
+            console.log('💰 [EMAIL] Using actual WeTravel deposit:', {
+              depositAmount,
+              remainingBalance,
+              totalAmount
+            });
+          }
+        } catch (depositCalcError) {
+          console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
+        }
 
         await sendBookingConfirmationEmailWithRetry({
           recipientEmail: contactInfo.email,
