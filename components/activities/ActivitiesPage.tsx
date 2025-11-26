@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -30,13 +30,13 @@ const DEFAULT_YOGA_PACKAGE = "1-class" as const;
 // Surf program names
 const SURF_PROGRAMS = {
   fundamental: {
-    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+    name: { es: 'Core Surf Program (2 sesiones de videoanÃ¡lisis)', en: 'Core Surf Program (2 video analysis sessions)' },
   },
   progressionPlus: {
-    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanÃ¡lisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
   },
   highPerformance: {
-    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+    name: { es: 'Elite Surf Program (5 sesiones de videoanÃ¡lisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
   },
 } as const;
 
@@ -574,14 +574,14 @@ const ActivitiesPage = () => {
       const pkg = selectedYogaPackages[activity.id] ?? DEFAULT_YOGA_PACKAGE;
       const count = pkg.replace("-classes", "").replace("-class", "");
       return locale === "es"
-        ? `${count} ${count === "1" ? 'sesión' : 'sesiones'}`
+        ? `${count} ${count === "1" ? 'sesiÃ³n' : 'sesiones'}`
         : `${count} ${count === "1" ? 'session' : 'sessions'}`;
     }
 
     if (quantityCategories.has(activity.category)) {
       const qty = activityQuantities[activity.id] ?? 1;
       return locale === "es"
-        ? `${qty} ${qty === 1 ? 'sesión' : 'sesiones'}`
+        ? `${qty} ${qty === 1 ? 'sesiÃ³n' : 'sesiones'}`
         : `${qty} ${qty === 1 ? 'session' : 'sessions'}`;
     }
 
@@ -825,11 +825,11 @@ const ActivitiesPage = () => {
                 <CheckCircle2 className="h-6 w-6 text-amber-300" />
               </motion.div>
               <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
-                {locale === "es" ? "¡Actividades completadas!" : "Activities completed!"}
+                {locale === "es" ? "Â¡Actividades completadas!" : "Activities completed!"}
               </h2>
               <p className="text-[#6d5f57] text-sm md:text-base">
                 {locale === "es"
-                  ? "Revisa la selección de todos los participantes"
+                  ? "Revisa la selecciÃ³n de todos los participantes"
                   : "Review the selection for all participants"}
               </p>
             </div>
@@ -868,16 +868,16 @@ const ActivitiesPage = () => {
                             {participant.name}
                             {participant.isYou && (
                               <span className="ml-2 text-sm md:text-[11px] text-[#6d5f57]">
-                                ({locale === "es" ? "Tú" : "You"})
+                                ({locale === "es" ? "TÃº" : "You"})
                               </span>
                             )}
                             {/* Desktop: show activities + price inline */}
                             <span className="hidden md:inline ml-2 text-sm text-[#6d5f57] font-normal">
-                              • {participant.selectedActivities.length}{" "}
+                              â€¢ {participant.selectedActivities.length}{" "}
                               {participant.selectedActivities.length === 1
                                 ? (locale === "es" ? "actividad" : "activity")
                                 : (locale === "es" ? "actividades" : "activities")}
-                              {" • "}
+                              {" â€¢ "}
                               <span className="text-[#6d5f57] font-semibold">
                                 {formatCurrency(participantTotal)}
                               </span>
@@ -889,7 +889,7 @@ const ActivitiesPage = () => {
                             {participant.selectedActivities.length === 1
                               ? (locale === "es" ? "actividad" : "activity")
                               : (locale === "es" ? "actividades" : "activities")}
-                            {" • "}
+                            {" â€¢ "}
                             <span className="text-[#6d5f57] font-semibold">
                               {formatCurrency(participantTotal)}
                             </span>
@@ -1117,7 +1117,7 @@ const ActivitiesPage = () => {
                       <span className="text-xs font-bold text-white">
                         {activeParticipant.name}
                         {activeParticipant.isYou && (
-                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "TÃº" : "You"})</span>
                         )}
                       </span>
                     </motion.div>
@@ -1201,13 +1201,13 @@ const ActivitiesPage = () => {
                 <div className="flex flex-col gap-4">
                   {/* Title */}
                   <h3 className="text-xl md:text-2xl font-bold text-white">
-                    {locale === "es" ? "¿Estás seguro?" : "Are you sure?"}
+                    {locale === "es" ? "Â¿EstÃ¡s seguro?" : "Are you sure?"}
                   </h3>
 
                   {/* Message */}
                   <p className="text-black text-sm md:text-base">
                     {locale === "es"
-                      ? "¿Deseas eliminar a este participante? Esta acción no se puede deshacer."
+                      ? "Â¿Deseas eliminar a este participante? Esta acciÃ³n no se puede deshacer."
                       : "Do you want to remove this participant? This action cannot be undone."}
                   </p>
 
@@ -1276,8 +1276,8 @@ const ActivitiesPage = () => {
                   {/* Title */}
                   <h3 className="text-xl md:text-2xl font-bold text-black text-center">
                     {storeParticipants.length > 1
-                      ? (locale === "es" ? "¿Agregar otro viajero?" : "Add another traveler?")
-                      : (locale === "es" ? "¿Viajas con alguien?" : "Are you traveling with someone?")}
+                      ? (locale === "es" ? "Â¿Agregar otro viajero?" : "Add another traveler?")
+                      : (locale === "es" ? "Â¿Viajas con alguien?" : "Are you traveling with someone?")}
                   </h3>
 
                   {/* Description */}
@@ -1287,7 +1287,7 @@ const ActivitiesPage = () => {
                           ? "Puedes seguir agregando viajeros con las mismas actividades o personalizarlas."
                           : "You can keep adding travelers with the same activities or customize them.")
                       : (locale === "es"
-                          ? "Puedes agregar más personas con las mismas actividades o personalizarlas individualmente."
+                          ? "Puedes agregar mÃ¡s personas con las mismas actividades o personalizarlas individualmente."
                           : "You can add more people with the same activities or customize them individually.")}
                   </p>
 
@@ -1317,7 +1317,7 @@ const ActivitiesPage = () => {
                         </div>
                         <p className="text-xs text-[#6d5f57] mt-1">
                           {locale === "es"
-                            ? "El nuevo viajero tendrá las mismas actividades seleccionadas"
+                            ? "El nuevo viajero tendrÃ¡ las mismas actividades seleccionadas"
                             : "The new traveler will have the same activities selected"}
                         </p>
                       </div>

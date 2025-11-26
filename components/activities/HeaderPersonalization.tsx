@@ -1,4 +1,4 @@
-"use client";
+Ôªø"use client";
 
 import { ChangeEvent, useMemo } from "react";
 import { motion } from "framer-motion";
@@ -24,11 +24,11 @@ const PARTICIPANT_OPTIONS = [1, 2, 3, 4, 5];
 const translations = {
   es: {
     title: "Personaliza tu experiencia",
-    nameLabel: "Nombre del huÈsped principal",
+    nameLabel: "Nombre del hu√©sped principal",
     namePlaceholder: "Tu nombre",
     participantLabel: "Participantes",
     participantSuffix: (count: number) =>
-      count === 1 ? "huÈsped" : "huÈspedes",
+      count === 1 ? "hu√©sped" : "hu√©spedes",
     summaryPrefix: "Personalizando para",
     defaultGroup: "tu grupo",
   },
@@ -85,7 +85,7 @@ const HeaderPersonalization = ({
           {/* Subtitle - Much larger */}
           <p className="text-sm md:text-base text-[#6d5f57] max-w-2xl mx-auto leading-snug">
             {locale === 'es'
-              ? 'Elige las actividades que dar·n forma a tu experiencia perfecta.'
+              ? 'Elige las actividades que dar√°n forma a tu experiencia perfecta.'
               : 'Choose the activities that will shape your perfect experience.'}
           </p>
         </motion.div>

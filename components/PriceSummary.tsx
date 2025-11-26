@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useMemo } from 'react';
 import { useBookingStore } from '@/lib/store';
@@ -8,13 +8,13 @@ import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice, calculat
 // Surf program names
 const SURF_PROGRAMS = {
   fundamental: {
-    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+    name: { es: 'Core Surf Program (2 sesiones de videoanÃ¡lisis)', en: 'Core Surf Program (2 video analysis sessions)' },
   },
   progressionPlus: {
-    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanÃ¡lisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
   },
   highPerformance: {
-    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+    name: { es: 'Elite Surf Program (5 sesiones de videoanÃ¡lisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
   },
 } as const;
 
@@ -71,12 +71,12 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         packageInfo = yogaPackage;
         // Extract number from package (e.g., "4-classes" -> "4 classes")
         const classCount = yogaPackage.match(/(\d+)/)?.[1] || '1';
-        unitLabel = `${classCount} × ${formatCurrency(price / parseInt(classCount))} / class`;
+        unitLabel = `${classCount} Ã— ${formatCurrency(price / parseInt(classCount))} / class`;
       } else {
         // Calculate price based on yoga classes and discount
         price = calculateYogaPrice(yogaClassCount, useDiscount);
         packageInfo = `${yogaClassCount} ${yogaClassCount === 1 ? 'class' : 'classes'}`;
-        unitLabel = `${yogaClassCount} × ${formatCurrency(price / yogaClassCount)} / class`;
+        unitLabel = `${yogaClassCount} Ã— ${formatCurrency(price / yogaClassCount)} / class`;
       }
     } else if (activity.category === 'surf') {
       const surfClasses = participant.selectedSurfClasses[activity.id];
@@ -89,7 +89,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
       unitLabel = '';
     } else {
       price = activity.price || 0;
-      unitLabel = `1 × ${formatCurrency(price)} / activity`;
+      unitLabel = `1 Ã— ${formatCurrency(price)} / activity`;
     }
 
     return { price, packageInfo, unitLabel };
@@ -233,7 +233,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         {getText('prices.summary', 'Price Summary')}
       </h3>
 
-      {/* PASS 2: space-y-3 mb-4 → space-y-2.5 mb-3 */}
+      {/* PASS 2: space-y-3 mb-4 â†’ space-y-2.5 mb-3 */}
       <ul className="space-y-2.5 mb-3">
         {/* Accommodation */}
         {selectedRoom && nights > 0 && (
@@ -250,8 +250,8 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                 </div>
                 <div className="text-xs mt-1 text-[#6d5f57]">
                   {selectedRoom.isSharedRoom
-                    ? `${bookingData.guests} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
-                    : `${nights} × ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
+                    ? `${bookingData.guests} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
+                    : `${nights} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                   }
                 </div>
               </div>
@@ -328,7 +328,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         )}
       </ul>
 
-      {/* PASS 2: mb-4 → mb-3 */}
+      {/* PASS 2: mb-4 â†’ mb-3 */}
       {allActivitySelections.length > 0 && (
         <div className="flex justify-end mb-3">
           <button
@@ -340,7 +340,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         </div>
       )}
 
-      {/* PASS 2: mb-2.5 → mb-2, mb-4 → mb-3 */}
+      {/* PASS 2: mb-2.5 â†’ mb-2, mb-4 â†’ mb-3 */}
       {((accommodationTotal > 0) && (activitiesTotal > 0)) && (
         <>
           <div className="h-px mb-2 bg-gray-200" />
@@ -355,7 +355,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         </>
       )}
 
-      {/* PASS 2: mb-4 → mb-3 */}
+      {/* PASS 2: mb-4 â†’ mb-3 */}
       {fees > 0 && (
         <div className="flex justify-between items-center mb-3">
           <span className="text-[14px] font-medium text-black">
@@ -367,19 +367,19 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         </div>
       )}
 
-      {/* PASS 2: mb-4 → mb-3 */}
+      {/* PASS 2: mb-4 â†’ mb-3 */}
       {discounts > 0 && (
         <div className="flex justify-between items-center mb-3">
           <span className="text-[14px] font-medium text-black">
             {getText('prices.discount', 'Discount')}
           </span>
           <span className="text-[14px] font-medium text-right text-amber-600">
-            −{formatCurrency(discounts, locale)}
+            âˆ’{formatCurrency(discounts, locale)}
           </span>
         </div>
       )}
 
-      {/* PASS 2: pt-4 → pt-3 */}
+      {/* PASS 2: pt-4 â†’ pt-3 */}
       {(accommodationTotal > 0 || activitiesTotal > 0) && (
         <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between items-center" aria-live="polite">
@@ -396,7 +396,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
       {/* Empty States */}
       {!bookingData.checkIn && !bookingData.checkOut && activitiesTotal === 0 && (
         <div className="text-center py-8">
-          <div className="text-[32px] mb-3">📅</div>
+          <div className="text-[32px] mb-3">ðŸ“…</div>
           <p className="text-[15px] text-black">
             {getText('prices.selectDatesToStart', 'Select dates to see pricing')}
           </p>
@@ -405,7 +405,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
 
       {bookingData.checkIn && bookingData.checkOut && !selectedRoom && activitiesTotal === 0 && (
         <div className="text-center py-8">
-          <div className="text-[32px] mb-3">🏠</div>
+          <div className="text-[32px] mb-3">ðŸ </div>
           <p className="text-[15px] text-black">
             {getText('prices.selectAccommodationToSeeTotal', 'Select accommodation to see total')}
           </p>

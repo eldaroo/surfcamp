@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
@@ -42,13 +42,13 @@ const pluralize = (count: number, singular: string, plural: string): string => {
 // Surf program names
 const SURF_PROGRAMS = {
   fundamental: {
-    name: { es: 'Core Surf Program (2 sesiones de videoanálisis)', en: 'Core Surf Program (2 video analysis sessions)' },
+    name: { es: 'Core Surf Program (2 sesiones de videoanÃ¡lisis)', en: 'Core Surf Program (2 video analysis sessions)' },
   },
   progressionPlus: {
-    name: { es: 'Intensive Surf Program (4 sesiones de videoanálisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
+    name: { es: 'Intensive Surf Program (4 sesiones de videoanÃ¡lisis)', en: 'Intensive Surf Program (4 video analysis sessions)' },
   },
   highPerformance: {
-    name: { es: 'Elite Surf Program (5 sesiones de videoanálisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
+    name: { es: 'Elite Surf Program (5 sesiones de videoanÃ¡lisis)', en: 'Elite Surf Program (5 video analysis sessions)' },
   },
 } as const;
 
@@ -102,8 +102,8 @@ export default function DateSelector() {
     return { price, packageInfo };
   }, [isPrivateUpgrade]);
 
-  console.log('🏠 [DateSelector] Render - availableRooms:', availableRooms);
-  console.log('🏠 [DateSelector] Render - availableRooms length:', availableRooms?.length);
+  console.log('ðŸ  [DateSelector] Render - availableRooms:', availableRooms);
+  console.log('ðŸ  [DateSelector] Render - availableRooms length:', availableRooms?.length);
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -113,14 +113,14 @@ export default function DateSelector() {
   const [hasRequestedAvailability, setHasRequestedAvailability] = useState(false);
   const [isDateSelectorCollapsed, setIsDateSelectorCollapsed] = useState(false);
 
-  console.log('🏠 [DateSelector] State:', {
+  console.log('ðŸ  [DateSelector] State:', {
     hasRequestedAvailability,
     loadingRooms,
     availableRoomsExists: !!availableRooms,
     availableRoomsLength: availableRooms?.length
   });
 
-  // Usar fechas del store global para mantener sincronización
+  // Usar fechas del store global para mantener sincronizaciÃ³n
   const checkInDate = bookingData.checkIn ? new Date(bookingData.checkIn) : null;
   const checkOutDate = bookingData.checkOut ? new Date(bookingData.checkOut) : null;
 
@@ -156,18 +156,18 @@ export default function DateSelector() {
   const fetchAvailableRooms = async () => {
     const guestsToUse = bookingData.guests ?? guests;
 
-    console.log('🔄 [DateSelector fetchAvailableRooms] Starting...', {
+    console.log('ðŸ”„ [DateSelector fetchAvailableRooms] Starting...', {
       checkIn: bookingData.checkIn,
       checkOut: bookingData.checkOut,
       guestsToUse
     });
 
     if (!bookingData.checkIn || !bookingData.checkOut || !guestsToUse) {
-      console.log('❌ [DateSelector fetchAvailableRooms] Missing required data');
+      console.log('âŒ [DateSelector fetchAvailableRooms] Missing required data');
       return;
     }
 
-    console.log('📞 [DateSelector fetchAvailableRooms] Calling API...');
+    console.log('ðŸ“ž [DateSelector fetchAvailableRooms] Calling API...');
     setLoadingRooms(true);
     setGlobalError(null);
 
@@ -182,15 +182,15 @@ export default function DateSelector() {
         }),
       });
 
-      console.log('📡 [DateSelector fetchAvailableRooms] Response:', response.status, response.ok);
+      console.log('ðŸ“¡ [DateSelector fetchAvailableRooms] Response:', response.status, response.ok);
 
       const data = await response.json();
-      console.log('📋 [DateSelector fetchAvailableRooms] Data:', data);
+      console.log('ðŸ“‹ [DateSelector fetchAvailableRooms] Data:', data);
 
       if (!response.ok) {
-        console.log('❌ [DateSelector fetchAvailableRooms] Response not OK');
+        console.log('âŒ [DateSelector fetchAvailableRooms] Response not OK');
         if (response.status === 404 && data.error && data.error.includes('suficientes camas')) {
-          console.log('🛏️ [DateSelector fetchAvailableRooms] Not enough beds - setting empty array');
+          console.log('ðŸ›ï¸ [DateSelector fetchAvailableRooms] Not enough beds - setting empty array');
           setAvailableRooms([]);
           setGlobalError(null);
           return;
@@ -199,40 +199,40 @@ export default function DateSelector() {
       }
 
       if (!data.available || !data.availableRooms?.length) {
-        console.log('⚠️ [DateSelector fetchAvailableRooms] No rooms available or empty array');
+        console.log('âš ï¸ [DateSelector fetchAvailableRooms] No rooms available or empty array');
         setAvailableRooms([]);
         setGlobalError(null);
         return;
       }
 
-      console.log('✅ [DateSelector fetchAvailableRooms] Setting rooms:', data.availableRooms);
+      console.log('âœ… [DateSelector fetchAvailableRooms] Setting rooms:', data.availableRooms);
       setAvailableRooms(data.availableRooms);
       setGlobalError(null);
     } catch (error) {
-      console.error('❌ [DateSelector fetchAvailableRooms] Error:', error);
+      console.error('âŒ [DateSelector fetchAvailableRooms] Error:', error);
       setGlobalError('Error getting available rooms. Please try again.');
       setAvailableRooms([]);
     } finally {
-      console.log('🏁 [DateSelector fetchAvailableRooms] Setting loadingRooms to false');
+      console.log('ðŸ [DateSelector fetchAvailableRooms] Setting loadingRooms to false');
       setLoadingRooms(false);
     }
   };
 
   const handleAvailabilitySearch = async () => {
-    console.log('🔍 [DateSelector handleAvailabilitySearch] Starting...', {
+    console.log('ðŸ” [DateSelector handleAvailabilitySearch] Starting...', {
       checkIn: bookingData.checkIn,
       checkOut: bookingData.checkOut,
       guests
     });
 
     if (!bookingData.checkIn || !bookingData.checkOut) {
-      console.log('❌ [DateSelector handleAvailabilitySearch] Missing dates');
+      console.log('âŒ [DateSelector handleAvailabilitySearch] Missing dates');
       setError(t('dates.validation.selectDates'));
       setHasRequestedAvailability(false);
       return;
     }
 
-    console.log('✅ [DateSelector handleAvailabilitySearch] Setting hasRequestedAvailability = true');
+    console.log('âœ… [DateSelector handleAvailabilitySearch] Setting hasRequestedAvailability = true');
     setError('');
     setGlobalError(null);
     setHasRequestedAvailability(true);
@@ -244,9 +244,9 @@ export default function DateSelector() {
     setIsPriceSummaryCollapsed(true);
     setIsDateSelectorCollapsed(true);
 
-    console.log('📞 [DateSelector handleAvailabilitySearch] Calling fetchAvailableRooms...');
+    console.log('ðŸ“ž [DateSelector handleAvailabilitySearch] Calling fetchAvailableRooms...');
     await fetchAvailableRooms();
-    console.log('🏁 [DateSelector handleAvailabilitySearch] Completed');
+    console.log('ðŸ [DateSelector handleAvailabilitySearch] Completed');
   };
 
   const handleRoomSelect = (room: RoomFromAPI) => {
@@ -699,7 +699,7 @@ export default function DateSelector() {
 
             {/* Room Cards */}
             {(() => {
-              console.log('🏠 [DateSelector] Room Cards condition check:', {
+              console.log('ðŸ  [DateSelector] Room Cards condition check:', {
                 hasRequestedAvailability,
                 loadingRooms,
                 availableRooms,
@@ -713,7 +713,7 @@ export default function DateSelector() {
 
                 <div className="accommodation-cards-grid mb-6 flex flex-col gap-4" style={{ overflow: 'visible' }}>
                 {availableRooms.map((room: RoomFromAPI) => {
-                  console.log('🏠 [DateSelector] Rendering room:', room);
+                  console.log('ðŸ  [DateSelector] Rendering room:', room);
 
                   const features = getRoomFeatures(room.roomTypeId);
                   const isSelected = selectedRoom?.roomTypeId === room.roomTypeId;
@@ -754,7 +754,7 @@ export default function DateSelector() {
               {/* No rooms available */}
               {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
                 <div className="text-center py-8 bg-[white]/70 backdrop-blur-md rounded-3xl p-8 border border-[white]/50 shadow-xl">
-                  <div className="text-6xl mb-4">🏠</div>
+                  <div className="text-6xl mb-4">ðŸ </div>
                   <h3 className="text-xl md:text-2xl font-bold text-black mb-3 font-heading">
                     {t('accommodation.noRoomsAvailable')}
                   </h3>
