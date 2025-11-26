@@ -3,17 +3,24 @@ export const sendWhatsAppMessage = async (
   phone: string,
   message: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
+  console.log('📱 [WHATSAPP] sendWhatsAppMessage called with:', { phone, messageLength: message.length });
+
   const idInstance = '7105281616';
   const apiTokenInstance = 'e44f5320e85d4222baff6089d5f192bc6363f86e55da4e3e8c';
 
   // Formatea el número para Green API
   let cleaned = phone.replace(/[^0-9]/g, '');
+  console.log('📱 [WHATSAPP] Phone cleaned:', cleaned);
+
   if (!cleaned.startsWith('54')) {
     cleaned = '54' + cleaned;
   }
   const chatId = cleaned + '@c.us';
+  console.log('📱 [WHATSAPP] ChatId:', chatId);
 
   const url = `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiTokenInstance}`;
+  console.log('📱 [WHATSAPP] Calling Green API URL:', url);
+
   try {
     const res = await fetch(url, {
       method: 'POST',
@@ -23,14 +30,21 @@ export const sendWhatsAppMessage = async (
         message,
       }),
     });
+
+    console.log('📱 [WHATSAPP] Green API response status:', res.status);
+
     const data = await res.json();
+    console.log('📱 [WHATSAPP] Green API response data:', JSON.stringify(data, null, 2));
+
     if (!res.ok) {
-      console.error('[GreenAPI] Error HTTP:', data);
+      console.error('❌ [WHATSAPP] Error HTTP:', data);
       return { success: false, error: data.error || 'Error enviando mensaje' };
     }
+
+    console.log('✅ [WHATSAPP] Message sent successfully, messageId:', data.idMessage);
     return { success: true, messageId: data.idMessage };
   } catch (error) {
-    console.error('[GreenAPI] Error de conexión:', error);
+    console.error('❌ [WHATSAPP] Error de conexión:', error);
     return { success: false, error: 'Error de conexión' };
   }
 };
@@ -410,6 +424,14 @@ export const sendClientConfirmationMessage = async (
     locale?: string; // 'en' or 'es', defaults to 'es'
   }
 ) => {
+  console.log('📧 [WHATSAPP] sendClientConfirmationMessage called with:', {
+    clientPhone: bookingData.clientPhone,
+    clientFirstName: bookingData.clientFirstName,
+    checkIn: bookingData.checkIn,
+    checkOut: bookingData.checkOut,
+    locale: bookingData.locale
+  });
+
   const isEnglish = bookingData.locale === 'en';
 
   // Format dates according to locale
@@ -461,5 +483,12 @@ Si tenés alguna duda, escribinos a este número. ¡Estamos para ayudarte!
 
 *Zeneida's Garden*`;
 
-  return sendWhatsAppMessage(bookingData.clientPhone, message);
+  console.log('📧 [WHATSAPP] About to send message to:', bookingData.clientPhone);
+  console.log('📧 [WHATSAPP] Message preview:', message.substring(0, 100) + '...');
+
+  const result = await sendWhatsAppMessage(bookingData.clientPhone, message);
+
+  console.log('📧 [WHATSAPP] sendWhatsAppMessage result:', result);
+
+  return result;
 }; 
