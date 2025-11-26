@@ -17,7 +17,7 @@ import {
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
-import { sendBookingConfirmationEmailWithRetry } from '@/lib/brevo-email';
+import { sendBookingConfirmationEmailWithRetry, addContactToBrevoListWithRetry } from '@/lib/brevo-email';
 import {
   calculateWeTravelPayment,
   detectSurfPrograms,
@@ -1311,7 +1311,7 @@ export async function POST(request: NextRequest) {
             console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
           }
 
-          await sendBookingConfirmationEmailWithRetry({
+          await addContactToBrevoListWithRetry({
             recipientEmail: contactInfo.email,
             recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
             locale: locale as 'en' | 'es',
@@ -1327,7 +1327,7 @@ export async function POST(request: NextRequest) {
             }
           });
         } catch (emailError) {
-          console.error('Email notification error:', emailError);
+          console.error('Brevo contact add error:', emailError);
         }
 
         return NextResponse.json({
@@ -1644,7 +1644,7 @@ export async function POST(request: NextRequest) {
           console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
         }
 
-        await sendBookingConfirmationEmailWithRetry({
+        await addContactToBrevoListWithRetry({
           recipientEmail: contactInfo.email,
           recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
           locale: locale as 'en' | 'es',
@@ -1660,7 +1660,7 @@ export async function POST(request: NextRequest) {
           }
         });
       } catch (emailError) {
-        console.error('Email notification error:', emailError);
+        console.error('Brevo contact add error:', emailError);
       }
 
       return NextResponse.json({
@@ -1924,7 +1924,7 @@ export async function POST(request: NextRequest) {
           console.error('⚠️ [EMAIL] Could not calculate WeTravel deposit, using 10% fallback:', depositCalcError);
         }
 
-        await sendBookingConfirmationEmailWithRetry({
+        await addContactToBrevoListWithRetry({
           recipientEmail: contactInfo.email,
           recipientName: `${contactInfo.firstName} ${contactInfo.lastName}`,
           locale: locale as 'en' | 'es',
@@ -1940,7 +1940,7 @@ export async function POST(request: NextRequest) {
           }
         });
       } catch (emailError) {
-        console.error('Email notification error:', emailError);
+        console.error('Brevo contact add error:', emailError);
       }
 
       return NextResponse.json({
