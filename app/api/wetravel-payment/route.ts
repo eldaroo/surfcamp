@@ -162,14 +162,14 @@ export async function POST(request: NextRequest) {
             participant_fees: "all"
           },
           pricing: {
-            price: depositAmount, // Only charge 10% deposit (in dollars)
+            price: depositAmount, // Only charge deposit amount (in dollars)
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
-              deposit: 0,
+              deposit: depositAmount, // Force full deposit payment - no option to pay 0
               installments: [
                 {
-                  price: depositAmount, // 10% deposit payment (in dollars)
+                  price: depositAmount, // Full deposit payment required (in dollars)
                   days_before_departure: daysBeforeDeparture
                 }
               ]

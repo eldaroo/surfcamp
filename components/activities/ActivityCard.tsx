@@ -1164,24 +1164,29 @@ const ActivityCard = ({
                   </span>
                 </div>
 
-                {/* Tagline */}
-                <p className="text-[11px] md:text-[13px] text-black/70 font-light italic ml-7 md:ml-7.5 mt-0.5 mb-2">
-                  {program.tagline[locale]}
-                </p>
+                {/* Tagline and Features - Only show when expanded */}
+                {expandedSurfProgram === programId && (
+                  <>
+                    {/* Tagline */}
+                    <p className="text-[11px] md:text-[13px] text-black/70 font-light italic ml-7 md:ml-7.5 mt-0.5 mb-2">
+                      {program.tagline[locale]}
+                    </p>
 
-                {/* Features List - Reduced spacing */}
-                <div className="space-y-1 ml-7 md:ml-7.5">
-                  {program.includes[locale].map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-1.5">
-                      <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                      <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
-                        {feature}
-                      </span>
+                    {/* Features List - Reduced spacing */}
+                    <div className="space-y-1 ml-7 md:ml-7.5">
+                      {program.includes[locale].map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-1.5">
+                          <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                          </svg>
+                          <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </>
+                )}
 
                 {/* Session Work - Only show for expanded program */}
                 <AnimatePresence>
