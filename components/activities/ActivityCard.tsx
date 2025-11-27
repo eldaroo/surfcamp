@@ -596,6 +596,7 @@ const ActivityCard = ({
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [isCoachingMethodExpanded, setIsCoachingMethodExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(surfProgram || null);
 
   // Set mounted state for portal (SSR safety)
   useEffect(() => {
@@ -1115,7 +1116,18 @@ const ActivityCard = ({
               <motion.button
                 key={programId}
                 type="button"
-                onClick={() => handleSurfProgramChange(programId)}
+                onClick={() => {
+                  // Toggle expansion
+                  if (expandedSurfProgram === programId) {
+                    setExpandedSurfProgram(null); // Collapse if already expanded
+                  } else {
+                    setExpandedSurfProgram(programId); // Expand this program
+                  }
+                  // Always update selection
+                  if (!isSelected) {
+                    handleSurfProgramChange(programId);
+                  }
+                }}
                 whileHover={{ scale: 1.005 }}
                 whileTap={{ scale: 0.995 }}
                 className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
@@ -1171,9 +1183,9 @@ const ActivityCard = ({
                   ))}
                 </div>
 
-                {/* Session Work - Only show for selected program */}
+                {/* Session Work - Only show for expanded program */}
                 <AnimatePresence>
-                  {isSelected && (
+                  {expandedSurfProgram === programId && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
