@@ -36,7 +36,7 @@ export const ACTIVITY_PRICES = {
   },
   
   hosting: {
-    basePrice: 100, // Precio por estadía
+    basePrice: 250, // Precio por estadía
     packages: {}
   }
 };
