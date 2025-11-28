@@ -28,10 +28,7 @@ const PaymentSection = dynamic(() => import("@/components/PaymentSection"), {
 const SuccessPage = dynamic(() => import("@/components/SuccessPage"), {
   loading: StepLoaderFallback,
 });
-<<<<<<< HEAD
-=======
 const LandingPage = dynamic(() => import("@/components/LandingPage"));
->>>>>>> feature/nueva-feature-clean
 
 const stepComponents: Record<string, ComponentType> = {
   dates: DateSelector,
@@ -153,29 +150,6 @@ export default function HomePage() {
   }
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen">
-      <main className="container mx-auto px-4 pt-20 md:pt-8 pb-8">
-        <div className="mx-auto max-w-6xl">
-
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
-            <motion.div
-              className="organic-hover"
-              transition={{ duration: 0.3 }}
-            >
-              {content}
-            </motion.div>
-          </motion.div>
-        </div>
-      </main>
-    </div>
-=======
     <LandingPage
       bookingWidget={
         <main id="booking" className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20">
@@ -197,6 +171,5 @@ export default function HomePage() {
         </main>
       }
     />
->>>>>>> feature/nueva-feature-clean
   );
 }
