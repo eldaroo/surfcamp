@@ -444,6 +444,107 @@ const translations = {
       estimatedTotal: "Total Estimado",
       activitySelectedNoPackage: "Actividad seleccionada sin paquete (precio: $0)",
       activitySelectedNoPlan: "Actividad seleccionada sin plan de progreso (precio: $0)"
+    },
+    landing: {
+      navigation: {
+        home: "Inicio",
+        experience: "Experiencia",
+        stories: "Historias",
+        accommodation: "Alojamiento",
+        activities: "Actividades",
+        faqs: "Preguntas",
+        contact: "Contacto",
+        bookNow: "Reservar Ahora"
+      },
+      hero: {
+        title: "Santa Teresa Surf",
+        subtitle: "Experimenta el mejor programa de surf en Costa Rica en Zeneidas Surf Garden",
+        tagline: "Surf, Yoga, Meditación & Baños de Hielo en Santa Teresa",
+        bookNow: "Reservar Ahora",
+        exploreActivities: "Explorar Actividades"
+      },
+      accommodationShowcase: {
+        title: "Tu Hogar en el Paraíso",
+        subtitle: "Despierta con vistas al océano y duerme con el sonido de las olas. Elige el espacio perfecto para tu aventura de surf."
+      },
+      activitiesShowcase: {
+        title: "Prueba Nuestras Actividades",
+        subtitle: "Descubre las experiencias transformadoras que te esperan",
+        clickToPlay: "Click para reproducir",
+        surfProgram: {
+          title: "Programa de Surf",
+          description: "Cabalga la Ola - Experimenta la emoción del surf en las aguas cristalinas de Santa Teresa."
+        },
+        breathwork: {
+          title: "Respiraciones",
+          description: "Aprende técnicas de respiración poderosas para autorregular tus emociones y liberar el estrés."
+        },
+        soundHealing: {
+          title: "Sanación Sonora & Kirtan",
+          description: "Conéctate con energías sutiles a través de canciones sagradas y ceremonias de sanación sonora."
+        },
+        creativeArts: {
+          title: "Artes Creativas",
+          description: "Exprésate a través de la cerámica y otras actividades creativas en nuestro estudio de arte."
+        }
+      },
+      reviews: {
+        title: "Experiencia Transformadora",
+        subtitle: "Descubre las historias de nuestros participantes",
+        years: "años",
+        data: [
+          {
+            id: 1,
+            name: 'Luján Sánchez',
+            age: 44,
+            country: 'Argentina',
+            occupation: 'Dentista',
+            avatar: '/assets/reviews/reviews-lujan.jpg',
+            quote: '"La gente, la conexión con la naturaleza, el surf..."',
+            review: 'La gente, la conexión con la naturaleza, el surf... Encontré en Santa Teresa lo que estaba buscando cuando dejé mi país el año pasado. Me encanta vivir en Zeneidas, se siente como en casa, lo que necesito ahora. Esta experiencia abre mi mente y me permite ser una mejor persona. Estoy muy feliz. ♥️',
+          },
+          {
+            id: 2,
+            name: 'Catherine Cormier',
+            age: 25,
+            country: 'Canadá',
+            occupation: 'Estudiante',
+            avatar: '/assets/reviews/review-catherine.jpg',
+            quote: '"Este lugar rápidamente comenzó a sentirse como en casa"',
+            review: '¡Este lugar rápidamente comenzó a sentirse como en casa y las personas que trabajan y viven aquí realmente son como una familia! Me encantó el equilibrio entre tener actividades organizadas y tiempo libre. Siempre había algo que hacer, pero nunca se sentía abrumador. La comida era deliciosa y la ubicación es perfecta. Hice tantos recuerdos increíbles que nunca olvidaré y conocí a personas realmente maravillosas ♥️',
+          },
+          {
+            id: 3,
+            name: 'Taylor Evans',
+            age: 32,
+            country: 'Sudáfrica',
+            occupation: 'Profesor',
+            avatar: '/assets/reviews/review-taylor.jpg',
+            quote: '"Vine aquí sin saber qué esperar..."',
+            review: 'Vine aquí sin saber qué esperar y quedé impresionado por la comunidad, las actividades y el ambiente en general. Las clases de surf fueron increíbles, las sesiones de yoga fueron exactamente lo que necesitaba, y el trabajo de respiración cambió mi vida. Los facilitadores son muy conocedores y cariñosos. Esta experiencia realmente me ha transformado.',
+          },
+          {
+            id: 4,
+            name: 'Marcelo',
+            age: 60,
+            country: 'Argentina',
+            occupation: 'Jubilado',
+            avatar: '/assets/reviews/reviews-marcelo.jpg',
+            quote: '"A mi edad, nunca pensé que podría aprender a surfear..."',
+            review: 'A mi edad, nunca pensé que podría aprender a surfear, ¡pero los instructores aquí lo hicieron posible y muy divertido! Toda la experiencia fue rejuvenecedora - desde el yoga matutino hasta las reuniones nocturnas. Me sentí bienvenido y apoyado todos los días. Este lugar tiene una magia especial que une a las personas.',
+          },
+          {
+            id: 5,
+            name: 'Eilin Annika Orgland',
+            age: 22,
+            country: 'Suiza',
+            occupation: 'Fotógrafa',
+            avatar: '/assets/reviews/reviews-eilin.jpg',
+            quote: '"Los atardeceres más hermosos, las personas más cálidas..."',
+            review: 'Los atardeceres más hermosos, las personas más cálidas y la energía más increíble. Vine aquí sola y me fui con una familia. Cada actividad fue cuidadosamente planificada y los facilitadores realmente se preocupan por tu crecimiento y bienestar. ¡El surf camp superó todas mis expectativas y no puedo esperar para volver!',
+          },
+        ]
+      }
     }
   },
   en: {
@@ -876,6 +977,107 @@ const translations = {
       estimatedTotal: "Estimated Total",
       activitySelectedNoPackage: "Activity selected without package (price: $0)",
       activitySelectedNoPlan: "Activity selected without progress plan (price: $0)"
+    },
+    landing: {
+      navigation: {
+        home: "Home",
+        experience: "Experience",
+        stories: "Stories",
+        accommodation: "Accommodation",
+        activities: "Activities",
+        faqs: "FAQs",
+        contact: "Contact",
+        bookNow: "Book Now"
+      },
+      hero: {
+        title: "Santa Teresa Surf",
+        subtitle: "Experience the best surf program in Costa Rica at Zeneidas Surf Garden",
+        tagline: "Surf, Yoga, Meditation & Ice Baths in Santa Teresa",
+        bookNow: "Book Now",
+        exploreActivities: "Explore Activities"
+      },
+      accommodationShowcase: {
+        title: "Your Home in Paradise",
+        subtitle: "Wake up to ocean views and fall asleep to the sound of waves. Choose the perfect space for your surf adventure."
+      },
+      activitiesShowcase: {
+        title: "Get a Taste of Our Activities",
+        subtitle: "Discover the transformative experiences that await you",
+        clickToPlay: "Click to play",
+        surfProgram: {
+          title: "Surf Program",
+          description: "Ride the Wave - Experience the thrill of surfing in the pristine waters of Santa Teresa."
+        },
+        breathwork: {
+          title: "Breathwork",
+          description: "Learn powerful breathing techniques to auto-regulate your emotions and release stress."
+        },
+        soundHealing: {
+          title: "Sound Healing & Kirtan",
+          description: "Connect with subtle energies through sacred songs and sound healing ceremonies."
+        },
+        creativeArts: {
+          title: "Creative Arts",
+          description: "Express yourself through ceramics and other creative activities in our art studio."
+        }
+      },
+      reviews: {
+        title: "Life-Changing Experience",
+        subtitle: "Discover the stories of our participants",
+        years: "years",
+        data: [
+          {
+            id: 1,
+            name: 'Luján Sánchez',
+            age: 44,
+            country: 'Argentina',
+            occupation: 'Dentist',
+            avatar: '/assets/reviews/reviews-lujan.jpg',
+            quote: '"The people, the connection with the nature, the surf..."',
+            review: 'The people, the connection with the nature, the surf... I found in Santa Teresa what I was looking for when I left my country last year. I love to live at Zeneidas, it feels like home, what I need right now. This experience opens my mind and allows me to be a better person. I am very happy. ♥️',
+          },
+          {
+            id: 2,
+            name: 'Catherine Cormier',
+            age: 25,
+            country: 'Canada',
+            occupation: 'Student',
+            avatar: '/assets/reviews/review-catherine.jpg',
+            quote: '"This place quickly started to feel like home"',
+            review: 'This place quickly started to feel like home and the people who work and live here really are like family! I loved the balance between having organized activities and free time. There was always something to do, but it never felt overwhelming. The food was so delicious and the location is perfect. I made so many incredible memories that I will never forget and met some truly wonderful people ♥️',
+          },
+          {
+            id: 3,
+            name: 'Taylor Evans',
+            age: 32,
+            country: 'South Africa',
+            occupation: 'Teacher',
+            avatar: '/assets/reviews/review-taylor.jpg',
+            quote: '"I came here not knowing what to expect..."',
+            review: 'I came here not knowing what to expect and was blown away by the community, the activities, and the overall vibe. The surf lessons were amazing, the yoga sessions were exactly what I needed, and the breathwork changed my life. The facilitators are so knowledgeable and caring. This experience has truly transformed me.',
+          },
+          {
+            id: 4,
+            name: 'Marcelo',
+            age: 60,
+            country: 'Argentina',
+            occupation: 'Retired',
+            avatar: '/assets/reviews/reviews-marcelo.jpg',
+            quote: '"At my age, I never thought I could learn to surf..."',
+            review: 'At my age, I never thought I could learn to surf, but the instructors here made it possible and so much fun! The whole experience was rejuvenating - from the morning yoga to the evening gatherings. I felt welcomed and supported every single day. This place has a special magic that brings people together.',
+          },
+          {
+            id: 5,
+            name: 'Eilin Annika Orgland',
+            age: 22,
+            country: 'Switzerland',
+            occupation: 'Photographer',
+            avatar: '/assets/reviews/reviews-eilin.jpg',
+            quote: '"The most beautiful sunsets, the warmest people..."',
+            review: 'The most beautiful sunsets, the warmest people, and the most incredible energy. I came here solo and left with a family. Every activity was thoughtfully planned and the facilitators truly care about your growth and wellbeing. The surfcamp exceeded all my expectations and I can\'t wait to come back!',
+          },
+        ]
+      }
     }
   }
 };

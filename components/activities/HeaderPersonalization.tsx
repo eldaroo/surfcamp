@@ -83,10 +83,17 @@ const HeaderPersonalization = ({
           </h1>
 
           {/* Subtitle - Much larger */}
+<<<<<<< HEAD
           <p className="text-sm md:text-base text-[#6d5f57] max-w-2xl mx-auto leading-snug">
             {locale === 'es'
               ? 'Elige las actividades que darán forma a tu experiencia perfecta.'
               : 'Choose the activities that will shape your perfect experience.'}
+=======
+          <p className="text-sm md:text-base text-[#6d5f57] max-w-3xl mx-auto leading-relaxed">
+            {locale === 'es'
+              ? 'Tú decides el ritmo, la duración y qué prácticas resuenan más contigo. Desde baños de hielo hasta yoga, sesiones de surf, excursiones a la naturaleza o simplemente tiempo para descansar — este es tu espacio para diseñar un viaje que se adapte a tus necesidades y deseos.'
+              : 'You decide the rhythm, the duration, and which practices resonate most with you. From ice baths to yoga, surf sessions, excursions into nature, or simply time to rest — this is your space to design a journey that suits your needs and desires.'}
+>>>>>>> feature/nueva-feature-clean
           </p>
         </motion.div>
       </div>
