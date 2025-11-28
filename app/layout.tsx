@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Zeneidas Surf - Santa Teresa Surf Camp',
     description: 'Premier Santa Teresa surf camp offering surf lessons, yoga, meditation & ice baths. Transform your life at our beachfront lodge in Costa Rica.',
-    url: 'https://surfcampwidget.duckdns.org',
+    url: 'https://santateresasurfcamp.com',
     siteName: 'Zeneidas Surf',
     locale: 'en_US',
     type: 'website',
@@ -75,10 +75,10 @@ export const metadata: Metadata = {
     // google: 'tu-codigo-de-verificacion',
   },
   alternates: {
-    canonical: 'https://surfcampwidget.duckdns.org',
+    canonical: 'https://santateresasurfcamp.com',
     languages: {
-      'es': 'https://surfcampwidget.duckdns.org/es',
-      'en': 'https://surfcampwidget.duckdns.org/en',
+      'es': 'https://santateresasurfcamp.com/es',
+      'en': 'https://santateresasurfcamp.com/en',
     },
   },
 };
