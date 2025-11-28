@@ -2,11 +2,8 @@ import { Roboto } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import Providers from '@/components/Providers';
-<<<<<<< HEAD
-=======
 import SchemaOrg from '@/components/SchemaOrg';
 import { Metadata } from 'next';
->>>>>>> feature/nueva-feature-clean
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -21,8 +18,6 @@ const bochanSerif = localFont({
   weight: '400 600',
 });
 
-<<<<<<< HEAD
-=======
 export const metadata: Metadata = {
   title: 'Zeneidas Surf - Santa Teresa Surf Camp | Surf, Yoga & Ice Baths in Costa Rica',
   description: 'Experience the best Santa Teresa surf camp at Zeneidas Surf. Premier surf lessons, yoga, meditation, and ice baths in Santa Teresa, Costa Rica. Book your transformative surf retreat today.',
@@ -88,7 +83,6 @@ export const metadata: Metadata = {
   },
 };
 
->>>>>>> feature/nueva-feature-clean
 export default function RootLayout({
   children,
 }: {
@@ -97,10 +91,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
-<<<<<<< HEAD
-=======
         <SchemaOrg />
->>>>>>> feature/nueva-feature-clean
         <div
           className="min-h-screen relative overflow-hidden"
           style={{
