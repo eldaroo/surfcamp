@@ -19,6 +19,7 @@ const bochanSerif = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://santateresasurfcamp.com'),
   title: 'Zeneidas Surf - Santa Teresa Surf Camp | Surf, Yoga & Ice Baths in Costa Rica',
   description: 'Experience the best Santa Teresa surf camp at Zeneidas Surf. Premier surf lessons, yoga, meditation, and ice baths in Santa Teresa, Costa Rica. Book your transformative surf retreat today.',
   keywords: [
