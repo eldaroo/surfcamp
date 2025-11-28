@@ -1,0 +1,539 @@
+/* Fonts are loaded via next/font in layout.tsx and available as CSS variables:
+   --font-roboto (Google Font)
+   --font-bochan (Local font: BochanSerif.ttf)
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-bg: #0f2a2b;
+    --brand-surface: #14363a;
+    --brand-border: #2a4c4f;
+    --brand-gold: #f2c14e;        /* primary */
+    --brand-gold-weak: #e9d08a;   /* disabled */
+    --brand-aqua: #39c6c6;        /* info/success */
+    --brand-orange: #f39b4a;      /* soft highlight */
+    --brand-text: #f2f5f4;
+    --brand-text-dim: #c7d0cf;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (min-width: 1024px) {
+    html {
+      font-size: 80%;
+    }
+  }
+
+  /* Fuente base para todo el body */
+  body {
+    @apply antialiased;
+    font-family: var(--font-roboto), sans-serif;
+    font-weight: 400;
+    color: white;
+    background-color: var(--brand-bg);
+  }
+
+  /* Fuente para todos los headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-bochan), serif;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* Asegurar que los párrafos usen Roboto */
+  p, div, button, input, label, a {
+    font-family: var(--font-roboto), sans-serif;
+    color: white;
+  }
+
+  /* Los span usan Roboto por defecto, pero pueden ser sobrescritos por clases específicas */
+  span {
+    font-family: var(--font-roboto), sans-serif;
+    color: white;
+  }
+
+  /* Clases de utilidad para fuentes */
+  .font-heading {
+    font-family: var(--font-bochan), serif !important;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* Asegurar que font-heading tenga prioridad absoluta sobre cualquier otra regla */
+  .font-heading,
+  .font-heading *,
+  h1.font-heading,
+  h2.font-heading,
+  h3.font-heading,
+  h4.font-heading,
+  h5.font-heading,
+  h6.font-heading,
+  span.font-heading {
+    font-family: var(--font-bochan), serif !important;
+  }
+
+  .font-body {
+    font-family: var(--font-roboto), sans-serif !important;
+    font-weight: 400;
+    color: white;
+  }
+
+  .font-roboto {
+    font-family: var(--font-roboto), sans-serif !important;
+    color: white;
+  }
+
+  .font-bochan {
+    font-family: var(--font-bochan), serif !important;
+    color: white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-warm-500 text-white px-6 py-3 rounded-lg font-semibold 
+           hover:bg-warm-600 hover:shadow-lg transform hover:scale-105 transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-warm-600 border-2 border-warm-300 px-6 py-3 rounded-lg font-semibold 
+           hover:bg-warm-50 hover:border-warm-400 hover:shadow-md transition-all duration-300
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:ring-offset-2;
+  }
+  
+  /* PASS 2: p-4/5 → p-3/4 */
+  .card {
+    @apply bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-3 md:p-4 border border-warm-200
+           transition-all duration-300;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-warm-300 rounded-lg 
+           focus:outline-none focus:ring-2 focus:ring-warm-500 focus:border-warm-500
+           transition-all duration-300 hover:border-warm-400;
+  }
+  
+  .input-field:invalid {
+    @apply border-warm-400 focus:ring-warm-500 focus:border-warm-500;
+  }
+  
+  .activity-card {
+    @apply card cursor-pointer hover:border-warm-300 hover:shadow-xl transition-all duration-300;
+  }
+  
+  .activity-card.selected {
+    @apply border-2 border-accent-200 bg-gradient-to-br from-accent-50 to-warm-50 shadow-lg;
+    box-shadow: 0 0 15px rgba(236, 233, 127, 0.25), 0 2px 8px rgba(153, 113, 70, 0.15);
+    transform: translateY(-1px);
+  }
+
+  /* Efectos dorados para elementos seleccionados */
+  .selected-gold {
+    @apply border-2 border-accent-200 bg-gradient-to-br from-accent-50 to-warm-50;
+    box-shadow: 0 0 18px rgba(236, 233, 127, 0.3), 0 4px 12px rgba(153, 113, 70, 0.2);
+    transform: translateY(-2px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .selected-gold:hover {
+    box-shadow: 0 0 22px rgba(236, 233, 127, 0.35), 0 6px 15px rgba(153, 113, 70, 0.25);
+    transform: translateY(-3px);
+  }
+
+  /* Etiquetas con mejor contraste */
+  .tag-feature {
+    @apply px-3 py-1 text-xs rounded-full font-medium inline-flex items-center;
+    white-space: nowrap;
+    display: inline-flex;
+  }
+
+  .tag-feature.primary {
+    @apply text-white border border-white/30;
+    flex-shrink: 0;
+  }
+
+  .tag-feature.accent {
+    @apply text-white border border-white/30;
+    flex-shrink: 0;
+  }
+
+  .tag-feature.secondary {
+    @apply text-white border border-white/30;
+    flex-shrink: 0;
+  }
+
+  /* Efectos de hover mejorados */
+  .card-hover-gold {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover-gold:hover {
+    box-shadow: 0 4px 12px rgba(236, 233, 127, 0.15), 0 2px 6px rgba(153, 113, 70, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .step-indicator {
+    @apply w-12 h-12 rounded-lg border-2 flex items-center justify-center 
+           text-lg font-semibold transition-all duration-300 shadow-md;
+  }
+  
+  .step-indicator.active {
+    @apply bg-gradient-to-br from-warm-500 to-accent-200 border-warm-500 text-white shadow-lg;
+  }
+  
+  .step-indicator.completed {
+    @apply bg-gradient-to-br from-accent-200 to-accent-300 border-accent-200 text-white shadow-lg;
+  }
+  
+  .step-indicator.inactive {
+    @apply bg-warm-100 border-warm-300 text-warm-500 hover:bg-warm-200;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-warm-500 via-accent-200 to-warm-600 bg-clip-text text-transparent;
+  }
+
+  .font-heading {
+    font-family: var(--font-bochan), serif !important;
+    font-weight: 600;
+  }
+
+  .font-body {
+    font-family: var(--font-roboto), sans-serif !important;
+    font-weight: 400;
+  }
+
+  .font-roboto {
+    font-family: var(--font-roboto), sans-serif !important;
+  }
+
+  .font-bochan {
+    font-family: var(--font-bochan), serif !important;
+  }
+
+  /* PASS 2: p-4/5 → p-3/4 */
+  .card {
+    @apply rounded-xl p-3 md:p-4 border-2 transition-all duration-300;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+
+  /* Gradientes con energía de surf */
+  .bg-warm-gradient {
+    background: linear-gradient(135deg, #997146 0%, #8C8179 30%, #CCC8BE 60%, #ECE97F 100%);
+  }
+
+  .bg-earth-gradient {
+    background: linear-gradient(135deg, #1D4148 0%, #677A7D 40%, #997146 70%, #ECE97F 100%);
+  }
+
+  .bg-surf-gradient {
+    background: linear-gradient(135deg, #1D4148 0%, #677A7D 25%, #997146 50%, #8C8179 75%, #ECE97F 100%);
+  }
+
+  .text-warm-gradient {
+    background: linear-gradient(135deg, #997146 0%, #8C8179 30%, #CCC8BE 60%, #ECE97F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Efectos orgánicos */
+  .organic-shadow {
+    box-shadow: 0 4px 20px rgba(153, 113, 70, 0.15), 0 2px 8px rgba(236, 233, 127, 0.1);
+  }
+
+  .organic-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .organic-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(153, 113, 70, 0.2), 0 4px 12px rgba(236, 233, 127, 0.15);
+  }
+
+  /* Colores específicos de la paleta */
+  .bg-earth-600 {
+    background-color: #677A7D;
+  }
+
+  .text-earth-600 {
+    color: #677A7D;
+  }
+
+  .border-earth-600 {
+    border-color: #677A7D;
+  }
+
+  .bg-warm-200 {
+    background-color: #CCC8BE;
+  }
+
+  .text-warm-200 {
+    color: #CCC8BE;
+  }
+
+  .border-warm-200 {
+    border-color: #CCC8BE;
+  }
+
+  .bg-warm-400 {
+    background-color: #8C8179;
+  }
+
+  .text-warm-400 {
+    color: #8C8179;
+  }
+
+  .border-warm-400 {
+    border-color: #8C8179;
+  }
+
+  .bg-warm-500 {
+    background-color: #997146;
+  }
+
+  .text-warm-500 {
+    color: #997146;
+  }
+
+  .border-warm-500 {
+    border-color: #997146;
+  }
+
+  .bg-warm-900 {
+    background-color: #1D4148;
+  }
+
+  .text-warm-900 {
+    color: #1D4148;
+  }
+
+  .border-warm-900 {
+    border-color: #1D4148;
+  }
+
+  .bg-accent-200 {
+    background-color: #ECE97F;
+  }
+
+  .text-accent-200 {
+    color: #ECE97F;
+  }
+
+  .border-accent-200 {
+    border-color: #ECE97F;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-ocean-600 to-ocean-800 bg-clip-text text-transparent;
+  }
+} 
+
+/* Ocultar barra de scroll para el selector de pasos */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Centrado automático del paso activo en móvil */
+@media (max-width: 768px) {
+  .scrollbar-hide {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Force date picker language settings */
+html[lang="en-US"] input[type="date"],
+html[lang="en-US"] input[type="date"]::-webkit-calendar-picker-indicator,
+html[lang="en-US"] input[type="date"]::-webkit-inner-spin-button,
+html[lang="en-US"] input[type="date"]::-webkit-clear-button {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Override any Portuguese date picker styles */
+input[type="date"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "lnum" 1;
+}
+
+/* Try to force English locale for WebKit date inputs */
+input[type="date"]::-webkit-datetime-edit {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Activity Card Enhancements - Range Input Styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Range slider track - WebKit */
+input[type="range"]::-webkit-slider-track {
+  height: 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+/* Range slider track - Firefox */
+input[type="range"]::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb - WebKit */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(251 191 36) 0%, rgb(245 158 11) 100%);
+  border: 3px solid rgb(15 23 42);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4), 0 0 0 2px rgba(251, 191, 36, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb - Firefox */
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgb(251 191 36) 0%, rgb(245 158 11) 100%);
+  border: 3px solid rgb(15 23 42);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4), 0 0 0 2px rgba(251, 191, 36, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Range slider thumb hover effects - WebKit */
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.6), 0 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Range slider thumb hover effects - Firefox */
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.6), 0 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Range slider thumb active effects - WebKit */
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.5), 0 0 0 3px rgba(251, 191, 36, 0.25);
+}
+
+/* Range slider thumb active effects - Firefox */
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.5), 0 0 0 3px rgba(251, 191, 36, 0.25);
+}
+
+/* Activity Card flip animations */
+@media (prefers-reduced-motion: reduce) {
+  .flip-card-inner {
+    transition: none !important;
+  }
+}
+
+/* Smooth scroll for mobile cards */
+@media (max-width: 768px) {
+  .activity-card-container {
+    scroll-snap-type: y mandatory;
+    scroll-padding: 24px;
+  }
+
+  .activity-card-item {
+    scroll-snap-align: start;
+  }
+}
+
+/* Enhanced shadow effects for cards */
+.card-shadow-enhanced {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.card-shadow-enhanced:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.15),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(251, 191, 36, 0.1);
+}
+
+/* Typography scale improvements */
+@media (max-width: 640px) {
+  .text-responsive-sm {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+  }
+
+  .text-responsive-base {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  }
+
+  .text-responsive-2xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+}
+
+/* Touch target improvements for mobile */
+@media (max-width: 768px) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Backdrop blur support fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .md\:backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-md {
+    background-color: rgba(15, 23, 42, 0.95);
+  }
+}

@@ -1,0 +1,2147 @@
+﻿"use client";
+
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { Activity } from "@/types";
+import {
+  CheckCircle2,
+  Sparkles,
+  Users,
+  Minus,
+  Plus,
+  Clock,
+  Star,
+  Flame,
+  Globe,
+  Timer,
+  User,
+  Waves,
+  Snowflake,
+  Wind,
+  Car,
+  Shield,
+  HeadphonesIcon,
+  MapPin,
+  ArrowRight,
+  ArrowLeft,
+  Quote,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
+const YOGA_CLASSES_RANGE = { min: 1, max: 15 } as const;
+
+// Surf Programs - Duration-based packages (work for any level)
+const SURF_PROGRAMS = {
+  fundamental: {
+    id: 'fundamental',
+    name: { es: 'Core Surf Program', en: 'Core Surf Program' },
+    tagline: {
+      es: 'Inicio rÃ¡pido, base sÃ³lida, coaching personalizado',
+      en: 'Fast start, strong foundation, personalized coaching'
+    },
+    price: 450,
+    sessions: 4,
+    includes: {
+      es: [
+        '4 sesiones de surf',
+        '2 sesiones de videoanÃ¡lisis',
+        'Equipo (tabla + lycra)',
+        'TeorÃ­a del surf',
+        'SesiÃ³n de fotos',
+        'Plan de continuidad'
+      ],
+      en: [
+        '4 surf sessions',
+        '2 video analysis sessions',
+        'Gear (board + lycra)',
+        'Surf theory',
+        'Photo session',
+        'Continuity plan'
+      ]
+    },
+    sessionWork: {
+      es: [
+        'TÃ©cnica & biomecÃ¡nica: Fundamentos esenciales adaptados a tu nivel â€” remada, pop-up, postura y transiciones',
+        'Mentalidad & confianza: Desarrollo acelerado desde seguridad bÃ¡sica hasta lectura de olas complejas',
+        'NutriciÃ³n & recuperaciÃ³n: Estrategias de alimentaciÃ³n e hidrataciÃ³n para mantener energÃ­a en 4 dÃ­as',
+        'Feedback visual: AnÃ¡lisis de video en momentos clave para ajustar enfoque y maximizar resultados'
+      ],
+      en: [
+        'Technique & biomechanics: Essential fundamentals adapted to your level â€” paddling, pop-up, stance, and transitions',
+        'Mindset & confidence: Accelerated development from basic safety to complex wave reading',
+        'Nutrition & recovery: Fueling and hydration strategies to maintain energy over 4 days',
+        'Visual feedback: Video analysis at key moments to adjust focus and maximize results'
+      ]
+    }
+  },
+  progressionPlus: {
+    id: 'progressionPlus',
+    name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
+    tagline: {
+      es: 'Progreso consistente mediante repeticiÃ³n, coaching y feedback',
+      en: 'Consistent progress through repetition, coaching and feedback'
+    },
+    price: 650,
+    sessions: 6,
+    includes: {
+      es: [
+        '6 sesiones de surf',
+        '4 sesiones de videoanÃ¡lisis',
+        'Transporte a spots de surf cercanos',
+        'Equipo (tabla + lycra)',
+        'TeorÃ­a del surf',
+        '1 sesiÃ³n de fotos',
+        'Plan de prÃ¡ctica final'
+      ],
+      en: [
+        '6 surf sessions',
+        '4 video analysis sessions',
+        'Transport to nearby surf spots',
+        'Gear (board + lycra)',
+        'Surf theory',
+        '1 photo session',
+        'Final practice plan'
+      ]
+    },
+    sessionWork: {
+      es: [
+        'TÃ©cnica & biomecÃ¡nica: Refinamiento de patrones de movimiento especÃ­ficos, desde fundamentos hasta maniobras intermedias',
+        'Mentalidad & confianza: Desarrollo de intuiciÃ³n y toma de decisiones en condiciones variadas',
+        'NutriciÃ³n & recuperaciÃ³n: PlanificaciÃ³n nutricional personalizada para optimizar cada sesiÃ³n',
+        'Feedback visual: MÃºltiples anÃ¡lisis de video mÃ¡s plan personalizado post-campamento'
+      ],
+      en: [
+        'Technique & biomechanics: Refinement of specific movement patterns, from fundamentals to intermediate maneuvers',
+        'Mindset & confidence: Development of intuition and decision-making in varying conditions',
+        'Nutrition & recovery: Personalized nutrition planning to optimize each session',
+        'Visual feedback: Multiple video analyses plus personalized post-camp plan'
+      ]
+    }
+  },
+  highPerformance: {
+    id: 'highPerformance',
+    name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
+    tagline: {
+      es: 'TransformaciÃ³n tÃ©cnica profunda y anÃ¡lisis de alta calidad',
+      en: 'Deep technical transformation and high-quality analysis'
+    },
+    price: 910,
+    sessions: 8,
+    includes: {
+      es: [
+        '8 sesiones de surf',
+        '5 sesiones de videoanÃ¡lisis avanzado',
+        'Transporte a spots de surf cercanos',
+        'Equipo (tabla + lycra)',
+        'TeorÃ­a del surf',
+        'SesiÃ³n de fotos + drone',
+        'RevisiÃ³n final extendida'
+      ],
+      en: [
+        '8 surf sessions',
+        '5 advanced video analysis sessions',
+        'Transport to nearby surf spots',
+        'Gear (board + lycra)',
+        'Surf theory',
+        'Photo + drone session',
+        'Extended final review'
+      ]
+    },
+    sessionWork: {
+      es: [
+        'TÃ©cnica & biomecÃ¡nica: AnÃ¡lisis biomecÃ¡nico profundo para crear cambios duraderos en tus patrones especÃ­ficos',
+        'Mentalidad & confianza: Desarrollo de resiliencia, adaptabilidad y flow state en tu zona Ã³ptima',
+        'NutriciÃ³n & recuperaciÃ³n: Protocolos deportivos completos con periodizaciÃ³n y estrategias personalizadas',
+        'Feedback visual: AnÃ¡lisis exhaustivo con drone y fotografÃ­a, mÃ¡s plan detallado de continuidad'
+      ],
+      en: [
+        'Technique & biomechanics: Deep biomechanical analysis to create lasting changes in your specific patterns',
+        'Mindset & confidence: Development of resilience, adaptability, and flow state in your optimal zone',
+        'Nutrition & recovery: Complete sports protocols with periodization and personalized strategies',
+        'Visual feedback: Comprehensive analysis with drone and photography, plus detailed continuity plan'
+      ]
+    }
+  }
+} as const;
+
+// Our Integrated Surf Coaching Method
+const COACHING_METHOD = {
+  title: {
+    es: 'Nuestro Método Integral de Coaching de Surf',
+    en: 'Our Integrated Surf Coaching Method'
+  },
+  subtitle: {
+    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA - toda esta experiencia se integra en cada sesión. Todos los programas se adaptan a tu nivel, sin restricciones - las sesiones ocurren con un máximo de 2-3 personas por coach.',
+    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges - all this expertise is integrated into every session. All programs adapt to your level, no restrictions - sessions occur with a maximum of 2-3 people per coach.'
+  },
+  pillars: [
+    {
+      title: { es: 'Biomecánica & memoria muscular', en: 'Biomechanics & muscle memory' },
+      description: {
+        es: 'Patrones de movimiento eficientes que apoyan la progresión a largo plazo.',
+        en: 'Efficient movement patterns that support long-term progression.'
+      }
+    },
+    {
+      title: { es: 'Feedback técnico basado en video', en: 'Video-based technical feedback' },
+      description: {
+        es: 'Análisis visual claro para entender exactamente qué mejorar.',
+        en: 'Clear visual analysis to understand exactly what to improve.'
+      }
+    },
+    {
+      title: { es: 'Mentalidad, seguridad & nutrición práctica', en: 'Mindset, safety & practical nutrition' },
+      description: {
+        es: 'Un enfoque completo para la confianza, conocimiento del océano y alimentación inteligente.',
+        en: 'A complete approach to confidence, ocean awareness and smart fueling.'
+      }
+    }
+  ]
+} as const;
+
+type ActivityCardProps = {
+  activity: Activity;
+  locale: "es" | "en";
+  participants: number;
+  isSelected: boolean;
+  price: number;
+  pricePerPerson?: number;
+  formatPrice: (value: number) => string;
+  onToggle: () => void;
+  onAutoAdvance?: () => void;
+  onSkip?: () => void;
+  onBack?: () => void;
+  isFirstStep?: boolean;
+  isSurfMandatory?: boolean;
+  yogaClasses?: number;
+  onYogaClassesChange?: (value: number) => void;
+  yogaUsePackDiscount?: boolean;
+  onYogaPackDiscountChange?: (value: boolean) => void;
+  surfProgram?: 'fundamental' | 'progressionPlus' | 'highPerformance';
+  onSurfProgramChange?: (value: 'fundamental' | 'progressionPlus' | 'highPerformance') => void;
+  onShowPrivateCoachingModal?: () => void;
+  hasQuantitySelector?: boolean;
+  quantity?: number;
+  onQuantityChange?: (value: number) => void;
+  hasTimeSelector?: boolean;
+  timeSlot?: "7:00 AM" | "3:00 PM";
+  onTimeSlotChange?: (value: "7:00 AM" | "3:00 PM") => void;
+};
+
+const localeCopy = {
+  es: {
+    add: "Agregar",
+    remove: "Quitar",
+    included: "Incluido",
+    mandatory: "Obligatorio",
+    choose: "Elegir",
+    chosen: "Elegido",
+    skip: "Omitir",
+    back: "Volver",
+    perPerson: "/ persona",
+    classTrack: "Clases",
+    quantity: "Sesiones",
+    timeSlot: "Horario preferido",
+    selectPackage: "Selecciona un paquete",
+    yogaClasses: "Clases de Yoga",
+    class: "clase",
+    classes: "clases",
+    total: "Total",
+    packOffer: "ObtÃ©n el pack de 10 clases por $80 (ahorra $20)",
+    selectPack: "Seleccionar Pack de 10",
+    packSelected: "Pack de 10 Clases Seleccionado",
+    regularPrice: "Precio regular",
+    chooseSurfProgram: "Elige tu Programa de Surf",
+  },
+  en: {
+    add: "Add",
+    remove: "Remove",
+    included: "Included",
+    mandatory: "Mandatory",
+    choose: "Choose",
+    chosen: "Chosen",
+    skip: "Skip",
+    back: "Back",
+    perPerson: "/ person",
+    classTrack: "Classes",
+    quantity: "Sessions",
+    timeSlot: "Preferred time",
+    selectPackage: "Choose a package",
+    yogaClasses: "Yoga Classes",
+    class: "class",
+    classes: "classes",
+    total: "Total",
+    packOffer: "Get the 10-class pack for $80 (save $20)",
+    selectPack: "Select 10-Class Pack",
+    packSelected: "10-Class Pack Selected",
+    regularPrice: "Regular price",
+    chooseSurfProgram: "Choose Your Surf Program",
+  },
+};
+
+const marketingContent = {
+  surf: {
+    rating: {
+      es: "4.9",
+      en: "4.9",
+    },
+    reviews: {
+      es: "120 reseÃ±as",
+      en: "120 reviews",
+    },
+    trust: {
+      es: "Confiado por viajeros de mÃ¡s de 15 paÃ­ses",
+      en: "Trusted by travelers from 15+ countries",
+    },
+  },
+  yoga: {
+    rating: {
+      es: "4.8",
+      en: "4.8",
+    },
+    reviews: {
+      es: "95 reseÃ±as",
+      en: "95 reviews",
+    },
+    trust: {
+      es: "Sesiones frente al mar con instructores certificados",
+      en: "Oceanfront sessions with certified instructors",
+    },
+  },
+  ice_bath: {
+    rating: {
+      es: "5.0",
+      en: "5.0",
+    },
+    reviews: {
+      es: "48 reseÃ±as",
+      en: "48 reviews",
+    },
+    trust: {
+      es: "Protocolo profesional de recuperaciÃ³n 1:1",
+      en: "Professional 1:1 recovery protocol",
+    },
+  },
+  transport: {
+    rating: {
+      es: "4.9",
+      en: "4.9",
+    },
+    reviews: {
+      es: "200+ reseÃ±as",
+      en: "200+ reviews",
+    },
+    trust: {
+      es: "Traslados certificados con seguro completo",
+      en: "Certified transfers with full insurance",
+    },
+  },
+  hosting: {
+    rating: {
+      es: "5.0",
+      en: "5.0",
+    },
+    reviews: {
+      es: "80 reseÃ±as",
+      en: "80 reviews",
+    },
+    trust: {
+      es: "AtenciÃ³n personalizada 7 dÃ­as de la semana",
+      en: "Personalized attention 7 days a week",
+    },
+  },
+  default: {
+    rating: { es: "", en: "" },
+    reviews: { es: "", en: "" },
+    trust: { es: "", en: "" },
+  },
+} as const;
+
+const sellingPointsContent = {
+  surf: {
+    es: [
+      "Coaches certificados de alto rendimiento",
+      "Video anÃ¡lisis + feedback personalizado",
+      "Equipo completo incluido",
+      "Horarios segÃºn mareas y condiciones",
+    ],
+    en: [
+      "Certified high-performance coaches",
+      "Video analysis + personalized feedback",
+      "All gear included",
+      "Schedule aligned with tides",
+    ],
+  },
+} as const;
+
+const testimonialsContent = {
+  surf: {
+    es: [
+      {
+        text: "Las clases de surf fueron exactamente lo que necesitaba. Cambiaron mi forma de pensar y me ayudaron a encontrar calma en el ocÃ©ano.",
+        author: "Catherine Cormier",
+        country: "CanadÃ¡"
+      },
+      {
+        text: "A travÃ©s de las sesiones de surf aprendÃ­ a superar mis lÃ­mites, respirar y encontrar paz en las olas.",
+        author: "Taryne Evans",
+        country: "SudÃ¡frica"
+      },
+      {
+        text: "Las clases de surf fueron increÃ­bles. Lo que antes parecÃ­a imposible se volviÃ³ realidad con solo unos pasos y grandes instructores.",
+        author: "Marcelo",
+        country: "Argentina"
+      },
+      {
+        text: "Cada sesiÃ³n de surf me trajo una sensaciÃ³n de conexiÃ³n con el mar y conmigo misma.",
+        author: "LujÃ¡n SÃ¡nchez",
+        country: "Argentina"
+      },
+      {
+        text: "En las olas aprendÃ­ a soltar, confiar en el ocÃ©ano y abrir mi corazÃ³n nuevamente.",
+        author: "Eilin Annika Orgland",
+        country: "Suiza"
+      }
+    ],
+    en: [
+      {
+        text: "The surf lessons were exactly what I needed. They changed how I think and helped me find calm in the ocean.",
+        author: "Catherine Cormier",
+        country: "Canada"
+      },
+      {
+        text: "Through the surf sessions I learned to push my limits, breathe, and find peace in the waves.",
+        author: "Taryne Evans",
+        country: "South Africa"
+      },
+      {
+        text: "The surf classes were incredible. What once felt impossible became real with just a few steps and great instructors.",
+        author: "Marcelo",
+        country: "Argentina"
+      },
+      {
+        text: "Each surf session brought a feeling of connection with the sea and with myself.",
+        author: "LujÃ¡n SÃ¡nchez",
+        country: "Argentina"
+      },
+      {
+        text: "In the waves I learned to let go, trust the ocean, and open my heart again.",
+        author: "Eilin Annika Orgland",
+        country: "Switzerland"
+      }
+    ]
+  }
+} as const;
+
+const CACHE_VERSION = '20251124-2200';
+
+const activityImages = {
+  surf: {
+    image: `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    mobileImage: `/assets/surf-mobile.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
+  },
+  yoga: {
+    image: `/assets/Yoga.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
+  },
+  ice_bath: {
+    image: `/assets/Icebath.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
+  },
+  transport: {
+    gradient: "from-orange-500 via-amber-400 to-yellow-500",
+    hasImage: false,
+  },
+  hosting: {
+    image: `/assets/Host.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
+  },
+} as const;
+
+const descriptiveContent = {
+  surf: {
+    es: {
+      description: "",
+      features: [],
+    },
+    en: {
+      description: "",
+      features: [],
+    },
+  },
+  yoga: {
+    es: {
+      description: "Sesiones de yoga para comenzar el dÃ­a con energÃ­a y equilibrio.",
+      features: [
+        { icon: Timer, text: "60 minutos" },
+        { icon: Users, text: "Grupos pequeÃ±os" },
+        { icon: Waves, text: "Todos los niveles" },
+      ],
+    },
+    en: {
+      description: "Yoga sessions to start the day with energy and balance.",
+      features: [
+        { icon: Timer, text: "60 minutes" },
+        { icon: Users, text: "Small groups" },
+        { icon: Waves, text: "All levels" },
+      ],
+    },
+  },
+  ice_bath: {
+    es: {
+      description: "SesiÃ³n de terapia de frÃ­o 1:1 para regeneraciÃ³n completa. Incluye tÃ©cnicas de movimiento y respiraciÃ³n para mÃ¡xima recuperaciÃ³n.",
+      features: [
+        { icon: Snowflake, text: "45 minutos" },
+        { icon: User, text: "SesiÃ³n privada" },
+        { icon: Wind, text: "RecuperaciÃ³n post-surf" },
+      ],
+    },
+    en: {
+      description: "1:1 cold therapy session for complete regeneration. Includes movement and breathing techniques for maximum recovery.",
+      features: [
+        { icon: Snowflake, text: "45 minutes" },
+        { icon: User, text: "Private session" },
+        { icon: Wind, text: "Post-surf recovery" },
+      ],
+    },
+  },
+  transport: {
+    es: {
+      description: "Traslados seguros y cÃ³modos con conductores certificados. Servicio puerta a puerta con seguimiento en tiempo real.",
+      features: [
+        { icon: Car, text: "VehÃ­culos AC + WiFi" },
+        { icon: Shield, text: "Seguro completo" },
+        { icon: MapPin, text: "Tracking en vivo" },
+      ],
+    },
+    en: {
+      description: "Safe and comfortable transfers with certified drivers. Door-to-door service with real-time tracking.",
+      features: [
+        { icon: Car, text: "AC + WiFi vehicles" },
+        { icon: Shield, text: "Full insurance" },
+        { icon: MapPin, text: "Live tracking" },
+      ],
+    },
+  },
+  hosting: {
+    es: {
+      description: "AtenciÃ³n personalizada con concierge local dedicado. Planificamos tu experiencia completa segÃºn tus preferencias.",
+      features: [
+        { icon: HeadphonesIcon, text: "Disponible 7 dÃ­as" },
+        { icon: Star, text: "Reservas prioritarias" },
+        { icon: Clock, text: "Soporte 24/7" },
+      ],
+    },
+    en: {
+      description: "Personalized attention with dedicated local concierge. We plan your complete experience according to your preferences.",
+      features: [
+        { icon: HeadphonesIcon, text: "Available 7 days" },
+        { icon: Star, text: "Priority bookings" },
+        { icon: Clock, text: "24/7 support" },
+      ],
+    },
+  },
+} as const;
+
+const ActivityCard = ({
+  activity,
+  locale,
+  participants,
+  isSelected,
+  price,
+  pricePerPerson,
+  formatPrice,
+  onToggle,
+  onAutoAdvance,
+  onSkip,
+  onBack,
+  isFirstStep = false,
+  isSurfMandatory = true,
+  yogaClasses,
+  onYogaClassesChange,
+  yogaUsePackDiscount,
+  onYogaPackDiscountChange,
+  surfProgram,
+  onSurfProgramChange,
+  onShowPrivateCoachingModal,
+  hasQuantitySelector,
+  quantity = 1,
+  onQuantityChange,
+  hasTimeSelector,
+  timeSlot = "7:00 AM",
+  onTimeSlotChange,
+}: ActivityCardProps) => {
+  console.log('[ACTIVITY CARD] Rendering:', activity.name);
+  const copy = localeCopy[locale] ?? localeCopy.es;
+  const marketing = marketingContent[activity.category as keyof typeof marketingContent] ?? marketingContent.default;
+  const sellingPoints = sellingPointsContent[activity.category as keyof typeof sellingPointsContent]?.[locale];
+  const descriptive = descriptiveContent[activity.category as keyof typeof descriptiveContent]?.[locale];
+
+  const ratingValue = typeof marketing.rating === "object" ? marketing.rating[locale] : "";
+  const reviewsText = typeof marketing.reviews === "object" ? marketing.reviews[locale] : "";
+  const trustMessage = typeof marketing.trust === "object" ? marketing.trust[locale] : "";
+
+  const isSurf = activity.category === "surf";
+  const [isChoosing, setIsChoosing] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false); // Track if user has modified selectors
+  const [showTestimonialsPopup, setShowTestimonialsPopup] = useState(false);
+  const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
+  const [currentSurfImageIndex, setCurrentSurfImageIndex] = useState(0);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [modalImageIndex, setModalImageIndex] = useState(0);
+  const [isCoachingMethodExpanded, setIsCoachingMethodExpanded] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(surfProgram || null);
+
+  // Set mounted state for portal (SSR safety)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  console.log('[ACTIVITY CARD] State:', {
+    showImageModal,
+    modalImageIndex,
+    showTestimonialsPopup,
+    currentTestimonialIndex
+  });
+  const imageData = activityImages[activity.category as keyof typeof activityImages] || {
+    gradient: "from-slate-600 to-slate-800",
+    hasImage: false,
+  };
+
+  const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
+
+  // Surf image carousel - Mobile version
+  const surfImagesMobile = [
+    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (2) Mobile.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
+  ];
+
+  // Surf image carousel - Desktop version
+  const surfImagesDesktop = [
+    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (2).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
+  ];
+
+  const handleNextSurfImage = () => {
+    setCurrentSurfImageIndex((prev) => (prev + 1) % surfImagesMobile.length);
+  };
+
+  const handlePrevSurfImage = () => {
+    setCurrentSurfImageIndex((prev) => (prev - 1 + surfImagesMobile.length) % surfImagesMobile.length);
+  };
+
+  const handleOpenImageModal = (index: number) => {
+    console.log('[ACTIVITY CARD] Opening image modal at index:', index);
+    console.log('[ACTIVITY CARD] Body pointer-events before modal open:', window.getComputedStyle(document.body).pointerEvents);
+    console.log('[ACTIVITY CARD] HTML pointer-events before modal open:', window.getComputedStyle(document.documentElement).pointerEvents);
+    setModalImageIndex(index);
+    setShowImageModal(true);
+  };
+
+  const handleCloseImageModal = () => {
+    console.log('[ACTIVITY CARD] Closing image modal');
+    console.log('[ACTIVITY CARD] Body pointer-events before modal close:', window.getComputedStyle(document.body).pointerEvents);
+    console.log('[ACTIVITY CARD] HTML pointer-events before modal close:', window.getComputedStyle(document.documentElement).pointerEvents);
+    setShowImageModal(false);
+  };
+
+  const handleNextModalImage = () => {
+    console.log('[ACTIVITY CARD] Next modal image');
+    setModalImageIndex((prev) => (prev + 1) % surfImagesDesktop.length);
+  };
+
+  const handlePrevModalImage = () => {
+    console.log('[ACTIVITY CARD] Previous modal image');
+    setModalImageIndex((prev) => (prev - 1 + surfImagesDesktop.length) % surfImagesDesktop.length);
+  };
+
+  const handleNextTestimonial = () => {
+    if (testimonials) {
+      setCurrentTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }
+  };
+
+  const handlePrevTestimonial = () => {
+    if (testimonials) {
+      setCurrentTestimonialIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+    }
+  };
+
+  // Auto-rotate testimonials every 5 seconds
+  useEffect(() => {
+    if (!isSurf || !testimonials) return;
+
+    const interval = setInterval(() => {
+      setCurrentTestimonialIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isSurf, testimonials]);
+
+  // Preload all surf images on mount to prevent loading delay
+  useEffect(() => {
+    if (!isSurf) return;
+
+    // Preload mobile images
+    surfImagesMobile.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+
+    // Preload desktop images
+    surfImagesDesktop.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+    });
+  }, [isSurf]);
+
+  // Auto-rotate surf carousel every 4 seconds (mobile only)
+  useEffect(() => {
+    if (!isSurf) return;
+
+    const interval = setInterval(() => {
+      setCurrentSurfImageIndex((prev) => (prev + 1) % surfImagesMobile.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isSurf, surfImagesMobile.length]);
+
+  // Add global mouse move listener to detect hover issues when image modal is open
+  // Also disable pointer-events on body to prevent hover effects on background elements
+  useEffect(() => {
+    console.log('[ACTIVITY CARD MODAL EFFECT] showImageModal:', showImageModal);
+    console.log('[ACTIVITY CARD MODAL EFFECT] Modal rendered via Portal to document.body');
+    if (!showImageModal) return;
+
+    // Store original pointer-events value
+    const originalBodyPointerEvents = document.body.style.pointerEvents;
+    const originalHtmlPointerEvents = document.documentElement.style.pointerEvents;
+
+    // Disable pointer-events on body and html (except for modal children)
+    document.body.style.pointerEvents = 'none';
+    document.documentElement.style.pointerEvents = 'none';
+    console.log('[ACTIVITY CARD MODAL EFFECT] Disabled pointer-events on body and html');
+
+    // Note: With portal rendering, we don't need to disable pointer-events on the activity card
+    // The modal is rendered directly to document.body and is naturally on top
+    console.log('[ACTIVITY CARD MODAL EFFECT] Using portal rendering - activity card pointer-events remain active');
+
+    let lastLogTime = 0;
+    const LOG_THROTTLE_MS = 500; // Only log once every 500ms to avoid spam
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      const now = Date.now();
+      const target = e.target as HTMLElement;
+      const modalElement = document.querySelector('[data-modal-id="surf-image-modal"]');
+
+      // Build element path from target to root
+      const getElementPath = (el: HTMLElement) => {
+        const path = [];
+        let current: HTMLElement | null = el;
+        while (current && current !== document.documentElement) {
+          const className = current.className;
+          let classString = '';
+          try {
+            classString = typeof className === 'string' ? className : String(className);
+          } catch (e) {
+            classString = '(error getting classes)';
+          }
+          const info = {
+            tag: current.tagName,
+            id: current.id || '(no id)',
+            classes: classString ? classString.split(' ').slice(0, 3).join(' ') : '(no class)',
+            pointerEvents: window.getComputedStyle(current).pointerEvents
+          };
+          path.push(info);
+          current = current.parentElement;
+          if (path.length > 5) break; // Limit to 5 levels to avoid spam
+        }
+        return path;
+      };
+
+      // Log modal detection info (throttled)
+      if (now - lastLogTime > LOG_THROTTLE_MS) {
+        console.log('[ACTIVITY CARD MODAL EFFECT] Modal element found:', !!modalElement);
+        console.log('[ACTIVITY CARD MODAL EFFECT] Modal element classes:', modalElement?.className);
+        console.log('[ACTIVITY CARD MODAL EFFECT] Target element:', {
+          tagName: target.tagName,
+          className: target.className,
+          id: target.id,
+          pointerEvents: window.getComputedStyle(target).pointerEvents,
+          mouseX: e.clientX,
+          mouseY: e.clientY
+        });
+        console.log('[ACTIVITY CARD MODAL EFFECT] Element path (target â†’ parent):', getElementPath(target));
+        console.log('[ACTIVITY CARD MODAL EFFECT] Body pointer-events:', window.getComputedStyle(document.body).pointerEvents);
+        console.log('[ACTIVITY CARD MODAL EFFECT] HTML pointer-events:', window.getComputedStyle(document.documentElement).pointerEvents);
+
+        if (modalElement) {
+          const isTargetInModal = modalElement.contains(target);
+          console.log('[ACTIVITY CARD MODAL EFFECT] Target is inside modal:', isTargetInModal);
+          console.log('[ACTIVITY CARD MODAL EFFECT] Modal bounding rect:', modalElement.getBoundingClientRect());
+          console.log('[ACTIVITY CARD MODAL EFFECT] Modal z-index:', window.getComputedStyle(modalElement).zIndex);
+          console.log('[ACTIVITY CARD MODAL EFFECT] Modal position:', window.getComputedStyle(modalElement).position);
+        } else {
+          console.warn('[ACTIVITY CARD MODAL EFFECT] âš ï¸ Modal element NOT FOUND in DOM!');
+        }
+
+        // Check elements at mouse position
+        const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
+        console.log('[ACTIVITY CARD MODAL EFFECT] Elements at mouse position (top to bottom):',
+          elementsAtPoint.slice(0, 5).map(el => ({
+            tag: el.tagName,
+            id: el.id || '(no id)',
+            classes: el.className ? (typeof el.className === 'string' ? el.className.split(' ').slice(0, 3).join(' ') : '(object)') : '(no class)',
+            dataModalId: el.getAttribute('data-modal-id')
+          }))
+        );
+
+        lastLogTime = now;
+      }
+
+      if (modalElement && !modalElement.contains(target)) {
+        if (now - lastLogTime > LOG_THROTTLE_MS) {
+          console.log('[ACTIVITY CARD HOVER ISSUE] âš ï¸ Mouse over element OUTSIDE modal:', {
+            tagName: target.tagName,
+            className: target.className,
+            id: target.id,
+            pointerEvents: window.getComputedStyle(target).pointerEvents
+          });
+        }
+      }
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+
+    return () => {
+      console.log('[ACTIVITY CARD MODAL EFFECT] Cleanup - Restoring pointer-events on body/html');
+      document.body.style.pointerEvents = originalBodyPointerEvents;
+      document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [showImageModal]);
+
+  const handleChoose = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isChoosing) return;
+
+    setIsChoosing(true);
+
+    // Call onToggle to select the activity (or re-select if already selected)
+    if (!isSelected) {
+      onToggle();
+    }
+
+    // Brief visual feedback before auto-advance (600ms)
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    setIsChoosing(false);
+
+    // Show private coaching modal for surf activities
+    if (isSurf && onShowPrivateCoachingModal) {
+      onShowPrivateCoachingModal();
+    }
+
+    // Auto-advance to next activity
+    if (onAutoAdvance) {
+      onAutoAdvance();
+    }
+  };
+
+
+  const handleYogaClassesChange = (newClasses: number) => {
+    if (onYogaClassesChange) {
+      onYogaClassesChange(newClasses);
+      setHasInteracted(true);
+      // Si estÃ¡ en 10 y tenÃ­a el descuento, quitarlo al cambiar manualmente
+      if (yogaUsePackDiscount && newClasses !== 10 && onYogaPackDiscountChange) {
+        onYogaPackDiscountChange(false);
+      }
+    }
+  };
+
+  const handleYogaPackDiscountToggle = () => {
+    if (onYogaPackDiscountChange && onYogaClassesChange) {
+      const newDiscountState = !yogaUsePackDiscount;
+      onYogaPackDiscountChange(newDiscountState);
+      // Si activa el pack, establecer en 10 clases
+      if (newDiscountState) {
+        onYogaClassesChange(10);
+      }
+      setHasInteracted(true);
+    }
+  };
+
+  const handleSurfProgramChange = (programId: 'fundamental' | 'progressionPlus' | 'highPerformance') => {
+    if (onSurfProgramChange) {
+      onSurfProgramChange(programId);
+      setHasInteracted(true);
+    }
+  };
+
+  const renderYogaSelector = () => {
+    if (!onYogaClassesChange || typeof yogaClasses !== "number") return null;
+
+    const currentClasses = yogaClasses;
+    const isAtPackThreshold = currentClasses === 10;
+
+    return (
+      <div className="space-y-4 md:space-y-5" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
+          {copy.yogaClasses}
+        </span>
+
+        {/* Desktop: Horizontal Layout */}
+        <div className="hidden md:block">
+          <div className="flex items-center justify-between gap-4">
+            {/* Counter Section */}
+            <div className="flex items-center gap-4">
+              <motion.button
+                type="button"
+                onClick={() => handleYogaClassesChange(Math.max(YOGA_CLASSES_RANGE.min, currentClasses - 1))}
+                disabled={currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount}
+                whileHover={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+                whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
+                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
+                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+                }`}
+              >
+                <Minus className="h-5 w-5" />
+              </motion.button>
+
+              <div className="flex items-baseline gap-2">
+                <motion.span
+                  key={currentClasses}
+                  initial={{ scale: 0.85 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
+                  className="text-3xl font-bold text-[#6d5f57]"
+                >
+                  {currentClasses}
+                </motion.span>
+                <span className="text-sm text-[#6d5f57] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+              </div>
+
+              <motion.button
+                type="button"
+                onClick={() => handleYogaClassesChange(Math.min(YOGA_CLASSES_RANGE.max, currentClasses + 1))}
+                disabled={currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount}
+                whileHover={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+                whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
+                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
+                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+                }`}
+              >
+                <Plus className="h-5 w-5" />
+              </motion.button>
+            </div>
+
+            {/* OR Divider */}
+            <span className="text-xs text-[#6d5f57] font-medium uppercase px-2">or</span>
+
+            {/* 10-Class Pack Option */}
+            <motion.button
+              type="button"
+              onClick={handleYogaPackDiscountToggle}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex-1 max-w-[250px] rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
+                yogaUsePackDiscount || isAtPackThreshold
+                  ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
+                  : "border-[white]/50 bg-[white]/40 hover:border-amber-300/40 hover:bg-[white]/60"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <p className="text-sm font-bold text-black">
+                    {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
+                  </p>
+                  <motion.p
+                    animate={isAtPackThreshold && !yogaUsePackDiscount ? {
+                      opacity: [1, 0.6, 1],
+                      scale: [1, 1.05, 1]
+                    } : {}}
+                    transition={{ duration: 0.6, repeat: isAtPackThreshold && !yogaUsePackDiscount ? 2 : 0 }}
+                    className="text-xs text-amber-300 font-semibold"
+                  >
+                    {locale === 'es' ? 'ahorra $20' : 'save $20'}
+                  </motion.p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-amber-300">$80</p>
+                  {yogaUsePackDiscount && (
+                    <CheckCircle2 className="h-5 w-5 text-green-400 ml-auto" />
+                  )}
+                </div>
+              </div>
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Mobile: Vertical Layout */}
+        <div className="md:hidden space-y-3">
+          {/* Counter Section */}
+          <div className="flex items-center justify-center gap-4">
+            <motion.button
+              type="button"
+              onClick={() => handleYogaClassesChange(Math.max(YOGA_CLASSES_RANGE.min, currentClasses - 1))}
+              disabled={currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount}
+              whileHover={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+              whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+              className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
+                  ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
+                  : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Minus className="h-5 w-5" />
+            </motion.button>
+
+            <div className="flex items-baseline gap-2">
+              <motion.span
+                key={currentClasses}
+                initial={{ scale: 0.85 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25, duration: 0.1 }}
+                className="text-3xl font-bold text-[#6d5f57]"
+              >
+                {currentClasses}
+              </motion.span>
+              <span className="text-sm text-[#6d5f57] font-medium">{currentClasses === 1 ? copy.class : copy.classes}</span>
+            </div>
+
+            <motion.button
+              type="button"
+              onClick={() => handleYogaClassesChange(Math.min(YOGA_CLASSES_RANGE.max, currentClasses + 1))}
+              disabled={currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount}
+              whileHover={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
+              whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
+              className={`flex h-11 w-11 min-w-[44px] min-h-[44px] items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
+                  ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
+                  : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Plus className="h-5 w-5" />
+            </motion.button>
+          </div>
+
+          {/* OR Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-700/50"></div>
+            <span className="text-xs text-[#6d5f57] font-medium uppercase">or</span>
+            <div className="flex-1 h-px bg-slate-700/50"></div>
+          </div>
+
+          {/* 10-Class Pack Option */}
+          <motion.button
+            type="button"
+            onClick={handleYogaPackDiscountToggle}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`w-full rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
+              yogaUsePackDiscount || isAtPackThreshold
+                ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
+                : "border-[white]/50 bg-[white]/40"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <p className="text-sm font-bold text-black">
+                  {locale === 'es' ? 'Pack de 10 clases' : '10-class pack'}
+                </p>
+                <motion.p
+                  animate={isAtPackThreshold && !yogaUsePackDiscount ? {
+                    opacity: [1, 0.6, 1],
+                    scale: [1, 1.05, 1]
+                  } : {}}
+                  transition={{ duration: 0.6, repeat: isAtPackThreshold && !yogaUsePackDiscount ? 2 : 0 }}
+                  className="text-xs text-amber-300 font-semibold"
+                >
+                  {locale === 'es' ? 'ahorra $20' : 'save $20'}
+                </motion.p>
+              </div>
+              <div className="text-right flex items-center gap-2">
+                <p className="text-lg font-bold text-amber-300">$80</p>
+                {yogaUsePackDiscount && (
+                  <CheckCircle2 className="h-5 w-5 text-green-400" />
+                )}
+              </div>
+            </div>
+          </motion.button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSurfProgramSelector = () => {
+    if (!onSurfProgramChange || !surfProgram) return null;
+
+    const programs = ['fundamental', 'progressionPlus', 'highPerformance'] as const;
+
+    return (
+      <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
+          {copy.chooseSurfProgram}
+        </span>
+
+        {/* Programs List - Reduced spacing */}
+        <div className="space-y-2 md:space-y-2.5">
+          {programs.map((programId) => {
+            const program = SURF_PROGRAMS[programId];
+            const isSelected = surfProgram === programId;
+
+            return (
+              <motion.button
+                key={programId}
+                type="button"
+                onClick={() => {
+                  // Toggle expansion
+                  if (expandedSurfProgram === programId) {
+                    setExpandedSurfProgram(null); // Collapse if already expanded
+                  } else {
+                    setExpandedSurfProgram(programId); // Expand this program
+                  }
+                  // Always update selection
+                  if (!isSelected) {
+                    handleSurfProgramChange(programId);
+                  }
+                }}
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
+                  isSelected
+                    ? "border-amber-300 bg-[white]/40"
+                    : "border-[white]/50 bg-[white]/40 hover:border-[white]/60 hover:bg-[white]/60"
+                }`}
+              >
+                {/* Header: Radio + Name + Price - Reduced spacing */}
+                <div className="flex items-center justify-between mb-1.5 md:mb-2">
+                  <div className="flex items-center gap-2.5">
+                    {/* Radio Button */}
+                    <div className={`flex-shrink-0 w-3.5 h-3.5 md:w-4 md:h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "border-amber-300 bg-amber-300"
+                        : "border-amber-300 bg-amber-300"
+                    }`}>
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-[white]"
+                        />
+                      )}
+                    </div>
+                    {/* Program Name */}
+                    <span className="text-sm md:text-base font-extrabold text-black font-heading">
+                      {program.name[locale]}
+                    </span>
+                  </div>
+                  {/* Price - Reduced margin */}
+                  <span className="text-lg md:text-xl font-bold text-[#6d5f57]">
+                    ${program.price}
+                  </span>
+                </div>
+
+                {/* Tagline and Features - Only show when expanded */}
+                {expandedSurfProgram === programId && (
+                  <>
+                    {/* Tagline */}
+                    <p className="text-[11px] md:text-[13px] text-black/70 font-light italic ml-7 md:ml-7.5 mt-0.5 mb-2">
+                      {program.tagline[locale]}
+                    </p>
+
+                    {/* Features List - Reduced spacing */}
+                    <div className="space-y-1 ml-7 md:ml-7.5">
+                      {program.includes[locale].map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-1.5">
+                          <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                          </svg>
+                          <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
+                            {feature}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* Session Work - Only show for expanded program */}
+                <AnimatePresence>
+                  {expandedSurfProgram === programId && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-3 md:mt-4 mx-auto p-3 md:p-4 border border-amber-400 rounded-xl bg-amber-400/5">
+                        <div className="space-y-2.5 md:space-y-3">
+                          {program.sessionWork[locale].map((item, idx) => {
+                            // Split by colon to separate title from description
+                            const [title, ...descParts] = item.split(':');
+                            const description = descParts.join(':').trim();
+
+                            return (
+                              <div key={idx}>
+                                {/* Black Title - No bullet */}
+                                <p className="text-xs md:text-sm font-bold text-black font-heading mb-1">
+                                  {title.trim()}
+                                </p>
+                                {/* Description */}
+                                {description && (
+                                  <p className="text-[10px] md:text-[11px] text-[#6d5f57] font-light leading-relaxed">
+                                    {description}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (onQuantityChange) {
+      onQuantityChange(newQuantity);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
+  };
+
+  const renderQuantityControl = () => {
+    if (!hasQuantitySelector || !onQuantityChange) return null;
+
+    return (
+      <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
+          {copy.quantity}
+        </span>
+        <div className="flex items-center justify-center gap-4 md:gap-5">
+          <motion.button
+            type="button"
+            onClick={() => {
+              if (quantity > 1) {
+                handleQuantityChange(quantity - 1);
+              }
+            }}
+            disabled={quantity <= 1}
+            whileHover={{ scale: quantity > 1 ? 1.05 : 1 }}
+            whileTap={{ scale: quantity > 1 ? 0.9 : 1 }}
+            className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-[white]/70 bg-[white]/60 text-black transition-all ${
+              quantity > 1
+                ? "hover:border-amber-300/70 hover:bg-[white]/80 active:bg-amber-300/20"
+                : "cursor-not-allowed opacity-40"
+            }`}
+          >
+            <Minus className="h-4 w-4 md:h-5 md:w-5" />
+          </motion.button>
+          <span className="min-w-[3rem] text-center text-xl md:text-2xl font-bold text-[#6d5f57]">
+            {quantity}
+          </span>
+          <motion.button
+            type="button"
+            onClick={() => handleQuantityChange(quantity + 1)}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full border-2 border-[white]/70 bg-[white]/60 text-black transition-all hover:border-amber-300/70 hover:bg-[white]/80 active:bg-amber-300/20"
+          >
+            <Plus className="h-4 w-4 md:h-5 md:w-5" />
+          </motion.button>
+        </div>
+      </div>
+    );
+  };
+
+  const handleTimeSlotSelect = (slot: "7:00 AM" | "3:00 PM") => {
+    if (onTimeSlotChange) {
+      onTimeSlotChange(slot);
+      setHasInteracted(true); // Mark as interacted to show "ready to choose" state
+    }
+  };
+
+  const renderTimeSlot = () => {
+    if (!hasTimeSelector || !onTimeSlotChange) return null;
+
+    return (
+      <div className="space-y-3 md:space-y-4" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
+          {copy.timeSlot}
+        </span>
+        <div className="flex gap-2 md:gap-3">
+          {["7:00 AM", "3:00 PM"].map((slot) => {
+            const active = timeSlot === slot;
+            return (
+              <motion.button
+                key={slot}
+                type="button"
+                onClick={() => handleTimeSlotSelect(slot as "7:00 AM" | "3:00 PM")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`flex flex-1 items-center justify-center gap-2 md:gap-2.5 rounded-xl border px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base font-bold transition-all ${
+                  active
+                    ? "border-transparent bg-gradient-to-br from-amber-300 to-amber-400 text-slate-900 shadow-xl shadow-amber-300/40"
+                    : "border-[white]/60 bg-[white]/50 text-black hover:border-amber-300/60 hover:bg-[white]/80"
+                }`}
+              >
+                <Clock className="h-4 w-4 md:h-5 md:w-5" />
+                {slot}
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <motion.div
+      className="activity-card-main w-full h-full flex flex-col rounded-2xl md:rounded-3xl overflow-hidden border border-[white]/50 bg-[white]/80 shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-all duration-300 hover:border-amber-300/60 hover:shadow-[0_12px_32px_rgba(251,191,36,0.25)]"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      {/* Compact banner - clean horizontal band */}
+      <div className={`relative w-full overflow-hidden group/hero ${isSurf ? 'h-[260px] md:h-[220px]' : 'h-[200px] md:h-[180px]'}`}>
+        {/* Surf Mobile Carousel */}
+        {isSurf ? (
+          <>
+            {/* Mobile: Carousel */}
+            <div className="md:hidden relative w-full h-full bg-[white]" style={{ touchAction: 'manipulation' }}>
+              <motion.div
+                key={currentSurfImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0"
+                style={{ touchAction: 'manipulation' }}
+              >
+                <Image
+                  src={surfImagesMobile[currentSurfImageIndex]}
+                  alt={`Surf ${currentSurfImageIndex + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
+                  priority={true}
+                  loading="eager"
+                  quality={90}
+                  style={{
+                    objectPosition: 'center center',
+                    objectFit: 'cover',
+                    touchAction: 'manipulation',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none'
+                  }}
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
+
+              {/* Clickable overlay - opens modal when clicked */}
+              <div
+                className="absolute inset-0 z-10 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenImageModal(currentSurfImageIndex);
+                }}
+              />
+
+              {/* Navigation Arrows - More Visible */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handlePrevSurfImage();
+                }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleNextSurfImage();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Pagination Dots - Minimal & Elegant */}
+              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-0.5 bg-black/30 backdrop-blur-sm px-1 py-0.5 rounded-full">
+                {surfImagesMobile.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setCurrentSurfImageIndex(index);
+                    }}
+                    style={{
+                      width: index === currentSurfImageIndex ? '8px' : '4px',
+                      height: '4px',
+                      minWidth: '4px',
+                      minHeight: '4px',
+                    }}
+                    className={`rounded-full transition-all ${
+                      index === currentSurfImageIndex
+                        ? 'bg-amber-400'
+                        : 'bg-white/30'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Image Counter */}
+              <div className="absolute bottom-3 right-3 z-20 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-semibold border border-white/20">
+                {currentSurfImageIndex + 1} / {surfImagesMobile.length}
+              </div>
+            </div>
+
+            {/* Desktop: Carousel also visible */}
+            <div className="hidden md:block relative w-full h-full bg-[white]">
+              <motion.div
+                key={currentSurfImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={surfImagesDesktop[currentSurfImageIndex]}
+                  alt={`Surf ${currentSurfImageIndex + 1}`}
+                  fill
+                  className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
+                  priority={true}
+                  loading="eager"
+                  quality={90}
+                  style={{
+                    objectPosition: 'center center',
+                    objectFit: 'cover'
+                  }}
+                />
+              </motion.div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
+
+              {/* Clickable overlay - opens modal when clicked */}
+              <div
+                className="absolute inset-0 z-10 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenImageModal(currentSurfImageIndex);
+                }}
+              />
+
+              {/* Navigation Arrows Desktop */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handlePrevSurfImage();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-7 h-7" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleNextSurfImage();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black/90 hover:border-amber-400/60 transition-all shadow-lg active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-7 h-7" />
+              </button>
+
+              {/* Pagination Dots Desktop */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
+                {surfImagesDesktop.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setCurrentSurfImageIndex(index);
+                    }}
+                    style={{
+                      width: index === currentSurfImageIndex ? '12px' : '6px',
+                      height: '6px',
+                      minWidth: '6px',
+                      minHeight: '6px',
+                    }}
+                    className={`rounded-full transition-all ${
+                      index === currentSurfImageIndex
+                        ? 'bg-amber-400'
+                        : 'bg-white/40 hover:bg-white/70'
+                    }`}
+                    aria-label={`Go to image ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Image Counter Desktop */}
+              <div className="absolute bottom-4 right-4 z-20 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-sm font-semibold border border-white/20">
+                {currentSurfImageIndex + 1} / {surfImagesDesktop.length}
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Non-Surf Activities */
+          imageData.hasImage && 'image' in imageData ? (
+            <>
+              <Image
+                src={imageData.image}
+                alt={activity.name}
+                fill
+                className="object-cover transition-all duration-500 ease-out group-hover/hero:scale-110"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 75vw, 50vw"
+                quality={90}
+                style={{
+                  objectPosition: 'center center',
+                  objectFit: 'cover'
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20"></div>
+            </>
+          ) : (
+            <>
+              <div className={`w-full h-full bg-gradient-to-br ${'gradient' in imageData ? imageData.gradient : 'from-slate-600 to-slate-800'}`}>
+                <div className="absolute inset-0 bg-black/20"></div>
+              </div>
+            </>
+          )
+        )}
+
+        {/* Category Badge - Top Left */}
+        <motion.div
+          className="absolute top-4 left-4 md:top-5 md:left-5"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+        >
+          <span className="inline-flex items-center gap-2 rounded-full bg-[white]/80 backdrop-blur-md px-3 md:px-4 py-1.5 md:py-2 text-[10px] md:text-xs font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-[#6d5f57] border border-[#6d5f57]/30 shadow-lg">
+            <Sparkles className="h-3 md:h-3.5 w-3 md:w-3.5 text-amber-300" />
+            {activity.category.replace("_", " ")}
+          </span>
+        </motion.div>
+
+        {/* Title Overlay - Centered - HIDDEN ON MOBILE, only desktop */}
+        <div className="absolute inset-0 hidden md:flex items-center justify-center px-6 md:px-8">
+          <motion.h2
+            className="text-[2.5rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+          >
+            {activity.name}
+          </motion.h2>
+        </div>
+
+        {/* Title Overlay - Bottom - MOBILE ONLY */}
+        <div className="absolute bottom-0 left-0 right-0 md:hidden bg-gradient-to-t from-black/80 via-black/60 to-transparent px-4 py-4">
+          <h2 className="text-xl font-bold text-white font-heading text-center leading-tight">
+            {activity.name}
+          </h2>
+        </div>
+
+      </div>
+
+      {/* Our Integrated Surf Coaching Method - Only for Surf */}
+      {isSurf && onSurfProgramChange && surfProgram && (
+        <div className="px-4 md:px-6 pt-4 md:pt-5">
+          <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40">
+            {/* Title */}
+            <h3 className="text-base md:text-lg font-bold text-black mb-2 md:mb-3">
+              {COACHING_METHOD.title[locale]}
+            </h3>
+
+            {/* Subtitle */}
+            <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
+              {COACHING_METHOD.subtitle[locale]}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* PASS 2: Further tightened */}
+      <div className="flex flex-col md:flex-row md:items-start md:flex-1">
+
+        {/* PASS 2: px-5/8 py-4/6 gap-4/5 â†’ px-4/6 py-3/4 gap-3/4 */}
+        <div className={`flex flex-col flex-1 md:flex-[7] px-4 md:px-6 ${isSurf ? 'py-3 md:py-4 gap-3 md:gap-4' : 'py-2.5 md:py-3 gap-2 md:gap-3'}`}>
+
+          {/* 1. Description */}
+          {descriptive && descriptive.description && (
+            <p className={`text-black/90 font-light ${isSurf ? 'text-sm md:text-[15px] leading-relaxed' : 'text-xs md:text-sm leading-snug'}`}>
+              {descriptive.description}
+            </p>
+          )}
+
+          {/* 2. Features - Bullet Points with Golden Checkmarks (only if features exist) */}
+          {descriptive && descriptive.features && descriptive.features.length > 0 && (
+            <div className={isSurf ? "space-y-1.5 md:space-y-2.5" : "space-y-1 md:space-y-1.5"}>
+              {descriptive.features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-2 md:gap-3"
+                >
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className={`text-amber-500 ${isSurf ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5 md:w-4 md:h-4'}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                  </div>
+                  <span className={`text-black font-light ${isSurf ? 'text-sm md:text-[15px] leading-snug md:leading-relaxed' : 'text-xs md:text-sm leading-snug'}`}>
+                    {feature.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 3. Class/Session Selector */}
+          {(renderYogaSelector() || renderSurfProgramSelector() || renderQuantityControl() || renderTimeSlot()) && (
+            <div>
+              {renderYogaSelector()}
+              {renderSurfProgramSelector()}
+              {renderQuantityControl()}
+              {renderTimeSlot()}
+            </div>
+          )}
+        </div>
+
+        {/* PASS 2: px-5/6 py-4/6 gap-3/4 â†’ px-4/5 py-3/4 gap-2.5/3 */}
+        <div className={`md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full ${isSurf ? 'py-3 md:py-4' : 'py-2.5 md:py-3'}`}>
+          <div className={`flex flex-col md:justify-center md:flex-1 ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
+
+            {/* PASS 2: gap-3/4 â†’ gap-2.5/3, space-y-1.5 â†’ space-y-1 */}
+            <div className={`flex flex-col items-center ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
+              <div className="w-full text-center space-y-1">
+                <p className="text-xs uppercase tracking-wider text-[#6d5f57] font-semibold">Total</p>
+                <motion.div
+                  className={`font-bold text-[#6d5f57] ${isSurf ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {formatPrice(price)}
+                </motion.div>
+                {participants > 1 && typeof pricePerPerson === "number" && (
+                  <p className="text-xs text-[#6d5f57] font-medium">
+                    {formatPrice(pricePerPerson)} {copy.perPerson}
+                  </p>
+                )}
+              </div>
+
+              <div className="w-full flex flex-col gap-1.5">
+                {/* Choose Button */}
+                <motion.button
+                  type="button"
+                  onClick={handleChoose}
+                  disabled={isChoosing}
+                  whileHover={!isChoosing ? { scale: 1.02 } : {}}
+                  whileTap={!isChoosing ? { scale: 0.98 } : {}}
+                  animate={isChoosing ? {
+                    scale: [1, 1.05, 1],
+                  } : {}}
+                  transition={{ duration: 0.15 }}
+                  className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 ${
+                    isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
+                  } ${
+                    isChoosing
+                      ? "bg-[#6d5f57] text-white cursor-wait shadow-md"
+                      : hasInteracted
+                        ? "bg-[#FDCB2E] text-slate-900 shadow-xl ring-2 ring-amber-400/60 hover:shadow-2xl hover:ring-amber-400/80"
+                        : "bg-[#FDCB2E] text-slate-900 shadow-md hover:bg-[#FCD34D] hover:shadow-lg"
+                  }`}
+                >
+                  {isChoosing ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5" />
+                      <span>{copy.chosen}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{copy.choose}</span>
+                      <ArrowRight className="h-4 md:h-5 w-4 md:w-5 text-white" />
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Skip Button - Only for non-mandatory activities */}
+                {(!isSurf || !isSurfMandatory) && onSkip && (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSkip) onSkip();
+                    }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className={`w-full rounded-2xl text-sm md:text-base font-bold uppercase tracking-wide transition-all duration-150 flex items-center justify-center gap-2 bg-[#6d5f57] text-white shadow-md hover:shadow-xl ${
+                      isSurf ? 'px-6 md:px-8 py-3.5 md:py-4' : 'px-5 md:px-6 py-3 md:py-3.5'
+                    }`}
+                  >
+                    <span>{copy.skip}</span>
+                    <ArrowRight className="h-4 md:h-5 w-4 md:w-5" />
+                  </motion.button>
+                )}
+              </div>
+            </div>
+
+            {/* PASS 2: pt-3/4 â†’ pt-2.5/3, space-y-2/3 â†’ space-y-1.5/2.5 */}
+            {isSurf && ratingValue && (
+              <div className="w-full mt-3 md:mt-4 p-3 md:p-4 bg-amber-400/10 border-2 border-amber-400/30 rounded-xl space-y-2 md:space-y-3">
+                {/* Rating */}
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-4 md:h-5 w-4 md:w-5 fill-amber-400 text-amber-400"
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm md:text-base font-bold text-black">{ratingValue}</span>
+                  <span className="text-xs md:text-sm text-[#6d5f57] font-medium">({reviewsText})</span>
+                </div>
+
+                {/* Testimonial */}
+                {testimonials && (
+                  <div className="space-y-2.5">
+                    <p className="text-xs md:text-sm leading-relaxed text-black font-light italic text-center">
+                      &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
+                    </p>
+                    {/* Author & Country */}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <p className="text-xs md:text-sm font-semibold text-black">
+                        {testimonials[currentTestimonialIndex].author}
+                      </p>
+                      <p className="text-[10px] md:text-xs uppercase tracking-wider text-[#6d5f57] font-medium">
+                        {testimonials[currentTestimonialIndex].country}
+                      </p>
+                    </div>
+                    {/* Dots */}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {testimonials.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentTestimonialIndex(idx);
+                          }}
+                          className={`h-1.5 rounded-full transition-all ${
+                            idx === currentTestimonialIndex
+                              ? "bg-amber-400 w-4"
+                              : "bg-gray-400 w-1.5 hover:bg-gray-500"
+                          }`}
+                          aria-label={`Go to testimonial ${idx + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trust message */}
+                {trustMessage && (
+                  <p className="text-xs md:text-sm text-black/80 font-medium text-center">
+                    {trustMessage}
+                  </p>
+                )}
+              </div>
+            )}
+
+
+            {/* Navigation Buttons for Surf (maintains original vertical layout) */}
+            {isSurf && ((!isSurfMandatory && onSkip) || onBack) && (
+              <div className="hidden md:flex w-full pt-4 md:pt-5 border-t border-[white]/30 flex-col gap-3">
+                {/* Back Button */}
+                {!isFirstStep && onBack && (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onBack) onBack();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4 text-gray-600" />
+                    <span>{copy.back}</span>
+                  </motion.button>
+                )}
+
+                {/* Skip Button - Only for non-mandatory activities */}
+                {(!isSurf || !isSurfMandatory) && onSkip && (
+                  <motion.button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onSkip) onSkip();
+                    }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ duration: 0.15 }}
+                    className="text-sm font-medium text-white bg-[#6d5f57] transition-all px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+                  >
+                    {copy.skip}
+                  </motion.button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Footer - Navigation for non-Surf cards */}
+      {(!isSurf || !isSurfMandatory) && (onSkip || onBack) && (
+        <div className="hidden md:block border-t border-[white]/40 px-6 md:px-10 py-5 md:py-6">
+          <div className="flex items-center justify-between">
+            {/* Left Side - Back Button */}
+            {!isFirstStep && onBack && (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onBack) onBack();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 text-gray-600" />
+                <span>{copy.back}</span>
+              </motion.button>
+            )}
+
+            {/* Right Side - Spacer (Choose button is in the right column above) */}
+            <div />
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Buttons (Skip/Back) - Mobile only */}
+      {(onSkip || onBack) && (
+        <div className="md:hidden border-t border-[white]/40 bg-[white]/10 px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Back Button */}
+            {!isFirstStep && onBack ? (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onBack) onBack();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 text-gray-600" />
+                <span>{copy.back}</span>
+              </motion.button>
+            ) : (
+              <div />
+            )}
+
+            {/* Skip Button - Only for non-mandatory activities */}
+            {!isSurf && onSkip && (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onSkip) onSkip();
+                }}
+                whileHover={{ scale: 1.05, x: 3 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="text-sm font-medium text-[#6d5f57] transition-all"
+              >
+                {copy.skip}
+              </motion.button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Testimonials Popup */}
+      {showTestimonialsPopup && testimonials && (
+        <motion.div
+          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowTestimonialsPopup(false)}
+        >
+          <motion.div
+            className="w-full max-w-lg bg-[white] rounded-t-3xl border-t border-x border-[white]/50 shadow-2xl"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="relative flex items-center justify-between px-6 py-5 border-b border-[white]/50">
+              <h3 className="text-lg font-bold text-slate-100 uppercase tracking-wide">
+                {locale === "es" ? "Testimonios" : "Testimonials"}
+              </h3>
+              <motion.button
+                type="button"
+                onClick={() => setShowTestimonialsPopup(false)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors"
+              >
+                <X className="h-5 w-5 text-black" />
+              </motion.button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-8">
+              <div className="relative bg-[white]/40 rounded-2xl p-6 border border-[white]/40">
+                <Quote className="absolute top-4 left-4 h-8 w-8 text-amber-300/20" />
+
+                <div className="space-y-5 pt-3">
+                  {/* Stars */}
+                  <div className="flex items-center justify-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-5 w-5 fill-amber-300 text-amber-300"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Testimonial Text */}
+                  <p className="text-sm leading-relaxed text-black italic text-center min-h-[100px] flex items-center justify-center">
+                    &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
+                  </p>
+
+                  {/* Author */}
+                  <div className="text-center pt-3 border-t border-[white]/30">
+                    <p className="text-sm font-bold text-amber-300">
+                      {testimonials[currentTestimonialIndex].author}
+                    </p>
+                    <p className="text-xs text-[#6d5f57] uppercase tracking-wide mt-1">
+                      {testimonials[currentTestimonialIndex].country}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <motion.button
+                  type="button"
+                  onClick={handlePrevTestimonial}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
+                >
+                  <ChevronLeft className="h-5 w-5 text-black" />
+                </motion.button>
+
+                <div className="flex gap-2">
+                  {testimonials.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === currentTestimonialIndex
+                          ? "bg-amber-300 w-6"
+                          : "bg-slate-600 w-2"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <motion.button
+                  type="button"
+                  onClick={handleNextTestimonial}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
+                >
+                  <ChevronRight className="h-5 w-5 text-black" />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Image Modal Fullscreen - Rendered via Portal */}
+      {isMounted && isSurf && createPortal(
+        <AnimatePresence>
+          {showImageModal && (
+            <motion.div
+              data-modal-id="surf-image-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                console.log('[ACTIVITY CARD] Modal overlay clicked');
+                handleCloseImageModal();
+              }}
+              className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
+              style={{ margin: 0, pointerEvents: 'auto', isolation: 'isolate' }}
+            >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 flex items-center justify-center"
+            >
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('[ACTIVITY CARD] Close button clicked');
+                  handleCloseImageModal();
+                }}
+                className="absolute top-4 right-4 z-30 w-12 h-12 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Image Counter */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-semibold border border-white/20">
+                {modalImageIndex + 1} / {surfImagesDesktop.length}
+              </div>
+
+              {/* Main Image */}
+              <div className="relative w-full h-full flex items-center justify-center">
+                <motion.div
+                  key={modalImageIndex}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="relative w-full h-full"
+                >
+                  <Image
+                    src={surfImagesDesktop[modalImageIndex]}
+                    alt={`Surf ${modalImageIndex + 1}`}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    quality={95}
+                    priority
+                  />
+                </motion.div>
+              </div>
+
+              {/* Navigation Arrows */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevModalImage();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextModalImage();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+
+              {/* Thumbnail Strip */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-full overflow-x-auto">
+                <div className="flex gap-2 bg-black/80 backdrop-blur-md px-3 py-2 rounded-full border border-white/20">
+                  {surfImagesDesktop.map((img, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setModalImageIndex(index);
+                      }}
+                      className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all flex-shrink-0 ${
+                        index === modalImageIndex
+                          ? 'ring-2 ring-amber-400 scale-110'
+                          : 'opacity-60 hover:opacity-100 hover:scale-105'
+                      }`}
+                    >
+                      <Image
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                        quality={60}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+    </motion.div>
+  );
+};
+
+export default ActivityCard;

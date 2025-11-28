@@ -1,0 +1,83 @@
+*** Begin Patch
+*** Update File: components/AccommodationCard.tsx
+@@
+-import { useState, useEffect } from 'react';
+-import { motion } from 'framer-motion';
++import { useState, useEffect, useCallback, useRef } from 'react';
++import { motion } from 'framer-motion';
+@@
+-  const { t } = useI18n();
+-  const [isFlipped, setIsFlipped] = useState(false);
+-  const [lightboxOpen, setLightboxOpen] = useState(false);
+-  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
++  const { t } = useI18n();
++  const [isFlipped, setIsFlipped] = useState(false);
++  const [lightboxOpen, setLightboxOpen] = useState(false);
++  const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
++  const lightboxWrapperRef = useRef<HTMLDivElement | null>(null);
+@@
+-  useEffect(() => {
+-    if (!lightboxOpen) return undefined;
+-    const previousOverflow = document.body.style.overflow;
+-    document.body.style.overflow = 'hidden';
+-    return () => {
+-      document.body.style.overflow = previousOverflow;
+-    };
+-  }, [lightboxOpen]);
++  useEffect(() => {
++    if (!lightboxOpen) return undefined;
++    const previousOverflow = document.body.style.overflow;
++    document.body.style.overflow = 'hidden';
++
++    const rect = lightboxWrapperRef.current?.getBoundingClientRect();
++    if (rect) {
++      console.log('[Lightbox] opened', {
++        width: rect.width,
++        height: rect.height,
++        windowWidth: window.innerWidth,
++        windowHeight: window.innerHeight,
++        imageIndex: lightboxImageIndex,
++      });
++    }
++
++    return () => {
++      document.body.style.overflow = previousOverflow;
++    };
++  }, [lightboxOpen, lightboxImageIndex]);
++
++  const logBounds = useCallback((label: string) => {
++    const rect = lightboxWrapperRef.current?.getBoundingClientRect();
++    if (rect) {
++      console.log(`[Lightbox] ${label}`, {
++        width: rect.width,
++        height: rect.height,
++        windowWidth: window.innerWidth,
++        windowHeight: window.innerHeight,
++        imageIndex: lightboxImageIndex,
++        timestamp: Date.now(),
++      });
++    }
++  }, [lightboxImageIndex]);
++
++  const handleLightboxMouseEnter = useCallback(() => {
++    logBounds('mouse enter');
++  }, [logBounds]);
++
++  const handleLightboxMouseLeave = useCallback(() => {
++    logBounds('mouse leave');
++  }, [logBounds]);
+@@
+-            <div
+-              className="relative w-full"
+-              style={{ maxWidth: '1280px' }}
+-              onClick={(e) => e.stopPropagation()}
+-            >
++            <div
++              ref={lightboxWrapperRef}
++              className="relative w-full"
++              style={{ maxWidth: '1280px' }}
++              onClick={(e) => e.stopPropagation()}
++              onMouseEnter={handleLightboxMouseEnter}
++              onMouseLeave={handleLightboxMouseLeave}
++            >
+*** End Patch
