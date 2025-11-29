@@ -59,8 +59,18 @@ export default function ActivitiesShowcase() {
   return (
     <section className="py-12 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-12">
+        {/* Hero Title - Only Desktop */}
+        <div className="hidden lg:block text-center mb-5 xl:mb-6 2xl:mb-8 pt-1 xl:pt-2 2xl:pt-4">
+          <h1 className="text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-heading font-bold text-gray-900 mb-5 xl:mb-6 2xl:mb-8 leading-[3.8] whitespace-pre-line">
+            {t('landing.hero.title')}
+          </h1>
+          <p className="text-base lg:text-base xl:text-lg 2xl:text-xl text-[#997146] mb-6 xl:mb-8 2xl:mb-12 font-semibold max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto">
+            {t('landing.hero.subtitle')}
+          </p>
+        </div>
+
+        {/* Section Header - Only Mobile */}
+        <div className="text-center mb-12 lg:hidden">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('landing.activitiesShowcase.title')}
           </h2>
@@ -165,7 +175,7 @@ export default function ActivitiesShowcase() {
         </div>
 
         {/* Desktop Grid */}
-        <div className="hidden lg:grid lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        <div className="hidden lg:grid lg:grid-cols-4 gap-4 xl:gap-5 2xl:gap-6 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
           {activities.map((activity) => (
             <motion.div
               key={activity.id}

@@ -5,12 +5,19 @@ import Link from 'next/link';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { usePathname, useRouter } from 'next/navigation';
 
-const menuItems = [
+interface MenuItem {
+  key: string;
+  href: string;
+  isExternal?: boolean;
+}
+
+const menuItems: MenuItem[] = [
   { key: 'experience', href: '#' },
   { key: 'activities', href: '#activities' },
   { key: 'accommodation', href: '#accommodation' },
   { key: 'stories', href: '#stories' },
   { key: 'faqs', href: '#faqs' },
+  { key: 'blog', href: '/en/blog', isExternal: true },
 ];
 
 export default function Navigation() {
@@ -92,15 +99,25 @@ export default function Navigation() {
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-8">
-            {menuItems.map((item) => (
-              <button
-                key={item.href}
-                onClick={() => scrollToSection(item.href)}
-                className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-              >
-                {t(`landing.navigation.${item.key}`)}
-              </button>
-            ))}
+            {menuItems.map((item) =>
+              item.isExternal ? (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                >
+                  {t(`landing.navigation.${item.key}`)}
+                </Link>
+              ) : (
+                <button
+                  key={item.href}
+                  onClick={() => scrollToSection(item.href)}
+                  className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                >
+                  {t(`landing.navigation.${item.key}`)}
+                </button>
+              )
+            )}
 
             {/* Language Switcher */}
             <div className="flex gap-1 bg-gray-100 rounded-full p-1">
@@ -157,15 +174,26 @@ export default function Navigation() {
         {isOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4 pt-4">
-              {menuItems.map((item) => (
-                <button
-                  key={item.href}
-                  onClick={() => scrollToSection(item.href)}
-                  className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-                >
-                  {t(`landing.navigation.${item.key}`)}
-                </button>
-              ))}
+              {menuItems.map((item) =>
+                item.isExternal ? (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {t(`landing.navigation.${item.key}`)}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.href}
+                    onClick={() => scrollToSection(item.href)}
+                    className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                  >
+                    {t(`landing.navigation.${item.key}`)}
+                  </button>
+                )
+              )}
 
               {/* Language Switcher Mobile */}
               <div className="flex gap-2 bg-gray-100 rounded-full p-1 w-fit">

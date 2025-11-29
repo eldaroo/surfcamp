@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { CheckCircle2, X, ZoomIn } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { getAltTags } from '@/lib/altTags';
 
 type RoomFromAPI = {
   roomTypeId: string;
@@ -91,6 +92,55 @@ const AccommodationCard = ({
 }: AccommodationCardProps) => {
   console.log('[ACCOMMODATION CARD] Rendering, lightboxOpen:', useState(false)[0]);
   const { t } = useI18n();
+  const alts = getAltTags(locale);
+
+  // Get main image alt-tag based on room type
+  const getMainImageAlt = (roomTypeId: string): string => {
+    const mainAltMap: { [key: string]: string } = {
+      'casa-playa': alts.shared.main,
+      'casitas-privadas': alts.private.main,
+      'casas-deluxe': alts.deluxe.main,
+    };
+    return mainAltMap[roomTypeId] || room.roomTypeName;
+  };
+
+  // Get gallery alt-tag based on room type and image index
+  const getGalleryAlt = (roomTypeId: string, index: number): string => {
+    const altMap: { [key: string]: string[] } = {
+      'casa-playa': [
+        alts.shared.dorm,
+        alts.shared.dorm1,
+        alts.shared.dorm2,
+        alts.shared.dorm3,
+        alts.shared.dorm4,
+        alts.shared.dorm5,
+        alts.shared.dorm6,
+        alts.shared.dorm7,
+        alts.shared.beachView,
+      ],
+      'casitas-privadas': [
+        alts.private.cabin2,
+        alts.private.interior1,
+        alts.private.interior2,
+        alts.private.interior3,
+        alts.private.interior4,
+        alts.private.interior5,
+        alts.private.interior6,
+        alts.private.interior7,
+      ],
+      'casas-deluxe': [
+        alts.deluxe.interior1,
+        alts.deluxe.bathroom,
+        alts.deluxe.kitchen,
+        alts.deluxe.main,
+        alts.deluxe.exterior,
+        alts.deluxe.main,
+        alts.deluxe.luxury,
+      ],
+    };
+    return altMap[roomTypeId]?.[index] || room.roomTypeName;
+  };
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImageIndex, setLightboxImageIndex] = useState(0);
@@ -357,7 +407,7 @@ const AccommodationCard = ({
               <>
                 <Image
                   src={accommodationImages[room.roomTypeId]}
-                  alt={room.roomTypeName}
+                  alt={getMainImageAlt(room.roomTypeId)}
                   fill
                   className="object-cover transition-transform duration-300 scale-[1.3] group-hover/card:scale-[1.4]"
                   priority
@@ -527,7 +577,7 @@ const AccommodationCard = ({
                       >
                         <Image
                           src={img}
-                          alt={`${room.roomTypeName} thumbnail ${idx + 1}`}
+                          alt={getGalleryAlt(room.roomTypeId, idx)}
                           fill
                           className="object-cover"
                           sizes="64px"
@@ -719,7 +769,7 @@ const AccommodationCard = ({
               <div className="relative w-full" style={{ aspectRatio: "16/10", height: lightboxDimensions ? `${lightboxDimensions.height}px` : undefined }}>
                 <Image
                   src={gallery[lightboxImageIndex]}
-                  alt={`${room.roomTypeName} - Image ${lightboxImageIndex + 1}`}
+                  alt={getGalleryAlt(room.roomTypeId, lightboxImageIndex)}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
@@ -776,7 +826,7 @@ const AccommodationCard = ({
                   >
                     <Image
                       src={img}
-                      alt={`Thumbnail ${idx + 1}`}
+                      alt={getGalleryAlt(room.roomTypeId, idx)}
                       fill
                       className="object-cover"
                       sizes="64px"

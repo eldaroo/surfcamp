@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
+import { getAltTags } from '@/lib/altTags';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Review {
@@ -17,9 +18,27 @@ interface Review {
 }
 
 export default function StoriesSlider() {
-  const { t, raw } = useI18n();
+  const { t, raw, locale } = useI18n();
   const reviews = (raw<Review[]>('landing.reviews.data') || []) as Review[];
   const [currentIndex, setCurrentIndex] = useState(0);
+  const alts = getAltTags(locale as 'en' | 'es');
+
+  // Get review alt-tag based on avatar path
+  const getReviewAlt = (avatar: string): string => {
+    const avatarMap: { [key: string]: string } = {
+      'lujan': alts.reviews.lujan,
+      'catherine': alts.reviews.catherine,
+      'taylor': alts.reviews.taylor,
+      'marcelo': alts.reviews.marcelo,
+      'eilin': alts.reviews.eilin,
+    };
+
+    // Extract name from avatar path (e.g., '/assets/reviews/review-catherine.jpg' -> 'catherine')
+    const match = avatar.match(/review[s]?-(\w+)\./i);
+    const key = match?.[1]?.toLowerCase();
+
+    return key && avatarMap[key] ? avatarMap[key] : `${currentReview.name} - Santa Teresa testimonial`;
+  };
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % reviews.length);
@@ -84,7 +103,7 @@ export default function StoriesSlider() {
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#ece97f] shadow-xl bg-gradient-to-br from-[#163237] to-[#2a4f57] flex items-center justify-center">
                       <img
                         src={currentReview.avatar}
-                        alt={`${currentReview.name} - Santa Teresa surf camp guest testimonial`}
+                        alt={getReviewAlt(currentReview.avatar)}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           // Hide broken image and show initials instead

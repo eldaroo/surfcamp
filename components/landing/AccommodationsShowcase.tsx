@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
+import { getAltTags } from '@/lib/altTags';
 import { ChevronLeft, ChevronRight, Users, Home, Sparkles } from 'lucide-react';
 
 const accommodations = [
@@ -54,7 +55,8 @@ const accommodations = [
 ];
 
 export default function AccommodationsShowcase() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const alts = getAltTags(locale as 'en' | 'es');
   const [currentImages, setCurrentImages] = useState<{ [key: string]: number }>({
     'casa-playa': 0,
     'casitas-privadas': 0,
@@ -62,6 +64,37 @@ export default function AccommodationsShowcase() {
   });
   const [modalOpen, setModalOpen] = useState<string | null>(null);
   const [modalImageIndex, setModalImageIndex] = useState(0);
+
+  // Get alt-tag based on accommodation type and image index
+  const getAccommodationAlt = (id: string, index: number): string => {
+    const altMap: { [key: string]: string[] } = {
+      'casa-playa': [
+        alts.shared.dorm,
+        alts.shared.dorm1,
+        alts.shared.dorm2,
+        alts.shared.dorm3,
+        alts.shared.dorm4,
+        alts.shared.dorm5,
+      ],
+      'casitas-privadas': [
+        alts.private.main,
+        alts.private.interior1,
+        alts.private.interior2,
+        alts.private.interior3,
+        alts.private.interior4,
+        alts.private.interior5,
+      ],
+      'casas-deluxe': [
+        alts.deluxe.interior1,
+        alts.deluxe.bathroom,
+        alts.deluxe.kitchen,
+        alts.deluxe.luxury,
+        alts.deluxe.main,
+        alts.deluxe.exterior,
+      ],
+    };
+    return altMap[id]?.[index] || `${t(`accommodation.roomTypes.${id}.name`)} - Santa Teresa`;
+  };
 
   const nextImage = (id: string, totalImages: number) => {
     setCurrentImages((prev) => ({
@@ -153,7 +186,7 @@ export default function AccommodationsShowcase() {
                     <motion.img
                       key={currentImageIndex}
                       src={accommodation.images[currentImageIndex]}
-                      alt={`${roomType} at Zeneidas Surf Santa Teresa - Surf camp accommodation in Costa Rica`}
+                      alt={getAccommodationAlt(accommodation.id, currentImageIndex)}
                       className="w-full h-full object-cover cursor-pointer"
                       initial={{ opacity: 0, scale: 1.1 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -292,7 +325,7 @@ export default function AccommodationsShowcase() {
                       <motion.img
                         key={modalImageIndex}
                         src={selectedAccommodation.images[modalImageIndex]}
-                        alt={`${t(`accommodation.roomTypes.${selectedAccommodation.id}.name`)} - Santa Teresa surf camp beachfront accommodation`}
+                        alt={getAccommodationAlt(selectedAccommodation.id, modalImageIndex)}
                         className="w-full h-full object-contain"
                         initial={{ opacity: 0, x: 100 }}
                         animate={{ opacity: 1, x: 0 }}

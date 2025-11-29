@@ -454,38 +454,39 @@ const translations = {
         activities: "Actividades",
         faqs: "Preguntas",
         contact: "Contacto",
+        blog: "Blog",
         bookNow: "Reservar Ahora"
       },
       hero: {
-        title: "Santa Teresa Surf",
-        subtitle: "Experimenta el mejor programa de surf en Costa Rica en Zeneidas Surf Garden",
-        tagline: "Surf, Yoga, Meditación & Baños de Hielo en Santa Teresa",
+        title: "Santa Teresa Surf & Yoga Experience\nby Zeneidas Surf Garden",
+        subtitle: "Somos un hostel frente al mar que ofrece programas de surf, yoga, breathwork e ice baths — una surf & yoga experience auténtica en Santa Teresa, Costa Rica.",
+        tagline: "Surf, Yoga, Breathwork & Baños de Hielo en Santa Teresa, Costa Rica",
         bookNow: "Reservar Ahora",
-        exploreActivities: "Explorar Actividades"
+        exploreActividades: "Explorar Actividades"
       },
       accommodationShowcase: {
         title: "Tu Hogar en el Paraíso",
         subtitle: "Despierta con vistas al océano y duerme con el sonido de las olas. Elige el espacio perfecto para tu aventura de surf."
       },
       activitiesShowcase: {
-        title: "Prueba Nuestras Actividades",
-        subtitle: "Descubre las experiencias transformadoras que te esperan",
+        title: "Actividades de Surf & Wellness en Santa Teresa",
+        subtitle: "Experiencias auténticas que combinan surf, yoga y bienestar integral en Costa Rica",
         clickToPlay: "Click para reproducir",
         surfProgram: {
-          title: "Programa de Surf",
-          description: "Cabalga la Ola - Experimenta la emoción del surf en las aguas cristalinas de Santa Teresa."
+          title: "Programa de Surf en Santa Teresa",
+          description: "Coaching profesional de surf para todos los niveles en las mejores olas de Costa Rica. Desarrollá técnica, lectura del océano y confianza con instructores certificados."
         },
         breathwork: {
-          title: "Respiraciones",
-          description: "Aprende técnicas de respiración poderosas para autorregular tus emociones y liberar el estrés."
+          title: "Breathwork & Baños de Hielo",
+          description: "Transformá tu mentalidad con sesiones guiadas de breathwork y terapia de frío. Reducí estrés, mejorá recuperación y potenciá claridad mental."
         },
         soundHealing: {
-          title: "Sanación Sonora & Kirtan",
-          description: "Conéctate con energías sutiles a través de canciones sagradas y ceremonias de sanación sonora."
+          title: "Yoga & Sanación Sonora",
+          description: "Clases de yoga diarias y ceremonias de sanación sonora diseñadas para restaurar equilibrio, profundizar tu práctica y conectar cuerpo, mente y espíritu."
         },
         creativeArts: {
-          title: "Artes Creativas",
-          description: "Exprésate a través de la cerámica y otras actividades creativas en nuestro estudio de arte."
+          title: "Artes Creativas & Bienestar",
+          description: "Explorá tu lado creativo con cerámica, talleres artísticos y expresión consciente en nuestro estudio frente al mar."
         }
       },
       reviews: {
@@ -987,12 +988,13 @@ const translations = {
         activities: "Activities",
         faqs: "FAQs",
         contact: "Contact",
+        blog: "Blog",
         bookNow: "Book Now"
       },
       hero: {
-        title: "Santa Teresa Surf",
-        subtitle: "Experience the best surf program in Costa Rica at Zeneidas Surf Garden",
-        tagline: "Surf, Yoga, Meditation & Ice Baths in Santa Teresa",
+        title: "Santa Teresa Surf & Yoga Experience\nby Zeneidas Surf Garden",
+        subtitle: "We are a beachfront hostel offering surf programs, yoga, breathwork, and ice baths — an authentic surf & yoga experience in Santa Teresa, Costa Rica.",
+        tagline: "Surf, Yoga, Breathwork & Ice Baths in Santa Teresa, Costa Rica",
         bookNow: "Book Now",
         exploreActivities: "Explore Activities"
       },
@@ -1001,24 +1003,24 @@ const translations = {
         subtitle: "Wake up to ocean views and fall asleep to the sound of waves. Choose the perfect space for your surf adventure."
       },
       activitiesShowcase: {
-        title: "Get a Taste of Our Activities",
-        subtitle: "Discover the transformative experiences that await you",
+        title: "Santa Teresa Surf & Wellness Activities",
+        subtitle: "Authentic experiences combining surf, yoga, and holistic wellness in Costa Rica",
         clickToPlay: "Click to play",
         surfProgram: {
-          title: "Surf Program",
-          description: "Ride the Wave - Experience the thrill of surfing in the pristine waters of Santa Teresa."
+          title: "Santa Teresa Surf Program",
+          description: "Professional surf coaching for all levels in Costa Rica's best waves. Build technique, ocean awareness, and confidence with certified instructors."
         },
         breathwork: {
-          title: "Breathwork",
-          description: "Learn powerful breathing techniques to auto-regulate your emotions and release stress."
+          title: "Breathwork & Ice Baths",
+          description: "Transform your mindset with guided breathwork sessions and cold exposure therapy. Reduce stress, boost recovery, and enhance mental clarity."
         },
         soundHealing: {
-          title: "Sound Healing & Kirtan",
-          description: "Connect with subtle energies through sacred songs and sound healing ceremonies."
+          title: "Yoga & Sound Healing",
+          description: "Daily yoga classes and sound healing ceremonies designed to restore balance, deepen your practice, and connect mind, body, and spirit."
         },
         creativeArts: {
-          title: "Creative Arts",
-          description: "Express yourself through ceramics and other creative activities in our art studio."
+          title: "Creative Arts & Wellness",
+          description: "Explore your creative side through ceramics, art workshops, and mindful expression in our beachfront studio."
         }
       },
       reviews: {

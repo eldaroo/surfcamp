@@ -38,8 +38,6 @@ export default function HeroSection() {
         >
           <source src="/assets/Reel 1.mp4" type="video/mp4" />
         </video>
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/60" />
       </div>
 
       {/* Sound Toggle Button */}
@@ -55,8 +53,8 @@ export default function HeroSection() {
         )}
       </button>
 
-      {/* Content - Mobile: flex-col justify-between, Desktop: start from top */}
-      <div className="relative z-10 container mx-auto px-4 text-center h-full md:h-auto flex flex-col justify-between md:justify-start py-32 md:pt-32 md:pb-16">
+      {/* Content - Mobile: title at top, CTA at bottom */}
+      <div className="relative z-10 container mx-auto px-4 text-center flex flex-col min-h-[90vh] md:min-h-0 md:h-auto justify-between md:justify-start pt-8 pb-16 md:pt-32 md:pb-16">
         {/* Title Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -65,8 +63,14 @@ export default function HeroSection() {
           className="max-w-5xl mx-auto"
         >
           {/* Main H1 - Optimized for SEO */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-tight">
+          {/* Mobile: Short title */}
+          <h1 className="md:hidden text-4xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-tight">
             {t('landing.hero.title')}
+          </h1>
+
+          {/* Desktop: Full SEO title */}
+          <h1 className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-tight">
+            Santa Teresa Surf Experience en Zeneidas Surf Garden, Costa Rica
           </h1>
 
           {/* Desktop: Tagline and Button here */}
@@ -86,19 +90,17 @@ export default function HeroSection() {
           </div>
         </motion.div>
 
-        {/* Mobile: Tagline and Button at bottom */}
+        {/* Mobile CTA anchored to the bottom */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.6 }}
-          className="md:hidden max-w-5xl mx-auto space-y-6"
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="md:hidden max-w-5xl mx-auto space-y-6 mt-auto"
         >
-          {/* Keywords for SEO - visible but natural */}
           <p className="text-lg text-[#ece97f] font-semibold drop-shadow-lg">
             {t('landing.hero.tagline')}
           </p>
 
-          {/* CTA Button */}
           <div className="flex justify-center">
             <button
               onClick={scrollToBooking}

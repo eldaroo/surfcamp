@@ -23,20 +23,22 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
       {/* Navigation */}
       <Navigation />
 
-      {/* Hero Section */}
-      <HeroSection />
-
-      {/* Booking Widget (passed as prop) */}
-      {bookingWidget}
+      {/* Hero Section - Only Mobile */}
+      <div className="lg:hidden">
+        <HeroSection />
+      </div>
 
       {/* Main Content */}
       <main>
-        <SunDecorator />
-
-        {/* Activities Showcase */}
+        {/* Activities Showcase - First on Desktop */}
         <section id="activities">
           <ActivitiesShowcase />
         </section>
+
+        <SunDecorator />
+
+        {/* Booking Widget (passed as prop) */}
+        {bookingWidget}
 
         {/* Accommodations Showcase */}
         <section id="accommodation">
