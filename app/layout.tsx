@@ -94,7 +94,7 @@ export default function RootLayout({
       <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
         <SchemaOrg />
         <div
-          className="min-h-screen relative overflow-hidden"
+          className="min-h-screen relative overflow-hidden lg:bg-none"
           style={{
             backgroundImage: 'url(/assets/background.jpg)',
             backgroundSize: 'cover',

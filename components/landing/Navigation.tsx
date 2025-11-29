@@ -89,13 +89,37 @@ export default function Navigation() {
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-[#163237]">
-              Zeneidas Surf Garden
-            </div>
-          </Link>
+        <div className="flex items-center justify-between gap-4">
+          {/* Mobile: Menu button + Logo */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="lg:hidden w-10 h-10 flex flex-col items-center justify-center space-y-1.5"
+              aria-label="Toggle menu"
+            >
+              <span
+                className={`block w-6 h-0.5 bg-gray-900 transition-transform duration-300 ${
+                  isOpen ? 'rotate-45 translate-y-2' : ''
+                }`}
+              />
+              <span
+                className={`block w-6 h-0.5 bg-gray-900 transition-opacity duration-300 ${
+                  isOpen ? 'opacity-0' : ''
+                }`}
+              />
+              <span
+                className={`block w-6 h-0.5 bg-gray-900 transition-transform duration-300 ${
+                  isOpen ? '-rotate-45 -translate-y-2' : ''
+                }`}
+              />
+            </button>
+
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="text-2xl font-bold text-[#163237]">
+                Zeneidas Surf Garden
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-8">
@@ -146,28 +170,33 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden w-10 h-10 flex flex-col items-center justify-center space-y-1.5"
-            aria-label="Toggle menu"
-          >
-            <span
-              className={`block w-6 h-0.5 bg-gray-900 transition-transform duration-300 ${
-                isOpen ? 'rotate-45 translate-y-2' : ''
-              }`}
-            />
-            <span
-              className={`block w-6 h-0.5 bg-gray-900 transition-opacity duration-300 ${
-                isOpen ? 'opacity-0' : ''
-              }`}
-            />
-            <span
-              className={`block w-6 h-0.5 bg-gray-900 transition-transform duration-300 ${
-                isOpen ? '-rotate-45 -translate-y-2' : ''
-              }`}
-            />
-          </button>
+          {/* Mobile Language Switcher */}
+          <div className="lg:hidden flex items-center justify-end">
+            <div className="flex gap-1 bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => handleLanguageChange('es')}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  locale === 'es'
+                    ? 'bg-[#163237] text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+                aria-label="Cambiar a Español"
+              >
+                ES
+              </button>
+              <button
+                onClick={() => handleLanguageChange('en')}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                  locale === 'en'
+                    ? 'bg-[#163237] text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+                aria-label="Switch to English"
+              >
+                EN
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -195,31 +224,6 @@ export default function Navigation() {
                 )
               )}
 
-              {/* Language Switcher Mobile */}
-              <div className="flex gap-2 bg-gray-100 rounded-full p-1 w-fit">
-                <button
-                  onClick={() => handleLanguageChange('es')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    locale === 'es'
-                      ? 'bg-[#163237] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                  aria-label="Cambiar a Español"
-                >
-                  ES
-                </button>
-                <button
-                  onClick={() => handleLanguageChange('en')}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    locale === 'en'
-                      ? 'bg-[#163237] text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-200'
-                  }`}
-                  aria-label="Switch to English"
-                >
-                  EN
-                </button>
-              </div>
             </div>
           </div>
         )}

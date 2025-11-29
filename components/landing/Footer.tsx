@@ -51,7 +51,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4 text-[#fffb7a]">Connect With Us</h4>
             <div className="space-y-3 mb-6">
               <a
-                href="mailto:info@santateresasurfcamp.com"
+                href="mailto:info@zeneidasgarden.com"
                 className="flex items-center text-gray-300 hover:text-white transition-colors"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@ export default function Footer() {
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                   />
                 </svg>
-                info@santateresasurfcamp.com
+                info@zeneidasgarden.com
               </a>
               <a
                 href="https://wa.link/cqy47y"

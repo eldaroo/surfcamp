@@ -120,7 +120,7 @@ export default function BlogPage() {
               Join us at Zeneidas Surf Garden for the ultimate surf and yoga experience in Costa Rica.
             </p>
             <Link
-              href="/"
+              href="/#personalize-experience"
               className="inline-block px-8 py-4 bg-white text-[#163237] text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
             >
               Book Your Experience

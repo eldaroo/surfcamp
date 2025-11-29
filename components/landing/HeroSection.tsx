@@ -9,11 +9,18 @@ export default function HeroSection() {
   const { t } = useI18n();
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const heroTitle = t('landing.hero.title');
+  const [primaryHeroTitle, brandHeroTitleRaw] = (heroTitle ?? '').split('\n');
+  const brandHeroTitle = brandHeroTitleRaw?.trim();
+  const mainHeroTitle = primaryHeroTitle?.trim() || heroTitle;
 
   const scrollToBooking = () => {
-    const element = document.getElementById('booking');
+    const element =
+      document.getElementById('personalize-experience') ??
+      document.getElementById('booking');
+
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -40,10 +47,10 @@ export default function HeroSection() {
         </video>
       </div>
 
-      {/* Sound Toggle Button */}
+      {/* Sound Toggle Button - Desktop */}
       <button
         onClick={toggleMute}
-        className="absolute top-24 right-4 md:top-8 md:right-8 z-20 w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center transition-all duration-300 group"
+        className="hidden md:flex absolute top-8 right-8 z-20 w-12 h-12 rounded-full bg-black/40 border border-white/40 shadow-2xl backdrop-blur-md hover:bg-black/60 items-center justify-center transition-all duration-300 group"
         aria-label={isMuted ? 'Unmute video' : 'Mute video'}
       >
         {isMuted ? (
@@ -64,13 +71,38 @@ export default function HeroSection() {
         >
           {/* Main H1 - Optimized for SEO */}
           {/* Mobile: Short title */}
-          <h1 className="md:hidden text-4xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-tight">
-            {t('landing.hero.title')}
-          </h1>
+            <h1 className="md:hidden text-4xl font-heading font-bold text-white leading-tight">
+              {mainHeroTitle}
+            </h1>
+            {brandHeroTitle && (
+              <h1 className="md:hidden text-lg font-heading font-bold text-[#ece97f] uppercase tracking-[0.6em] mt-2">
+                {brandHeroTitle}
+              </h1>
+            )}
+
+            {/* Mobile Sound Toggle */}
+            <div className="md:hidden flex justify-center mt-6 mb-8">
+              <button
+                onClick={toggleMute}
+                className="w-16 h-16 rounded-full bg-[rgba(22,50,55,0.85)] border-2 border-white/80 shadow-2xl backdrop-blur-md hover:bg-[rgba(22,50,55,0.95)] flex items-center justify-center transition-all duration-300"
+                aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-7 h-7 text-white" />
+                ) : (
+                  <Volume2 className="w-7 h-7 text-white" />
+                )}
+              </button>
+            </div>
 
           {/* Desktop: Full SEO title */}
-          <h1 className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-tight">
-            Santa Teresa Surf Experience en Zeneidas Surf Garden, Costa Rica
+          <h1 className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-[1.6] lg:leading-[3.2rem]">
+            {mainHeroTitle}
+            {brandHeroTitle && (
+              <span className="block text-4xl lg:text-[2.8rem] font-heading font-semibold text-[#ece97f] leading-[1.3] mt-4">
+                {brandHeroTitle}
+              </span>
+            )}
           </h1>
 
           {/* Desktop: Tagline and Button here */}

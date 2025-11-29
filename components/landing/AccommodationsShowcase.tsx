@@ -34,8 +34,8 @@ const accommodations = [
     ],
     capacity: '2',
     icon: Home,
-    color: 'from-green-500/20 to-emerald-500/20',
-    borderColor: 'border-green-500/30',
+    color: 'from-blue-500/20 to-cyan-500/20',
+    borderColor: 'border-blue-500/30',
   },
   {
     id: 'casas-deluxe',
@@ -49,8 +49,8 @@ const accommodations = [
     ],
     capacity: '2',
     icon: Sparkles,
-    color: 'from-purple-500/20 to-pink-500/20',
-    borderColor: 'border-purple-500/30',
+    color: 'from-blue-500/20 to-cyan-500/20',
+    borderColor: 'border-blue-500/30',
   },
 ];
 

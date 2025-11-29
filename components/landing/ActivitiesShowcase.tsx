@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 
@@ -35,6 +35,17 @@ export default function ActivitiesShowcase() {
   const { t } = useI18n();
   const [activeVideo, setActiveVideo] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const mobileActivities = useMemo(() => {
+    const reordered = [...activities];
+    const surfIndex = reordered.findIndex((activity) => activity.key === 'surfProgram');
+
+    if (surfIndex >= 0) {
+      const [surfActivity] = reordered.splice(surfIndex, 1);
+      reordered.push(surfActivity);
+    }
+
+    return reordered;
+  }, []);
 
   const openVideo = (id: number) => {
     setActiveVideo(id);
@@ -45,11 +56,13 @@ export default function ActivitiesShowcase() {
   };
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % activities.length);
+    const totalSlides = mobileActivities.length || 1;
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + activities.length) % activities.length);
+    const totalSlides = mobileActivities.length || 1;
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
   const goToSlide = (index: number) => {
@@ -61,7 +74,7 @@ export default function ActivitiesShowcase() {
       <div className="container mx-auto px-4">
         {/* Hero Title - Only Desktop */}
         <div className="hidden lg:block text-center mb-5 xl:mb-6 2xl:mb-8 pt-1 xl:pt-2 2xl:pt-4">
-          <h1 className="text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-heading font-bold text-gray-900 mb-5 xl:mb-6 2xl:mb-8 leading-[3.8] whitespace-pre-line">
+          <h1 className="text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-heading font-bold text-gray-900 mb-5 xl:mb-6 2xl:mb-8 leading-[3.8] xl:leading-[3.2rem] whitespace-pre-line">
             {t('landing.hero.title')}
           </h1>
           <p className="text-base lg:text-base xl:text-lg 2xl:text-xl text-[#997146] mb-6 xl:mb-8 2xl:mb-12 font-semibold max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto">
@@ -91,7 +104,7 @@ export default function ActivitiesShowcase() {
                   exit={{ opacity: 0, x: -100 }}
                   transition={{ duration: 0.3 }}
                   className="absolute inset-0"
-                  onClick={() => openVideo(activities[currentSlide].id)}
+                  onClick={() => mobileActivities[currentSlide] && openVideo(mobileActivities[currentSlide].id)}
                 >
                   {/* Video */}
                   <video
@@ -101,7 +114,9 @@ export default function ActivitiesShowcase() {
                     playsInline
                     className="absolute inset-0 w-full h-full object-cover"
                   >
-                    <source src={activities[currentSlide].video} type="video/mp4" />
+                    {mobileActivities[currentSlide] && (
+                      <source src={mobileActivities[currentSlide].video} type="video/mp4" />
+                    )}
                   </video>
 
                   {/* Gradient Overlay */}
@@ -110,13 +125,15 @@ export default function ActivitiesShowcase() {
                   {/* Content */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-3xl">{activities[currentSlide].icon}</span>
+                      <span className="text-3xl">{mobileActivities[currentSlide]?.icon}</span>
                       <h3 className="text-xl font-bold">
-                        {t(`landing.activitiesShowcase.${activities[currentSlide].key}.title`)}
+                        {mobileActivities[currentSlide] &&
+                          t(`landing.activitiesShowcase.${mobileActivities[currentSlide].key}.title`)}
                       </h3>
                     </div>
                     <p className="text-base text-gray-200 leading-snug line-clamp-2">
-                      {t(`landing.activitiesShowcase.${activities[currentSlide].key}.description`)}
+                      {mobileActivities[currentSlide] &&
+                        t(`landing.activitiesShowcase.${mobileActivities[currentSlide].key}.description`)}
                     </p>
                   </div>
 
@@ -158,7 +175,7 @@ export default function ActivitiesShowcase() {
 
             {/* Pagination Dots */}
             <div className="flex justify-center gap-2 mt-6">
-              {activities.map((_, index) => (
+              {mobileActivities.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => goToSlide(index)}

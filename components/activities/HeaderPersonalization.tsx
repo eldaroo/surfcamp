@@ -63,7 +63,10 @@ const HeaderPersonalization = ({
   };
 
   return (
-    <div className="mb-3 md:mb-4 rounded-3xl border border-[white]/50 bg-[white]/80 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden">
+    <div
+      id="personalize-experience"
+      className="mb-3 md:mb-4 rounded-3xl border border-[white]/50 bg-[white]/80 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden"
+    >
       {/* PASS 2: reduced padding p-4/6 ? p-3/4, gaps 2.5/3 ? 2/2.5 */}
       <div className="p-3 md:p-4 text-center">
         <motion.div
