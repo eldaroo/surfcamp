@@ -8,9 +8,9 @@ import { getActivityTotalPrice, calculateSurfPrice, calculatePrivateCoachingUpgr
 import CustomDatePicker from '@/components/CustomDatePicker';
 import BackButton from './BackButton';
 import AccommodationCard from './AccommodationCard';
-import PriceSummary from './PriceSummary'; // Import PriceSummary
-import Modal from './Modal'; // Import Modal
-import { DollarSign, ReceiptText } from 'lucide-react'; // Import icons
+import PriceSummary from './PriceSummary';
+import Modal from './Modal';
+import { ReceiptText } from 'lucide-react';
 
 // Tipo para las habitaciones que vienen de la API
 type RoomFromAPI = {
@@ -240,7 +240,6 @@ export default function DateSelector() {
     setBookingData({ guests });
     clearAvailabilityResults();
 
-    // Collapse price summary and date selector when search button is pressed
     setIsPriceSummaryCollapsed(true);
     setIsDateSelectorCollapsed(true);
 
@@ -341,7 +340,6 @@ export default function DateSelector() {
     return selections;
   }, [participantList, getActivityDetailsForParticipant]);
 
-  // Calculate totals
   const accommodationTotal = selectedRoom && nights > 0
     ? (selectedRoom.isSharedRoom
         ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)
@@ -354,10 +352,9 @@ export default function DateSelector() {
 
   const subtotal = accommodationTotal + activitiesTotal;
   const fees = priceBreakdown?.tax || 0;
-  const total = subtotal + fees;
 
-  return (
-    <div className="relative">
+return (
+  <div className="relative pb-24">
       {/* Overlay behind widget */}
       <div className="absolute inset-0 bg-black/75 rounded-3xl -z-10"></div>
 
@@ -392,14 +389,14 @@ export default function DateSelector() {
 
           {/* Main Content Container */}
           <div className={`rounded-3xl border border-[white]/50 bg-[white]/70 shadow-xl overflow-visible mb-3 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`}>
-            <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+            <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? '' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
               {/* Columna izquierda - Selector de fechas */}
               {!isDateSelectorCollapsed ? (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className={`p-4 md:p-6 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''} ${!isPriceSummaryCollapsed ? 'border-r border-[white]/50' : ''}`}
+                  className={`p-4 md:p-6 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''} ${!isPriceSummaryCollapsed ? 'border-b lg:border-b-0 lg:border-r border-[white]/50' : ''}`}
                 >
                   <div className="space-y-4">
                     {/* Date Pickers Row */}
@@ -551,9 +548,19 @@ export default function DateSelector() {
                                 <div className="mt-2 text-sm text-amber-600 font-bold">
                                   {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                                 </div>
-                              )}
-                            </div>
-                          </div>
+              )}
+              {!isPriceSummaryCollapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="hidden lg:block w-full p-4 md:p-6 bg-white/10"
+                >
+                  <PriceSummary showContainer={false} />
+                </motion.div>
+              )}
+            </div>
+          </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -629,23 +636,13 @@ export default function DateSelector() {
                 </motion.div>
               )}
 
-              {/* Right Column - Full Price Summary (Desktop only, when not collapsed) */}
-              {!isPriceSummaryCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="hidden lg:block w-full p-4 md:p-6 bg-white/10"
-                >
-                  <PriceSummary showContainer={false} />
-                </motion.div>
-              )}
-            </div>
           </div>
+        </div>
 
-          {/* Accommodation Section - Below date selector */}
-          {checkInDate && checkOutDate && (hasRequestedAvailability || loadingRooms) && (
-            <motion.div
+
+        {/* Accommodation Section - Below date selector */}
+        {checkInDate && checkOutDate && (hasRequestedAvailability || loadingRooms) && (
+          <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -768,43 +765,41 @@ export default function DateSelector() {
         </motion.div>
       </div>
 
-      {/* Collapsed Price Summary (Desktop) */}
-      {isPriceSummaryCollapsed && (bookingData.checkIn && bookingData.checkOut) && (
-        <motion.button
-          type="button"
-          onClick={() => setShowPriceSummaryModal(true)}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
-          className="hidden lg:flex fixed top-4 right-4 z-40 items-center gap-2 rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-5 py-2.5 text-sm font-bold text-black shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
-        >
-          <ReceiptText className="h-5 w-5 text-black" />
-          <span className="text-black">{t('prices.total')}: {formatCurrency(total, locale)}</span>
-        </motion.button>
+      {isPriceSummaryCollapsed && bookingData.checkIn && bookingData.checkOut && (
+        <>
+          <motion.button
+            type="button"
+            onClick={() => setShowPriceSummaryModal(true)}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="hidden lg:flex absolute bottom-6 right-6 z-30 items-center gap-3 rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-3 text-sm font-bold text-black shadow-xl shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
+          >
+            <ReceiptText className="h-5 w-5 text-black" />
+            <span>{t('prices.total')}: {formatCurrency(subtotal + fees, locale)}</span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={() => setShowPriceSummaryModal(true)}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="lg:hidden absolute bottom-6 left-4 right-4 z-30 flex items-center justify-between rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-4 text-base font-bold text-black shadow-xl shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
+          >
+            <div className="flex items-center gap-3">
+              <ReceiptText className="h-6 w-6 text-black" />
+              <span>{t('prices.summary')}</span>
+            </div>
+            <span>{formatCurrency(subtotal + fees, locale)}</span>
+          </motion.button>
+        </>
       )}
 
-      {/* Collapsed Price Summary (Mobile) */}
-      {isPriceSummaryCollapsed && (bookingData.checkIn && bookingData.checkOut) && (
-        <motion.button
-          type="button"
-          onClick={() => setShowPriceSummaryModal(true)}
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.5 }}
-          className="lg:hidden fixed bottom-24 left-4 right-4 z-40 flex items-center justify-between rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-4 text-base font-bold shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
-        >
-          <div className="flex items-center gap-3">
-            <ReceiptText className="h-6 w-6 text-black" />
-            <span className="text-black font-bold">{t('prices.summary')}</span>
-          </div>
-          <span className="text-black font-bold">{formatCurrency(total, locale)}</span>
-        </motion.button>
-      )}
-
-      {/* Price Summary Modal */}
       <Modal isOpen={showPriceSummaryModal} onClose={() => setShowPriceSummaryModal(false)} title={t('prices.summary')}>
         <PriceSummary isCollapsed={false} showContainer={false} />
       </Modal>
+
     </div>
   );
 } 

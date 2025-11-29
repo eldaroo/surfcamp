@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Activity } from "@/types";
+import { useBookingStore } from "@/lib/store";
 import {
   CheckCircle2,
   Sparkles,
@@ -615,6 +616,7 @@ const ActivityCard = ({
   };
 
   const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
+  const setLandingSectionsHidden = useBookingStore((state) => state.setLandingSectionsHidden);
 
   // Surf image carousel - Mobile version
   const surfImagesMobile = [
@@ -847,6 +849,10 @@ const ActivityCard = ({
     // Call onToggle to select the activity (or re-select if already selected)
     if (!isSelected) {
       onToggle();
+    }
+
+    if (isSurf) {
+      setLandingSectionsHidden(true);
     }
 
     // Brief visual feedback before auto-advance (600ms)
@@ -1367,14 +1373,8 @@ const ActivityCard = ({
               </motion.div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
 
-              {/* Clickable overlay - opens modal when clicked */}
-              <div
-                className="absolute inset-0 z-10 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenImageModal(currentSurfImageIndex);
-                }}
-              />
+              {/* Clickable overlay - DISABLED for mobile to prevent popup */}
+              {/* Desktop version still has this enabled */}
 
               {/* Navigation Arrows - More Visible */}
               <button
@@ -1810,10 +1810,10 @@ const ActivityCard = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     transition={{ duration: 0.15 }}
-                    className="flex items-center justify-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                    className="flex items-center justify-center gap-2 text-sm font-semibold text-black bg-white/80 px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-white"
                   >
-                    <ArrowLeft className="h-4 w-4 text-gray-600" />
-                    <span>{copy.back}</span>
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    <span className="text-black">{copy.back}</span>
                   </motion.button>
                 )}
 
@@ -1854,10 +1854,10 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                className="flex items-center gap-2 text-sm font-semibold text-black bg-white/80 px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-white"
               >
-                <ArrowLeft className="h-4 w-4 text-gray-600" />
-                <span>{copy.back}</span>
+                <ArrowLeft className="h-4 w-4 text-black" />
+                <span className="text-black">{copy.back}</span>
               </motion.button>
             )}
 
@@ -1882,10 +1882,10 @@ const ActivityCard = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                className="flex items-center gap-2 text-sm font-semibold text-black bg-white/80 px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-white"
               >
-                <ArrowLeft className="h-4 w-4 text-gray-600" />
-                <span>{copy.back}</span>
+                <ArrowLeft className="h-4 w-4 text-black" />
+                <span className="text-black">{copy.back}</span>
               </motion.button>
             ) : (
               <div />

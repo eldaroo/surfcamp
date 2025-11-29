@@ -38,6 +38,11 @@ export const metadata: Metadata = {
     'Costa Rica surfcamp'
   ],
   authors: [{ name: 'Zeneidas Surf' }],
+  icons: {
+    icon: '/assets/favicon.png',
+    shortcut: '/assets/favicon.png',
+    apple: '/assets/favicon.png',
+  },
   openGraph: {
     title: 'Zeneidas Surf - Santa Teresa Surf Camp',
     description: 'Premier Santa Teresa surf camp offering surf lessons, yoga, meditation & ice baths. Transform your life at our beachfront lodge in Costa Rica.',

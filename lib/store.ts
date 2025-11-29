@@ -50,6 +50,7 @@ interface BookingStore {
   personalizationName: string;
   priceBreakdown: PriceBreakdown | null;
   availabilityCheck: AvailabilityCheck | null;
+  landingSectionsHidden: boolean;
   
   // Accommodation data
   availableRooms: Room[] | null;
@@ -89,6 +90,7 @@ interface BookingStore {
   setSelectedSurfClasses: (activityId: string, classes: number) => void;
   setIsPrivateUpgrade: (isUpgrade: boolean) => void;
   setPersonalizationName: (name: string) => void;
+  setLandingSectionsHidden: (hidden: boolean) => void;
 
   setPriceBreakdown: (breakdown: PriceBreakdown | null) => void;
   setAvailabilityCheck: (check: AvailabilityCheck | null) => void;
@@ -140,6 +142,7 @@ const initialState = {
   personalizationName: '',
   priceBreakdown: null,
   availabilityCheck: null,
+  landingSectionsHidden: false,
   availableRooms: null,
   selectedRoom: null,
   currentStep: 'activities' as const,
@@ -712,6 +715,9 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         participants: updatedParticipants
       };
     }),
+
+  setLandingSectionsHidden: (hidden) =>
+    set({ landingSectionsHidden: hidden }),
 
   setPriceBreakdown: (breakdown) =>
     set({ priceBreakdown: breakdown }),

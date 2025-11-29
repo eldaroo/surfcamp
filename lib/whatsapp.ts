@@ -464,34 +464,28 @@ export const sendClientConfirmationMessage = async (
     : formatDateForWhatsApp(bookingData.checkOut);
 
   const message = isEnglish
-    ? `Hi ${bookingData.clientFirstName}! 👋
+    ? `Hi! 🙌 This is Dario — welcome to Zeneidas Surf Garden and to our Surf & Wellness Experience.
+Thank you so much for booking with us 💛
 
-✅ *Your reservation is confirmed*
+The instructors for the activities you booked will reach out to you today to coordinate schedules, answer any questions, and make sure everything is ready for your experience.
 
-📅 *Check-in:* ${formattedCheckIn}
-📅 *Check-out:* ${formattedCheckOut}
+If you need anything from my side, I'm here to help with whatever you need 🙏
 
-The instructors will contact you to coordinate the activity schedules.
+For questions about how to get here, check-in, or anything related to the accommodation, you can contact Zeneidas reception at:
+📞 +506 6176 2653
 
-If you have any questions, write to us at this number. We're here to help!
+Looking forward to having you here!`
+    : `Hola! 🙌 Soy Dario, bienvenidos a Zeneidas Surf Garden y a nuestra Surf & Wellness Experience.
+Gracias por reservar con nosotros 💛
 
-See you soon! 🌊
+Los profesores de las actividades que eligieron se van a estar comunicando con ustedes durante el día para coordinar horarios, resolver dudas y asegurarse de que tengan todo listo para empezar.
 
-*Zeneida's Garden*`
-    : `¡Hola ${bookingData.clientFirstName}! 👋
+Por mi parte, cualquier cosa que necesiten, estoy acá para ayudarles en lo que sea 🙏
 
-✅ *Tu reserva está confirmada*
+Si tienen dudas sobre cómo llegar, el check-in o temas del alojamiento, pueden contactar directamente a la recepción de Zeneidas:
+📞 +506 6176 2653
 
-📅 *Check-in:* ${formattedCheckIn}
-📅 *Check-out:* ${formattedCheckOut}
-
-Los instructores se van a contactar contigo para coordinar los horarios de las actividades.
-
-Si tenés alguna duda, escribinos a este número. ¡Estamos para ayudarte!
-
-¡Nos vemos pronto! 🌊
-
-*Zeneida's Garden*`;
+¡Nos vemos pronto!`;
 
   console.log('📧 [WHATSAPP] About to send message to:', bookingData.clientPhone);
   console.log('📧 [WHATSAPP] Message preview:', message.substring(0, 100) + '...');

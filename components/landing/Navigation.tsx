@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -115,7 +116,14 @@ export default function Navigation() {
             </button>
 
             <Link href="/" className="flex items-center space-x-2">
-              <div className="text-2xl font-bold text-[#163237]">
+              <Image
+                src="/assets/favicon.png"
+                alt="Zeneidas Surf Garden Logo"
+                width={40}
+                height={40}
+                className="w-8 h-8 md:w-10 md:h-10"
+              />
+              <div className="text-xl md:text-2xl font-bold text-[#163237]">
                 Zeneidas Surf Garden
               </div>
             </Link>
