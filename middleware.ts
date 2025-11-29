@@ -1,41 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  // Check if there is any supported locale in the pathname
-  const pathname = request.nextUrl.pathname;
-  
-  // ⛔ NO tocar sitemap, robots, archivos estáticos ni API
+const locales = ["en", "es"];
+const defaultLocale = "en";
+
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // ⛔ Rutas que NO deben pasar por el redirect de locales
   const isSpecialPath =
-    pathname === '/sitemap.xml' ||
-    pathname === '/robots.txt' ||
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/_next') ||
-    pathname.match(/\.[^/]+$/) // archivos como .png, .js, etc
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/_next") ||
+    pathname.match(/\.[^/]+$/); // archivos (.png, .js, .ico, etc)
 
-  if (isSpecialPath) return
-  // Check if the pathname already includes a locale
-  const pathnameIsMissingLocale = ['/es', '/en'].every(
-    (locale) => !pathname.startsWith(locale) && pathname !== locale.slice(1)
+  if (isSpecialPath) {
+    return NextResponse.next();
+  }
+
+  // Si ya tiene /en o /es, no tocamos
+  const hasLocale = locales.some(
+    (locale) =>
+      pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
   );
 
-  // Redirect to /en if no locale is present
-  if (pathnameIsMissingLocale) {
-    return NextResponse.redirect(new URL(`/en${pathname}`, request.url));
+  if (!hasLocale) {
+    const url = req.nextUrl.clone();
+    url.pathname = `/${defaultLocale}${pathname}`;
+    return NextResponse.redirect(url);
   }
-  
+
   return NextResponse.next();
 }
 
+// Opcional pero recomendable: limitar el matcher
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - assets (public assets folder)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|assets).*)',
-  ],
+  matcher: ["/((?!sitemap.xml|robots.txt|_next|api|.*\\..*).*)"],
 };
