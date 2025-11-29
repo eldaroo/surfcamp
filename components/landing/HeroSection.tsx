@@ -99,7 +99,7 @@ export default function HeroSection() {
           <h1 className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-[1.6] lg:leading-[3.2rem]">
             {mainHeroTitle}
             {brandHeroTitle && (
-              <span className="block text-4xl lg:text-[2.8rem] font-heading font-semibold text-[#ece97f] leading-[1.3] mt-4">
+              <span className="block text-lg font-heading font-bold text-[#ece97f] uppercase tracking-[0.5em] mt-2">
                 {brandHeroTitle}
               </span>
             )}

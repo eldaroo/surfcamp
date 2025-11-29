@@ -394,7 +394,7 @@ const AccommodationCard = ({
         {/* Front Face - Image */}
         <div
           className={`flip-card-face flip-card-front ${!isFlipped ? 'relative' : 'absolute inset-0'} w-full rounded-3xl overflow-hidden group/card min-h-[400px] md:min-h-[200px] ${
-            isUnavailable ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+            isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer'
           }`}
           style={{
             backfaceVisibility: 'hidden',
@@ -427,22 +427,28 @@ const AccommodationCard = ({
                 <h2 className="text-[1.35rem] md:text-[2rem] leading-snug font-bold text-white mb-3 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] font-heading">
                   {t(`accommodation.roomTypes.${room.roomTypeId}.name`)}
                 </h2>
-                <div
-                  className="inline-block rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold backdrop-blur-sm min-w-fit"
-                  style={{ backgroundColor: 'rgba(242, 193, 78, 0.9)', color: '#1a1a1a' }}
-                >
-                  {room.isSharedRoom ? (
-                    <>
-                      <span className="text-sm md:text-base font-bold">${roomPrice}</span>
-                      <span className="font-medium"> / {locale === 'es' ? 'noche / persona' : 'night / person'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-sm md:text-base font-bold">${roomPrice}</span>
-                      <span className="font-medium"> / {locale === 'es' ? 'noche (total)' : 'night (total)'}</span>
-                    </>
-                  )}
-                </div>
+                {isUnavailable ? (
+                  <div className="inline-block rounded-full px-4 py-2 text-xs md:text-sm font-bold uppercase tracking-wide bg-black/80 text-white shadow-lg">
+                    {locale === 'es' ? 'Agotado' : 'Sold out'}
+                  </div>
+                ) : (
+                  <div
+                    className="inline-block rounded-full px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-semibold backdrop-blur-sm min-w-fit"
+                    style={{ backgroundColor: 'rgba(242, 193, 78, 0.9)', color: '#1a1a1a' }}
+                  >
+                    {room.isSharedRoom ? (
+                      <>
+                        <span className="text-sm md:text-base font-bold">${roomPrice}</span>
+                        <span className="font-medium"> / {locale === 'es' ? 'noche / persona' : 'night / person'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-sm md:text-base font-bold">${roomPrice}</span>
+                        <span className="font-medium"> / {locale === 'es' ? 'noche (total)' : 'night (total)'}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -453,8 +459,13 @@ const AccommodationCard = ({
             )}
 
             {isUnavailable && (
-              <div className="absolute top-4 left-4 bg-red-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs md:text-sm font-semibold">
-                {locale === "es" ? "No disponible" : "Unavailable"}
+              <div className="absolute inset-0">
+                <div className="absolute inset-0 bg-black/60"></div>
+                <div className="absolute inset-x-4 bottom-6 bg-black/85 rounded-full px-5 py-2 text-center">
+                  <span className="text-white text-sm md:text-base font-bold uppercase tracking-[0.4em]">
+                    {locale === "es" ? "Agotado" : "Sold Out"}
+                  </span>
+                </div>
               </div>
             )}
           </div>
