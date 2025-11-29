@@ -105,6 +105,23 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Google Maps Section */}
+        <div className="mb-8 border-t border-white/10 pt-8">
+          <h4 className="text-lg font-semibold mb-4 text-[#fffb7a] text-center">Find Us</h4>
+          <div className="w-full max-w-4xl mx-auto">
+            <div className="relative w-full h-0 pb-[56.25%] md:pb-[50%] rounded-lg overflow-hidden shadow-xl">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3933.4390011172027!2d-85.1701925244878!3d9.643478679066831!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8f9f6ef5386eb765%3A0x7737d9ad9395e75b!2sZeneidas%20Surf%20Garden!5e0!3m2!1ses!2scr!4v1764401497191!5m2!1ses!2scr"
+                className="absolute top-0 left-0 w-full h-full border-0"
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Zeneidas Surf Garden Location"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-8 text-center text-gray-400">
           <p>&copy; {currentYear} Zeneidas Surf Garden. All rights reserved.</p>
