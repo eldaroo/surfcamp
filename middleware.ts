@@ -4,6 +4,15 @@ export function middleware(request: NextRequest) {
   // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname;
   
+  // ⛔ NO tocar sitemap, robots, archivos estáticos ni API
+  const isSpecialPath =
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.match(/\.[^/]+$/) // archivos como .png, .js, etc
+
+  if (isSpecialPath) return
   // Check if the pathname already includes a locale
   const pathnameIsMissingLocale = ['/es', '/en'].every(
     (locale) => !pathname.startsWith(locale) && pathname !== locale.slice(1)
