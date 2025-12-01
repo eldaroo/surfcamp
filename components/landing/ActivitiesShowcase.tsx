@@ -19,12 +19,18 @@ const activities = [
   },
   {
     id: 3,
-    key: 'soundHealing',
-    video: '/assets/videos/Videos%20de%20Actividades/Kirtan%202.mp4',
-    icon: '🎵',
+    key: 'yoga',
+    video: '/assets/videos/Videos%20de%20Actividades/Yoga.mp4',
+    icon: '🧘',
   },
   {
     id: 4,
+    key: 'iceBath',
+    video: '/assets/videos/Videos%20de%20Actividades/Hielo.mp4',
+    icon: '❄️',
+  },
+  {
+    id: 5,
     key: 'creativeArts',
     video: '/assets/videos/Videos%20de%20Actividades/Ceramica.mp4',
     icon: '🎨',
@@ -32,7 +38,7 @@ const activities = [
 ];
 
 export default function ActivitiesShowcase() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [activeVideo, setActiveVideo] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const mobileActivities = useMemo(() => {
@@ -69,16 +75,25 @@ export default function ActivitiesShowcase() {
     setCurrentSlide(index);
   };
 
+  const desktopTitle =
+    (locale as 'es' | 'en') === 'es'
+      ? 'Experiencias que podés vivir acá.'
+      : 'Experiences you can live here.';
+  const desktopSubtitle =
+    (locale as 'es' | 'en') === 'es'
+      ? 'Explora nuestras actividades en video y sentí el ambiente: olas, movimiento, respiración, creatividad y descanso.'
+      : 'Explore our activities on video and feel the vibe: waves, movement, breath, creativity, and rest.';
+
   return (
     <section className="py-12 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
         {/* Hero Title - Only Desktop */}
         <div className="hidden lg:block text-center mb-5 xl:mb-6 2xl:mb-8 pt-1 xl:pt-2 2xl:pt-4">
           <h1 className="text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-heading font-bold text-gray-900 mb-5 xl:mb-6 2xl:mb-8 leading-[3.8] xl:leading-[3.2rem] 2xl:leading-[4.2rem] whitespace-pre-line">
-            {t('landing.hero.title')}
+            {desktopTitle}
           </h1>
           <p className="text-base lg:text-base xl:text-lg 2xl:text-xl text-[#997146] mb-6 xl:mb-8 2xl:mb-12 font-semibold max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto">
-            {t('landing.hero.subtitle')}
+            {desktopSubtitle}
           </p>
         </div>
 

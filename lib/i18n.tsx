@@ -468,28 +468,32 @@ const translations = {
         title: "Tu Hogar en el Paraíso",
         subtitle: "Despierta con vistas al océano y duerme con el sonido de las olas. Elige el espacio perfecto para tu aventura de surf."
       },
-      activitiesShowcase: {
+            activitiesShowcase: {
         title: "Actividades de Surf & Wellness en Santa Teresa",
-        subtitle: "Experiencias auténticas que combinan surf, yoga y bienestar integral en Costa Rica",
+        subtitle: "Experiencias autenticas que combinan surf, yoga y bienestar integral en Costa Rica",
         clickToPlay: "Click para reproducir",
         surfProgram: {
-          title: "Programa de Surf en Santa Teresa",
-          description: "Coaching profesional de surf para todos los niveles en las mejores olas de Costa Rica. Desarrollá técnica, lectura del océano y confianza con instructores certificados."
+          title: "Surf",
+          description: "Coaching profesional de surf para todos los niveles en las mejores olas de Costa Rica. Desarrolla tecnica, lectura del oceano y confianza con instructores certificados."
         },
         breathwork: {
-          title: "Breathwork & Baños de Hielo",
-          description: "Transformá tu mentalidad con sesiones guiadas de breathwork y terapia de frío. Reducí estrés, mejorá recuperación y potenciá claridad mental."
+          title: "Breathwork",
+          description: "Transforma tu mentalidad con sesiones guiadas de breathwork y terapia de frio. Reduce estres, mejora recuperacion y potencia claridad mental."
         },
-        soundHealing: {
-          title: "Yoga & Sanación Sonora",
-          description: "Clases de yoga diarias y ceremonias de sanación sonora diseñadas para restaurar equilibrio, profundizar tu práctica y conectar cuerpo, mente y espíritu."
+        yoga: {
+          title: "Yoga",
+          description: "Sesiones de yoga frente al mar para alinear cuerpo y mente y resetear energia."
+        },
+        iceBath: {
+          title: "Ice Bath",
+          description: "Inmersiones guiadas en hielo para recuperar energia, bajar el estres y ganar claridad."
         },
         creativeArts: {
-          title: "Artes Creativas & Bienestar",
-          description: "Explorá tu lado creativo con cerámica, talleres artísticos y expresión consciente en nuestro estudio frente al mar."
+          title: "Clay Workshop",
+          description: "Explora tu lado creativo con ceramica, talleres artisticos y expresion consciente en nuestro estudio frente al mar."
         }
       },
-      reviews: {
+reviews: {
         title: "Experiencia Transformadora",
         subtitle: "Descubre las historias de nuestros participantes",
         years: "años",
@@ -1002,28 +1006,32 @@ const translations = {
         title: "Your Home in Paradise",
         subtitle: "Wake up to ocean views and fall asleep to the sound of waves. Choose the perfect space for your surf adventure."
       },
-      activitiesShowcase: {
+            activitiesShowcase: {
         title: "Santa Teresa Surf & Wellness",
         subtitle: "Some experiences can be booked here; others happen at Zeneidas and can be reserved at reception once you're on-site",
         clickToPlay: "Click to play",
         surfProgram: {
-          title: "Santa Teresa Surf Program",
+          title: "Surf",
           description: "Professional surf coaching for all levels in Costa Rica's best waves. Build technique, ocean awareness, and confidence with certified instructors."
         },
         breathwork: {
-          title: "Breathwork & Ice Baths",
+          title: "Breathwork",
           description: "Transform your mindset with guided breathwork sessions and cold exposure therapy. Reduce stress, boost recovery, and enhance mental clarity."
         },
-        soundHealing: {
-          title: "Yoga & Sound Healing",
-          description: "Daily yoga classes and sound healing ceremonies designed to restore balance, deepen your practice, and connect mind, body, and spirit."
+        yoga: {
+          title: "Yoga",
+          description: "Oceanfront yoga sessions to reset body and mind with breath, movement, and focus."
+        },
+        iceBath: {
+          title: "Ice Bath",
+          description: "Guided cold plunges to boost recovery, calm stress, and sharpen mental clarity."
         },
         creativeArts: {
-          title: "Creative Arts & Wellness",
+          title: "Clay Workshop",
           description: "Explore your creative side through ceramics, art workshops, and mindful expression in our beachfront studio."
         }
       },
-      reviews: {
+reviews: {
         title: "Life-Changing Experience",
         subtitle: "Discover the stories of our participants",
         years: "years",

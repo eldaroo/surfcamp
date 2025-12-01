@@ -87,7 +87,7 @@ export default function Navigation() {
         isScrolled
           ? 'bg-white shadow-md py-3 translate-y-0 opacity-100'
           : 'bg-white/95 py-5 -translate-y-full opacity-0'
-      }`}
+      } lg:bg-white lg:shadow-md lg:py-4 lg:translate-y-0 lg:opacity-100`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between gap-4">

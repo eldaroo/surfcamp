@@ -57,7 +57,7 @@ const surfProgramToClasses = (program: 'fundamental' | 'progressionPlus' | 'high
 };
 
 const ActivitiesPage = () => {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const {
     bookingData,
     setBookingData,
@@ -119,6 +119,12 @@ const ActivitiesPage = () => {
       activitiesCount: p.selectedActivities.length,
     })),
   });
+
+  const heroTitle = t("landing.hero.title");
+  const [heroMainTitleRaw, heroBrandTitleRaw] = (heroTitle ?? "").split("\n");
+  const heroMainTitle = heroMainTitleRaw?.trim() || heroTitle;
+  const heroBrandTitle = heroBrandTitleRaw?.trim();
+  const heroSubtitle = t("landing.hero.subtitle");
 
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
@@ -796,6 +802,16 @@ const ActivitiesPage = () => {
           pointerEvents: isAnyModalOpen ? 'none' : 'auto'
         }}
       >
+        <div className="hidden lg:block text-center text-white mb-5 lg:mb-7">
+          <h1 className="text-3xl xl:text-4xl font-heading font-bold leading-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.65)]">
+            {heroMainTitle}
+            {heroBrandTitle && (
+              <span className="block text-[11px] font-semibold tracking-[0.22em] text-[#ece97f] mt-2 uppercase">
+                {heroBrandTitle}
+              </span>
+            )}
+          </h1>
+        </div>
         <HeaderPersonalization
         name={personalizationName}
         participants={participantCount}

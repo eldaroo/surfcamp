@@ -88,8 +88,8 @@ const HeaderPersonalization = ({
           {/* Subtitle - Much larger */}
           <p className="text-sm md:text-base text-[#6d5f57] max-w-3xl mx-auto leading-relaxed">
             {locale === 'es'
-              ? 'Tú decides el ritmo, la duración y qué prácticas resuenan más contigo. Desde baños de hielo hasta yoga, sesiones de surf, excursiones a la naturaleza o simplemente tiempo para descansar — este es tu espacio para diseñar un viaje que se adapte a tus necesidades y deseos.'
-              : 'You decide the rhythm, the duration, and which practices resonate most with you. From ice baths to yoga, surf sessions, excursions into nature, or simply time to rest — this is your space to design a journey that suits your needs and desires.'}
+              ? 'A pasos del mar en Santa Teresa, te abrimos un espacio para descubrir, aprender y crear tu propia experiencia. Surf, yoga, breathwork, ice baths y naturaleza: vos eleg?s el ritmo, la intensidad y lo que quer?s vivir.'
+              : 'Just steps from the ocean in Santa Teresa, we open a space for you to discover, learn, and create your own experience. Surf, yoga, breathwork, ice baths, and nature, you choose the rhythm, the intensity, and what you want to live.'}
           </p>
         </motion.div>
       </div>

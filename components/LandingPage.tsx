@@ -34,15 +34,15 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
       )}
 
       {/* Main Content */}
-      <main className="flex flex-col gap-0">
+      <main className="flex flex-col gap-0 lg:pt-24">
         {!landingSectionsHidden && (
           <>
             {/* Activities Showcase */}
-            <section id="activities" className="order-3 lg:order-1">
+            <section id="activities" className="order-3 lg:order-4">
               <ActivitiesShowcase />
             </section>
 
-            <div className="order-1 lg:order-2 -mt-4 lg:-mt-12">
+            <div className="order-1 lg:order-3 -mt-4 lg:-mt-12">
               <SunDecorator />
             </div>
           </>
@@ -50,38 +50,38 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
 
         {/* Booking Widget (passed as prop) */}
         {bookingWidget && (
-          <div className="order-2 lg:order-3">{bookingWidget}</div>
+          <div className="order-2 lg:order-2">{bookingWidget}</div>
         )}
 
         {!landingSectionsHidden && (
           <>
             {/* Accommodations Showcase */}
-            <section id="accommodation" className="order-4 lg:order-4">
+            <section id="accommodation" className="order-4 lg:order-5">
               <AccommodationsShowcase />
             </section>
 
             {/* CTA Banner */}
-            <div className="order-5 lg:order-5">
+            <div className="order-5 lg:order-6">
               <CTABanner />
             </div>
 
             {/* Stories Slider */}
-            <section id="stories" className="order-6 lg:order-6">
+            <section id="stories" className="order-6 lg:order-7">
               <StoriesSlider />
             </section>
 
             {/* Not Included Section */}
-            <div className="order-7 lg:order-7">
+            <div className="order-7 lg:order-8">
               <NotIncludedSection />
             </div>
 
             {/* FAQs Section */}
-            <section id="faqs" className="order-8 lg:order-8">
+            <section id="faqs" className="order-8 lg:order-9">
               <FAQSection />
             </section>
 
             {/* Final CTA Banner */}
-            <div className="order-9 lg:order-9">
+            <div className="order-9 lg:order-10">
               <CTABanner />
             </div>
           </>
