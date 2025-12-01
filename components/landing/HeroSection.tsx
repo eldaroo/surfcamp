@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -13,23 +13,50 @@ export default function HeroSection() {
   const [primaryHeroTitle, brandHeroTitleRaw] = (heroTitle ?? '').split('\n');
   const brandHeroTitle = brandHeroTitleRaw?.trim();
   const mainHeroTitle = primaryHeroTitle?.trim() || heroTitle;
-
-  const scrollToBooking = () => {
-    const element =
-      document.getElementById('personalize-experience') ??
-      document.getElementById('booking');
-
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  const [showMobileContent, setShowMobileContent] = useState(true);
 
   const toggleMute = () => {
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const newMuted = !isMuted;
+      videoRef.current.muted = newMuted;
+      setIsMuted(newMuted);
+
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        setShowMobileContent(newMuted);
+      } else {
+        setShowMobileContent(true);
+      }
     }
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isMobile = window.innerWidth < 768;
+
+    if (!isMobile || isMuted) {
+      setShowMobileContent(true);
+      return;
+    }
+
+    let hideTimeout = window.setTimeout(() => setShowMobileContent(false), 2000);
+
+    const handleScroll = () => {
+      setShowMobileContent(true);
+      clearTimeout(hideTimeout);
+      hideTimeout = window.setTimeout(() => setShowMobileContent(false), 2000);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(hideTimeout);
+    };
+  }, [isMuted]);
+
+  const mobileVisibilityClasses = showMobileContent
+    ? 'opacity-100 translate-y-0 pointer-events-auto'
+    : 'opacity-0 translate-y-3 pointer-events-none';
 
   return (
     <section className="relative min-h-[90vh] md:min-h-screen flex items-start justify-center overflow-hidden">
@@ -50,7 +77,20 @@ export default function HeroSection() {
       {/* Sound Toggle Button - Desktop */}
       <button
         onClick={toggleMute}
-        className="hidden md:flex absolute top-8 right-8 z-20 w-12 h-12 rounded-full bg-black/40 border border-white/40 shadow-2xl backdrop-blur-md hover:bg-black/60 items-center justify-center transition-all duration-300 group"
+        className="hidden md:flex absolute top-8 left-8 z-20 w-12 h-12 rounded-full bg-black/40 border border-white/40 shadow-2xl backdrop-blur-md hover:bg-black/60 items-center justify-center transition-all duration-300 group"
+        aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+      >
+        {isMuted ? (
+          <VolumeX className="w-6 h-6 text-white" />
+        ) : (
+          <Volume2 className="w-6 h-6 text-white" />
+        )}
+      </button>
+
+      {/* Sound Toggle Button - Mobile */}
+      <button
+        onClick={toggleMute}
+        className={`md:hidden absolute top-6 left-4 z-20 w-14 h-14 rounded-full bg-[rgba(22,50,55,0.85)] border border-white/60 shadow-2xl backdrop-blur-md hover:bg-[rgba(22,50,55,0.95)] flex items-center justify-center transition-all duration-300 ${mobileVisibilityClasses}`}
         aria-label={isMuted ? 'Unmute video' : 'Mute video'}
       >
         {isMuted ? (
@@ -61,86 +101,43 @@ export default function HeroSection() {
       </button>
 
       {/* Content - Mobile: title at top, CTA at bottom */}
-      <div className="relative z-10 container mx-auto px-4 text-center flex flex-col min-h-[90vh] md:min-h-0 md:h-auto justify-between md:justify-start pt-8 pb-16 md:pt-32 md:pb-16">
+      <div className="relative z-10 container mx-auto px-4 text-center flex flex-col min-h-[90vh] md:min-h-0 md:h-auto justify-end pt-8 pb-16 md:pt-32 md:pb-16">
         {/* Title Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-5xl mx-auto"
+          className="max-w-5xl mx-auto mt-auto"
         >
           {/* Main H1 - Optimized for SEO */}
           {/* Mobile: Short title */}
-            <h1 className="md:hidden text-4xl font-heading font-bold text-white leading-tight">
-              {mainHeroTitle}
-            </h1>
-            {brandHeroTitle && (
-              <h1 className="md:hidden text-lg font-heading font-bold text-[#ece97f] uppercase tracking-[0.6em] mt-2">
-                {brandHeroTitle}
+            <div className={`md:hidden transition-all duration-500 ${mobileVisibilityClasses}`}>
+              <h1
+                className="text-4xl font-heading font-bold text-white leading-tight"
+                style={{ textShadow: '0 4px 20px rgba(0,0,0,0.6)' }}
+              >
+                {mainHeroTitle}
               </h1>
-            )}
+              {brandHeroTitle && (
+                <p className="text-lg font-semibold text-[#ece97f] tracking-[0.15em] uppercase mt-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                  {brandHeroTitle}
+                </p>
+              )}
+           </div>
 
-            {/* Mobile Sound Toggle */}
-            <div className="md:hidden flex justify-center mt-6 mb-8">
-              <button
-                onClick={toggleMute}
-                className="w-16 h-16 rounded-full bg-[rgba(22,50,55,0.85)] border-2 border-white/80 shadow-2xl backdrop-blur-md hover:bg-[rgba(22,50,55,0.95)] flex items-center justify-center transition-all duration-300"
-                aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-              >
-                {isMuted ? (
-                  <VolumeX className="w-7 h-7 text-white" />
-                ) : (
-                  <Volume2 className="w-7 h-7 text-white" />
-                )}
-              </button>
-            </div>
+      {/* Desktop: Full SEO title */}
+      <h1
+        className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 leading-[1.6] lg:leading-[3.2rem]"
+        style={{ textShadow: '0 6px 35px rgba(0,0,0,0.65)' }}
+      >
+        {mainHeroTitle}
+        {brandHeroTitle && (
+          <span className="block text-base font-bold text-[#ece97f] tracking-[0.3em] mt-2">
+            {brandHeroTitle}
+          </span>
+        )}
+      </h1>
 
-          {/* Desktop: Full SEO title */}
-          <h1 className="hidden md:block text-5xl lg:text-6xl font-heading font-bold text-white mb-12 drop-shadow-2xl leading-[1.6] lg:leading-[3.2rem]">
-            {mainHeroTitle}
-            {brandHeroTitle && (
-              <span className="block text-lg font-heading font-bold text-[#ece97f] uppercase tracking-[0.5em] mt-2">
-                {brandHeroTitle}
-              </span>
-            )}
-          </h1>
-
-          {/* Desktop: Tagline and Button here */}
-          <div className="hidden md:block">
-            <p className="text-lg md:text-xl text-[#ece97f] mb-12 font-semibold drop-shadow-lg">
-              {t('landing.hero.tagline')}
-            </p>
-
-            <div className="flex justify-center">
-              <button
-                onClick={scrollToBooking}
-                className="px-8 py-4 bg-[#163237] text-white text-lg font-semibold rounded-lg hover:bg-[#0f2328] transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
-              >
-                {t('landing.hero.bookNow')}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Mobile CTA anchored to the bottom */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="md:hidden max-w-5xl mx-auto space-y-6 mt-auto"
-        >
-          <p className="text-lg text-[#ece97f] font-semibold drop-shadow-lg">
-            {t('landing.hero.tagline')}
-          </p>
-
-          <div className="flex justify-center">
-            <button
-              onClick={scrollToBooking}
-              className="px-8 py-4 bg-[#163237] text-white text-lg font-semibold rounded-lg hover:bg-[#0f2328] transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
-            >
-              {t('landing.hero.bookNow')}
-            </button>
-          </div>
         </motion.div>
       </div>
     </section>

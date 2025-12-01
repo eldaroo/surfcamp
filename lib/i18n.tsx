@@ -1003,8 +1003,8 @@ const translations = {
         subtitle: "Wake up to ocean views and fall asleep to the sound of waves. Choose the perfect space for your surf adventure."
       },
       activitiesShowcase: {
-        title: "Santa Teresa Surf & Wellness Activities",
-        subtitle: "Authentic experiences combining surf, yoga, and holistic wellness in Costa Rica",
+        title: "Santa Teresa Surf & Wellness",
+        subtitle: "Some experiences can be booked here; others happen at Zeneidas and can be reserved at reception once you're on-site",
         clickToPlay: "Click to play",
         surfProgram: {
           title: "Santa Teresa Surf Program",

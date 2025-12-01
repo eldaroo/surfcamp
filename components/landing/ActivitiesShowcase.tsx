@@ -124,8 +124,7 @@ export default function ActivitiesShowcase() {
 
                   {/* Content */}
                   <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-3xl">{mobileActivities[currentSlide]?.icon}</span>
+                    <div className="mb-2">
                       <h3 className="text-xl font-bold">
                         {mobileActivities[currentSlide] &&
                           t(`landing.activitiesShowcase.${mobileActivities[currentSlide].key}.title`)}
@@ -218,8 +217,7 @@ export default function ActivitiesShowcase() {
 
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-3xl">{activity.icon}</span>
+                  <div className="mb-2">
                     <h3 className="text-lg font-bold">
                       {t(`landing.activitiesShowcase.${activity.key}.title`)}
                     </h3>
@@ -306,14 +304,9 @@ export default function ActivitiesShowcase() {
 
                 {/* Video Title */}
                 <div className="absolute -bottom-12 left-0 text-white">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">
-                      {activities.find((a) => a.id === activeVideo)?.icon}
-                    </span>
-                    <h3 className="text-2xl font-bold">
-                      {t(`landing.activitiesShowcase.${activities.find((a) => a.id === activeVideo)?.key}.title`)}
-                    </h3>
-                  </div>
+                  <h3 className="text-2xl font-bold">
+                    {t(`landing.activitiesShowcase.${activities.find((a) => a.id === activeVideo)?.key}.title`)}
+                  </h3>
                 </div>
               </motion.div>
             </motion.div>

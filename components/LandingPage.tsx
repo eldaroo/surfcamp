@@ -27,20 +27,26 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
       <Navigation />
 
       {/* Hero Section - Only Mobile */}
-      <div className="lg:hidden">
-        <HeroSection />
-      </div>
+      {!landingSectionsHidden && (
+        <div className="lg:hidden">
+          <HeroSection />
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex flex-col gap-0">
-        {/* Activities Showcase */}
-        <section id="activities" className="order-3 lg:order-1">
-          <ActivitiesShowcase />
-        </section>
+        {!landingSectionsHidden && (
+          <>
+            {/* Activities Showcase */}
+            <section id="activities" className="order-3 lg:order-1">
+              <ActivitiesShowcase />
+            </section>
 
-        <div className="order-1 lg:order-2 -mt-4 lg:-mt-12">
-          <SunDecorator />
-        </div>
+            <div className="order-1 lg:order-2 -mt-4 lg:-mt-12">
+              <SunDecorator />
+            </div>
+          </>
+        )}
 
         {/* Booking Widget (passed as prop) */}
         {bookingWidget && (

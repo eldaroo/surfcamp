@@ -722,45 +722,84 @@ return (
                 </div>
               )}
 
-            {/* Room Cards */}
-            {hasRequestedAvailability && !loadingRooms && roomsToDisplay.length > 0 && (
-              <div className="accommodation-cards-grid mb-6 flex flex-col gap-4" style={{ overflow: 'visible' }}>
-                {roomsToDisplay.map((room) => {
-                  const features = getRoomFeatures(room.roomTypeId);
-                  const isUnavailable = room.availableRooms === 0;
-                  const isSelected = !isUnavailable && selectedRoom?.roomTypeId === room.roomTypeId;
-                  const roomPrice = room.isSharedRoom ? room.pricePerNight * (bookingData.guests || 1) : room.pricePerNight;
-                  const totalPrice = room.isSharedRoom
-                    ? room.pricePerNight * nights * (bookingData.guests || 1)
-                    : room.pricePerNight * nights;
-                  const roomDescriptions = raw<Record<string, { desktop: string; mobile: string }>>('accommodation.roomDescriptions') || {};
-                  const description = roomDescriptions[room.roomTypeId] ?? {
-                    desktop: room.roomTypeName,
-                    mobile: room.roomTypeName
-                  };
-
-                  return (
-                    <div key={room.roomTypeId} className="mb-2 md:mb-0">
-                      <AccommodationCard
-                        room={room}
-                        isSelected={isSelected}
-                        isUnavailable={isUnavailable}
-                        nights={nights}
-                        guests={bookingData.guests || 1}
-                        roomPrice={roomPrice}
-                        totalPrice={totalPrice}
-                        features={features}
-                        description={description}
-                        locale={locale}
-                        onSelect={() => handleRoomSelect(room)}
-                        getFeatureChipStyle={getFeatureChipStyle}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
+            {/* Room Cards */}
+
+            {hasRequestedAvailability && !loadingRooms && roomsToDisplay.length > 0 && (
+
+              <div className="accommodation-cards-grid mb-6 flex flex-col gap-4" style={{ overflow: 'visible' }}>
+
+                {roomsToDisplay.map((room) => {
+
+                  const features = getRoomFeatures(room.roomTypeId);
+
+                  const isUnavailable = room.availableRooms === 0;
+
+                  const isSelected = !isUnavailable && selectedRoom?.roomTypeId === room.roomTypeId;
+
+                  const roomPrice = room.isSharedRoom ? room.pricePerNight * (bookingData.guests || 1) : room.pricePerNight;
+
+                  const totalPrice = room.isSharedRoom
+
+                    ? room.pricePerNight * nights * (bookingData.guests || 1)
+
+                    : room.pricePerNight * nights;
+
+                  const roomDescriptions = raw<Record<string, { desktop: string; mobile: string }>>('accommodation.roomDescriptions') || {};
+
+                  const description = roomDescriptions[room.roomTypeId] ?? {
+
+                    desktop: room.roomTypeName,
+
+                    mobile: room.roomTypeName
+
+                  };
+
+
+
+                  return (
+
+                    <div key={room.roomTypeId} className="mb-2 md:mb-0">
+
+                      <AccommodationCard
+
+                        room={room}
+
+                        isSelected={isSelected}
+
+                        isUnavailable={isUnavailable}
+
+                        nights={nights}
+
+                        guests={bookingData.guests || 1}
+
+                        roomPrice={roomPrice}
+
+                        totalPrice={totalPrice}
+
+                        features={features}
+
+                        description={description}
+
+                        locale={locale}
+
+                        onSelect={() => handleRoomSelect(room)}
+
+                        getFeatureChipStyle={getFeatureChipStyle}
+
+                      />
+
+                    </div>
+
+                  );
+
+                })}
+
+              </div>
+
+            )}
+
+
+
             {/* No rooms available */}
               {hasRequestedAvailability && !loadingRooms && (!availableRooms || availableRooms.length === 0) && checkInDate && checkOutDate && (
                 <div className="text-center py-8 bg-[white]/70 backdrop-blur-md rounded-3xl p-8 border border-[white]/50 shadow-xl">
