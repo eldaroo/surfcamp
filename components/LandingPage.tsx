@@ -38,7 +38,7 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
         {!landingSectionsHidden && (
           <>
             {/* Activities Showcase */}
-            <section id="activities" className="order-3 lg:order-4">
+            <section id="activities" className="order-3 lg:hidden">
               <ActivitiesShowcase />
             </section>
 

@@ -125,6 +125,26 @@ const ActivitiesPage = () => {
   const heroMainTitle = heroMainTitleRaw?.trim() || heroTitle;
   const heroBrandTitle = heroBrandTitleRaw?.trim();
   const heroSubtitle = t("landing.hero.subtitle");
+  const landingActivities = useMemo(
+    () => [
+      { id: "surf", key: "surfProgram", video: "/assets/Reel 1.mp4", icon: "🏄‍♂️" },
+      { id: "yoga", key: "yoga", video: "/assets/videos/Videos%20de%20Actividades/Yoga.mp4", icon: "🧘" },
+      { id: "iceBath", key: "iceBath", video: "/assets/videos/Videos%20de%20Actividades/Hielo.mp4", icon: "❄️" },
+      { id: "breathwork", key: "breathwork", video: "/assets/videos/Videos%20de%20Actividades/Respiraciones.mp4", icon: "🌬️" },
+      { id: "clay", key: "creativeArts", video: "/assets/videos/Videos%20de%20Actividades/Ceramica.mp4", icon: "🎨" },
+    ],
+    []
+  );
+  const [landingVideoId, setLandingVideoId] = useState<string | null>(null);
+  const [landingCarouselIndex, setLandingCarouselIndex] = useState(0);
+  const visibleLandingActivities = useMemo(
+    () =>
+      Array.from({ length: 3 }, (_, i) => {
+        const idx = (landingCarouselIndex + i) % landingActivities.length;
+        return landingActivities[idx];
+      }),
+    [landingActivities, landingCarouselIndex]
+  );
 
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
@@ -811,6 +831,107 @@ const ActivitiesPage = () => {
               </span>
             )}
           </h1>
+        </div>
+        {/* Desktop activities carousel */}
+        <div className="hidden lg:block mb-6">
+          <div className="relative">
+            <button
+              onClick={() =>
+                setLandingCarouselIndex(
+                  (prev) => (prev - 1 + landingActivities.length) % landingActivities.length
+                )
+              }
+              className="absolute -left-4 xl:-left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Previous activity"
+            >
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() =>
+                setLandingCarouselIndex((prev) => (prev + 1) % landingActivities.length)
+              }
+              className="absolute -right-4 xl:-right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Next activity"
+            >
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            <div className="grid grid-cols-3 gap-4 xl:gap-5 max-w-5xl xl:max-w-6xl mx-auto">
+              {visibleLandingActivities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="group relative cursor-pointer overflow-hidden rounded-2xl shadow-lg border border-white/30 bg-black"
+                  onClick={() => setLandingVideoId(activity.id)}
+                >
+                  <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  >
+                    <source src={activity.video} type="video/mp4" />
+                  </video>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="relative p-4 text-white h-[220px] flex flex-col justify-end">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl" aria-hidden="true">{activity.icon}</span>
+                      <h3 className="text-lg font-bold">
+                        {t(`landing.activitiesShowcase.${activity.key}.title`)}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-200 leading-snug line-clamp-2">
+                      {t(`landing.activitiesShowcase.${activity.key}.description`)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {landingVideoId && (
+              <div
+              className="absolute inset-0 z-20 bg-black/70 backdrop-blur-sm flex items-center justify-center px-8 py-8"
+              onClick={() => setLandingVideoId(null)}
+            >
+              <div
+                  className="relative w-full max-w-[308px] rounded-xl bg-black/60 border border-white/15 shadow-2xl p-2.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => setLandingVideoId(null)}
+                    className="absolute -top-10 right-1 text-white/90 hover:text-white transition-colors"
+                    aria-label="Close video"
+                  >
+                    <svg
+                      className="w-7 h-7"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+                  <div className="relative aspect-[9/16] overflow-hidden rounded-lg border border-white/10 bg-black w-[90%] mx-auto">
+                    <video
+                      key={landingVideoId}
+                      autoPlay
+                      controls
+                      className="absolute inset-0 w-full h-full object-cover"
+                    >
+                  <source
+                    src={landingActivities.find((a) => a.id === landingVideoId)?.video}
+                    type="video/mp4"
+                  />
+                    </video>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <HeaderPersonalization
         name={personalizationName}

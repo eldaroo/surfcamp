@@ -13,21 +13,21 @@ const activities = [
   },
   {
     id: 2,
-    key: 'breathwork',
-    video: '/assets/videos/Videos%20de%20Actividades/Respiraciones.mp4',
-    icon: '🌬️',
-  },
-  {
-    id: 3,
     key: 'yoga',
     video: '/assets/videos/Videos%20de%20Actividades/Yoga.mp4',
     icon: '🧘',
   },
   {
-    id: 4,
+    id: 3,
     key: 'iceBath',
     video: '/assets/videos/Videos%20de%20Actividades/Hielo.mp4',
     icon: '❄️',
+  },
+  {
+    id: 4,
+    key: 'breathwork',
+    video: '/assets/videos/Videos%20de%20Actividades/Respiraciones.mp4',
+    icon: '🌬️',
   },
   {
     id: 5,
@@ -41,6 +41,7 @@ export default function ActivitiesShowcase() {
   const { t, locale } = useI18n();
   const [activeVideo, setActiveVideo] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [desktopIndex, setDesktopIndex] = useState(0);
   const mobileActivities = useMemo(() => {
     const reordered = [...activities];
     const surfIndex = reordered.findIndex((activity) => activity.key === 'surfProgram');
@@ -75,26 +76,39 @@ export default function ActivitiesShowcase() {
     setCurrentSlide(index);
   };
 
-  const desktopTitle =
-    (locale as 'es' | 'en') === 'es'
-      ? 'Experiencias que podés vivir acá.'
-      : 'Experiences you can live here.';
-  const desktopSubtitle =
-    (locale as 'es' | 'en') === 'es'
-      ? 'Explora nuestras actividades en video y sentí el ambiente: olas, movimiento, respiración, creatividad y descanso.'
-      : 'Explore our activities on video and feel the vibe: waves, movement, breath, creativity, and rest.';
+  const desktopActivities = activities;
+  const visibleDesktopCount = 3;
+  const desktopVisible = useMemo(
+    () =>
+      Array.from({ length: visibleDesktopCount }, (_, i) =>
+        desktopActivities[(desktopIndex + i) % desktopActivities.length]
+      ),
+    [desktopActivities, desktopIndex]
+  );
+  const handleDesktopNext = () =>
+    setDesktopIndex((prev) => (prev + 1) % desktopActivities.length);
+  const handleDesktopPrev = () =>
+    setDesktopIndex((prev) =>
+      (prev - 1 + desktopActivities.length) % desktopActivities.length
+    );
+
+  const heroTitleRaw = t('landing.hero.title') || '';
+  const [heroMainTitle, heroBrandTitleRaw] = heroTitleRaw.split('\n');
+  const heroBrandTitle = heroBrandTitleRaw?.trim();
 
   return (
     <section className="py-12 bg-gradient-to-b from-white to-gray-50">
       <div className="container mx-auto px-4">
         {/* Hero Title - Only Desktop */}
-        <div className="hidden lg:block text-center mb-5 xl:mb-6 2xl:mb-8 pt-1 xl:pt-2 2xl:pt-4">
-          <h1 className="text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl font-heading font-bold text-gray-900 mb-5 xl:mb-6 2xl:mb-8 leading-[3.8] xl:leading-[3.2rem] 2xl:leading-[4.2rem] whitespace-pre-line">
-            {desktopTitle}
+        <div className="hidden lg:block text-center mb-8 xl:mb-10 2xl:mb-12 pt-1 xl:pt-2 2xl:pt-4">
+          <h1 className="text-4xl xl:text-5xl 2xl:text-6xl font-heading font-bold text-gray-900 leading-tight">
+            {heroMainTitle}
+            {heroBrandTitle && (
+              <span className="block text-sm xl:text-base 2xl:text-lg font-semibold tracking-[0.22em] text-[#997146] mt-2 uppercase">
+                {heroBrandTitle}
+              </span>
+            )}
           </h1>
-          <p className="text-base lg:text-base xl:text-lg 2xl:text-xl text-[#997146] mb-6 xl:mb-8 2xl:mb-12 font-semibold max-w-2xl xl:max-w-3xl 2xl:max-w-4xl mx-auto">
-            {desktopSubtitle}
-          </p>
         </div>
 
         {/* Section Header - Only Mobile */}
@@ -205,65 +219,87 @@ export default function ActivitiesShowcase() {
           </div>
         </div>
 
-        {/* Desktop Grid */}
-        <div className="hidden lg:grid lg:grid-cols-4 gap-4 xl:gap-5 2xl:gap-6 max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
-          {activities.map((activity) => (
-            <motion.div
-              key={activity.id}
-              className="group relative cursor-pointer"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.3 }}
-              onClick={() => openVideo(activity.id)}
+        {/* Desktop Carousel */}
+        <div className="hidden lg:block max-w-6xl xl:max-w-7xl mx-auto">
+          <div className="relative">
+            <button
+              onClick={handleDesktopPrev}
+              className="absolute -left-4 xl:-left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Previous activity"
             >
-              <div className="relative aspect-[9/16] rounded-xl overflow-hidden shadow-lg">
-                {/* Video */}
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                >
-                  <source src={activity.video} type="video/mp4" />
-                </video>
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={handleDesktopNext}
+              className="absolute -right-4 xl:-right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              aria-label="Next activity"
+            >
+              <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
 
-                {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-all duration-300" />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={desktopIndex}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.3 }}
+                className="grid grid-cols-3 gap-5 xl:gap-6"
+              >
+                {desktopVisible.map((activity) => (
+                  <motion.div
+                    key={activity.id}
+                    className="group relative cursor-pointer"
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.25 }}
+                    onClick={() => openVideo(activity.id)}
+                  >
+                    <div className="relative aspect-[9/16] rounded-2xl overflow-hidden shadow-lg">
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover"
+                      >
+                        <source src={activity.video} type="video/mp4" />
+                      </video>
 
-                {/* Content */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                  <div className="mb-2">
-                    <h3 className="text-lg font-bold">
-                      {t(`landing.activitiesShowcase.${activity.key}.title`)}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-gray-200 leading-snug line-clamp-2">
-                    {t(`landing.activitiesShowcase.${activity.key}.description`)}
-                  </p>
-                </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent group-hover:from-black/90 transition-all duration-300" />
 
-                {/* Play Icon Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-white ml-1"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="text-xl" aria-hidden="true">{activity.icon}</span>
+                          <h3 className="text-lg font-bold">
+                            {t(`landing.activitiesShowcase.${activity.key}.title`)}
+                          </h3>
+                        </div>
+                        <p className="text-sm text-gray-200 leading-snug line-clamp-2">
+                          {t(`landing.activitiesShowcase.${activity.key}.description`)}
+                        </p>
+                      </div>
 
-                {/* Click to Play Label */}
-                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <span className="text-white text-xs font-semibold">
-                    {t('landing.activitiesShowcase.clickToPlay')}
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="w-16 h-16 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-white ml-1"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Video Modal */}
