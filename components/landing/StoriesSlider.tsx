@@ -173,8 +173,8 @@ export default function StoriesSlider() {
               onClick={() => goToSlide(index)}
               className={`transition-all duration-300 ${
                 index === currentIndex
-                  ? 'w-8 h-2 bg-[#ece97f] rounded-full'
-                  : 'w-2 h-2 bg-white/30 rounded-full hover:bg-white/50'
+                  ? 'w-2.5 h-1 bg-[#ece97f] rounded-full'
+                  : 'w-1.5 h-1.5 bg-white/30 rounded-full hover:bg-white/50'
               }`}
               aria-label={`Go to review ${index + 1}`}
             />

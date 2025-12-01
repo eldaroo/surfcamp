@@ -370,8 +370,8 @@ export default function AccommodationsShowcase() {
                         onClick={() => setModalImageIndex(index)}
                         className={`transition-all duration-300 ${
                           index === modalImageIndex
-                            ? 'w-8 h-2 bg-white rounded-full'
-                            : 'w-2 h-2 bg-white/50 hover:bg-white/75 rounded-full'
+                            ? 'w-2.5 h-1 bg-white rounded-full'
+                            : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/75 rounded-full'
                         }`}
                         aria-label={`Go to image ${index + 1}`}
                       />
