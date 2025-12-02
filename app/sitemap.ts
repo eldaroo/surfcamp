@@ -34,6 +34,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: "weekly",
         priority: 0.9,
+        alternates: {
+          languages: {
+            en: `${base}/en${page}`,
+            es: `${base}/es${page}`,
+          },
+        },
       });
     }
   }
@@ -46,6 +52,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: "weekly",
         priority: 0.8,
+        alternates: {
+          languages: {
+            en: `${base}/en/blog/${slug}`,
+            es: `${base}/es/blog/${slug}`,
+          },
+        },
       });
     }
   }

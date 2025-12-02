@@ -41,7 +41,7 @@ const SURF_PROGRAMS = {
     id: 'fundamental',
     name: { es: 'Core Surf Program', en: 'Core Surf Program' },
     tagline: {
-      es: 'Inicio rÃ¡pido, base sÃ³lida, coaching personalizado',
+      es: 'Inicio rápido, base sólida, coaching personalizado',
       en: 'Fast start, strong foundation, personalized coaching'
     },
     price: 450,
@@ -49,10 +49,10 @@ const SURF_PROGRAMS = {
     includes: {
       es: [
         '4 sesiones de surf',
-        '2 sesiones de videoanÃ¡lisis',
+        '2 sesiones de videoanálisis',
         'Equipo (tabla + lycra)',
-        'TeorÃ­a del surf',
-        'SesiÃ³n de fotos',
+        'Teoría del surf',
+        'Sesión de fotos',
         'Plan de continuidad'
       ],
       en: [
@@ -66,13 +66,13 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'TÃ©cnica & biomecÃ¡nica: Fundamentos esenciales adaptados a tu nivel â€” remada, pop-up, postura y transiciones',
-        'Mentalidad & confianza: Desarrollo acelerado desde seguridad bÃ¡sica hasta lectura de olas complejas',
-        'NutriciÃ³n & recuperaciÃ³n: Estrategias de alimentaciÃ³n e hidrataciÃ³n para mantener energÃ­a en 4 dÃ­as',
-        'Feedback visual: AnÃ¡lisis de video en momentos clave para ajustar enfoque y maximizar resultados'
+        'Técnica & biomecánica: Fundamentos esenciales adaptados a tu nivel — remada, pop-up, postura y transiciones',
+        'Mentalidad & confianza: Desarrollo acelerado desde seguridad básica hasta lectura de olas complejas',
+        'Nutrición & recuperación: Estrategias de alimentación e hidratación para mantener energía en 4 días',
+        'Feedback visual: Análisis de video en momentos clave para ajustar enfoque y maximizar resultados'
       ],
       en: [
-        'Technique & biomechanics: Essential fundamentals adapted to your level â€” paddling, pop-up, stance, and transitions',
+        'Technique & biomechanics: Essential fundamentals adapted to your level — paddling, pop-up, stance, and transitions',
         'Mindset & confidence: Accelerated development from basic safety to complex wave reading',
         'Nutrition & recovery: Fueling and hydration strategies to maintain energy over 4 days',
         'Visual feedback: Video analysis at key moments to adjust focus and maximize results'
@@ -83,7 +83,7 @@ const SURF_PROGRAMS = {
     id: 'progressionPlus',
     name: { es: 'Intensive Surf Program', en: 'Intensive Surf Program' },
     tagline: {
-      es: 'Progreso consistente mediante repeticiÃ³n, coaching y feedback',
+      es: 'Progreso consistente mediante repetición, coaching y feedback',
       en: 'Consistent progress through repetition, coaching and feedback'
     },
     price: 650,
@@ -91,12 +91,12 @@ const SURF_PROGRAMS = {
     includes: {
       es: [
         '6 sesiones de surf',
-        '4 sesiones de videoanÃ¡lisis',
+        '4 sesiones de videoanálisis',
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
-        'TeorÃ­a del surf',
-        '1 sesiÃ³n de fotos',
-        'Plan de prÃ¡ctica final'
+        'Teoría del surf',
+        '1 sesión de fotos',
+        'Plan de práctica final'
       ],
       en: [
         '6 surf sessions',
@@ -110,10 +110,10 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'TÃ©cnica & biomecÃ¡nica: Refinamiento de patrones de movimiento especÃ­ficos, desde fundamentos hasta maniobras intermedias',
-        'Mentalidad & confianza: Desarrollo de intuiciÃ³n y toma de decisiones en condiciones variadas',
-        'NutriciÃ³n & recuperaciÃ³n: PlanificaciÃ³n nutricional personalizada para optimizar cada sesiÃ³n',
-        'Feedback visual: MÃºltiples anÃ¡lisis de video mÃ¡s plan personalizado post-campamento'
+        'Técnica & biomecánica: Refinamiento de patrones de movimiento específicos, desde fundamentos hasta maniobras intermedias',
+        'Mentalidad & confianza: Desarrollo de intuición y toma de decisiones en condiciones variadas',
+        'Nutrición & recuperación: Planificación nutricional personalizada para optimizar cada sesión',
+        'Feedback visual: Múltiples análisis de video más plan personalizado post-campamento'
       ],
       en: [
         'Technique & biomechanics: Refinement of specific movement patterns, from fundamentals to intermediate maneuvers',
@@ -127,7 +127,7 @@ const SURF_PROGRAMS = {
     id: 'highPerformance',
     name: { es: 'Elite Surf Program', en: 'Elite Surf Program' },
     tagline: {
-      es: 'TransformaciÃ³n tÃ©cnica profunda y anÃ¡lisis de alta calidad',
+      es: 'Transformación técnica profunda y análisis de alta calidad',
       en: 'Deep technical transformation and high-quality analysis'
     },
     price: 910,
@@ -135,12 +135,12 @@ const SURF_PROGRAMS = {
     includes: {
       es: [
         '8 sesiones de surf',
-        '5 sesiones de videoanÃ¡lisis avanzado',
+        '5 sesiones de videoanálisis avanzado',
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
-        'TeorÃ­a del surf',
-        'SesiÃ³n de fotos + drone',
-        'RevisiÃ³n final extendida'
+        'Teoría del surf',
+        'Sesión de fotos + drone',
+        'Revisión final extendida'
       ],
       en: [
         '8 surf sessions',
@@ -154,10 +154,10 @@ const SURF_PROGRAMS = {
     },
     sessionWork: {
       es: [
-        'TÃ©cnica & biomecÃ¡nica: AnÃ¡lisis biomecÃ¡nico profundo para crear cambios duraderos en tus patrones especÃ­ficos',
-        'Mentalidad & confianza: Desarrollo de resiliencia, adaptabilidad y flow state en tu zona Ã³ptima',
-        'NutriciÃ³n & recuperaciÃ³n: Protocolos deportivos completos con periodizaciÃ³n y estrategias personalizadas',
-        'Feedback visual: AnÃ¡lisis exhaustivo con drone y fotografÃ­a, mÃ¡s plan detallado de continuidad'
+        'Técnica & biomecánica: Análisis biomecánico profundo para crear cambios duraderos en tus patrones específicos',
+        'Mentalidad & confianza: Desarrollo de resiliencia, adaptabilidad y flow state en tu zona óptima',
+        'Nutrición & recuperación: Protocolos deportivos completos con periodización y estrategias personalizadas',
+        'Feedback visual: Análisis exhaustivo con drone y fotografía, más plan detallado de continuidad'
       ],
       en: [
         'Technique & biomechanics: Deep biomechanical analysis to create lasting changes in your specific patterns',
@@ -252,7 +252,7 @@ const localeCopy = {
     class: "clase",
     classes: "clases",
     total: "Total",
-    packOffer: "ObtÃ©n el pack de 10 clases por $80 (ahorra $20)",
+    packOffer: "Obtén el pack de 10 clases por $80 (ahorra $20)",
     selectPack: "Seleccionar Pack de 10",
     packSelected: "Pack de 10 Clases Seleccionado",
     regularPrice: "Precio regular",
@@ -291,12 +291,12 @@ const marketingContent = {
       en: "4.9",
     },
     reviews: {
-      es: "120 reseÃ±as",
+      es: "120 reseñas",
       en: "120 reviews",
     },
     trust: {
-      es: "Confiado por viajeros de mÃ¡s de 15 paÃ­ses",
-      en: "Trusted by travelers from 15+ countries",
+      es: "Confiado por viajeros de más de 45 países",
+      en: "Trusted by travelers from 45+ countries",
     },
   },
   yoga: {
@@ -305,7 +305,7 @@ const marketingContent = {
       en: "4.8",
     },
     reviews: {
-      es: "95 reseÃ±as",
+      es: "95 reseñas",
       en: "95 reviews",
     },
     trust: {
@@ -319,11 +319,11 @@ const marketingContent = {
       en: "5.0",
     },
     reviews: {
-      es: "48 reseÃ±as",
+      es: "48 reseñas",
       en: "48 reviews",
     },
     trust: {
-      es: "Protocolo profesional de recuperaciÃ³n 1:1",
+      es: "Protocolo profesional de recuperación 1:1",
       en: "Professional 1:1 recovery protocol",
     },
   },
@@ -333,7 +333,7 @@ const marketingContent = {
       en: "4.9",
     },
     reviews: {
-      es: "200+ reseÃ±as",
+      es: "200+ reseñas",
       en: "200+ reviews",
     },
     trust: {
@@ -347,11 +347,11 @@ const marketingContent = {
       en: "5.0",
     },
     reviews: {
-      es: "80 reseÃ±as",
+      es: "80 reseñas",
       en: "80 reviews",
     },
     trust: {
-      es: "AtenciÃ³n personalizada 7 dÃ­as de la semana",
+      es: "Atención personalizada 7 días de la semana",
       en: "Personalized attention 7 days a week",
     },
   },
@@ -366,9 +366,9 @@ const sellingPointsContent = {
   surf: {
     es: [
       "Coaches certificados de alto rendimiento",
-      "Video anÃ¡lisis + feedback personalizado",
+      "Video análisis + feedback personalizado",
       "Equipo completo incluido",
-      "Horarios segÃºn mareas y condiciones",
+      "Horarios según mareas y condiciones",
     ],
     en: [
       "Certified high-performance coaches",
@@ -383,27 +383,27 @@ const testimonialsContent = {
   surf: {
     es: [
       {
-        text: "Las clases de surf fueron exactamente lo que necesitaba. Cambiaron mi forma de pensar y me ayudaron a encontrar calma en el ocÃ©ano.",
+        text: "Las clases de surf fueron exactamente lo que necesitaba. Cambiaron mi forma de pensar y me ayudaron a encontrar calma en el océano.",
         author: "Catherine Cormier",
-        country: "CanadÃ¡"
+        country: "Canadá"
       },
       {
-        text: "A travÃ©s de las sesiones de surf aprendÃ­ a superar mis lÃ­mites, respirar y encontrar paz en las olas.",
+        text: "A través de las sesiones de surf aprendí a superar mis límites, respirar y encontrar paz en las olas.",
         author: "Taryne Evans",
-        country: "SudÃ¡frica"
+        country: "Sudáfrica"
       },
       {
-        text: "Las clases de surf fueron increÃ­bles. Lo que antes parecÃ­a imposible se volviÃ³ realidad con solo unos pasos y grandes instructores.",
+        text: "Las clases de surf fueron increíbles. Lo que antes parecía imposible se volvió realidad con solo unos pasos y grandes instructores.",
         author: "Marcelo",
         country: "Argentina"
       },
       {
-        text: "Cada sesiÃ³n de surf me trajo una sensaciÃ³n de conexiÃ³n con el mar y conmigo misma.",
-        author: "LujÃ¡n SÃ¡nchez",
+        text: "Cada sesión de surf me trajo una sensación de conexión con el mar y conmigo misma.",
+        author: "Luján Sánchez",
         country: "Argentina"
       },
       {
-        text: "En las olas aprendÃ­ a soltar, confiar en el ocÃ©ano y abrir mi corazÃ³n nuevamente.",
+        text: "En las olas aprendí a soltar, confiar en el océano y abrir mi corazón nuevamente.",
         author: "Eilin Annika Orgland",
         country: "Suiza"
       }
@@ -426,7 +426,7 @@ const testimonialsContent = {
       },
       {
         text: "Each surf session brought a feeling of connection with the sea and with myself.",
-        author: "LujÃ¡n SÃ¡nchez",
+        author: "Luján Sánchez",
         country: "Argentina"
       },
       {
@@ -477,10 +477,10 @@ const descriptiveContent = {
   },
   yoga: {
     es: {
-      description: "Sesiones de yoga para comenzar el dÃ­a con energÃ­a y equilibrio.",
+      description: "Sesiones de yoga para comenzar el día con energía y equilibrio.",
       features: [
         { icon: Timer, text: "60 minutos" },
-        { icon: Users, text: "Grupos pequeÃ±os" },
+        { icon: Users, text: "Grupos pequeños" },
         { icon: Waves, text: "Todos los niveles" },
       ],
     },
@@ -495,11 +495,11 @@ const descriptiveContent = {
   },
   ice_bath: {
     es: {
-      description: "SesiÃ³n de terapia de frÃ­o 1:1 para regeneraciÃ³n completa. Incluye tÃ©cnicas de movimiento y respiraciÃ³n para mÃ¡xima recuperaciÃ³n.",
+      description: "Sesión de terapia de frío 1:1 para regeneración completa. Incluye técnicas de movimiento y respiración para máxima recuperación.",
       features: [
         { icon: Snowflake, text: "45 minutos" },
-        { icon: User, text: "SesiÃ³n privada" },
-        { icon: Wind, text: "RecuperaciÃ³n post-surf" },
+        { icon: User, text: "Sesión privada" },
+        { icon: Wind, text: "Recuperación post-surf" },
       ],
     },
     en: {
@@ -513,9 +513,9 @@ const descriptiveContent = {
   },
   transport: {
     es: {
-      description: "Traslados seguros y cÃ³modos con conductores certificados. Servicio puerta a puerta con seguimiento en tiempo real.",
+      description: "Traslados seguros y cómodos con conductores certificados. Servicio puerta a puerta con seguimiento en tiempo real.",
       features: [
-        { icon: Car, text: "VehÃ­culos AC + WiFi" },
+        { icon: Car, text: "Vehículos AC + WiFi" },
         { icon: Shield, text: "Seguro completo" },
         { icon: MapPin, text: "Tracking en vivo" },
       ],
@@ -531,9 +531,9 @@ const descriptiveContent = {
   },
   hosting: {
     es: {
-      description: "AtenciÃ³n personalizada con concierge local dedicado. Planificamos tu experiencia completa segÃºn tus preferencias.",
+      description: "Atención personalizada con concierge local dedicado. Planificamos tu experiencia completa según tus preferencias.",
       features: [
-        { icon: HeadphonesIcon, text: "Disponible 7 dÃ­as" },
+        { icon: HeadphonesIcon, text: "Disponible 7 días" },
         { icon: Star, text: "Reservas prioritarias" },
         { icon: Clock, text: "Soporte 24/7" },
       ],
@@ -876,7 +876,7 @@ const ActivityCard = ({
     if (onYogaClassesChange) {
       onYogaClassesChange(newClasses);
       setHasInteracted(true);
-      // Si estÃ¡ en 10 y tenÃ­a el descuento, quitarlo al cambiar manualmente
+      // Si está en 10 y tenía el descuento, quitarlo al cambiar manualmente
       if (yogaUsePackDiscount && newClasses !== 10 && onYogaPackDiscountChange) {
         onYogaPackDiscountChange(false);
       }
@@ -1765,7 +1765,7 @@ const ActivityCard = ({
                       </p>
                     </div>
                     {/* Dots */}
-                    <div className="flex items-center justify-center gap-1.5">
+                    <div className="flex items-center justify-center gap-2">
                       {testimonials.map((_, idx) => (
                         <button
                           key={idx}
@@ -1774,10 +1774,10 @@ const ActivityCard = ({
                             e.stopPropagation();
                             setCurrentTestimonialIndex(idx);
                           }}
-                          className={`h-1.5 rounded-full transition-all ${
+                          className={`h-2 rounded-full transition-all ${
                             idx === currentTestimonialIndex
-                              ? "bg-amber-400 w-4"
-                              : "bg-gray-400 w-1.5 hover:bg-gray-500"
+                              ? "bg-amber-400 w-6"
+                              : "bg-gray-400 w-2 hover:bg-gray-500"
                           }`}
                           aria-label={`Go to testimonial ${idx + 1}`}
                         />

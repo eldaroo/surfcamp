@@ -878,12 +878,9 @@ const ActivitiesPage = () => {
                   </video>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="relative p-4 text-white h-[220px] flex flex-col justify-end">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xl" aria-hidden="true">{activity.icon}</span>
-                      <h3 className="text-lg font-bold">
-                        {t(`landing.activitiesShowcase.${activity.key}.title`)}
-                      </h3>
-                    </div>
+                        <h3 className="text-lg font-bold mb-2">
+                          {t(`landing.activitiesShowcase.${activity.key}.title`)}
+                        </h3>
                     <p className="text-sm text-gray-200 leading-snug line-clamp-2">
                       {t(`landing.activitiesShowcase.${activity.key}.description`)}
                     </p>
@@ -1009,25 +1006,25 @@ const ActivitiesPage = () => {
                               </span>
                             )}
                             {/* Desktop: show activities + price inline */}
-                            <span className="hidden md:inline ml-2 text-sm text-[#6d5f57] font-normal">
+                            <span className="hidden md:inline ml-2 text-base text-[#6d5f57] font-normal">
                               • {participant.selectedActivities.length}{" "}
                               {participant.selectedActivities.length === 1
                                 ? (locale === "es" ? "actividad" : "activity")
                                 : (locale === "es" ? "actividades" : "activities")}
                               {" • "}
-                              <span className="text-[#6d5f57] font-semibold">
+                              <span className="text-[#6d5f57] font-bold text-base">
                                 {formatCurrency(participantTotal)}
                               </span>
                             </span>
                           </h3>
                           {/* Mobile: show activities + price on second line */}
-                          <p className="md:hidden text-xs text-[#6d5f57]">
+                          <p className="md:hidden text-sm text-[#6d5f57]">
                             {participant.selectedActivities.length}{" "}
                             {participant.selectedActivities.length === 1
                               ? (locale === "es" ? "actividad" : "activity")
                               : (locale === "es" ? "actividades" : "activities")}
                             {" • "}
-                            <span className="text-[#6d5f57] font-semibold">
+                            <span className="text-[#6d5f57] font-bold text-sm">
                               {formatCurrency(participantTotal)}
                             </span>
                           </p>

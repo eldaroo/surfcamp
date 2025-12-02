@@ -91,11 +91,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: { locale?: string };
 }) {
+  const lang = params?.locale ?? 'en';
+
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
         <SchemaOrg />
         <div

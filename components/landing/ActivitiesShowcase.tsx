@@ -209,8 +209,8 @@ export default function ActivitiesShowcase() {
                   onClick={() => goToSlide(index)}
                   className={`transition-all duration-300 ${
                     index === currentSlide
-                      ? 'w-1.5 h-0.5 bg-[#163237] rounded-full'
-                      : 'w-1 h-1 bg-gray-300 rounded-full hover:bg-gray-400'
+                      ? 'w-8 h-2.5 bg-[#163237] rounded-full'
+                      : 'w-2.5 h-2.5 bg-gray-300 rounded-full hover:bg-gray-400'
                   }`}
                   aria-label={`Go to activity ${index + 1}`}
                 />

@@ -759,10 +759,10 @@ const priceBreakdown = useMemo(
 
         {/* Two Column Layout - Desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
-          {/* Left Column - Personal Information */}
-          <div className="bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl h-full">
+          {/* Left Column - Personal Information (Desktop Only) */}
+          <div className="hidden lg:block bg-gray-800 border border-gray-700 rounded-2xl p-8 shadow-2xl h-full">
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-2 font-heading">Personal Information</h2>
+            <h2 className="text-xl font-semibold text-white mb-2 font-heading">{t('contact.personalInfo')}</h2>
             <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
           </div>
 
@@ -988,6 +988,142 @@ const priceBreakdown = useMemo(
                   <span className="font-semibold text-white">{t('payment.secure.title')}</span>
                 </div>
                 <p className="text-gray-300 text-sm">{t('payment.secure.description')}</p>
+              </div>
+            </div>
+
+            {/* Personal Information - Mobile Only */}
+            <div className="block lg:hidden">
+              <div className="bg-gray-700/50 rounded-lg p-4 md:p-6 border border-gray-600">
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-white mb-2 font-heading">{t('contact.personalInfo')}</h2>
+                  <div className="w-12 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full"></div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name Fields Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* First Name */}
+                  <div>
+                    <label htmlFor="firstName-mobile" className="block text-sm font-semibold text-gray-300 mb-3">
+                      {t('contact.firstName')}
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName-mobile"
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      placeholder={t('contact.placeholder.firstName')}
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                        errors.firstName ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                      }`}
+                    />
+                    {errors.firstName && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2 text-sm text-red-400"
+                      >
+                        {errors.firstName}
+                      </motion.p>
+                    )}
+                  </div>
+
+                  {/* Last Name */}
+                  <div>
+                    <label htmlFor="lastName-mobile" className="block text-sm font-semibold text-gray-300 mb-3">
+                      {t('contact.lastName')}
+                    </label>
+                    <input
+                      type="text"
+                      id="lastName-mobile"
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      placeholder={t('contact.placeholder.lastName')}
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                        errors.lastName ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                      }`}
+                    />
+                    {errors.lastName && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2 text-sm text-red-400"
+                      >
+                        {errors.lastName}
+                      </motion.p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="email-mobile" className="block text-sm font-semibold text-gray-300 mb-3">
+                    {t('contact.email')}
+                  </label>
+                  <input
+                    type="email"
+                    id="email-mobile"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder={t('contact.placeholder.email')}
+                    className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                      errors.email ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  />
+                  {errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 text-sm text-red-400"
+                    >
+                      {errors.email}
+                    </motion.p>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <PhoneSelector
+                    label={t('contact.phone')}
+                    value={formData.phone}
+                    onChange={(phone, countryCode) => {
+                      handleInputChange('phone', phone);
+                      if (countryCode) {
+                        setFormData(prev => ({ ...prev, nationality: countryCode }));
+                        console.log('🌍 [ContactForm] Country selected:', countryCode);
+                      }
+                    }}
+                    placeholder={t('contact.placeholder.phone')}
+                    error={errors.phone}
+                  />
+                </div>
+
+                {/* DNI */}
+                <div>
+                  <label htmlFor="dni-mobile" className="block text-sm font-semibold text-gray-300 mb-3">
+                    {t('contact.dni')}
+                  </label>
+                  <input
+                    type="text"
+                    id="dni-mobile"
+                    value={formData.dni}
+                    onChange={(e) => handleInputChange('dni', e.target.value)}
+                    placeholder={t('contact.placeholder.dni')}
+                    className={`w-full px-4 py-3 bg-gray-700 border rounded-xl text-white placeholder-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent ${
+                      errors.dni ? 'border-red-500 focus:ring-red-400' : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  />
+                  {errors.dni && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 text-sm text-red-400"
+                    >
+                      {errors.dni}
+                    </motion.p>
+                  )}
+                </div>
+                </form>
               </div>
             </div>
 

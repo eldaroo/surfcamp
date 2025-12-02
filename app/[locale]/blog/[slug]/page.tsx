@@ -10,19 +10,26 @@ import MarkdownContent from '@/components/blog/MarkdownContent';
 interface PageProps {
   params: {
     slug: string;
-    locale: string;
+    locale: 'en' | 'es';
   };
 }
 
 export async function generateStaticParams() {
-  const slugs = getAllPostSlugs();
-  return slugs.map((slug) => ({
-    slug,
-  }));
+  const locales = ['en', 'es'] as const;
+  const params: { locale: string; slug: string }[] = [];
+
+  for (const locale of locales) {
+    const slugs = getAllPostSlugs(locale);
+    slugs.forEach((slug) => {
+      params.push({ locale, slug });
+    });
+  }
+
+  return params;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const post = getPostBySlug(params.slug);
+  const post = getPostBySlug(params.slug, params.locale);
 
   if (!post) {
     return {
@@ -52,7 +59,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default function BlogPostPage({ params }: PageProps) {
-  const post = getPostBySlug(params.slug);
+  const { slug, locale } = params;
+  const post = getPostBySlug(slug, locale);
+
+  const translations = {
+    en: {
+      backToBlog: '← Back to Blog',
+    },
+    es: {
+      backToBlog: '← Volver al Blog',
+    },
+  };
+
+  const t = translations[locale];
 
   if (!post) {
     notFound();
@@ -206,7 +225,7 @@ export default function BlogPostPage({ params }: PageProps) {
             {/* Back to Blog */}
             <div className="text-center">
               <Link
-                href="/en/blog"
+                href={`/${locale}/blog`}
                 className="inline-flex items-center gap-2 text-[#163237] hover:text-[#997146] font-semibold transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +236,7 @@ export default function BlogPostPage({ params }: PageProps) {
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                <span>Back to Blog</span>
+                <span>{t.backToBlog}</span>
               </Link>
             </div>
           </div>

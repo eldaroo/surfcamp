@@ -935,10 +935,10 @@ export default function PaymentSection() {
           {error && (
             <div className="bg-white/10 border border-white/20 rounded-lg p-4">
               <div className="flex items-center space-x-2">
-                <span className="text-red-400">⚠️</span>
+                <span className="text-amber-300">⚠️</span>
                 <span className="font-semibold text-white">{t('common.error')}</span>
               </div>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <p className="text-amber-200 text-sm mt-1">{error}</p>
             </div>
           )}
         </div>

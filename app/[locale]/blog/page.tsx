@@ -14,8 +14,38 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BlogPage() {
-  const posts = getAllPosts();
+interface BlogPageProps {
+  params: {
+    locale: 'en' | 'es';
+  };
+}
+
+export default function BlogPage({ params }: BlogPageProps) {
+  const { locale } = params;
+  const posts = getAllPosts(locale);
+
+  const translations = {
+    en: {
+      title: 'Surf, Yoga & Wellness Blog',
+      subtitle: 'Expert guides, tips, and stories from Santa Teresa, Costa Rica. Learn about surfing, yoga, breathwork, ice baths, and transformative wellness experiences.',
+      noPosts: 'No blog posts available yet. Check back soon!',
+      readMore: 'Read more',
+      ctaTitle: 'Ready to Experience Santa Teresa?',
+      ctaSubtitle: 'Join us at Zeneidas Surf Garden for the ultimate surf and yoga experience in Costa Rica.',
+      ctaButton: 'Book Your Experience',
+    },
+    es: {
+      title: 'Blog de Surf, Yoga y Bienestar',
+      subtitle: 'Guías expertas, consejos e historias desde Santa Teresa, Costa Rica. Aprende sobre surf, yoga, respiración, baños de hielo y experiencias transformadoras de bienestar.',
+      noPosts: '¡Aún no hay publicaciones disponibles! Vuelve pronto.',
+      readMore: 'Leer más',
+      ctaTitle: '¿Listo para Experimentar Santa Teresa?',
+      ctaSubtitle: 'Únete a nosotros en Zeneidas Surf Garden para la mejor experiencia de surf y yoga en Costa Rica.',
+      ctaButton: 'Reserva tu Experiencia',
+    },
+  };
+
+  const t = translations[locale];
 
   return (
     <div className="min-h-screen">
@@ -26,24 +56,24 @@ export default function BlogPage() {
           {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-5xl md:text-6xl font-heading font-bold text-gray-900 mb-6">
-              Surf, Yoga & Wellness Blog
+              {t.title}
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Expert guides, tips, and stories from Santa Teresa, Costa Rica. Learn about surfing, yoga, breathwork, ice baths, and transformative wellness experiences.
+              {t.subtitle}
             </p>
           </div>
 
           {/* Blog Posts Grid */}
           {posts.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-xl text-gray-600">No blog posts available yet. Check back soon!</p>
+              <p className="text-xl text-gray-600">{t.noPosts}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.map((post) => (
                 <Link
                   key={post.slug}
-                  href={`/en/blog/${post.slug}`}
+                  href={`/${locale}/blog/${post.slug}`}
                   className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
                 >
                   {/* Featured Image */}
@@ -90,7 +120,7 @@ export default function BlogPage() {
 
                     {/* Read More */}
                     <div className="flex items-center text-[#163237] font-semibold group-hover:gap-2 transition-all">
-                      <span>Read more</span>
+                      <span>{t.readMore}</span>
                       <svg
                         className="w-5 h-5 transform group-hover:translate-x-1 transition-transform"
                         fill="none"
@@ -114,16 +144,16 @@ export default function BlogPage() {
           {/* CTA Section */}
           <div className="mt-20 bg-gradient-to-r from-[#163237] to-[#0f2328] rounded-2xl p-12 text-center text-white">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Ready to Experience Santa Teresa?
+              {t.ctaTitle}
             </h2>
             <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-              Join us at Zeneidas Surf Garden for the ultimate surf and yoga experience in Costa Rica.
+              {t.ctaSubtitle}
             </p>
             <Link
-              href="/#personalize-experience"
+              href={`/${locale}/#personalize-experience`}
               className="inline-block px-8 py-4 bg-white text-[#163237] text-lg font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105"
             >
-              Book Your Experience
+              {t.ctaButton}
             </Link>
           </div>
         </div>

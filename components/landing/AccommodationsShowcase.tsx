@@ -178,7 +178,7 @@ export default function AccommodationsShowcase() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: index * 0.2 }}
-                className={`relative group bg-gradient-to-br ${accommodation.color} backdrop-blur-sm rounded-2xl overflow-hidden border ${accommodation.borderColor} hover:shadow-2xl transition-all duration-500`}
+                className="relative group bg-slate-700/50 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/15 hover:border-white/30 hover:shadow-2xl transition-all duration-500"
               >
                 {/* Image Carousel */}
                 <div className="relative aspect-[4/3] overflow-hidden">
@@ -229,7 +229,7 @@ export default function AccommodationsShowcase() {
                                 [accommodation.id]: imgIndex,
                               }))
                             }
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                               imgIndex === currentImageIndex
                                 ? 'bg-white w-8'
                                 : 'bg-white/50 hover:bg-white/75'

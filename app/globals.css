@@ -523,7 +523,7 @@ input[type="range"]::-moz-range-thumb:active {
 
 /* Touch target improvements for mobile */
 @media (max-width: 768px) {
-  button, a, [role="button"] {
+  button:not([aria-label*="Go to"]), a:not([aria-label*="Go to"]), [role="button"]:not([aria-label*="Go to"]) {
     min-height: 44px;
     min-width: 44px;
   }
