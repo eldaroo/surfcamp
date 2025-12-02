@@ -114,7 +114,7 @@ export default function RootLayout({
         >
           {/* Contenido principal */}
           <div className="relative z-10">
-            <Providers>
+            <Providers locale={lang as 'es' | 'en'}>
               {children}
             </Providers>
           </div>
