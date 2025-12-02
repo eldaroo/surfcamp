@@ -1,44 +1,34 @@
-import { I18nProvider } from '@/lib/i18n';
-import { Locale } from '@/lib/i18n';
-import DocumentLangSetter from '@/components/DocumentLangSetter';
+import { Metadata } from "next";
+import { ReactNode } from "react";
 
-interface LocaleLayoutProps {
-  children: React.ReactNode;
-  params: {
-    locale: string;
+type LayoutProps = {
+  children: ReactNode;
+  params: { locale: string };
+};
+
+export function generateMetadata({ params }: { params: { locale: string } }): Metadata {
+  const isSpanish = params.locale === "es";
+  const title = isSpanish
+    ? "Zeneidas Surf Garden | Experiencia de Surf y Yoga en Santa Teresa, Costa Rica"
+    : "Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica";
+  const description = isSpanish
+    ? "Viví surf, yoga, breathwork y vida frente al mar en Zeneidas Surf Garden en Santa Teresa, Costa Rica. Programas personalizados, ambiente de playa y un espacio para aprender, explorar y reconectar."
+    : "Experience surf, yoga, breathwork, and oceanfront living at Zeneidas Surf Garden in Santa Teresa, Costa Rica. Personalized programs, beachfront vibes, and a space to learn, explore, and reconnect.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+    },
+    twitter: {
+      title,
+      description,
+    },
   };
 }
 
-export default function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  const { locale } = params;
-  
-  console.log('🌍 LocaleLayout - Iniciando con locale:', locale);
-  console.log('🌍 LocaleLayout - Tipo de locale:', typeof locale);
-  
-  // Validar que el locale sea válido
-  const validLocales: Locale[] = ['es', 'en'];
-  const isValidLocale = validLocales.includes(locale as Locale);
-  
-  console.log('🌍 LocaleLayout - Locale válido:', isValidLocale);
-  
-  if (!isValidLocale) {
-    console.log('❌ LocaleLayout - Locale inválido, redirigiendo a /es');
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4 font-heading">Invalid Locale</h1>
-          <p className="text-gray-600">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  console.log('✅ LocaleLayout - Locale válido, renderizando con:', locale);
-  
-  return (
-    <I18nProvider initialLocale={locale as Locale}>
-      <DocumentLangSetter />
-      {children}
-    </I18nProvider>
-  );
-} 
+export default function LocaleLayout({ children }: LayoutProps) {
+  return <>{children}</>;
+}

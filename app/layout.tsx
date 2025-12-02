@@ -20,8 +20,8 @@ const bochanSerif = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://santateresasurfcamp.com'),
-  title: 'Zeneidas Surf - Santa Teresa Surf Camp | Surf, Yoga & Ice Baths in Costa Rica',
-  description: 'Experience the best Santa Teresa surf camp at Zeneidas Surf. Premier surf lessons, yoga, meditation, and ice baths in Santa Teresa, Costa Rica. Book your transformative surf retreat today.',
+  title: 'Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica',
+  description: 'Experience surf, yoga, breathwork, and oceanfront living at Zeneidas Surf Garden in Santa Teresa, Costa Rica. Personalized programs, beachfront vibes, and a space to learn, explore, and reconnect.',
   keywords: [
     'Santa Teresa surf',
     'Santa Teresa surf camp',
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     apple: '/assets/favicon.png',
   },
   openGraph: {
-    title: 'Zeneidas Surf - Santa Teresa Surf Camp',
+    title: 'Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica',
     description: 'Premier Santa Teresa surf camp offering surf lessons, yoga, meditation & ice baths. Transform your life at our beachfront lodge in Costa Rica.',
     url: 'https://santateresasurfcamp.com',
     siteName: 'Zeneidas Surf',
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Zeneidas Surf - Santa Teresa Surf Camp',
+    title: 'Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica',
     description: 'Premier Santa Teresa surf camp with surf lessons, yoga & wellness activities in Costa Rica',
     images: ['/assets/Surf.jpg']
   },
