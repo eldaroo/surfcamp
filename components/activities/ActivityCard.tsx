@@ -577,7 +577,6 @@ const ActivityCard = ({
   timeSlot = "7:00 AM",
   onTimeSlotChange,
 }: ActivityCardProps) => {
-  console.log('[ACTIVITY CARD] Rendering:', activity.name);
   const copy = localeCopy[locale] ?? localeCopy.es;
   const marketing = marketingContent[activity.category as keyof typeof marketingContent] ?? marketingContent.default;
   const sellingPoints = sellingPointsContent[activity.category as keyof typeof sellingPointsContent]?.[locale];
@@ -649,27 +648,19 @@ const ActivityCard = ({
   };
 
   const handleOpenImageModal = (index: number) => {
-    console.log('[ACTIVITY CARD] Opening image modal at index:', index);
-    console.log('[ACTIVITY CARD] Body pointer-events before modal open:', window.getComputedStyle(document.body).pointerEvents);
-    console.log('[ACTIVITY CARD] HTML pointer-events before modal open:', window.getComputedStyle(document.documentElement).pointerEvents);
     setModalImageIndex(index);
     setShowImageModal(true);
   };
 
   const handleCloseImageModal = () => {
-    console.log('[ACTIVITY CARD] Closing image modal');
-    console.log('[ACTIVITY CARD] Body pointer-events before modal close:', window.getComputedStyle(document.body).pointerEvents);
-    console.log('[ACTIVITY CARD] HTML pointer-events before modal close:', window.getComputedStyle(document.documentElement).pointerEvents);
     setShowImageModal(false);
   };
 
   const handleNextModalImage = () => {
-    console.log('[ACTIVITY CARD] Next modal image');
     setModalImageIndex((prev) => (prev + 1) % surfImagesDesktop.length);
   };
 
   const handlePrevModalImage = () => {
-    console.log('[ACTIVITY CARD] Previous modal image');
     setModalImageIndex((prev) => (prev - 1 + surfImagesDesktop.length) % surfImagesDesktop.length);
   };
 
@@ -724,122 +715,23 @@ const ActivityCard = ({
     return () => clearInterval(interval);
   }, [isSurf, surfImagesMobile.length]);
 
-  // Add global mouse move listener to detect hover issues when image modal is open
-  // Also disable pointer-events on body to prevent hover effects on background elements
-  useEffect(() => {
-    console.log('[ACTIVITY CARD MODAL EFFECT] showImageModal:', showImageModal);
-    console.log('[ACTIVITY CARD MODAL EFFECT] Modal rendered via Portal to document.body');
-    if (!showImageModal) return;
+  // When the image modal is open, disable pointer events on the page behind it.
+useEffect(() => {
+  if (!showImageModal) return;
 
-    // Store original pointer-events value
-    const originalBodyPointerEvents = document.body.style.pointerEvents;
-    const originalHtmlPointerEvents = document.documentElement.style.pointerEvents;
+  const originalBodyPointerEvents = document.body.style.pointerEvents;
+  const originalHtmlPointerEvents = document.documentElement.style.pointerEvents;
 
-    // Disable pointer-events on body and html (except for modal children)
-    document.body.style.pointerEvents = 'none';
-    document.documentElement.style.pointerEvents = 'none';
-    console.log('[ACTIVITY CARD MODAL EFFECT] Disabled pointer-events on body and html');
+  document.body.style.pointerEvents = 'none';
+  document.documentElement.style.pointerEvents = 'none';
 
-    // Note: With portal rendering, we don't need to disable pointer-events on the activity card
-    // The modal is rendered directly to document.body and is naturally on top
-    console.log('[ACTIVITY CARD MODAL EFFECT] Using portal rendering - activity card pointer-events remain active');
+  return () => {
+    document.body.style.pointerEvents = originalBodyPointerEvents;
+    document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
+  };
+}, [showImageModal]);
 
-    let lastLogTime = 0;
-    const LOG_THROTTLE_MS = 500; // Only log once every 500ms to avoid spam
-
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      const now = Date.now();
-      const target = e.target as HTMLElement;
-      const modalElement = document.querySelector('[data-modal-id="surf-image-modal"]');
-
-      // Build element path from target to root
-      const getElementPath = (el: HTMLElement) => {
-        const path = [];
-        let current: HTMLElement | null = el;
-        while (current && current !== document.documentElement) {
-          const className = current.className;
-          let classString = '';
-          try {
-            classString = typeof className === 'string' ? className : String(className);
-          } catch (e) {
-            classString = '(error getting classes)';
-          }
-          const info = {
-            tag: current.tagName,
-            id: current.id || '(no id)',
-            classes: classString ? classString.split(' ').slice(0, 3).join(' ') : '(no class)',
-            pointerEvents: window.getComputedStyle(current).pointerEvents
-          };
-          path.push(info);
-          current = current.parentElement;
-          if (path.length > 5) break; // Limit to 5 levels to avoid spam
-        }
-        return path;
-      };
-
-      // Log modal detection info (throttled)
-      if (now - lastLogTime > LOG_THROTTLE_MS) {
-        console.log('[ACTIVITY CARD MODAL EFFECT] Modal element found:', !!modalElement);
-        console.log('[ACTIVITY CARD MODAL EFFECT] Modal element classes:', modalElement?.className);
-        console.log('[ACTIVITY CARD MODAL EFFECT] Target element:', {
-          tagName: target.tagName,
-          className: target.className,
-          id: target.id,
-          pointerEvents: window.getComputedStyle(target).pointerEvents,
-          mouseX: e.clientX,
-          mouseY: e.clientY
-        });
-        console.log('[ACTIVITY CARD MODAL EFFECT] Element path (target â†’ parent):', getElementPath(target));
-        console.log('[ACTIVITY CARD MODAL EFFECT] Body pointer-events:', window.getComputedStyle(document.body).pointerEvents);
-        console.log('[ACTIVITY CARD MODAL EFFECT] HTML pointer-events:', window.getComputedStyle(document.documentElement).pointerEvents);
-
-        if (modalElement) {
-          const isTargetInModal = modalElement.contains(target);
-          console.log('[ACTIVITY CARD MODAL EFFECT] Target is inside modal:', isTargetInModal);
-          console.log('[ACTIVITY CARD MODAL EFFECT] Modal bounding rect:', modalElement.getBoundingClientRect());
-          console.log('[ACTIVITY CARD MODAL EFFECT] Modal z-index:', window.getComputedStyle(modalElement).zIndex);
-          console.log('[ACTIVITY CARD MODAL EFFECT] Modal position:', window.getComputedStyle(modalElement).position);
-        } else {
-          console.warn('[ACTIVITY CARD MODAL EFFECT] âš ï¸ Modal element NOT FOUND in DOM!');
-        }
-
-        // Check elements at mouse position
-        const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
-        console.log('[ACTIVITY CARD MODAL EFFECT] Elements at mouse position (top to bottom):',
-          elementsAtPoint.slice(0, 5).map(el => ({
-            tag: el.tagName,
-            id: el.id || '(no id)',
-            classes: el.className ? (typeof el.className === 'string' ? el.className.split(' ').slice(0, 3).join(' ') : '(object)') : '(no class)',
-            dataModalId: el.getAttribute('data-modal-id')
-          }))
-        );
-
-        lastLogTime = now;
-      }
-
-      if (modalElement && !modalElement.contains(target)) {
-        if (now - lastLogTime > LOG_THROTTLE_MS) {
-          console.log('[ACTIVITY CARD HOVER ISSUE] âš ï¸ Mouse over element OUTSIDE modal:', {
-            tagName: target.tagName,
-            className: target.className,
-            id: target.id,
-            pointerEvents: window.getComputedStyle(target).pointerEvents
-          });
-        }
-      }
-    };
-
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-
-    return () => {
-      console.log('[ACTIVITY CARD MODAL EFFECT] Cleanup - Restoring pointer-events on body/html');
-      document.body.style.pointerEvents = originalBodyPointerEvents;
-      document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-    };
-  }, [showImageModal]);
-
-  const handleChoose = async (e: React.MouseEvent) => {
+const handleChoose = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     if (isChoosing) return;
@@ -2027,7 +1919,6 @@ const ActivityCard = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => {
-                console.log('[ACTIVITY CARD] Modal overlay clicked');
                 handleCloseImageModal();
               }}
               className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
@@ -2045,7 +1936,6 @@ const ActivityCard = ({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log('[ACTIVITY CARD] Close button clicked');
                   handleCloseImageModal();
                 }}
                 className="absolute top-4 right-4 z-30 w-12 h-12 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl"

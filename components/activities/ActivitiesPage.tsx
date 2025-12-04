@@ -109,17 +109,6 @@ const ActivitiesPage = () => {
     };
   }, [storeParticipants, activeParticipantId]);
 
-  console.log('[ActivitiesPage] Component rendered', {
-    activeParticipantId,
-    participantsCount: storeParticipants.length,
-    selectedActivitiesCount: selectedActivities.length,
-    storeParticipants: storeParticipants.map(p => ({
-      id: p.id,
-      name: p.name,
-      activitiesCount: p.selectedActivities.length,
-    })),
-  });
-
   const heroTitle = t("landing.hero.title");
   const [heroMainTitleRaw, heroBrandTitleRaw] = (heroTitle ?? "").split("\n");
   const heroMainTitle = heroMainTitleRaw?.trim() || heroTitle;
@@ -149,7 +138,9 @@ const ActivitiesPage = () => {
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [showTravelingWithModal, setShowTravelingWithModal] = useState(false);
-  const [nextStepAfterTraveling, setNextStepAfterTraveling] = useState<string | null>(null);
+  const [nextStepAfterTraveling, setNextStepAfterTraveling] = useState<
+    'dates' | 'accommodation' | 'activities' | 'contact' | 'confirmation' | 'payment' | 'success' | 'find-reservation' | null
+  >(null);
   const [hasShownReservationTravelingModal, setHasShownReservationTravelingModal] = useState(false);
   const [needsAccommodation] = useState(true); // Accommodation is now mandatory
   const [isClient, setIsClient] = useState(false);
@@ -250,13 +241,6 @@ const ActivitiesPage = () => {
 
   const handleToggleActivity = useCallback(
     (activity: Activity) => {
-      console.log('[ActivitiesPage] handleToggleActivity called', {
-        activityId: activity.id,
-        activityName: activity.name,
-        activeParticipantId,
-        currentSelectedActivities: selectedActivities.map(a => a.name),
-      });
-
       const isAlreadySelected = selectedActivities.some((item) => item.id === activity.id);
 
       // Surf is mandatory only for the first participant - can be selected but not deselected
@@ -264,38 +248,28 @@ const ActivitiesPage = () => {
       const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
 
       if (activity.category === "surf" && isAlreadySelected && isFirstParticipant) {
-        console.log('[ActivitiesPage] handleToggleActivity - surf is mandatory for first participant, cannot deselect');
         return;
       }
 
       if (isAlreadySelected) {
         const updated = selectedActivities.filter((item) => item.id !== activity.id);
-        console.log('[ActivitiesPage] handleToggleActivity - deselecting', {
-          updated: updated.map(a => a.name),
-        });
         setSelectedActivities(updated);
         return;
       }
 
       // Ensure default configs
       if (activity.category === "yoga" && !yogaClasses[activity.id]) {
-        console.log('[ActivitiesPage] handleToggleActivity - setting default yoga classes');
         setYogaClasses(activity.id, 1); // Default to 1 class
         setYogaUsePackDiscount(activity.id, false);
       }
       if (quantityCategories.has(activity.category) && !activityQuantities[activity.id]) {
-        console.log('[ActivitiesPage] handleToggleActivity - setting default quantity');
         setActivityQuantity(activity.id, 1);
       }
       if (timeSlotCategories.has(activity.category) && !selectedTimeSlots[activity.id]) {
-        console.log('[ActivitiesPage] handleToggleActivity - setting default time slot');
         setSelectedTimeSlot(activity.id, "7:00 AM");
       }
 
       const updatedActivities = [...selectedActivities, activity];
-      console.log('[ActivitiesPage] handleToggleActivity - selecting activity', {
-        updatedActivities: updatedActivities.map(a => a.name),
-      });
       setSelectedActivities(updatedActivities);
     },
     [
@@ -430,20 +404,12 @@ const ActivitiesPage = () => {
   );
 
   // Prepare participants data for tabs
-  const participantTabsData: Participant[] = storeParticipants.map((p) => {
-    console.log('[ActivitiesPage] Building participant tab data', {
-      id: p.id,
-      name: p.name,
-      selectedActivities: p.selectedActivities,
-      activitiesCount: p.selectedActivities.length,
-    });
-    return {
-      id: p.id,
-      name: p.name,
-      isYou: p.isYou,
-      activitiesCount: p.selectedActivities.length,
-    };
-  });
+  const participantTabsData: Participant[] = storeParticipants.map((p) => ({
+    id: p.id,
+    name: p.name,
+    isYou: p.isYou,
+    activitiesCount: p.selectedActivities.length,
+  }));
 
   const handleParticipantChange = (participantId: string) => {
     setActiveParticipant(participantId);
@@ -773,77 +739,21 @@ const ActivitiesPage = () => {
   // Check if any modal is open
   const isAnyModalOpen = deleteConfirmId !== null || showTravelingWithModal || showPrivateCoachingModal;
 
-  // Add global mouse move listener to detect hover issues when any modal is open
-  // Also disable pointer-events on body to prevent hover effects on background elements
+  // When a modal is open, disable pointer events on the page behind it.
   useEffect(() => {
-    console.log('[ACTIVITIES PAGE] isAnyModalOpen:', isAnyModalOpen, {
-      deleteConfirmId,
-      showTravelingWithModal,
-      showPrivateCoachingModal
-    });
-
     if (!isAnyModalOpen) return;
 
-    // Store original pointer-events value
     const originalBodyPointerEvents = document.body.style.pointerEvents;
     const originalHtmlPointerEvents = document.documentElement.style.pointerEvents;
 
-    // Disable pointer-events on body and html (except for modal children rendered via portal)
     document.body.style.pointerEvents = 'none';
     document.documentElement.style.pointerEvents = 'none';
-    console.log('[ACTIVITIES PAGE] Disabled pointer-events on body and html');
-
-    let lastLogTime = 0;
-    const LOG_THROTTLE_MS = 500; // Only log once every 500ms to avoid spam
-
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      const now = Date.now();
-      const target = e.target as HTMLElement;
-
-      // Check if mouse is inside any modal using data attributes
-      const isInsideModal = target.closest('[data-modal-id="private-coaching-modal"]') ||
-                           target.closest('[data-modal-id="private-coaching-modal-backdrop"]') ||
-                           target.closest('[data-modal-id="surf-image-modal"]') ||
-                           target.closest('[data-modal-id]'); // Any other modal with data-modal-id
-
-      // Log if outside modals (throttled)
-      if (!isInsideModal && now - lastLogTime > LOG_THROTTLE_MS) {
-        console.log('[ACTIVITIES PAGE HOVER ISSUE] Mouse over element outside modals while modal is open:', {
-          tagName: target.tagName,
-          className: target.className,
-          id: target.id,
-          pointerEvents: window.getComputedStyle(target).pointerEvents,
-          modals: {
-            deleteConfirmId,
-            showTravelingWithModal,
-            showPrivateCoachingModal
-          }
-        });
-
-        // Check elements at mouse position
-        const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
-        console.log('[ACTIVITIES PAGE] Elements at mouse position (top to bottom):',
-          elementsAtPoint.slice(0, 5).map(el => ({
-            tag: el.tagName,
-            id: el.id || '(no id)',
-            classes: el.className ? (typeof el.className === 'string' ? el.className.split(' ').slice(0, 3).join(' ') : '(object)') : '(no class)',
-            dataModalId: el.getAttribute('data-modal-id')
-          }))
-        );
-
-        lastLogTime = now;
-      }
-    };
-
-    document.addEventListener('mousemove', handleGlobalMouseMove);
 
     return () => {
-      console.log('[ACTIVITIES PAGE] Cleanup - Restoring pointer-events on body and html');
       document.body.style.pointerEvents = originalBodyPointerEvents;
       document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
     };
-  }, [isAnyModalOpen, deleteConfirmId, showTravelingWithModal, showPrivateCoachingModal]);
+  }, [isAnyModalOpen]);
 
   return (
     <div className="relative">

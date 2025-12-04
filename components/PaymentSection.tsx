@@ -202,7 +202,7 @@ export default function PaymentSection() {
     const prices = calculatePrices();
     if (!prices) return { deposit: 0, remaining: 0 };
 
-    const { total, accommodationTotal, activitiesTotal } = prices;
+    const { total, accommodation, activities } = prices;
 
     // Detect surf programs and coaching
     const surfPrograms = detectSurfPrograms(participants, selectedActivities);
@@ -210,7 +210,7 @@ export default function PaymentSection() {
 
     if (surfPrograms.length > 0) {
       // Use the same formula as backend
-      const effectiveAccommodationTotal = hasExistingReservation ? 0 : accommodationTotal;
+      const effectiveAccommodationTotal = hasExistingReservation ? 0 : accommodation;
 
       const paymentBreakdown = calculateWeTravelPayment({
         surfPrograms,
