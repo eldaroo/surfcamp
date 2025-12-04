@@ -1,6 +1,7 @@
 import { Roboto } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
+import Script from 'next/script';
 import Providers from '@/components/Providers';
 import SchemaOrg from '@/components/SchemaOrg';
 import { Metadata } from 'next';
@@ -39,9 +40,13 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Zeneidas Surf' }],
   icons: {
-    icon: '/assets/favicon.png',
-    shortcut: '/assets/favicon.png',
-    apple: '/assets/favicon.png',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/apple-touch-icon.png',
+    other: [
+      { rel: 'icon', url: '/android-chrome-192x192.png', sizes: '192x192' },
+      { rel: 'icon', url: '/android-chrome-512x512.png', sizes: '512x512' },
+    ],
   },
   openGraph: {
     title: 'Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica',
@@ -101,6 +106,20 @@ export default function RootLayout({
   return (
     <html lang={lang}>
       <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-9LGV9LTKDC"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9LGV9LTKDC');
+          `}
+        </Script>
+
         <SchemaOrg />
         <div
           className="min-h-screen relative overflow-hidden lg:bg-none"

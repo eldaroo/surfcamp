@@ -117,7 +117,7 @@ export default function Navigation() {
 
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/assets/favicon.png"
+                src="/favicon.png"
                 alt="Zeneidas Surf Garden Logo"
                 width={40}
                 height={40}
