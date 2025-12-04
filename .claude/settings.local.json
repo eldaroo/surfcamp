@@ -94,7 +94,8 @@
       "WebFetch(domain:developers.brevo.com)",
       "Bash(find:*)",
       "Bash(move:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,15 +5,15 @@ import { useState } from 'react';
 const faqs = [
   {
     id: 1,
-    question: 'What level of surfing experience do I need?',
+    question: 'What level of surfing experience do I need at this Santa Teresa surf camp?',
     answer:
-      'All levels are welcome! Whether you are a complete beginner or an experienced surfer, our instructors will adapt the lessons to your level. We provide personalized attention to ensure everyone progresses at their own pace.',
+      'Our Santa Teresa surf camp welcomes all levels! We offer surf lessons for all levels in Costa Rica - whether you are a complete beginner or an experienced surfer, our certified instructors will adapt the lessons to your level. At our surf & yoga camp in Santa Teresa, we provide personalized attention to ensure everyone progresses at their own pace.',
   },
   {
     id: 3,
     question: 'How do I get to Santa Teresa?',
     answer:
-      'Santa Teresa is located on the Nicoya Peninsula in Costa Rica. The closest international airports are in San Jose (SJO) and Liberia (LIR). We can help arrange transportation from either airport to Santa Teresa. The journey is part of the adventure!',
+      'Santa Teresa is located on the Nicoya Peninsula in Costa Rica. The closest international airports are in San Jose (SJO) and Liberia (LIR). We can help arrange transportation from either airport to our surf camp in Santa Teresa. The journey is part of the adventure!',
   },
   {
     id: 4,
@@ -56,10 +56,10 @@ export default function FAQSection() {
         {/* Title */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Frequently Asked Questions
+            Santa Teresa Surf Camp FAQs
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Everything you need to know about your transformative journey
+            Everything you need to know about your surf & yoga experience in Santa Teresa, Costa Rica
           </p>
         </div>
 

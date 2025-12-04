@@ -110,14 +110,14 @@ export default function HeroSection() {
           className="max-w-5xl mx-auto mt-auto"
         >
           {/* Main H1 - Optimized for SEO */}
-          {/* Mobile: Short title */}
+          {/* Mobile: Short title (not H1, only desktop has H1) */}
             <div className={`md:hidden transition-all duration-500 ${mobileVisibilityClasses}`}>
-              <h1
+              <div
                 className="text-4xl font-heading font-bold text-white leading-tight"
                 style={{ textShadow: '0 4px 20px rgba(0,0,0,0.6)' }}
               >
                 {mainHeroTitle}
-              </h1>
+              </div>
               {brandHeroTitle && (
                 <p className="text-lg font-semibold text-[#ece97f] tracking-[0.15em] uppercase mt-2 whitespace-nowrap overflow-hidden text-ellipsis">
                   {brandHeroTitle}

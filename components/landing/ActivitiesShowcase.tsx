@@ -101,14 +101,14 @@ export default function ActivitiesShowcase() {
       <div className="container mx-auto px-4">
         {/* Hero Title - Only Desktop */}
         <div className="hidden lg:block text-center mb-8 xl:mb-10 2xl:mb-12 pt-1 xl:pt-2 2xl:pt-4">
-          <h1 className="text-4xl xl:text-5xl 2xl:text-6xl font-heading font-bold text-gray-900 leading-tight">
+          <h2 className="text-4xl xl:text-5xl 2xl:text-6xl font-heading font-bold text-gray-900 leading-tight">
             {heroMainTitle}
             {heroBrandTitle && (
               <span className="block text-sm xl:text-base 2xl:text-lg font-semibold tracking-[0.22em] text-[#997146] mt-2 uppercase">
                 {heroBrandTitle}
               </span>
             )}
-          </h1>
+          </h2>
         </div>
 
         {/* Section Header - Only Mobile */}

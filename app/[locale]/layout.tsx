@@ -13,7 +13,7 @@ export function generateMetadata({ params }: { params: { locale: string } }): Me
     : "Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica";
   const description = isSpanish
     ? "Viví surf, yoga, breathwork y vida frente al mar en Zeneidas Surf Garden en Santa Teresa, Costa Rica. Programas personalizados, ambiente de playa y un espacio para aprender, explorar y reconectar."
-    : "Experience surf, yoga, breathwork, and oceanfront living at Zeneidas Surf Garden in Santa Teresa, Costa Rica. Personalized programs, beachfront vibes, and a space to learn, explore, and reconnect.";
+    : "All-level Surf & Yoga experience at Zeneidas Surf Garden. Small-group surf coaching, beachfront stay, daily yoga and ice baths in Santa Teresa, Costa Rica.";
   const base = "https://santateresasurfcamp.com";
   const localePath = params.locale ? `/${params.locale}` : "";
   const canonical = `${base}${localePath}`;

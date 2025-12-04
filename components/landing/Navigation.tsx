@@ -115,7 +115,12 @@ export default function Navigation() {
               />
             </button>
 
-            <Link href="/" className="flex items-center space-x-2">
+            <Link
+              href="https://zeneidasgarden.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2"
+            >
               <Image
                 src="/favicon.png"
                 alt="Zeneidas Surf Garden Logo"

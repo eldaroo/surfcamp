@@ -1024,22 +1024,22 @@ const translations = {
       },
       hero: {
         title: "Santa Teresa Surf & Yoga Experience\nby Zeneidas Surf Garden",
-        subtitle: "We are a beachfront hostel offering surf programs, yoga, breathwork, and ice baths — an authentic surf & yoga experience in Santa Teresa, Costa Rica.",
+        subtitle: "Welcome to our Santa Teresa surf camp offering surf lessons for all levels in Costa Rica. Our surf & yoga camp in Santa Teresa combines beachfront accommodation with professional surf coaching, daily yoga sessions, breathwork, and ice baths.",
         tagline: "Surf, Yoga, Breathwork & Ice Baths in Santa Teresa, Costa Rica",
         bookNow: "Book Now",
         exploreActivities: "Explore Activities"
       },
       accommodationShowcase: {
         title: "Your Home in Paradise",
-        subtitle: "Wake up to ocean views and fall asleep to the sound of waves. Choose the perfect space for your surf adventure."
+        subtitle: "Wake up to ocean views and fall asleep to the sound of waves at our Santa Teresa surf camp. Choose the perfect beachfront accommodation for your surf & yoga experience."
       },
             activitiesShowcase: {
-        title: "Santa Teresa Surf & Wellness",
-        subtitle: "Some experiences can be booked here; others happen at Zeneidas and can be reserved at reception once you're on-site",
+        title: "Santa Teresa Surf Camp Activities",
+        subtitle: "Surf lessons for all levels in Costa Rica, oceanfront yoga, breathwork sessions, and ice bath therapy. Some experiences can be booked here; others can be reserved at reception once you arrive.",
         clickToPlay: "Click to play",
         surfProgram: {
-          title: "Surf",
-          description: "Professional surf coaching for all levels in Costa Rica's best waves. Build technique, ocean awareness, and confidence with certified instructors."
+          title: "Surf Lessons for All Levels",
+          description: "Our Santa Teresa surf camp offers professional surf lessons for all levels in Costa Rica's best waves. Small-group coaching with certified instructors to build technique, ocean awareness, and confidence."
         },
         breathwork: {
           title: "Breathwork",
