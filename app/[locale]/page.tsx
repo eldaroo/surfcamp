@@ -28,6 +28,9 @@ const PaymentSection = dynamic(() => import("@/components/PaymentSection"), {
 const SuccessPage = dynamic(() => import("@/components/SuccessPage"), {
   loading: StepLoaderFallback,
 });
+const FindReservation = dynamic(() => import("@/components/FindReservation"), {
+  loading: StepLoaderFallback,
+});
 const LandingPage = dynamic(() => import("@/components/LandingPage"));
 
 const stepComponents: Record<string, ComponentType> = {
@@ -37,6 +40,7 @@ const stepComponents: Record<string, ComponentType> = {
   contact: ContactForm,
   payment: PaymentSection,
   success: SuccessPage,
+  'find-reservation': FindReservation,
 };
 
 export default function HomePage() {

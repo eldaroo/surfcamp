@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n';
 
 interface BackButtonProps {
   className?: string;
-  variant?: 'default' | 'minimal' | 'floating';
+  variant?: 'default' | 'minimal' | 'floating' | 'card';
 }
 
 export default function BackButton({ className = '', variant = 'default' }: BackButtonProps) {
@@ -22,7 +22,8 @@ export default function BackButton({ className = '', variant = 'default' }: Back
   const variantClasses = {
     default: "bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 hover:border-gray-500",
     minimal: "text-gray-600 hover:text-gray-800",
-    floating: "fixed top-4 left-4 z-50 bg-gray-800/90 backdrop-blur-sm hover:bg-gray-700/90 text-white px-3 py-2 rounded-full border border-gray-600 hover:border-yellow-400"
+    floating: "fixed top-4 left-4 z-50 bg-gray-800/90 backdrop-blur-sm hover:bg-gray-700/90 text-white px-3 py-2 rounded-full border border-gray-600 hover:border-yellow-400",
+    card: "text-sm font-semibold text-black bg-white px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-gray-50"
   };
 
   return (

@@ -22,6 +22,26 @@ const supabase = createClient(
   }
 );
 
+// Helper function to format dates for WeTravel API (YYYY-MM-DD)
+function formatDateForWeTravel(date: string | Date): string {
+  if (!date) return '';
+
+  // If it's already a string in YYYY-MM-DD format, return it
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  // Convert to Date object if needed
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+  // Format as YYYY-MM-DD
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -72,24 +92,32 @@ export async function POST(request: NextRequest) {
       const coachingPrograms = getCoachingPrograms(participants, selectedActivities);
       const accommodationTotal = getAccommodationTotal(priceBreakdown);
 
+      // Check if this is adding activities to an existing reservation
+      const hasExistingReservation = body.existingReservationId || false;
+
       let depositAmount: number;
       let paymentBreakdown: any = null;
 
-      if (surfPrograms.length > 0 && accommodationTotal > 0) {
-        // Use new pricing formula
+      if (surfPrograms.length > 0) {
+        // Use new pricing formula if we have surf programs
+        // For existing reservations, accommodation is already paid, so use 0
+        const effectiveAccommodationTotal = hasExistingReservation ? 0 : accommodationTotal;
+
         paymentBreakdown = calculateWeTravelPayment({
           surfPrograms,
           coachingPrograms,
-          accommodationTotal
+          accommodationTotal: effectiveAccommodationTotal
         });
         depositAmount = paymentBreakdown.total;
 
         console.log('💰 [NEW PRICING] WeTravel payment calculated:', {
+          hasExistingReservation,
           surfPrograms,
           participantCount: paymentBreakdown.participantCount,
           coachingPrograms,
           coachingCount: paymentBreakdown.coachingParticipants,
-          accommodationTotal,
+          accommodationTotal: effectiveAccommodationTotal,
+          originalAccommodationTotal: accommodationTotal,
           programDifference: paymentBreakdown.programDifference,
           accommodationDeposit: paymentBreakdown.accommodationDeposit,
           coachingCost: paymentBreakdown.coachingCost,
@@ -156,10 +184,10 @@ export async function POST(request: NextRequest) {
           trip: wetravelData?.trip || {
             title: dynamicTitle,
             trip_id: `booking_${Date.now()}`, // Unique reference for internal tracking
-            start_date: checkIn,
-            end_date: checkOut,
+            start_date: formatDateForWeTravel(checkIn),
+            end_date: formatDateForWeTravel(checkOut),
             currency: "USD",
-            participant_fees: "all"
+            participant_fees: "none"
           },
           pricing: {
             price: depositAmount, // Total price = deposit amount (must be paid in full)
@@ -190,8 +218,18 @@ export async function POST(request: NextRequest) {
     }
     // OLD FORMAT: { data: { trip: { start_date, end_date }, pricing: { price } } }
     else if (body.data?.trip?.start_date && body.data?.trip?.end_date && body.data?.pricing?.price) {
-      console.log('📝 Legacy format detected - using directly');
-      wetravelPayload = body;
+      console.log('📝 Legacy format detected - formatting dates');
+      wetravelPayload = {
+        ...body,
+        data: {
+          ...body.data,
+          trip: {
+            ...body.data.trip,
+            start_date: formatDateForWeTravel(body.data.trip.start_date),
+            end_date: formatDateForWeTravel(body.data.trip.end_date)
+          }
+        }
+      };
     }
     else {
       console.error('❌ Invalid payload format:', Object.keys(body));

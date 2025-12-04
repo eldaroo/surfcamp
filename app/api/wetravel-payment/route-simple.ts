@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
             start_date: checkIn,
             end_date: checkOut,
             currency: "USD",
-            participant_fees: "all"
+            participant_fees: "none"
           },
           pricing: {
             price: totalAmount, // $1 for testing

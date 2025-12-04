@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
           start_date: checkIn,
           end_date: checkOut,
           currency: "USD",
-          participant_fees: "all"
+          participant_fees: "none"
         },
         pricing: {
           price: Math.round(finalAmount / 100), // Convert cents back to dollars for WeTravel

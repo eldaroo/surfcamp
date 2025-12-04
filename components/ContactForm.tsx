@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice, calculateSurfPrice, calculatePrivateCoachingUpgrade } from '@/lib/prices';
+import { calculateWeTravelPayment, detectSurfPrograms, getCoachingPrograms, getAccommodationTotal } from '@/lib/wetravel-pricing';
 import BackButton from './BackButton';
 import PhoneSelector from './PhoneSelector';
 
@@ -282,6 +283,31 @@ const privateCoachingUpgradeTotal = useMemo(() => {
 }, [participants, isPrivateUpgrade]);
 
 const total = accommodationTotal + activitiesTotal + privateCoachingUpgradeTotal;
+
+// Calculate deposit amount based on surf programs
+const depositAmount = useMemo(() => {
+  const hasExistingReservation = Boolean(bookingData.existingReservationId);
+
+  // Detect surf programs from participants
+  const surfPrograms = detectSurfPrograms(participants, selectedActivities);
+  const coachingPrograms = getCoachingPrograms(participants, selectedActivities);
+
+  // Get accommodation total from priceBreakdown
+  const accommodationForDeposit = hasExistingReservation ? 0 : accommodationTotal;
+
+  if (surfPrograms.length > 0) {
+    // Use WeTravel pricing formula
+    const paymentBreakdown = calculateWeTravelPayment({
+      surfPrograms,
+      coachingPrograms,
+      accommodationTotal: accommodationForDeposit
+    });
+    return paymentBreakdown.total;
+  } else {
+    // Fallback to 10% of total for activities only
+    return Math.round(total * 0.10);
+  }
+}, [participants, selectedActivities, accommodationTotal, total, bookingData.existingReservationId]);
 
 const priceBreakdown = useMemo(
   () => ({
@@ -646,7 +672,7 @@ const priceBreakdown = useMemo(
             start_date: checkInFormatted,
             end_date: checkOutFormatted,
             currency: "USD",
-            participant_fees: "all"
+            participant_fees: "none"
           },
           pricing: {
             price: Math.round(total), // TOTAL price - backend will calculate 10% deposit
@@ -977,6 +1003,23 @@ const priceBreakdown = useMemo(
                       <span className="font-semibold text-white">{t('payment.summary.total')}</span>
                       <span className="text-2xl font-bold text-yellow-300">${total}</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deposit Information Notice */}
+              <div className="bg-blue-500/20 border border-blue-400/50 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <span className="text-blue-400 text-xl">ℹ️</span>
+                  <div>
+                    <h4 className="font-semibold text-blue-300 mb-1">
+                      {locale === 'es' ? 'Depósito Requerido' : 'Deposit Required'}
+                    </h4>
+                    <p className="text-blue-200 text-sm">
+                      {locale === 'es'
+                        ? `Solo necesitas pagar un depósito de $${depositAmount} ahora para asegurar tu reserva. El saldo restante de $${total - depositAmount} será pagadero antes de tu llegada.`
+                        : `You only need to pay a deposit of $${depositAmount} now to secure your booking. The remaining balance of $${total - depositAmount} will be due before your arrival.`}
+                    </p>
                   </div>
                 </div>
               </div>

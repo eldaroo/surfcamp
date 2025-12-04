@@ -149,6 +149,8 @@ const ActivitiesPage = () => {
   const [showOverview, setShowOverview] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [showTravelingWithModal, setShowTravelingWithModal] = useState(false);
+  const [nextStepAfterTraveling, setNextStepAfterTraveling] = useState<string | null>(null);
+  const [hasShownReservationTravelingModal, setHasShownReservationTravelingModal] = useState(false);
   const [needsAccommodation] = useState(true); // Accommodation is now mandatory
   const [isClient, setIsClient] = useState(false);
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | null>(
@@ -160,6 +162,15 @@ const ActivitiesPage = () => {
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Persist whether the traveling modal was already shown (avoid re-triggering when navigating back)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const storedFlag = window.sessionStorage.getItem('hasShownReservationTravelingModal') === 'true';
+    if (storedFlag) {
+      setHasShownReservationTravelingModal(true);
+    }
   }, []);
 
   // Load the current participant's name when showing completion screen
@@ -522,6 +533,7 @@ const ActivitiesPage = () => {
   const handleCompleteAndContinue = () => {
     // Only show modal if we haven't reached the maximum of 2 participants
     if (storeParticipants.length < 2) {
+      setNextStepAfterTraveling(null);
       setShowTravelingWithModal(true);
     } else {
       // Already at max capacity, go straight to continue
@@ -531,8 +543,14 @@ const ActivitiesPage = () => {
 
   const handleSkipAddPerson = () => {
     setShowTravelingWithModal(false);
-    // Accommodation is now mandatory, so continue directly
-    handleContinue();
+    if (nextStepAfterTraveling) {
+      const targetStep = nextStepAfterTraveling;
+      setNextStepAfterTraveling(null);
+      setCurrentStep(targetStep);
+    } else {
+      // Accommodation is now mandatory, so continue directly
+      handleContinue();
+    }
   };
 
   const handleConfirmAddPerson = () => {
@@ -541,7 +559,13 @@ const ActivitiesPage = () => {
     // Safety check: don't add if we already have 2 participants
     if (storeParticipants.length >= 2) {
       // Accommodation is now mandatory, so continue directly
-      handleContinue();
+      if (nextStepAfterTraveling) {
+        const targetStep = nextStepAfterTraveling;
+        setNextStepAfterTraveling(null);
+        setCurrentStep(targetStep);
+      } else {
+        handleContinue();
+      }
       return;
     }
 
@@ -558,10 +582,20 @@ const ActivitiesPage = () => {
       setExpandedParticipantId(newParticipantId);
       // Go directly to the complete step to show all participants
       goToActivityStep('complete');
+      if (nextStepAfterTraveling) {
+        const targetStep = nextStepAfterTraveling;
+        setNextStepAfterTraveling(null);
+        setCurrentStep(targetStep);
+      }
     } else {
       // Customize - add participant and start from scratch
       addParticipant();
       resetActivityFlow();
+      if (nextStepAfterTraveling) {
+        const targetStep = nextStepAfterTraveling;
+        setNextStepAfterTraveling(null);
+        setCurrentStep(targetStep);
+      }
     }
   };
 
@@ -841,7 +875,7 @@ const ActivitiesPage = () => {
                   (prev) => (prev - 1 + landingActivities.length) % landingActivities.length
                 )
               }
-              className="absolute -left-4 xl:-left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              className="absolute -left-4 xl:-left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="Previous activity"
             >
               <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -852,7 +886,7 @@ const ActivitiesPage = () => {
               onClick={() =>
                 setLandingCarouselIndex((prev) => (prev + 1) % landingActivities.length)
               }
-              className="absolute -right-4 xl:-right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              className="absolute -right-4 xl:-right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-white shadow-md border border-black/10 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="Next activity"
             >
               <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1149,7 +1183,7 @@ const ActivitiesPage = () => {
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-base md:text-base font-bold text-amber-700">
+                                  <p className="text-base md:text-base font-bold text-earth-600">
                                     {formatCurrency(computePrivateCoachingUpgradeForParticipant(participant))}
                                   </p>
                                 </div>
@@ -1176,28 +1210,48 @@ const ActivitiesPage = () => {
                   <span className="text-lg md:text-sm font-bold text-white">
                     {locale === "es" ? "Total General" : "Grand Total"}
                   </span>
-                  <span className="text-2xl md:text-xl font-bold text-amber-300">
+                  <span className="text-2xl md:text-xl font-bold text-earth-600">
                     {formatCurrency(calculateGrandTotal())}
                   </span>
                 </div>
               </motion.div>
             )}
 
-            {/* Action Button */}
+            {/* Action Buttons */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.4 }}
-              className="flex justify-center"
+              className="flex flex-col md:flex-row gap-3 justify-center"
             >
               <motion.button
                 onClick={handleCompleteAndContinue}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full md:w-[240px] px-8 py-3 md:py-2.5 bg-[#FDCB2E] text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-[#FCD34D] hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2"
+                className="w-full md:w-auto px-8 py-3 md:py-2.5 bg-[#FDCB2E] text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-[#FCD34D] hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2"
               >
-                {locale === "es" ? "Continuar" : "Continue"}
+                {t("activities.selectAccommodation")}
                 <ArrowRight className="h-5 w-5" />
+              </motion.button>
+              <motion.button
+                onClick={() => {
+                  setNextStepAfterTraveling("find-reservation");
+                  if (!hasShownReservationTravelingModal) {
+                    setShowTravelingWithModal(true);
+                    setHasShownReservationTravelingModal(true);
+                    if (typeof window !== 'undefined') {
+                      window.sessionStorage.setItem('hasShownReservationTravelingModal', 'true');
+                    }
+                  } else {
+                    setShowTravelingWithModal(false);
+                    setCurrentStep("find-reservation");
+                  }
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full md:w-auto px-8 py-3 md:py-2.5 bg-white/90 text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-white hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2 border-2 border-[#FDCB2E]"
+              >
+                {t("activities.haveReservation")}
               </motion.button>
             </motion.div>
           </motion.div>

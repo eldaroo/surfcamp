@@ -616,7 +616,7 @@ const AccommodationCard = ({
                     <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">
                       {nights} {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
                     </span>
-                    <div className="text-xl font-bold text-amber-300">
+                    <div className="text-xl font-bold text-earth-600">
                       ${totalPrice}
                     </div>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
@@ -689,7 +689,7 @@ const AccommodationCard = ({
                       <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">
                         Total
                       </span>
-                      <div className="text-xl font-bold text-amber-300">
+                      <div className="text-xl font-bold text-earth-600">
                         ${totalPrice}
                       </div>
                     </div>

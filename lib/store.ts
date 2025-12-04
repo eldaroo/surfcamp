@@ -57,7 +57,7 @@ interface BookingStore {
   selectedRoom: Room | null;
   
   // UI state
-  currentStep: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success';
+  currentStep: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success' | 'find-reservation';
   previousStep: 'activities' | 'dates' | null; // Track where user came from before going to contact
   isLoading: boolean;
   error: string | null;
@@ -96,7 +96,7 @@ interface BookingStore {
   setAvailabilityCheck: (check: AvailabilityCheck | null) => void;
   setAvailableRooms: (rooms: Room[] | null) => void;
   setSelectedRoom: (room: Room | null) => void;
-  setCurrentStep: (step: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success') => void;
+  setCurrentStep: (step: 'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success' | 'find-reservation') => void;
   goBack: () => void;
   canGoBack: () => boolean;
   setLoading: (loading: boolean) => void;
@@ -786,6 +786,12 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         previousStep: state.previousStep,
       });
 
+      // Special handling for find-reservation step - always go back to activities
+      if (state.currentStep === 'find-reservation') {
+        console.log('[STORE] goBack - from find-reservation to activities');
+        return { currentStep: 'activities' };
+      }
+
       // Special handling for contact step - go back to where we came from
       if (state.currentStep === 'contact' && state.previousStep) {
         console.log('[STORE] goBack - returning to previousStep:', state.previousStep);
@@ -795,7 +801,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       const stepOrder: Array<'activities' | 'dates' | 'accommodation' | 'contact' | 'confirmation' | 'payment' | 'success'> = [
         'activities', 'dates', 'accommodation', 'contact', 'confirmation', 'payment', 'success'
       ];
-      const currentIndex = stepOrder.indexOf(state.currentStep);
+      const currentIndex = stepOrder.indexOf(state.currentStep as any);
       if (currentIndex > 0) {
         const previousStep = stepOrder[currentIndex - 1];
         console.log('[STORE] goBack - going to step:', previousStep);

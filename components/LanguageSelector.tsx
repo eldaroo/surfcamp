@@ -12,7 +12,7 @@ export default function LanguageSelector() {
   };
 
   return (
-    <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-gray-200">
+    <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-black/10">
       <button
         onClick={() => changeLanguage('es')}
         className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${

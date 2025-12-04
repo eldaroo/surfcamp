@@ -114,6 +114,7 @@ export default function DateSelector() {
   const [isPriceSummaryCollapsed, setIsPriceSummaryCollapsed] = useState(false);
   const [hasRequestedAvailability, setHasRequestedAvailability] = useState(false);
   const [isDateSelectorCollapsed, setIsDateSelectorCollapsed] = useState(false);
+  const showDesktopPriceSummary = !hasRequestedAvailability && !loadingRooms;
 
   console.log('ðŸ  [DateSelector] State:', {
     hasRequestedAvailability,
@@ -417,14 +418,14 @@ return (
 
           {/* Main Content Container */}
           <div className={`rounded-3xl border border-[white]/50 bg-[white]/70 shadow-xl overflow-visible mb-3 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`}>
-            <div className={`grid grid-cols-1 ${isPriceSummaryCollapsed ? '' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
+            <div className={`grid grid-cols-1 ${hasRequestedAvailability ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
               {/* Columna izquierda - Selector de fechas */}
               {!isDateSelectorCollapsed ? (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5 }}
-                  className={`p-4 md:p-6 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''} ${!isPriceSummaryCollapsed ? 'border-b lg:border-b-0 lg:border-r border-[white]/50' : ''}`}
+                  className={`p-4 md:p-6 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''} ${hasRequestedAvailability ? '' : 'lg:border-r border-[white]/50'}`}
                 >
                   <div className="space-y-4">
                     {/* Date Pickers Row */}
@@ -473,11 +474,11 @@ return (
                           <button
                             type="button"
                             disabled={guests <= participantCount}
-                            onClick={() => {
-                              const newGuests = Math.max(participantCount, guests - 1);
-                              markAvailabilityAsStale();
-                              setBookingData({ guests: newGuests });
-                            }}
+                          onClick={() => {
+                            const newGuests = Math.max(participantCount, guests - 1);
+                            markAvailabilityAsStale();
+                            setBookingData({ guests: newGuests });
+                          }}
                             className={`w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center transition-all shadow-sm ${
                               guests <= participantCount ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/70 hover:border-amber-400/50'
                             }`}
@@ -490,11 +491,11 @@ return (
                           <button
                             type="button"
                             disabled={guests >= 2}
-                            onClick={() => {
-                              const newGuests = Math.min(2, guests + 1);
-                              markAvailabilityAsStale();
-                              setBookingData({ guests: newGuests });
-                            }}
+                          onClick={() => {
+                            const newGuests = Math.min(2, guests + 1);
+                            markAvailabilityAsStale();
+                            setBookingData({ guests: newGuests });
+                          }}
                             className={`w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm border border-white/40 flex items-center justify-center transition-all shadow-sm ${
                               guests >= 2 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-white/70 hover:border-amber-400/50'
                             }`}
@@ -576,30 +577,20 @@ return (
                                 <div className="mt-2 text-sm text-amber-600 font-bold">
                                   {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
                                 </div>
-              )}
-              {!isPriceSummaryCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="hidden lg:block w-full p-4 md:p-6 bg-white/10"
-                >
-                  <PriceSummary showContainer={false} />
-                </motion.div>
-              )}
-            </div>
-          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              markAvailabilityAsStale();
-                              setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
-                            }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
-                          >
-                            {t('common.edit')}
-                          </button>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            markAvailabilityAsStale();
+                            setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
+                        >
+                          {t('common.edit')}
+                        </button>
                       </div>
                     )}
 
@@ -620,7 +611,7 @@ return (
                   className="p-4 md:p-6"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-4 flex-nowrap overflow-x-auto whitespace-nowrap no-scrollbar">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-black/70 font-semibold uppercase tracking-wider">{t('dates.checkIn')}:</span>
                         <span className="text-sm font-bold text-black">
@@ -664,8 +655,21 @@ return (
                 </motion.div>
               )}
 
+              {showDesktopPriceSummary && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="hidden lg:block w-full p-4 md:p-6 bg-white/10"
+                >
+                  <div className="lg:sticky lg:top-6">
+                    <PriceSummary showContainer={false} />
+                  </div>
+                </motion.div>
+              )}
+
+            </div>
           </div>
-        </div>
 
 
         {/* Accommodation Section - Below date selector */}
@@ -817,20 +821,8 @@ return (
         </motion.div>
       </div>
 
-      {isPriceSummaryCollapsed && bookingData.checkIn && bookingData.checkOut && (
+      {!hasRequestedAvailability && isPriceSummaryCollapsed && bookingData.checkIn && bookingData.checkOut && (
         <>
-          <motion.button
-            type="button"
-            onClick={() => setShowPriceSummaryModal(true)}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="hidden lg:flex absolute bottom-6 right-6 z-30 items-center gap-3 rounded-full bg-gradient-to-r from-amber-300 to-amber-400 px-6 py-3 text-sm font-bold text-black shadow-xl shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300 transition-all duration-300 ease-in-out"
-          >
-            <ReceiptText className="h-5 w-5 text-black" />
-            <span>{t('prices.total')}: {formatCurrency(subtotal + fees, locale)}</span>
-          </motion.button>
-
           <motion.button
             type="button"
             onClick={() => setShowPriceSummaryModal(true)}
@@ -855,4 +847,3 @@ return (
     </div>
   );
 } 
-

@@ -995,7 +995,7 @@ const ActivityCard = ({
                   </motion.p>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-amber-300">$80</p>
+                  <p className="text-lg font-bold text-earth-600">$80</p>
                   {yogaUsePackDiscount && (
                     <CheckCircle2 className="h-5 w-5 text-green-400 ml-auto" />
                   )}
@@ -1089,7 +1089,7 @@ const ActivityCard = ({
                 </motion.p>
               </div>
               <div className="text-right flex items-center gap-2">
-                <p className="text-lg font-bold text-amber-300">$80</p>
+                <p className="text-lg font-bold text-earth-600">$80</p>
                 {yogaUsePackDiscount && (
                   <CheckCircle2 className="h-5 w-5 text-green-400" />
                 )}

@@ -6,7 +6,12 @@ import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice } from '@/lib/prices';
 import BookingConfirmation from './BookingConfirmation';
-import BackButton from './BackButton';
+import {
+  detectSurfPrograms,
+  getCoachingPrograms,
+  calculateWeTravelPayment,
+  getAccommodationTotal
+} from '@/lib/wetravel-pricing';
 
 // Surf program names
 const SURF_PROGRAMS = {
@@ -40,7 +45,8 @@ export default function PaymentSection() {
     activityQuantities,
     setCurrentStep,
     setPriceBreakdown,
-    participants
+    participants,
+    goBack
   } = useBookingStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +57,7 @@ export default function PaymentSection() {
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
+  const [showBackConfirmation, setShowBackConfirmation] = useState(false);
 
   const closePaymentWindow = useCallback(() => {
     if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
@@ -59,16 +66,82 @@ export default function PaymentSection() {
     paymentWindowRef.current = null;
   }, []);
 
-  const isReadyForPayment =
-    bookingData.checkIn &&
-    bookingData.checkOut &&
-    bookingData.guests &&
-    selectedActivities.length > 0 &&
-    bookingData.contactInfo &&
-    selectedRoom;
+  // Check if this is adding activities to an existing reservation
+  const hasExistingReservation = Boolean(bookingData.existingReservationId);
+
+  // Handle back button click
+  const handleBackClick = () => {
+    if (hasExistingReservation) {
+      // Show confirmation modal for existing reservations
+      setShowBackConfirmation(true);
+    } else {
+      // Normal back navigation for new reservations
+      goBack();
+    }
+  };
+
+  const confirmGoBack = () => {
+    setShowBackConfirmation(false);
+    setCurrentStep('find-reservation');
+  };
+
+  const cancelGoBack = () => {
+    setShowBackConfirmation(false);
+  };
+
+  const isReadyForPayment = hasExistingReservation
+    ? // For existing reservations: only need activities and contact info
+      selectedActivities.length > 0 && bookingData.contactInfo
+    : // For new reservations: need dates, room, activities, and contact
+      bookingData.checkIn &&
+      bookingData.checkOut &&
+      bookingData.guests &&
+      selectedActivities.length > 0 &&
+      bookingData.contactInfo &&
+      selectedRoom;
 
   // Function to calculate prices
   const calculatePrices = () => {
+    // For existing reservations, skip accommodation and date checks
+    if (hasExistingReservation) {
+      // Only calculate activities cost
+      let activitiesTotal = 0;
+      participants.forEach(participant => {
+        participant.selectedActivities.forEach((activity: any) => {
+          if (activity.category === 'yoga') {
+            const yogaPackage = participant.selectedYogaPackages[activity.id];
+            const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+            const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+
+            if (yogaPackage) {
+              activitiesTotal += getActivityTotalPrice('yoga', yogaPackage, 1);
+            } else {
+              const pricePerClass = useDiscount ? 8 : 10;
+              activitiesTotal += yogaClassCount * pricePerClass;
+            }
+          } else if (activity.category === 'surf') {
+            const surfClasses = participant.selectedSurfClasses[activity.id];
+            if (surfClasses) {
+              activitiesTotal += getActivityTotalPrice('surf', undefined, 1, surfClasses);
+            }
+          } else {
+            const quantity = participant.activityQuantities[activity.id] || 1;
+            activitiesTotal += activity.price * quantity;
+          }
+        });
+      });
+
+      return {
+        accommodation: 0,
+        activities: activitiesTotal,
+        subtotal: activitiesTotal,
+        tax: 0,
+        total: activitiesTotal,
+        currency: 'USD'
+      };
+    }
+
+    // For new reservations, require room and dates
     if (!selectedRoom || !bookingData.checkIn || !bookingData.checkOut) {
       return null;
     }
@@ -122,6 +195,41 @@ export default function PaymentSection() {
       total,
       currency: 'USD'
     };
+  };
+
+  // Calculate correct deposit amount using the same logic as backend
+  const calculateDepositAmount = () => {
+    const prices = calculatePrices();
+    if (!prices) return { deposit: 0, remaining: 0 };
+
+    const { total, accommodationTotal, activitiesTotal } = prices;
+
+    // Detect surf programs and coaching
+    const surfPrograms = detectSurfPrograms(participants, selectedActivities);
+    const coachingPrograms = getCoachingPrograms(participants, selectedActivities);
+
+    if (surfPrograms.length > 0) {
+      // Use the same formula as backend
+      const effectiveAccommodationTotal = hasExistingReservation ? 0 : accommodationTotal;
+
+      const paymentBreakdown = calculateWeTravelPayment({
+        surfPrograms,
+        coachingPrograms,
+        accommodationTotal: effectiveAccommodationTotal
+      });
+
+      return {
+        deposit: paymentBreakdown.total,
+        remaining: total - paymentBreakdown.total
+      };
+    } else {
+      // Fallback to 10% for non-surf bookings
+      const deposit = Math.round(total * 0.10);
+      return {
+        deposit,
+        remaining: total - deposit
+      };
+    }
   };
 
   const serializedParticipants = useMemo(() =>
@@ -438,93 +546,184 @@ export default function PaymentSection() {
 
       // Generar link de pago con WeTravel
       console.log('🔗 Generating WeTravel payment link...');
-      
-      // Convertir fechas Date objects a formato ISO string para la API
-      const formatDateForAPI = (date: Date | string) => {
-        if (typeof date === 'string') return date;
-        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-      };
+      console.log('🔍 hasExistingReservation:', hasExistingReservation);
+      console.log('🔍 existingReservationId:', bookingData.existingReservationId);
 
-      const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
-      const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
-      
-      // Calcular días antes de la salida para el plan de pago
-      const today = new Date();
-      const checkInDate = new Date(checkInFormatted);
-      const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
-      
-      console.log('📅 Payment plan calculation:', {
-        today: today.toISOString().split('T')[0],
-        checkIn: checkInFormatted,
-        daysBeforeDeparture,
-        dueDate: new Date(checkInDate.getTime() - (daysBeforeDeparture * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
-      });
+      let paymentPayload: any;
 
-      // Build dynamic title based on booking
+      // Build customer name (common for both flows)
       const customerName = `${bookingData.contactInfo?.firstName || ''} ${bookingData.contactInfo?.lastName || ''}`.trim() || 'Guest';
 
-      // Get accommodation name based on locale
-      const accommodationNames = {
-        'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
-        'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-        'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
-      };
-      const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
+      if (hasExistingReservation) {
+        // 📋 EXISTING RESERVATION: Only send activities data
+        console.log('💼 Building payload for existing reservation');
 
-      const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
-      const nightsText = nightsCount === 1 ? (locale === 'es' ? '1 noche' : '1 night') : `${nightsCount} ${locale === 'es' ? 'noches' : 'nights'}`;
-      const guestsText = bookingData.guests === 1 ? (locale === 'es' ? '1 huésped' : '1 guest') : `${bookingData.guests} ${locale === 'es' ? 'huéspedes' : 'guests'}`;
-      const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
-      const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
+        // Format dates for API
+        const formatDateForAPI = (date: Date | string) => {
+          if (typeof date === 'string') return date;
+          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        };
 
-      console.log('📝 Generated dynamic title:', dynamicTitle);
+        const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
+        const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
 
-      // 💾 Crear payload completo incluyendo datos para guardar en DB
-      const paymentPayload = {
-        checkIn: checkInFormatted,
-        checkOut: checkOutFormatted,
-        guests: bookingData.guests,
-        roomTypeId: selectedRoom?.roomTypeId,
-        isSharedRoom: selectedRoom?.isSharedRoom, // Add isSharedRoom to payload
-        contactInfo: bookingData.contactInfo,
-        selectedRoom: selectedRoom ? { ...selectedRoom } : null,
-        priceBreakdown,
-        nights: nightsCount,
-        locale,
-        selectedActivities: selectedActivities.map((a: any) => ({
-          id: a.id,
-          name: a.name,
-          category: a.category,
-          price: a.price,
-          package:
-            a.category === 'yoga'
-              ? selectedYogaPackages[a.id]
-              : a.category === 'surf'
-                ? selectedSurfPackages[a.id]
-                : undefined,
-          classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
-        })),
-        participants: serializedParticipants,
-        // WeTravel specific data
-        wetravelData: {
-          trip: {
-            title: dynamicTitle,
-            start_date: checkInFormatted,
-            end_date: checkOutFormatted,
-            currency: "USD",
-            participant_fees: "all"
+        const activitiesLabel = locale === 'es' ? 'Actividades adicionales' : 'Additional activities';
+        const dynamicTitle = `${customerName} - ${activitiesLabel}`;
+
+        // For WeTravel: use tomorrow as start_date to avoid "dates in past" error
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const wetravelStartDate = tomorrow.toISOString().split('T')[0];
+
+        // Use day after tomorrow as end_date, or actual checkout if it's in the future
+        const dayAfterTomorrow = new Date();
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+        const checkOutDate = new Date(checkOutFormatted);
+        const wetravelEndDate = checkOutDate > dayAfterTomorrow
+          ? checkOutFormatted
+          : dayAfterTomorrow.toISOString().split('T')[0];
+
+        paymentPayload = {
+          existingReservationId: bookingData.existingReservationId,
+          checkIn: checkInFormatted,
+          checkOut: checkOutFormatted,
+          guests: bookingData.guests,
+          contactInfo: bookingData.contactInfo,
+          locale,
+          selectedActivities: selectedActivities.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            category: a.category,
+            price: a.price,
+            package:
+              a.category === 'yoga'
+                ? selectedYogaPackages[a.id]
+                : a.category === 'surf'
+                  ? selectedSurfPackages[a.id]
+                  : undefined,
+            classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
+          })),
+          participants: serializedParticipants,
+          priceBreakdown: {
+            accommodation: 0,
+            activities: activitiesTotal,
+            total: activitiesTotal
           },
-          pricing: {
-            price: Math.round(total), // TOTAL price - backend will calculate 10% deposit
-            payment_plan: {
-              allow_auto_payment: false,
-              allow_partial_payment: false,
-              deposit: 0,
-              installments: []
+          // WeTravel specific data
+          wetravelData: {
+            trip: {
+              title: dynamicTitle,
+              start_date: wetravelStartDate, // Tomorrow to avoid "dates in past" error
+              end_date: wetravelEndDate, // Day after tomorrow or real checkout date
+              currency: "USD",
+              participant_fees: "none"
+            },
+            pricing: {
+              price: Math.round(activitiesTotal),
+              payment_plan: {
+                allow_auto_payment: false,
+                allow_partial_payment: false,
+                deposit: 0,
+                installments: []
+              }
             }
           }
-        }
-      };
+        };
+
+        console.log('✅ Existing reservation payload built:', {
+          existingReservationId: bookingData.existingReservationId,
+          activitiesTotal,
+          participantsCount: serializedParticipants.length
+        });
+      } else {
+        // 🏠 NEW RESERVATION: Send complete booking data
+        console.log('🏠 Building payload for new reservation');
+
+        // Convertir fechas Date objects a formato ISO string para la API
+        const formatDateForAPI = (date: Date | string) => {
+          if (typeof date === 'string') return date;
+          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        };
+
+        const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
+        const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
+
+        // Calcular días antes de la salida para el plan de pago
+        const today = new Date();
+        const checkInDate = new Date(checkInFormatted);
+        const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
+
+        console.log('📅 Payment plan calculation:', {
+          today: today.toISOString().split('T')[0],
+          checkIn: checkInFormatted,
+          daysBeforeDeparture,
+          dueDate: new Date(checkInDate.getTime() - (daysBeforeDeparture * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
+        });
+
+        // Get accommodation name based on locale
+        const accommodationNames = {
+          'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
+          'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
+          'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+        };
+        const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
+
+        const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
+        const nightsText = nightsCount === 1 ? (locale === 'es' ? '1 noche' : '1 night') : `${nightsCount} ${locale === 'es' ? 'noches' : 'nights'}`;
+        const guestsText = bookingData.guests === 1 ? (locale === 'es' ? '1 huésped' : '1 guest') : `${bookingData.guests} ${locale === 'es' ? 'huéspedes' : 'guests'}`;
+        const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
+        const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
+
+        console.log('📝 Generated dynamic title:', dynamicTitle);
+
+        paymentPayload = {
+          checkIn: checkInFormatted,
+          checkOut: checkOutFormatted,
+          guests: bookingData.guests,
+          roomTypeId: selectedRoom?.roomTypeId,
+          isSharedRoom: selectedRoom?.isSharedRoom,
+          contactInfo: bookingData.contactInfo,
+          selectedRoom: selectedRoom ? { ...selectedRoom } : null,
+          priceBreakdown,
+          nights: nightsCount,
+          locale,
+          selectedActivities: selectedActivities.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            category: a.category,
+            price: a.price,
+            package:
+              a.category === 'yoga'
+                ? selectedYogaPackages[a.id]
+                : a.category === 'surf'
+                  ? selectedSurfPackages[a.id]
+                  : undefined,
+            classCount: a.category === 'surf' ? selectedSurfClasses[a.id] : undefined
+          })),
+          participants: serializedParticipants,
+          // WeTravel specific data
+          wetravelData: {
+            trip: {
+              title: dynamicTitle,
+              start_date: checkInFormatted,
+              end_date: checkOutFormatted,
+              currency: "USD",
+              participant_fees: "none"
+            },
+            pricing: {
+              price: Math.round(total), // TOTAL price - backend will calculate deposit
+              payment_plan: {
+                allow_auto_payment: false,
+                allow_partial_payment: false,
+                deposit: 0,
+                installments: []
+              }
+            }
+          }
+        };
+
+        console.log('✅ New reservation payload built');
+      }
 
       console.log('💰 Total price:', total);
       console.log('💰 10% Deposit will be charged by backend:', Math.round(total * 0.10));
@@ -604,16 +803,21 @@ export default function PaymentSection() {
       setIsProcessing(false);
     }
   };
-  const nights = bookingData.checkIn && bookingData.checkOut ? Math.ceil(
-    (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
-    (1000 * 60 * 60 * 24)
-  ) : 0;
+  // For existing reservations, skip accommodation calculations
+  const nights = hasExistingReservation ? 0 : (
+    bookingData.checkIn && bookingData.checkOut ? Math.ceil(
+      (new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) /
+      (1000 * 60 * 60 * 24)
+    ) : 0
+  );
 
-  const accommodationTotal = selectedRoom ? (
-    selectedRoom.isSharedRoom
-      ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
-      : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
-  ) : 0;
+  const accommodationTotal = hasExistingReservation ? 0 : (
+    selectedRoom ? (
+      selectedRoom.isSharedRoom
+        ? selectedRoom.pricePerNight * nights * (bookingData.guests || 1)  // Casa de Playa: precio por persona
+        : selectedRoom.pricePerNight * nights  // Privadas/Deluxe: precio por habitación (ya ajustado por backend)
+    ) : 0
+  );
 
   // Calculate activities total from all participants
   let activitiesTotal = 0;
@@ -689,16 +893,38 @@ export default function PaymentSection() {
     >
       {/* Back Button */}
       <div className="mb-6">
-        <BackButton variant="minimal" />
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleBackClick}
+          className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-all duration-200"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+          <span className="font-medium">{t('common.goBack')}</span>
+        </motion.button>
       </div>
 
       <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mr-4">
-          <span className="text-white">💳</span>
+        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-500 rounded-lg flex items-center justify-center mr-4 shadow-lg">
+          <span className="text-slate-900 text-xl">💳</span>
         </div>
         <div>
           <h2 className="text-2xl font-bold text-white font-heading">{t('payment.title')}</h2>
-          <p className="text-yellow-300">{t('payment.subtitle')}</p>
+          <p className="text-amber-300">{t('payment.subtitle')}</p>
         </div>
       </div>
 
@@ -716,11 +942,26 @@ export default function PaymentSection() {
             <div className="flex items-start space-x-3">
               <span className="text-blue-400 text-xl">ℹ️</span>
               <div>
-                <h4 className="font-semibold text-blue-300 mb-1">10% Deposit Required</h4>
-                <p className="text-blue-200 text-sm">
-                  You only need to pay a 10% deposit now (${Math.round(total * 0.10)}) to secure your booking.
-                  The remaining balance (${Math.round(total * 0.90)}) will be due before your arrival.
-                </p>
+                {hasExistingReservation ? (
+                  <>
+                    <h4 className="font-semibold text-blue-300 mb-1">
+                      {locale === 'es' ? 'Añadiendo actividades a tu reserva' : 'Adding activities to your reservation'}
+                    </h4>
+                    <p className="text-blue-200 text-sm">
+                      {locale === 'es'
+                        ? 'El depósito será calculado automáticamente basado en las actividades seleccionadas. El saldo restante será debido antes de tu llegada.'
+                        : 'The deposit will be automatically calculated based on your selected activities. The remaining balance will be due before your arrival.'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="font-semibold text-blue-300 mb-1">10% Deposit Required</h4>
+                    <p className="text-blue-200 text-sm">
+                      You only need to pay a 10% deposit now (${Math.round(total * 0.10)}) to secure your booking.
+                      The remaining balance (${Math.round(total * 0.90)}) will be due before your arrival.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -729,11 +970,11 @@ export default function PaymentSection() {
           <button
             onClick={handlePayment}
             disabled={isProcessing}
-            className="w-full flex items-center justify-center space-x-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-6 py-4 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isProcessing ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-900"></div>
                 <span>{t('payment.generatingLink')}</span>
               </>
             ) : (
@@ -807,13 +1048,27 @@ export default function PaymentSection() {
 
         {/* Payment Summary */}
         <div className="space-y-6">
-          <div className="bg-white/10 rounded-lg p-6 border border-white/20">
-            <h3 className="text-lg font-semibold text-white mb-4 font-heading">{t('payment.summary.title')}</h3>
-            <div className="space-y-3">
-              {selectedRoom && (
-                <div className="flex justify-between">
-                  <span className="text-white">{selectedRoom.roomTypeName}</span>
-                  <span className="font-medium text-blue-400">${accommodationTotal}</span>
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl border border-white/50 shadow-2xl overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-300/20 to-amber-500/20 border-b border-amber-400/30 px-4 md:px-5 py-3">
+              <h3 className="text-lg font-bold text-black font-heading">{t('payment.summary.title')}</h3>
+            </div>
+            <div className="p-4 md:p-5 space-y-3">
+              {/* Only show accommodation for new reservations */}
+              {!hasExistingReservation && selectedRoom && (
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 pr-4">
+                    <div className="text-sm md:text-base font-medium text-black">{selectedRoom.roomTypeName}</div>
+                  </div>
+                  <div className="text-sm md:text-base font-medium text-right text-earth-600">${accommodationTotal}</div>
+                </div>
+              )}
+              {/* Show existing reservation notice */}
+              {hasExistingReservation && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200 mb-3">
+                  <span className="text-amber-600 text-sm">ℹ️</span>
+                  <span className="text-gray-700 text-sm font-medium">
+                    {locale === 'es' ? 'Añadiendo actividades a reserva existente' : 'Adding activities to existing reservation'}
+                  </span>
                 </div>
               )}
               {participants.flatMap((participant, pIndex) => {
@@ -884,65 +1139,138 @@ export default function PaymentSection() {
                   }
 
                   return (
-                    <div key={`${participant.id}-${activity.id}-${pIndex}-${aIndex}`} className="flex justify-between items-start gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-white">
+                    <div key={`${participant.id}-${activity.id}-${pIndex}-${aIndex}`} className="flex justify-between items-start">
+                      <div className="flex-1 pr-4">
+                        <div className="text-sm md:text-base font-medium text-black">
                           {displayName}
                           {activityDetails && (
-                            <span className="text-sm text-blue-300 ml-2">
+                            <span className="text-xs md:text-sm text-gray-600 ml-2">
                               {activityDetails}
                             </span>
                           )}
                         </div>
                         {showParticipantName && (
-                          <div className="text-xs text-gray-400 mt-0.5">
+                          <div className="text-xs text-gray-500 mt-0.5">
                             {participant.name}
                           </div>
                         )}
                       </div>
-                      <span className="font-medium text-blue-400 whitespace-nowrap">${activityPrice}</span>
+                      <div className="text-sm md:text-base font-medium text-right whitespace-nowrap text-earth-600">${activityPrice}</div>
                     </div>
                   );
                 });
               })
               }
-              <div className="border-t border-white/20 pt-3">
+              <div className="border-t border-gray-200 pt-3">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-white">{t('payment.summary.total')}</span>
-                  <span className="text-2xl font-bold text-yellow-300">${total}</span>
+                  <span className="text-[18px] font-semibold text-black">{t('payment.summary.total')}</span>
+                  <span className="text-[24px] font-bold text-right text-earth-600">${total}</span>
                 </div>
-                <div className="flex justify-between items-center mt-2 pt-2 border-t border-blue-400/30">
-                  <span className="text-sm text-blue-300">Deposit Required (10%)</span>
-                  <span className="text-lg font-bold text-green-400">${Math.round(total * 0.10)}</span>
-                </div>
-                <p className="text-xs text-blue-200 mt-2">
-                  Remaining balance: ${Math.round(total * 0.90)} due before arrival
-                </p>
+                {(() => {
+                  const { deposit, remaining } = calculateDepositAmount();
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
+                        <span className="text-sm text-gray-700">
+                          {locale === 'es' ? 'Depósito requerido' : 'Deposit Required'}
+                        </span>
+                        <span className="text-lg font-bold text-earth-600">
+                          ${deposit}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2">
+                        {locale === 'es'
+                          ? `Balance restante: $${remaining} a pagar antes de la llegada`
+                          : `Remaining balance: $${remaining} due before arrival`}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
 
-          {/* Security Notice */}
-          <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-green-400">✅</span>
-              <span className="font-semibold text-white">{t('payment.secure.title')}</span>
+          {/* Payment Information */}
+          <div className="bg-white/90 backdrop-blur-sm border border-white/50 rounded-2xl p-4 shadow-lg space-y-4">
+            {/* Deposit Information */}
+            <div>
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="text-blue-600">💰</span>
+                <span className="font-semibold text-black">
+                  {locale === 'es' ? 'Información del Depósito' : 'Deposit Information'}
+                </span>
+              </div>
+              <p className="text-gray-700 text-sm">
+                {(() => {
+                  const { deposit, remaining } = calculateDepositAmount();
+                  return locale === 'es'
+                    ? `Solo necesitas pagar un depósito de $${deposit} ahora. El balance restante de $${remaining} será pagado antes de tu llegada.`
+                    : `You only need to pay a deposit of $${deposit} now. The remaining balance of $${remaining} will be paid before your arrival.`;
+                })()}
+              </p>
             </div>
-            <p className="text-blue-300 text-sm mt-1">{t('payment.secure.description')}</p>
+
+            {/* Security Notice */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center space-x-2">
+                <span className="text-green-600">✅</span>
+                <span className="font-semibold text-black">{t('payment.secure.title')}</span>
+              </div>
+              <p className="text-gray-700 text-sm mt-1">{t('payment.secure.description')}</p>
+            </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 shadow-lg">
               <div className="flex items-center space-x-2">
-                <span className="text-amber-300">⚠️</span>
-                <span className="font-semibold text-white">{t('common.error')}</span>
+                <span className="text-red-600">⚠️</span>
+                <span className="font-semibold text-red-900">{t('common.error')}</span>
               </div>
-              <p className="text-amber-200 text-sm mt-1">{error}</p>
+              <p className="text-red-700 text-sm mt-1">{error}</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Back Confirmation Modal */}
+      {showBackConfirmation && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {locale === 'es' ? '¿Estás seguro?' : 'Are you sure?'}
+              </h3>
+            </div>
+            <p className="text-gray-700 mb-6">
+              {locale === 'es'
+                ? 'Si vuelves atrás, perderás el progreso en esta página de pago. ¿Deseas continuar?'
+                : 'If you go back, you will lose the progress on this payment page. Do you want to continue?'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelGoBack}
+                className="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors"
+              >
+                {locale === 'es' ? 'Cancelar' : 'Cancel'}
+              </button>
+              <button
+                onClick={confirmGoBack}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 text-slate-900 rounded-xl font-semibold transition-all shadow-lg"
+              >
+                {locale === 'es' ? 'Sí, volver' : 'Yes, go back'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 } 

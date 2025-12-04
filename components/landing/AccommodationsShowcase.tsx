@@ -203,7 +203,7 @@ export default function AccommodationsShowcase() {
                         onClick={() =>
                           prevImage(accommodation.id, accommodation.images.length)
                         }
-                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-900 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-black/10 hover:bg-gray-50 text-slate-900 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
                         aria-label="Previous image"
                       >
                         <ChevronLeft className="w-5 h-5" />
@@ -212,7 +212,7 @@ export default function AccommodationsShowcase() {
                         onClick={() =>
                           nextImage(accommodation.id, accommodation.images.length)
                         }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-slate-900 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md border border-black/10 hover:bg-gray-50 text-slate-900 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
                         aria-label="Next image"
                       >
                         <ChevronRight className="w-5 h-5" />

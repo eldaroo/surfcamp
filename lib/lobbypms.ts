@@ -310,6 +310,22 @@ export class LobbyPMSClient {
   }
 
   /**
+   * Get a specific booking by ID
+   */
+  async getBookingById(bookingId: number): Promise<LobbyPMSBooking | null> {
+    try {
+      const response: AxiosResponse<LobbyPMSBooking> = await axios.get(
+        this.buildURL(`/bookings/${bookingId}`),
+        { timeout: 10000 }
+      );
+      return response.data || null;
+    } catch (error) {
+      console.error('LobbyPMS getBookingById error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create or ensure a customer exists in LobbyPMS
    */
   async createCustomer(customer: LobbyPMSCustomerPayload): Promise<any> {

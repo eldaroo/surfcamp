@@ -40,7 +40,17 @@ const pluralize = (count: number, singular: string, plural: string): string => {
   return count === 1 ? singular : plural;
 };
 
-export default function PriceSummary({ isCollapsed = false, showContainer = true }: { isCollapsed?: boolean; showContainer?: boolean }) {
+export default function PriceSummary({
+  isCollapsed = false,
+  showContainer = true,
+  hideTitle = false,
+  tone = 'default',
+}: {
+  isCollapsed?: boolean;
+  showContainer?: boolean;
+  hideTitle?: boolean;
+  tone?: 'default' | 'neutral';
+}) {
   const { t, locale } = useI18n();
   const {
     bookingData,
@@ -207,7 +217,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         <span className="text-base font-semibold text-black">
           {getText('prices.total', 'Total')}
         </span>
-        <span className="text-xl font-bold text-amber-600">
+        <span className="text-xl font-bold text-earth-600">
           {formatCurrency(total, locale)}
         </span>
       </div>
@@ -227,11 +237,16 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
     return accommodationNames[selectedRoom.roomTypeId as keyof typeof accommodationNames] || selectedRoom.roomTypeName;
   };
 
+  const textMuted = tone === 'neutral' ? 'text-gray-700' : '';
+  const amountText = textMuted;
+  const editBtnTone = tone === 'neutral' ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-earth-400 text-earth-600 hover:bg-earth-50';
   const content = (
     <>
-      <h3 className="text-base md:text-lg font-semibold mb-3 font-heading text-black">
-        {getText('prices.summary', 'Price Summary')}
-      </h3>
+      {!hideTitle && showContainer && (
+        <h3 className="text-base md:text-lg font-semibold mb-3 font-heading text-black">
+          {getText('prices.summary', 'Price Summary')}
+        </h3>
+      )}
 
       {/* PASS 2: space-y-3 mb-4 â†’ space-y-2.5 mb-3 */}
       <ul className="space-y-2.5 mb-3">
@@ -243,19 +258,19 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                 <div className="text-sm md:text-base font-medium text-black">
                   {getAccommodationName()}
                   {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
-                    <span className="text-xs md:text-sm ml-1 font-normal text-[#6d5f57]">
+                    <span className="text-xs md:text-sm ml-1 font-normal ">
                       ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
                     </span>
                   )}
                 </div>
-                <div className="text-xs mt-1 text-[#6d5f57]">
+                <div className="text-xs mt-1 ">
                   {selectedRoom.isSharedRoom
                     ? `${bookingData.guests} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                     : `${nights} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                   }
                 </div>
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
+              <div className="text-sm md:text-base font-medium text-right text-earth-600">
                 {formatCurrency(accommodationTotal, locale)}
               </div>
             </div>
@@ -284,18 +299,18 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
                   <div className="text-sm md:text-base font-medium text-black">
                     {displayName}
                     {packageInfo && activity.category !== 'surf' && (
-                      <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-600">
+                      <span className="text-xs ml-2 px-2 py-1 rounded-full bg-earth-100 text-earth-700">
                         {packageInfo.replace('-', ' ')}
                       </span>
                     )}
                   </div>
                   {showParticipantName && (
-                    <div className="text-xs mt-1 text-[#6d5f57]">
+                    <div className="text-xs mt-1 ">
                       {participant.name}
                     </div>
                   )}
                 </div>
-                <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
+                <div className="text-sm md:text-base font-medium text-right text-earth-600">
                   {formatCurrency(price, locale)}
                 </div>
               </div>
@@ -310,17 +325,17 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
               <div className="flex-1 pr-4">
                 <div className="text-sm md:text-base font-medium text-black">
                   {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
-                  <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-600">
+                  <span className="text-xs ml-2 px-2 py-1 rounded-full bg-earth-100 text-earth-700">
                     {locale === 'es' ? 'Mejora' : 'Upgrade'}
                   </span>
                 </div>
                 {participants.length > 1 && (
-                  <div className="text-xs mt-1 text-[#6d5f57]">
+                  <div className="text-xs mt-1 ">
                     {locale === 'es' ? 'Para todos los participantes' : 'For all participants'}
                   </div>
                 )}
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-[#6d5f57]">
+              <div className="text-sm md:text-base font-medium text-right text-earth-600">
                 {formatCurrency(privateCoachingUpgradeTotal, locale)}
               </div>
             </div>
@@ -333,7 +348,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
         <div className="flex justify-end mb-3">
           <button
             onClick={() => setCurrentStep('activities')}
-            className="text-[12px] font-medium px-3 py-1 rounded-full border border-amber-400 bg-transparent hover:bg-amber-50 transition-colors text-amber-600"
+            className="text-[12px] font-medium px-3 py-1 rounded-full border border-earth-400 bg-transparent hover:bg-earth-50 transition-colors text-earth-600"
           >
             {getText('activities.edit', 'Edit Activities')}
           </button>
@@ -348,7 +363,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
             <span className="text-[14px] font-medium text-black">
               {getText('prices.subtotal', 'Subtotal')}
             </span>
-            <span className="text-[14px] font-medium text-right text-[#6d5f57]">
+            <span className="text-[14px] font-medium text-right text-earth-600">
               {formatCurrency(subtotal, locale)}
             </span>
           </div>
@@ -361,7 +376,7 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
           <span className="text-[14px] font-medium text-black">
             {getText('prices.tax', 'Taxes & Fees')}
           </span>
-          <span className="text-[14px] font-medium text-right text-[#6d5f57]">
+          <span className="text-[14px] font-medium text-right text-earth-600">
             {formatCurrency(fees, locale)}
           </span>
         </div>
@@ -373,20 +388,20 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
           <span className="text-[14px] font-medium text-black">
             {getText('prices.discount', 'Discount')}
           </span>
-          <span className="text-[14px] font-medium text-right text-amber-600">
+          <span className="text-[14px] font-medium text-right text-earth-600">
             âˆ’{formatCurrency(discounts, locale)}
           </span>
         </div>
       )}
 
-      {/* PASS 2: pt-4 â†’ pt-3 */}
+      {/* PASS 2: pt-4 â†' pt-3 */}
       {(accommodationTotal > 0 || activitiesTotal > 0) && (
         <div className="border-t border-gray-200 pt-3">
           <div className="flex justify-between items-center" aria-live="polite">
             <span className="text-[18px] font-semibold text-black">
               {getText('prices.total', 'Total')}
             </span>
-            <span className="text-[24px] font-bold text-right text-amber-600">
+            <span className="text-[24px] font-bold text-right text-earth-600">
               {formatCurrency(total, locale)}
             </span>
           </div>
@@ -426,13 +441,5 @@ export default function PriceSummary({ isCollapsed = false, showContainer = true
     );
   }
 
-  return (
-    <div
-      className="lg:sticky lg:top-6"
-      role="complementary"
-      aria-label="Booking Summary"
-    >
-      {content}
-    </div>
-  );
+  return <div role="complementary" aria-label="Booking Summary">{content}</div>;
 }

@@ -99,6 +99,8 @@ export interface BookingRequest {
     dni: string;
     nationality?: string;
   };
+  existingReservationId?: string; // For adding activities to existing reservations
+  dni?: string; // Document number for finding existing reservations
 }
 
 export interface PriceBreakdown {
@@ -145,6 +147,8 @@ export interface BookingData {
   roomTypeId?: string;
   activityIds?: string[];
   contactInfo?: ContactFormData;
+  existingReservationId?: string; // For adding activities to existing reservations
+  dni?: string; // Document number for finding existing reservations
 }
 
 export interface BookingStore {

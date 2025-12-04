@@ -632,8 +632,211 @@ export async function POST(request: NextRequest) {
       priceBreakdown,
       selectedRoom,
       nights: payloadNights,
-      discountedAccommodationTotal
+      discountedAccommodationTotal,
+      existingReservationId // ID of existing reservation to add activities to
     } = body;
+
+    // ✅ LOGIC TO ADD ACTIVITIES TO EXISTING RESERVATION
+    if (existingReservationId) {
+      console.log('🏨 [RESERVE] ========== ADDING ACTIVITIES TO EXISTING RESERVATION ==========');
+      console.log('🏨 [RESERVE] Existing Reservation ID:', existingReservationId);
+
+      try {
+        // 1. Fetch the existing reservation from Lobby PMS
+        const bookingIdNum = typeof existingReservationId === 'string'
+          ? parseInt(existingReservationId, 10)
+          : existingReservationId;
+
+        console.log('🏨 [RESERVE] Fetching existing reservation from Lobby PMS...');
+        const existingReservation = await lobbyPMSClient.getBookingById(bookingIdNum);
+
+        if (!existingReservation) {
+          console.error('🏨 [RESERVE] Existing reservation not found in Lobby PMS');
+          return NextResponse.json({
+            success: false,
+            error: 'Reservation not found',
+          }, { status: 404 });
+        }
+        console.log('🏨 [RESERVE] Found existing reservation:', JSON.stringify(existingReservation, null, 2));
+
+        // 2. Process activities from participants
+        console.log('🏨 [RESERVE] Processing activities from participants...');
+        const allActivityItems: Array<{ product_id: string; cant: number; inventory_center_id?: string }> = [];
+
+        if (participants && participants.length > 0) {
+          console.log('🏨 [RESERVE] Processing', participants.length, 'participants');
+
+          // Build consumption items for each participant
+          participants.forEach((participant: any, index: number) => {
+            console.log(`🏨 [RESERVE] Processing participant ${index + 1}:`, participant.name);
+            const participantItems = buildParticipantConsumptionItems(participant);
+            console.log(`🏨 [RESERVE] Participant ${index + 1} items:`, JSON.stringify(participantItems, null, 2));
+            allActivityItems.push(...participantItems);
+          });
+        } else if (selectedActivitiesPayload && selectedActivitiesPayload.length > 0) {
+          // Fallback: legacy single-participant format
+          console.log('🏨 [RESERVE] Using legacy activities format');
+          const legacyParticipant = {
+            selectedActivities: selectedActivitiesPayload,
+            activityQuantities: {},
+            selectedYogaPackages: {},
+            selectedSurfPackages: {},
+            selectedSurfClasses: {},
+          };
+          const legacyItems = buildParticipantConsumptionItems(legacyParticipant);
+          allActivityItems.push(...legacyItems);
+        }
+
+        console.log('🏨 [RESERVE] Total activity items to add:', allActivityItems.length);
+        console.log('🏨 [RESERVE] Activity items:', JSON.stringify(allActivityItems, null, 2));
+
+        if (allActivityItems.length === 0) {
+          console.log('🏨 [RESERVE] No activities to add');
+          return NextResponse.json({
+            success: false,
+            error: 'No activities selected to add to reservation',
+          }, { status: 400 });
+        }
+
+        // 3. Add products to the existing reservation
+        console.log('🏨 [RESERVE] Adding products to existing reservation...');
+        await lobbyPMSClient.addProductsToBooking(bookingIdNum, allActivityItems);
+        console.log('🏨 [RESERVE] ✅ Successfully added activities to reservation');
+
+        // 4. Calculate the total price of added activities
+        let activitiesTotal = 0;
+        if (priceBreakdown?.activities) {
+          activitiesTotal = priceBreakdown.activities;
+        }
+        console.log('🏨 [RESERVE] Activities total:', activitiesTotal);
+
+        // 5. Create order in Supabase for tracking
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        const orderData = {
+          lobbypms_reservation_id: existingReservationId.toString(),
+          payment_intent_id: paymentIntentId || null,
+          booking_data: body,
+          amount: activitiesTotal,
+          status: 'activities_added',
+          created_at: new Date().toISOString(),
+        };
+
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert(orderData)
+          .select()
+          .single();
+
+        if (orderError) {
+          console.error('🏨 [RESERVE] Error creating order in Supabase:', orderError);
+        } else {
+          console.log('🏨 [RESERVE] ✅ Order created in Supabase:', order.id);
+        }
+
+        // 6. Send notifications
+        console.log('🏨 [RESERVE] Sending notifications...');
+
+        const holder = (existingReservation as any).holder;
+        const customerEmail = holder?.email || contactInfo?.email;
+        const customerPhone = holder?.phone || contactInfo?.phone;
+        const customerName = holder?.name || contactInfo?.firstName || 'Cliente';
+
+        // Send WhatsApp confirmation to client
+        if (customerPhone) {
+          try {
+            await sendClientConfirmationMessage({
+              clientPhone: customerPhone,
+              clientFirstName: customerName,
+              checkIn: (existingReservation as any).start_date,
+              checkOut: (existingReservation as any).end_date,
+              locale: locale as 'es' | 'en'
+            });
+            console.log('🏨 [RESERVE] ✅ WhatsApp confirmation sent to client');
+          } catch (error) {
+            console.error('🏨 [RESERVE] Error sending WhatsApp to client:', error);
+          }
+        }
+
+        // Send email confirmation
+        if (customerEmail) {
+          try {
+            const reservationData = existingReservation as any;
+            await sendBookingConfirmationEmailWithRetry({
+              recipientEmail: customerEmail,
+              recipientName: customerName,
+              locale: locale as 'es' | 'en',
+              bookingData: {
+                bookingReference: existingReservationId.toString(),
+                checkIn: reservationData.start_date,
+                checkOut: reservationData.end_date,
+                guests: reservationData.total_guests || 1,
+                roomTypeName: reservationData.category?.name || 'Room',
+                activities: allActivityItems.map(item => ({
+                  name: `Product ${item.product_id}`,
+                  quantity: item.cant,
+                })),
+                totalAmount: activitiesTotal
+              }
+            });
+            console.log('🏨 [RESERVE] ✅ Email confirmation sent');
+          } catch (error) {
+            console.error('🏨 [RESERVE] Error sending email:', error);
+          }
+        }
+
+        // Send unified activities notification to admin/instructors
+        if (participants && participants.length > 0) {
+          try {
+            const reservationData = existingReservation as any;
+            await sendUnifiedActivitiesNotification({
+              checkIn: reservationData.start_date,
+              checkOut: reservationData.end_date,
+              guestName: customerName,
+              phone: customerPhone || '',
+              dni: contactInfo?.dni || '',
+              total: activitiesTotal,
+              participants: participants
+            });
+            console.log('🏨 [RESERVE] ✅ Activities notification sent to instructors');
+          } catch (error) {
+            console.error('🏨 [RESERVE] Error sending activities notification:', error);
+          }
+        }
+
+        console.log('🏨 [RESERVE] ========== ACTIVITIES ADDED SUCCESSFULLY ==========');
+
+        return NextResponse.json({
+          success: true,
+          reservationId: existingReservationId.toString(),
+          status: 'activities_added',
+          message: locale === 'es'
+            ? 'Actividades agregadas exitosamente a tu reserva'
+            : 'Activities successfully added to your reservation',
+          activitiesTotal,
+          orderId: order?.id,
+        });
+
+      } catch (error: any) {
+        console.error('🏨 [RESERVE] Error adding activities to existing reservation:', error);
+        return NextResponse.json({
+          success: false,
+          error: error.message || 'Error adding activities to reservation',
+          reservationId: existingReservationId
+        }, { status: 500 });
+      }
+    }
+
+
     const phoneForLobby = normalizePhoneNumber(contactInfo?.phone);
     if (contactInfo?.phone) {
       if (phoneForLobby) {
