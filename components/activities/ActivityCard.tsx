@@ -438,16 +438,16 @@ const CACHE_VERSION = '20251124-2200';
 
 const activityImages = {
   surf: {
-    image: `/assets/Surf.jpgov=${CACHE_VERSION}`,
-    mobileImage: `/assets/surf-mobile.jpgov=${CACHE_VERSION}`,
+    image: `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+    mobileImage: `/assets/surf-mobile.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   yoga: {
-    image: `/assets/Yoga.jpgov=${CACHE_VERSION}`,
+    image: `/assets/Yoga.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   ice_bath: {
-    image: `/assets/Icebath.jpgov=${CACHE_VERSION}`,
+    image: `/assets/Icebath.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
   transport: {
@@ -455,7 +455,7 @@ const activityImages = {
     hasImage: false,
   },
   hosting: {
-    image: `/assets/Host.jpgov=${CACHE_VERSION}`,
+    image: `/assets/Host.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
 } as const;

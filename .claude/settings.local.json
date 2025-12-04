@@ -93,7 +93,8 @@
       "Bash(git revert:*)",
       "WebFetch(domain:developers.brevo.com)",
       "Bash(find:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
