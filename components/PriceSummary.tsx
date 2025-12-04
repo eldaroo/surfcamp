@@ -217,7 +217,7 @@ export default function PriceSummary({
         <span className="text-base font-semibold text-black">
           {getText('prices.total', 'Total')}
         </span>
-        <span className="text-xl font-bold text-earth-600">
+        <span className="text-xl font-bold text-amber-600">
           {formatCurrency(total, locale)}
         </span>
       </div>
@@ -237,9 +237,9 @@ export default function PriceSummary({
     return accommodationNames[selectedRoom.roomTypeId as keyof typeof accommodationNames] || selectedRoom.roomTypeName;
   };
 
-  const textMuted = tone === 'neutral' ? 'text-gray-700' : '';
+  const textMuted = tone === 'neutral' ? 'text-gray-700' : 'text-[#6d5f57]';
   const amountText = textMuted;
-  const editBtnTone = tone === 'neutral' ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-earth-400 text-earth-600 hover:bg-earth-50';
+  const editBtnTone = tone === 'neutral' ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-amber-400 text-amber-600 hover:bg-amber-50';
   const content = (
     <>
       {!hideTitle && showContainer && (
@@ -258,19 +258,19 @@ export default function PriceSummary({
                 <div className="text-sm md:text-base font-medium text-black">
                   {getAccommodationName()}
                   {bookingData.checkIn && bookingData.checkOut && bookingData.guests && (
-                    <span className="text-xs md:text-sm ml-1 font-normal ">
+                    <span className={`text-xs md:text-sm ml-1 font-normal ${textMuted}`}>
                       ({formatDate(bookingData.checkIn)} - {formatDate(bookingData.checkOut)}, {bookingData.guests} {bookingData.guests === 1 ? (locale === 'es' ? 'persona' : 'guest') : (locale === 'es' ? 'personas' : 'guests')})
                     </span>
                   )}
                 </div>
-                <div className="text-xs mt-1 ">
+                <div className={	ext-xs mt-1 }>
                   {selectedRoom.isSharedRoom
                     ? `${bookingData.guests} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                     : `${nights} Ã— ${formatCurrency(selectedRoom.pricePerNight, locale)} / night`
                   }
                 </div>
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-earth-600">
+              <div className={`text-sm md:text-base font-medium text-right ${amountText}`}>
                 {formatCurrency(accommodationTotal, locale)}
               </div>
             </div>
@@ -299,18 +299,18 @@ export default function PriceSummary({
                   <div className="text-sm md:text-base font-medium text-black">
                     {displayName}
                     {packageInfo && activity.category !== 'surf' && (
-                      <span className="text-xs ml-2 px-2 py-1 rounded-full bg-earth-100 text-earth-700">
+                      <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                         {packageInfo.replace('-', ' ')}
                       </span>
                     )}
                   </div>
                   {showParticipantName && (
-                    <div className="text-xs mt-1 ">
+                    <div className={`text-xs mt-1 ${textMuted}`}>
                       {participant.name}
                     </div>
                   )}
                 </div>
-                <div className="text-sm md:text-base font-medium text-right text-earth-600">
+                <div className={`text-sm md:text-base font-medium text-right ${amountText}`}>
                   {formatCurrency(price, locale)}
                 </div>
               </div>
@@ -325,17 +325,17 @@ export default function PriceSummary({
               <div className="flex-1 pr-4">
                 <div className="text-sm md:text-base font-medium text-black">
                   {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
-                  <span className="text-xs ml-2 px-2 py-1 rounded-full bg-earth-100 text-earth-700">
+                  <span className="text-xs ml-2 px-2 py-1 rounded-full bg-amber-100 text-amber-700">
                     {locale === 'es' ? 'Mejora' : 'Upgrade'}
                   </span>
                 </div>
                 {participants.length > 1 && (
-                  <div className="text-xs mt-1 ">
+                  <div className={`text-xs mt-1 ${textMuted}`}>
                     {locale === 'es' ? 'Para todos los participantes' : 'For all participants'}
                   </div>
                 )}
               </div>
-              <div className="text-sm md:text-base font-medium text-right text-earth-600">
+              <div className={`text-sm md:text-base font-medium text-right ${amountText}`}>
                 {formatCurrency(privateCoachingUpgradeTotal, locale)}
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function PriceSummary({
         <div className="flex justify-end mb-3">
           <button
             onClick={() => setCurrentStep('activities')}
-            className="text-[12px] font-medium px-3 py-1 rounded-full border border-earth-400 bg-transparent hover:bg-earth-50 transition-colors text-earth-600"
+            className={`text-[12px] font-medium px-3 py-1 rounded-full border bg-transparent transition-colors ${editBtnTone}`}
           >
             {getText('activities.edit', 'Edit Activities')}
           </button>
@@ -363,7 +363,7 @@ export default function PriceSummary({
             <span className="text-[14px] font-medium text-black">
               {getText('prices.subtotal', 'Subtotal')}
             </span>
-            <span className="text-[14px] font-medium text-right text-earth-600">
+            <span className={`text-[14px] font-medium text-right ${amountText}`}>
               {formatCurrency(subtotal, locale)}
             </span>
           </div>
@@ -376,7 +376,7 @@ export default function PriceSummary({
           <span className="text-[14px] font-medium text-black">
             {getText('prices.tax', 'Taxes & Fees')}
           </span>
-          <span className="text-[14px] font-medium text-right text-earth-600">
+          <span className={`text-[14px] font-medium text-right ${amountText}`}>
             {formatCurrency(fees, locale)}
           </span>
         </div>
@@ -388,7 +388,7 @@ export default function PriceSummary({
           <span className="text-[14px] font-medium text-black">
             {getText('prices.discount', 'Discount')}
           </span>
-          <span className="text-[14px] font-medium text-right text-earth-600">
+          <span className={`text-[14px] font-medium text-right ${amountText}`}>
             âˆ’{formatCurrency(discounts, locale)}
           </span>
         </div>
@@ -401,7 +401,7 @@ export default function PriceSummary({
             <span className="text-[18px] font-semibold text-black">
               {getText('prices.total', 'Total')}
             </span>
-            <span className="text-[24px] font-bold text-right text-earth-600">
+            <span className="text-[24px] font-bold text-right text-amber-600">
               {formatCurrency(total, locale)}
             </span>
           </div>

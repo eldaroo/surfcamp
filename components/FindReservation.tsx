@@ -74,9 +74,8 @@ export default function FindReservation() {
           lastName: reservation.guestName?.split(' ').slice(1).join(' ') || '',
           email: reservation.email || '',
           phone: reservation.phone || '',
-          country: nationality,
-          documentType: 'passport',
-          documentNumber: document.trim(),
+          dni: document.trim(),
+          nationality,
         },
       });
       // Ir directamente a la página de pago
@@ -112,7 +111,7 @@ export default function FindReservation() {
               </h3>
             </div>
             <div className="p-4 md:p-5">
-              <PriceSummary showContainer={false} hideTitle />
+              <PriceSummary showContainer={false} hideTitle tone="neutral" />
             </div>
           </div>
         </div>
