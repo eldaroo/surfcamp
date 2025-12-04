@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -614,27 +614,32 @@ const ActivityCard = ({
   const testimonials = isSurf ? testimonialsContent.surf[locale] : null;
   const setLandingSectionsHidden = useBookingStore((state) => state.setLandingSectionsHidden);
 
-  // Surf image carousel - Mobile version
-  const surfImagesMobile = [
-    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (2) Mobile.jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
-    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
-  ];
+  // Surf image carousel sources (memoized to keep stable references)
+  const surfImagesMobile = useMemo(
+    () => [
+      `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (2) Mobile.jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+      `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
+    ],
+    []
+  );
 
-  // Surf image carousel - Desktop version
-  const surfImagesDesktop = [
-    `/assets/Surf.jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (2).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
-    `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
-    `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
-  ];
+  const surfImagesDesktop = useMemo(
+    () => [
+      `/assets/Surf.jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (2).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (3).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (4).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surf (5).jpg?v=${CACHE_VERSION}`,
+      `/assets/Surfcamp - day2 - 49.jpg?v=${CACHE_VERSION}`,
+      `/assets/Surfcamp_-_day2_-_43.jpg?v=${CACHE_VERSION}`,
+    ],
+    []
+  );
 
   const handleNextSurfImage = () => {
     setCurrentSurfImageIndex((prev) => (prev + 1) % surfImagesMobile.length);
@@ -699,7 +704,7 @@ const ActivityCard = ({
       const img = new window.Image();
       img.src = src;
     });
-  }, [isSurf]);
+  }, [isSurf, surfImagesMobile, surfImagesDesktop]);
 
   // Auto-rotate surf carousel every 4 seconds (mobile only)
   useEffect(() => {

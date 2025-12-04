@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { useI18n } from '@/lib/i18n';
 import { getAltTags } from '@/lib/altTags';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function StoriesSlider() {
   const { t, raw, locale } = useI18n();
   const reviews = (raw<Review[]>('landing.reviews.data') || []) as Review[];
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [avatarError, setAvatarError] = useState(false);
   const alts = getAltTags(locale as 'en' | 'es');
 
   // Get review alt-tag based on avatar path
@@ -53,6 +55,11 @@ export default function StoriesSlider() {
   };
 
   const currentReview = reviews[currentIndex];
+
+  // Reset avatar error when slide changes
+  useEffect(() => {
+    setAvatarError(false);
+  }, [currentIndex]);
 
   return (
     <section className="relative bg-[#163237] overflow-hidden py-12 md:py-16">
@@ -101,22 +108,20 @@ export default function StoriesSlider() {
                 <div className="flex justify-center mb-8">
                   <div className="relative">
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#ece97f] shadow-xl bg-gradient-to-br from-[#163237] to-[#2a4f57] flex items-center justify-center">
-                      <img
-                        src={currentReview.avatar}
-                        alt={getReviewAlt(currentReview.avatar)}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Hide broken image and show initials instead
-                          e.currentTarget.style.display = 'none';
-                          const initialsDiv = e.currentTarget.nextElementSibling;
-                          if (initialsDiv) {
-                            (initialsDiv as HTMLElement).style.display = 'flex';
-                          }
-                        }}
-                      />
-                      <div className="hidden absolute inset-0 flex items-center justify-center text-3xl md:text-4xl font-bold text-[#ece97f]">
-                        {currentReview.name.split(' ').map(n => n[0]).join('')}
-                      </div>
+                      {!avatarError ? (
+                        <Image
+                          src={currentReview.avatar}
+                          alt={getReviewAlt(currentReview.avatar)}
+                          fill
+                          sizes="128px"
+                          className="object-cover"
+                          onError={() => setAvatarError(true)}
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-3xl md:text-4xl font-bold text-[#ece97f]">
+                          {currentReview.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
