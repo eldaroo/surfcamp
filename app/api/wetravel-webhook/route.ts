@@ -814,6 +814,7 @@ async function handleBookingCreated(
 
       // 🏨 CREATE LOBBYPMS RESERVATION DIRECTLY FROM WEBHOOK
       try {
+        console.log('🔍 [WEBHOOK] Attempting to fetch order data for order_id:', payment.order_id);
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .select('booking_data, lobbypms_reservation_id')
@@ -822,8 +823,17 @@ async function handleBookingCreated(
 
         if (orderError) {
           console.error('❌ [WEBHOOK] Error fetching order data:', orderError);
-        } else if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
-          console.log('✅ [WEBHOOK] Order has booking data and no reservation yet, calling /api/reserve');
+        } else if (!orderData) {
+          console.error('❌ [WEBHOOK] No order data found for order_id:', payment.order_id);
+        } else {
+          console.log('📋 [WEBHOOK] Order data fetched:', {
+            has_booking_data: !!orderData.booking_data,
+            has_lobbypms_reservation_id: !!orderData.lobbypms_reservation_id,
+            lobbypms_reservation_id: orderData.lobbypms_reservation_id
+          });
+
+          if (orderData.booking_data && !orderData.lobbypms_reservation_id) {
+            console.log('✅ [WEBHOOK] Order has booking data and no reservation yet, calling /api/reserve');
 
             const booking = orderData.booking_data;
             console.log('📦 [WEBHOOK] Full booking_data from DB:', JSON.stringify(booking, null, 2));
@@ -849,6 +859,9 @@ async function handleBookingCreated(
 
             // Call reserve endpoint
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://surfcampwidget.duckdns.org';
+            console.log('🌐 [WEBHOOK] Using base URL:', baseUrl);
+            console.log('🌐 [WEBHOOK] Full reserve endpoint:', `${baseUrl}/api/reserve`);
+
             const reserveResponse = await fetch(`${baseUrl}/api/reserve`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -966,13 +979,29 @@ async function handleBookingCreated(
               console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
             }
           } else {
-            console.error('❌ [WEBHOOK] /api/reserve failed:', reserveData);
+            console.error('❌ [WEBHOOK] /api/reserve failed:', {
+              status: reserveResponse.status,
+              statusText: reserveResponse.statusText,
+              error: reserveData
+            });
           }
         } else if (orderData?.lobbypms_reservation_id) {
-          console.log('ℹ️ [WEBHOOK] Reservation already exists:', orderData.lobbypms_reservation_id);
+          console.log('ℹ️ [WEBHOOK] Reservation already exists for this order:', {
+            order_id: payment.order_id,
+            lobbypms_reservation_id: orderData.lobbypms_reservation_id
+          });
+        } else if (!orderData?.booking_data) {
+          console.warn('⚠️ [WEBHOOK] Order has no booking_data - skipping reservation creation:', {
+            order_id: payment.order_id
+          });
         }
+        } // Close the else block started at line 828
       } catch (error) {
         console.error('❌ [WEBHOOK] Error creating reservation:', error);
+        console.error('❌ [WEBHOOK] Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
       }
 
       if (bookingContext.eventKey) {

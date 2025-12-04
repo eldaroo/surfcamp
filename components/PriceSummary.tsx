@@ -177,7 +177,7 @@ export default function PriceSummary({
     return (
       <div className="flex items-center justify-between p-4 rounded-xl border bg-white/80 backdrop-blur-md border-white/40">
         <span className="text-base font-semibold text-black">{getText('prices.total', 'Total')}</span>
-        <span className="text-xl font-bold text-amber-600">{formatCurrency(total, locale)}</span>
+        <span className="text-xl font-bold text-[#6d5f57]">{formatCurrency(total, locale)}</span>
       </div>
     );
   }
@@ -346,7 +346,7 @@ export default function PriceSummary({
           <div className="border-t border-gray-200 pt-3">
             <div className="flex justify-between items-center" aria-live="polite">
               <span className="text-[18px] font-semibold text-black">{getText('prices.total', 'Total')}</span>
-              <span className="text-[24px] font-bold text-right text-amber-600">
+              <span className={`text-[24px] font-bold text-right ${amountText}`}>
                 {formatCurrency(total, locale)}
               </span>
             </div>

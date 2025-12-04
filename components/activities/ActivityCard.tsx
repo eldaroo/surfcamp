@@ -175,10 +175,6 @@ const COACHING_METHOD = {
     es: 'Nuestro Método Integral de Coaching de Surf',
     en: 'Our Integrated Surf Coaching Method'
   },
-  subtitle: {
-    es: 'Trabajamos con coaches certificados de alto rendimiento, campeones de surf, psicólogos deportivos, especialistas en nutrición y jueces ISA - toda esta experiencia se integra en cada sesión. Todos los programas se adaptan a tu nivel, sin restricciones - las sesiones ocurren con un máximo de 2-3 personas por coach.',
-    en: 'We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA judges - all this expertise is integrated into every session. All programs adapt to your level, no restrictions - sessions occur with a maximum of 2-3 people per coach.'
-  },
   pillars: [
     {
       title: { es: 'Biomecánica & memoria muscular', en: 'Biomechanics & muscle memory' },
@@ -442,16 +438,16 @@ const CACHE_VERSION = '20251124-2200';
 
 const activityImages = {
   surf: {
-    image: `/assets/Surf.jpg?v=${CACHE_VERSION}`,
-    mobileImage: `/assets/surf-mobile.jpg?v=${CACHE_VERSION}`,
+    image: `/assets/Surf.jpgov=${CACHE_VERSION}`,
+    mobileImage: `/assets/surf-mobile.jpgov=${CACHE_VERSION}`,
     hasImage: true,
   },
   yoga: {
-    image: `/assets/Yoga.jpg?v=${CACHE_VERSION}`,
+    image: `/assets/Yoga.jpgov=${CACHE_VERSION}`,
     hasImage: true,
   },
   ice_bath: {
-    image: `/assets/Icebath.jpg?v=${CACHE_VERSION}`,
+    image: `/assets/Icebath.jpgov=${CACHE_VERSION}`,
     hasImage: true,
   },
   transport: {
@@ -459,7 +455,7 @@ const activityImages = {
     hasImage: false,
   },
   hosting: {
-    image: `/assets/Host.jpg?v=${CACHE_VERSION}`,
+    image: `/assets/Host.jpgov=${CACHE_VERSION}`,
     hasImage: true,
   },
 } as const;
@@ -596,19 +592,20 @@ const ActivityCard = ({
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [isCoachingMethodExpanded, setIsCoachingMethodExpanded] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(surfProgram || null);
+  const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(null);
+  const [hasExpandedProgram, setHasExpandedProgram] = useState(false);
 
   // Set mounted state for portal (SSR safety)
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  console.log('[ACTIVITY CARD] State:', {
-    showImageModal,
-    modalImageIndex,
-    showTestimonialsPopup,
-    currentTestimonialIndex
-  });
+  // Ensure surf programs start fully collapsed
+  useEffect(() => {
+    setExpandedSurfProgram(null);
+    setHasExpandedProgram(false);
+  }, []);
+
   const imageData = activityImages[activity.category as keyof typeof activityImages] || {
     gradient: "from-slate-600 to-slate-800",
     hasImage: false,
@@ -1009,18 +1006,17 @@ const handleChoose = async (e: React.MouseEvent) => {
           {programs.map((programId) => {
             const program = SURF_PROGRAMS[programId];
             const isSelected = surfProgram === programId;
+            const isExpanded = hasExpandedProgram && expandedSurfProgram === programId;
 
             return (
               <motion.button
                 key={programId}
                 type="button"
                 onClick={() => {
-                  // Toggle expansion
-                  if (expandedSurfProgram === programId) {
-                    setExpandedSurfProgram(null); // Collapse if already expanded
-                  } else {
-                    setExpandedSurfProgram(programId); // Expand this program
-                  }
+                  // Toggle expansion manually
+                  const willExpand = expandedSurfProgram !== programId;
+                  setExpandedSurfProgram(willExpand ? programId : null);
+                  setHasExpandedProgram(willExpand);
                   // Always update selection
                   if (!isSelected) {
                     handleSurfProgramChange(programId);
@@ -1063,7 +1059,7 @@ const handleChoose = async (e: React.MouseEvent) => {
                 </div>
 
                 {/* Tagline and Features - Only show when expanded */}
-                {expandedSurfProgram === programId && (
+                {isExpanded && (
                   <>
                     {/* Tagline */}
                     <p className="text-[11px] md:text-[13px] text-black/70 font-light italic ml-7 md:ml-7.5 mt-0.5 mb-2">
@@ -1088,7 +1084,7 @@ const handleChoose = async (e: React.MouseEvent) => {
 
                 {/* Session Work - Only show for expanded program */}
                 <AnimatePresence>
-                  {expandedSurfProgram === programId && (
+                  {isExpanded && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
@@ -1484,20 +1480,22 @@ const handleChoose = async (e: React.MouseEvent) => {
 
       {/* Our Integrated Surf Coaching Method - Only for Surf */}
       {isSurf && onSurfProgramChange && surfProgram && (
-        <div className="px-4 md:px-6 pt-4 md:pt-5">
-          <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40">
-            {/* Title */}
-            <h3 className="text-base md:text-lg font-bold text-black mb-2 md:mb-3">
-              {COACHING_METHOD.title[locale]}
-            </h3>
+      <div className="px-4 md:px-6 pt-4 md:pt-5">
+        <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40">
+          {/* Title */}
+          <h3 className="text-base md:text-lg font-bold text-black mb-2 md:mb-3">
+            {COACHING_METHOD.title[locale]}
+          </h3>
 
-            {/* Subtitle */}
-            <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
-              {COACHING_METHOD.subtitle[locale]}
-            </p>
-          </div>
+          {/* Subtitle */}
+          <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
+            We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA (International Surf Association) judges - all this expertise is integrated into every session.{' '}
+            <strong className="font-semibold text-black">All programs adapt to your level, no restrictions</strong>
+            {' '} - sessions occur with a maximum of 2-3 people per coach.
+          </p>
         </div>
-      )}
+      </div>
+    )}
 
       {/* PASS 2: Further tightened */}
       <div className="flex flex-col md:flex-row md:items-start md:flex-1">

@@ -72,12 +72,26 @@ export async function POST(request: NextRequest) {
         nights: payloadNights
       } = body;
 
-      // Get price from wetravelData if provided, otherwise use $1 for testing
-      const price = wetravelData?.pricing?.price || 1;
-      const installmentPrice = wetravelData?.pricing?.payment_plan?.installments?.[0]?.price || price;
+      // 🧪 TESTING MODE: Support $0 payments when ENABLE_ZERO_PAYMENT_TESTING is true
+      const enableZeroPaymentTesting = process.env.ENABLE_ZERO_PAYMENT_TESTING === 'true';
+
+      // Get price from wetravelData if provided, otherwise use fallback
+      // If wetravelData.pricing.price is explicitly 0 and testing is enabled, use 0
+      // Otherwise default to $1 for testing
+      let price: number;
+      if (wetravelData?.pricing?.price !== undefined) {
+        price = wetravelData.pricing.price;
+      } else if (enableZeroPaymentTesting) {
+        price = 0; // $0 for testing mode
+      } else {
+        price = 1; // $1 default fallback
+      }
+
+      const installmentPrice = wetravelData?.pricing?.payment_plan?.installments?.[0]?.price ?? price;
       const daysBeforeDeparture = wetravelData?.pricing?.payment_plan?.installments?.[0]?.days_before_departure ||
         Math.max(1, Math.ceil((new Date(checkIn).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
 
+      console.log('🧪 Zero payment testing enabled:', enableZeroPaymentTesting);
       console.log('💰 Price from payload:', price);
       console.log('💰 Installment price:', installmentPrice);
       console.log('📅 Days before departure:', daysBeforeDeparture);
@@ -98,7 +112,11 @@ export async function POST(request: NextRequest) {
       let depositAmount: number;
       let paymentBreakdown: any = null;
 
-      if (surfPrograms.length > 0) {
+      // 🧪 If price is $0 (testing mode), use $0 deposit
+      if (price === 0 && enableZeroPaymentTesting) {
+        depositAmount = 0;
+        console.log('🧪 [TESTING MODE] Using $0 payment for testing');
+      } else if (surfPrograms.length > 0) {
         // Use new pricing formula if we have surf programs
         // For existing reservations, accommodation is already paid, so use 0
         const effectiveAccommodationTotal = hasExistingReservation ? 0 : accommodationTotal;
