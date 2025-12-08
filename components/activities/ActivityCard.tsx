@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
@@ -894,14 +894,14 @@ const handleChoose = async (e: React.MouseEvent) => {
                 disabled={currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount}
                 whileHover={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
                 whileTap={currentClasses > YOGA_CLASSES_RANGE.min && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
-                  currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
-                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
-                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
-                }`}
-              >
-                <Minus className="h-5 w-5" />
-              </motion.button>
+              className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses <= YOGA_CLASSES_RANGE.min || yogaUsePackDiscount
+                  ? "border-gray-300 bg-white text-[#6d5f57] cursor-not-allowed"
+                  : "border-gray-300 bg-white text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Minus className="h-5 w-5" />
+            </motion.button>
 
               <div className="flex items-baseline gap-2">
                 <motion.span
@@ -922,14 +922,14 @@ const handleChoose = async (e: React.MouseEvent) => {
                 disabled={currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount}
                 whileHover={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 1.05 } : {}}
                 whileTap={currentClasses < YOGA_CLASSES_RANGE.max && !yogaUsePackDiscount ? { scale: 0.95 } : {}}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
-                  currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
-                    ? "border-[white]/50 bg-[white]/30 text-[#6d5f57] cursor-not-allowed"
-                    : "border-[white]/70 bg-[white]/60 text-black hover:border-amber-300/70 hover:bg-amber-300/20"
-                }`}
-              >
-                <Plus className="h-5 w-5" />
-              </motion.button>
+              className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                currentClasses >= YOGA_CLASSES_RANGE.max || yogaUsePackDiscount
+                  ? "border-gray-300 bg-white text-[#6d5f57] cursor-not-allowed"
+                  : "border-gray-300 bg-white text-black hover:border-amber-300/70 hover:bg-amber-300/20"
+              }`}
+            >
+              <Plus className="h-5 w-5" />
+            </motion.button>
             </div>
 
             {/* OR Divider */}
@@ -944,7 +944,7 @@ const handleChoose = async (e: React.MouseEvent) => {
               className={`flex-1 max-w-[250px] rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
                 yogaUsePackDiscount || isAtPackThreshold
                   ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                  : "border-[white]/50 bg-[white]/40 hover:border-amber-300/40 hover:bg-[white]/60"
+                  : "border-gray-300 bg-white hover:border-amber-300/60 hover:bg-white"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -975,7 +975,7 @@ const handleChoose = async (e: React.MouseEvent) => {
         </div>
 
         {/* Mobile: Vertical Layout */}
-        <div className="md:hidden space-y-3">
+        <div className="md:hidden space-y-2.5 border-2 border-gray-300 rounded-xl p-2.5 bg-white/80">
           {/* Counter Section */}
           <div className="flex items-center justify-center gap-4">
             <motion.button
@@ -1038,7 +1038,7 @@ const handleChoose = async (e: React.MouseEvent) => {
             className={`w-full rounded-xl px-4 py-3 border-2 transition-all min-h-[44px] ${
               yogaUsePackDiscount || isAtPackThreshold
                 ? "border-amber-300/60 bg-gradient-to-r from-amber-400/20 to-amber-300/10"
-                : "border-[white]/50 bg-[white]/40"
+                : "border-gray-300 bg-white"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -1076,7 +1076,7 @@ const handleChoose = async (e: React.MouseEvent) => {
     const programs = ['fundamental', 'progressionPlus', 'highPerformance'] as const;
 
     return (
-      <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-3 md:space-y-3.5 border border-gray-200 rounded-xl p-3 md:p-4 bg-white/80" onClick={(e) => e.stopPropagation()}>
         <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
           {copy.chooseSurfProgram}
         </span>
@@ -1107,7 +1107,7 @@ const handleChoose = async (e: React.MouseEvent) => {
                 className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
                   isSelected
                     ? "border-amber-300 bg-[white]/40"
-                    : "border-[white]/50 bg-[white]/40 hover:border-[white]/60 hover:bg-[white]/60"
+                    : "border-gray-200 bg-[white]/60 hover:border-amber-200 hover:bg-[white]/80"
                 }`}
               >
                 {/* Header: Radio + Name + Price - Reduced spacing */}
@@ -1182,12 +1182,12 @@ const handleChoose = async (e: React.MouseEvent) => {
                             return (
                               <div key={idx}>
                                 {/* Black Title - No bullet */}
-                                <p className="text-xs md:text-sm font-bold text-black font-heading mb-1">
+                                <p className="text-[11px] md:text-[13px] font-bold text-black mb-1">
                                   {title.trim()}
                                 </p>
                                 {/* Description */}
                                 {description && (
-                                  <p className="text-[10px] md:text-[11px] text-[#6d5f57] font-light leading-relaxed">
+                                  <p className="text-[11px] md:text-[13px] text-[#6d5f57] font-light leading-relaxed">
                                     {description}
                                   </p>
                                 )}
@@ -1234,7 +1234,11 @@ const handleChoose = async (e: React.MouseEvent) => {
                 }}
                 whileHover={{ scale: 1.005 }}
                 whileTap={{ scale: 0.995 }}
-                className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer border-[white]/50 bg-[white]/40 hover:border-[white]/60 hover:bg-[white]/60`}
+                className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
+                  isExpanded
+                    ? 'border-amber-300 bg-amber-50/70 shadow-md'
+                    : 'border-[white]/50 bg-[white]/40 hover:border-amber-200 hover:bg-[white]/60'
+                }`}
               >
                 {/* Header: Name + Price */}
                 <div className="flex items-center justify-between mb-1">
@@ -1395,7 +1399,7 @@ const handleChoose = async (e: React.MouseEvent) => {
       transition={{ duration: 0.4 }}
     >
       {/* Compact banner - clean horizontal band */}
-      <div className={`relative w-full overflow-hidden group/hero ${isSurf ? 'h-[260px] md:h-[220px]' : 'h-[200px] md:h-[180px]'}`}>
+      <div className={`relative w-full overflow-hidden group/hero ${isSurf ? 'h-[280px] md:h-[220px]' : 'h-[220px] md:h-[180px]'}`}>
         {/* Surf Mobile Carousel */}
         {isSurf ? (
           <>
@@ -1628,7 +1632,11 @@ const handleChoose = async (e: React.MouseEvent) => {
         {/* Title Overlay - Centered - HIDDEN ON MOBILE, only desktop */}
         <div className="absolute inset-0 hidden md:flex items-center justify-center px-6 md:px-8">
           <motion.h2
-            className="text-[2.5rem] leading-tight font-bold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] font-heading text-center"
+            className={`font-heading text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] ${
+              isSurf
+                ? "text-[2.2rem] leading-[1.2]"
+                : "text-[2.2rem] leading-[1.2]"
+            }`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.4 }}
@@ -1639,7 +1647,7 @@ const handleChoose = async (e: React.MouseEvent) => {
 
         {/* Title Overlay - Bottom - MOBILE ONLY */}
         <div className="absolute bottom-0 left-0 right-0 md:hidden bg-gradient-to-t from-black/80 via-black/60 to-transparent px-4 py-4">
-          <h2 className="text-xl font-bold text-white font-heading text-center leading-tight">
+          <h2 className="text-[1.3rem] md:text-3xl font-bold text-white font-heading text-center leading-tight break-words">
             {activity.name}
           </h2>
         </div>
@@ -1649,14 +1657,14 @@ const handleChoose = async (e: React.MouseEvent) => {
       {/* Our Integrated Surf Coaching Method - Only for Surf */}
       {isSurf && onSurfProgramChange && surfProgram && (
       <div className="px-4 md:px-6 pt-4 md:pt-5">
-        <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border border-[white]/40">
+        <div className="w-full p-4 md:p-6 bg-[white]/40 rounded-xl border-2 border-gray-200">
           {/* Title */}
-          <h3 className="text-base md:text-lg font-bold text-black mb-2 md:mb-3">
+          <h3 className="text-xl md:text-2xl font-heading font-bold text-black mb-3">
             {COACHING_METHOD.title[locale]}
           </h3>
 
           {/* Subtitle */}
-          <p className="text-[10px] md:text-[11px] text-black font-light leading-relaxed">
+          <p className="text-sm md:text-base text-black font-light leading-relaxed">
             We work with certified high-performance surf coaches, surf champions, sports psychologists, nutrition specialists, and ISA (International Surf Association) judges - all this expertise is integrated into every session.{' '}
             <strong className="font-semibold text-black">All programs adapt to your level, no restrictions</strong>
             {' '} - sessions occur with a maximum of 2-3 people per coach.
@@ -1673,9 +1681,11 @@ const handleChoose = async (e: React.MouseEvent) => {
 
           {/* 1. Description */}
           {descriptive && descriptive.description && (
-            <p className={`text-black/90 font-light ${isSurf ? 'text-sm md:text-[15px] leading-relaxed' : 'text-xs md:text-sm leading-snug'}`}>
-              {descriptive.description}
-            </p>
+            <div className={activity.category === 'hosting' ? 'border border-gray-300 rounded-xl p-3 md:p-4 bg-white/80' : ''}>
+              <p className="text-black/90 font-light text-[13px] leading-relaxed">
+                {descriptive.description}
+              </p>
+            </div>
           )}
 
           {children}
@@ -1714,7 +1724,7 @@ const handleChoose = async (e: React.MouseEvent) => {
         </div>
 
         {/* PASS 2: px-5/6 py-4/6 gap-3/4 â†’ px-4/5 py-3/4 gap-2.5/3 */}
-        <div className={`md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full ${isSurf ? 'py-3 md:py-4' : 'py-2.5 md:py-3'}`}>
+        <div className={`md:flex-[3] md:border-l border-[white]/40 px-4 md:px-5 bg-[white]/10 md:bg-transparent md:flex md:flex-col md:min-h-full ${isSurf ? 'py-2.5 md:py-3.5' : 'py-2 md:py-2.5'}`}>
           <div className={`flex flex-col md:justify-center md:flex-1 ${isSurf ? 'gap-2.5 md:gap-3' : 'gap-2 md:gap-2.5'}`}>
 
             {/* PASS 2: gap-3/4 â†’ gap-2.5/3, space-y-1.5 â†’ space-y-1 */}
@@ -1792,6 +1802,24 @@ const handleChoose = async (e: React.MouseEvent) => {
                 )}
               </div>
             </div>
+
+            {/* Mobile Back Button - compact, bottom-left */}
+            {!isFirstStep && onBack && (
+              <motion.button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBack();
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="md:hidden self-start mt-2 rounded-lg text-xs font-semibold text-black bg-white/90 px-3 py-1.5 shadow-md border border-black/10 hover:bg-white flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4 text-black" />
+                <span className="text-black">{copy.back}</span>
+              </motion.button>
+            )}
 
             {/* PASS 2: pt-3/4 â†’ pt-2.5/3, space-y-2/3 â†’ space-y-1.5/2.5 */}
             {isSurf && ratingValue && (
@@ -1926,277 +1954,6 @@ const handleChoose = async (e: React.MouseEvent) => {
             <div />
           </div>
         </div>
-      )}
-
-      {/* Navigation Buttons (Skip/Back) - Mobile only */}
-      {(onSkip || onBack) && (
-        <div className="md:hidden border-t border-[white]/40 bg-[white]/10 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            {/* Back Button */}
-            {!isFirstStep && onBack ? (
-              <motion.button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onBack) onBack();
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 text-sm font-semibold text-black bg-white/80 px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-white"
-              >
-                <ArrowLeft className="h-4 w-4 text-black" />
-                <span className="text-black">{copy.back}</span>
-              </motion.button>
-            ) : (
-              <div />
-            )}
-
-            {/* Skip Button - Only for non-mandatory activities */}
-            {!isSurf && onSkip && (
-              <motion.button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onSkip) onSkip();
-                }}
-                whileHover={{ scale: 1.05, x: 3 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15 }}
-                className="text-sm font-medium text-[#6d5f57] transition-all"
-              >
-                {copy.skip}
-              </motion.button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile Testimonials Popup */}
-      {showTestimonialsPopup && testimonials && (
-        <motion.div
-          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={() => setShowTestimonialsPopup(false)}
-        >
-          <motion.div
-            className="w-full max-w-lg bg-[white] rounded-t-3xl border-t border-x border-[white]/50 shadow-2xl"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="relative flex items-center justify-between px-6 py-5 border-b border-[white]/50">
-              <h3 className="text-lg font-bold text-slate-100 uppercase tracking-wide">
-                {locale === "es" ? "Testimonios" : "Testimonials"}
-              </h3>
-              <motion.button
-                type="button"
-                onClick={() => setShowTestimonialsPopup(false)}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors"
-              >
-                <X className="h-5 w-5 text-black" />
-              </motion.button>
-            </div>
-
-            {/* Content */}
-            <div className="px-6 py-8">
-              <div className="relative bg-[white]/40 rounded-2xl p-6 border border-[white]/40">
-                <Quote className="absolute top-4 left-4 h-8 w-8 text-amber-300/20" />
-
-                <div className="space-y-5 pt-3">
-                  {/* Stars */}
-                  <div className="flex items-center justify-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-5 w-5 fill-amber-300 text-amber-300"
-                      />
-                    ))}
-                  </div>
-
-                  {/* Testimonial Text */}
-                  <p className="text-sm leading-relaxed text-black italic text-center min-h-[100px] flex items-center justify-center">
-                    &ldquo;{testimonials[currentTestimonialIndex].text}&rdquo;
-                  </p>
-
-                  {/* Author */}
-                  <div className="text-center pt-3 border-t border-[white]/30">
-                    <p className="text-sm font-bold text-amber-300">
-                      {testimonials[currentTestimonialIndex].author}
-                    </p>
-                    <p className="text-xs text-[#6d5f57] uppercase tracking-wide mt-1">
-                      {testimonials[currentTestimonialIndex].country}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <motion.button
-                  type="button"
-                  onClick={handlePrevTestimonial}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
-                >
-                  <ChevronLeft className="h-5 w-5 text-black" />
-                </motion.button>
-
-                <div className="flex gap-2">
-                  {testimonials.map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-2 rounded-full transition-all ${
-                        idx === currentTestimonialIndex
-                          ? "bg-amber-300 w-6"
-                          : "bg-slate-600 w-2"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <motion.button
-                  type="button"
-                  onClick={handleNextTestimonial}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-3 rounded-full bg-[white]/60 hover:bg-slate-700/60 transition-colors border border-[white]/40"
-                >
-                  <ChevronRight className="h-5 w-5 text-black" />
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Image Modal Fullscreen - Rendered via Portal */}
-      {isMounted && isSurf && createPortal(
-        <AnimatePresence>
-          {showImageModal && (
-            <motion.div
-              data-modal-id="surf-image-modal"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                handleCloseImageModal();
-              }}
-              className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center"
-              style={{ margin: 0, pointerEvents: 'auto', isolation: 'isolate' }}
-            >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full h-full max-w-6xl max-h-[90vh] m-4 flex items-center justify-center"
-            >
-              {/* Close Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCloseImageModal();
-                }}
-                className="absolute top-4 right-4 z-30 w-12 h-12 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl"
-                aria-label="Close"
-              >
-                <X className="w-6 h-6" />
-              </button>
-
-              {/* Image Counter */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/80 backdrop-blur-md px-4 py-2 rounded-full text-white text-sm font-semibold border border-white/20">
-                {modalImageIndex + 1} / {surfImagesDesktop.length}
-              </div>
-
-              {/* Main Image */}
-              <div className="relative w-full h-full flex items-center justify-center">
-                <motion.div
-                  key={modalImageIndex}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative w-full h-full"
-                >
-                  <Image
-                    src={surfImagesDesktop[modalImageIndex]}
-                    alt={`Surf ${modalImageIndex + 1}`}
-                    fill
-                    className="object-contain"
-                    sizes="100vw"
-                    quality={95}
-                    priority
-                  />
-                </motion.div>
-              </div>
-
-              {/* Navigation Arrows */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevModalImage();
-                }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="w-8 h-8" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextModalImage();
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-black/80 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-black hover:border-amber-400/60 transition-all shadow-xl active:scale-95"
-                aria-label="Next image"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-
-              {/* Thumbnail Strip */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-full overflow-x-auto">
-                <div className="flex gap-2 bg-black/80 backdrop-blur-md px-3 py-2 rounded-full border border-white/20">
-                  {surfImagesDesktop.map((img, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setModalImageIndex(index);
-                      }}
-                      className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all flex-shrink-0 ${
-                        index === modalImageIndex
-                          ? 'ring-2 ring-amber-400 scale-110'
-                          : 'opacity-60 hover:opacity-100 hover:scale-105'
-                      }`}
-                    >
-                      <Image
-                        src={img}
-                        alt={`Thumbnail ${index + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                        quality={60}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
       )}
 
     </motion.div>

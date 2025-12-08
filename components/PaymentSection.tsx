@@ -669,7 +669,7 @@ export default function PaymentSection() {
         const accommodationNames = {
           'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
           'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-          'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+          'casas-deluxe': locale === 'es' ? 'Casa Privada' : 'Private House'
         };
         const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
 
@@ -906,22 +906,18 @@ export default function PaymentSection() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleBackClick}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-all duration-200"
+          className="flex items-center gap-2 text-sm font-semibold text-black bg-white/80 px-4 py-2 rounded-xl shadow-md border border-black/10 hover:bg-white transition-all duration-200"
         >
           <svg
-            className="w-5 h-5"
+            className="w-4 h-4 text-black"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
+            <path d="m12 19-7-7 7-7"></path>
+            <path d="M19 12H5"></path>
           </svg>
-          <span className="font-medium">{t('common.goBack')}</span>
+          <span className="text-black">{t('common.goBack')}</span>
         </motion.button>
       </div>
 

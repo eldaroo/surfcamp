@@ -62,7 +62,7 @@ const buildLeadGuestName = (firstName: string, lastName: string) =>
 const ACCOMMODATION_NAMES = {
   'casa-playa': { es: 'Casa de Playa', en: 'Beach House' },
   'casitas-privadas': { es: 'Casitas Privadas', en: 'Private House' },
-  'casas-deluxe': { es: 'Casas Deluxe', en: 'Deluxe Studio' }
+  'casas-deluxe': { es: 'Casa Privada', en: 'Private House' }
 } as const;
 
 // Surf program names
@@ -629,7 +629,7 @@ const priceBreakdown = useMemo(
       const accommodationNames = {
         'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
         'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-        'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+        'casas-deluxe': locale === 'es' ? 'Casa Privada' : 'Private House'
       };
       const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
 
@@ -779,7 +779,7 @@ const priceBreakdown = useMemo(
               </svg>
             </div>
             <h1 className="text-2xl md:text-4xl font-bold text-white mb-3 font-heading">{t('contact.title')}</h1>
-            <p className="text-base md:text-xl text-yellow-400 font-heading">{t('contact.subtitle')}</p>
+            <p className="text-base md:text-xl text-yellow-400 font-medium mb-4">{t('contact.subtitle')}</p>
           </div>
         </div>
 

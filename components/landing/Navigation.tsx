@@ -44,6 +44,24 @@ export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
+  // Prefetch key internal routes to speed up navigation
+  useEffect(() => {
+    menuItems.forEach((item) => {
+      const maybePrefetch = (href?: string, isExternal?: boolean) => {
+        if (!href || isExternal) return;
+        const url = href.startsWith('/')
+          ? href === '/'
+            ? `/${locale}`
+            : `/${locale}${href}`
+          : href;
+        router.prefetch(url);
+      };
+
+      maybePrefetch(item.href, item.isExternal);
+      item.dropdown?.forEach((sub) => maybePrefetch(sub.href));
+    });
+  }, [router, locale]);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -66,9 +84,41 @@ export default function Navigation() {
   }, [pathname]);
 
   const scrollToSection = (href: string) => {
-    // Route to main page when using a path
+    const scrollIntoViewById = (id: string) => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        return true;
+      }
+      return false;
+    };
+
+    // Route to main page when using a path (support hash anchors)
     if (href.startsWith('/')) {
-      router.push(href === '/' ? `/${locale}` : `/${locale}${href}`);
+      const [pathPart, hash] = href.split('#');
+      const targetPath = pathPart === '/' ? `/${locale}` : `/${locale}${pathPart}`;
+
+      if (hash) {
+        const fullPath = `${targetPath}#${hash}`;
+        const onSamePath = pathname === targetPath;
+
+        if (onSamePath) {
+          const scrolled = scrollIntoViewById(hash);
+          if (!scrolled) {
+            // If section isn't in DOM, open it in a new tab to ensure it's loaded
+            window.open(fullPath, '_blank');
+          }
+          setIsOpen(false);
+          return;
+        }
+
+        // Open in new tab to guarantee the anchor is loaded and visible
+        window.open(fullPath, '_blank');
+        setIsOpen(false);
+        return;
+      }
+
+      router.push(targetPath);
       setIsOpen(false);
       return;
     }
@@ -81,11 +131,11 @@ export default function Navigation() {
     }
 
     const id = href.replace('#', '');
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsOpen(false);
+    const scrolled = scrollIntoViewById(id);
+    if (!scrolled) {
+      window.open(`/${locale}#${id}`, '_blank');
     }
+    setIsOpen(false);
   };
 
   const handleLanguageChange = (newLocale: Locale) => {

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         },
         'casas-deluxe': {
           roomTypeId: 'casas-deluxe',
-          roomTypeName: 'Casas Deluxe',
+          roomTypeName: 'Casa Privada',
           maxGuests: 2, // Guests per individual casa
           isSharedRoom: false, // These are individual private rooms
           categories: [] as any[],
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
           // Casa de Playa: precio por cama/persona
           return category.prices.find((p: any) => p.people === 1)?.value || null;
         } else {
-          // Casitas/Casas Deluxe: calcular huéspedes por habitación
+          // Casitas/Casa Privada: calcular huéspedes por habitación
           const guestsPerRoom = Math.min(2, Math.ceil(guestsRequestedTotal / availableRoomsForCategory));
           
           // Si hay 1 huésped por habitación, usar precio single. Si 2+, usar precio double
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
               console.log(`❌ Only these categories are valid:`);
               console.log(`   - Casa de Playa: "Casa Playa"`);
               console.log(`   - Casitas Privadas: "Casita 3", "Casita 4", "Casita 7"`);
-              console.log(`   - Casas Deluxe: "Studio 1", "Studio 2", "Casita 5", "Casita 6"`);
+              console.log(`   - Casa Privada: "Studio 1", "Studio 2", "Casita 5", "Casita 6"`);
               // Continue processing but don't include this category
             }
           });

@@ -65,15 +65,15 @@ const HeaderPersonalization = ({
   return (
     <div
       id="personalize-experience"
-      className="mb-3 md:mb-4 rounded-3xl border border-[white]/50 bg-[white]/80 shadow-[0_4px_16px_rgba(0,0,0,0.25)] backdrop-blur overflow-hidden"
+      className="mb-3 md:mb-4 rounded-3xl border border-gray-200 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.25)] overflow-hidden"
     >
       {/* PASS 2: reduced padding p-4/6 ? p-3/4, gaps 2.5/3 ? 2/2.5 */}
-      <div className="p-3 md:p-4 text-center">
+      <div className="p-3 md:p-10 text-center bg-white">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col items-center gap-2 md:gap-2.5"
+          className="flex flex-col items-center gap-2 md:gap-2.5 bg-white"
         >
           {/* PASS 2: icon w-10/12 h-10/12 ? w-8/10 h-8/10 */}
           <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20">

@@ -58,7 +58,7 @@ export const getRoomTypeName = (roomTypeId: string): string => {
   const roomTypes: { [key: string]: string } = {
     'casa-playa': 'Casa de Playa (Cuarto Compartido)',
     'casitas-privadas': 'Casitas Privadas',
-    'casas-deluxe': 'Casas Deluxe'
+    'casas-deluxe': 'Casa Privada'
   };
 
   return roomTypes[roomTypeId] || roomTypeId;

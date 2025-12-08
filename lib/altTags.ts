@@ -64,15 +64,15 @@ export const altTags = {
   },
 
   // ========================================
-  // 4. ACCOMMODATION - DELUXE (Estudio Deluxe)
+  // 4. ACCOMMODATION - DELUXE (Ehouse Private House)
   // ========================================
   deluxe: {
-    main: "Deluxe beachfront studio at Zeneidas Surf Garden Santa Teresa",
-    exterior: "Premium ocean view studio steps from Santa Teresa beach",
-    interior1: "Deluxe studio interior with king-size bed at Zeneidas",
-    bathroom: "Beachfront deluxe studio bathroom with hot water Santa Teresa",
-    kitchen: "Private kitchen in deluxe studio at Santa Teresa surf camp",
-    luxury: "Luxury beachfront studio accommodation Santa Teresa Costa Rica",
+    main: "Private House beachfront house at Zeneidas Surf Garden Santa Teresa",
+    exterior: "Premium ocean view house steps from Santa Teresa beach",
+    interior1: "Private House house interior with king-size bed at Zeneidas",
+    bathroom: "Beachfront deluxe house bathroom with hot water Santa Teresa",
+    kitchen: "Private kitchen in deluxe house at Santa Teresa surf camp",
+    luxury: "Luxury beachfront house accommodation Santa Teresa Costa Rica",
   },
 
   // ========================================
@@ -157,12 +157,12 @@ export const altTagsES = {
   },
 
   deluxe: {
-    main: "Estudio deluxe frente al mar en Zeneidas Surf Garden Santa Teresa",
-    exterior: "Estudio premium con vista al océano a pasos de la playa de Santa Teresa",
-    interior1: "Interior de estudio deluxe con cama king-size en Zeneidas",
-    bathroom: "Baño de estudio deluxe frente al mar con agua caliente en Santa Teresa",
-    kitchen: "Cocina privada en estudio deluxe del surf camp de Santa Teresa",
-    luxury: "Alojamiento de lujo en estudio frente al mar Santa Teresa Costa Rica",
+    main: "Ehouse deluxe frente al mar en Zeneidas Surf Garden Santa Teresa",
+    exterior: "Ehouse premium con vista al océano a pasos de la playa de Santa Teresa",
+    interior1: "Interior de ehouse deluxe con cama king-size en Zeneidas",
+    bathroom: "Baño de ehouse deluxe frente al mar con agua caliente en Santa Teresa",
+    kitchen: "Cocina privada en ehouse deluxe del surf camp de Santa Teresa",
+    luxury: "Alojamiento de lujo en ehouse frente al mar Santa Teresa Costa Rica",
   },
 
   wellness: {

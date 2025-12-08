@@ -104,9 +104,9 @@ export default function AccommodationPage({ params }: PageProps) {
           features: ['Private', 'Quiet', 'Independent'],
         },
         'casas-deluxe': {
-          name: 'Deluxe Studio',
-          description: 'Premium studio steps from the beach with all amenities, perfect for those seeking luxury and comfort. Includes kitchen, hot water bathroom, Wi-Fi, and A/C.',
-          features: ['Premium', 'Spacious', 'Deluxe Amenities'],
+          name: 'Private House',
+          description: 'Private house steps from the beach with kitchen, hot water bathroom, Wi-Fi, and A/C. Perfect for couples seeking comfort and privacy.',
+          features: ['Private', 'Kitchen included', 'A/C + Wi-Fi'],
         },
       },
       included: {
@@ -252,9 +252,9 @@ export default function AccommodationPage({ params }: PageProps) {
           features: ['Privada', 'Tranquila', 'Independiente'],
         },
         'casas-deluxe': {
-          name: 'Estudio Deluxe',
-          description: 'Estudio premium a pasos de la playa con todas las comodidades, perfecto para quienes buscan lujo y confort. Incluye cocina, baño con agua caliente, Wi-Fi y A/C.',
-          features: ['Premium', 'Espacioso', 'Comodidades Deluxe'],
+          name: 'Casa Privada',
+          description: 'Casa privada a pasos de la playa con cocina, baño con agua caliente, Wi-Fi y A/C. Ideal para parejas que buscan confort y privacidad.',
+          features: ['Privada', 'Cocina propia', 'A/C + Wi-Fi'],
         },
       },
       included: {

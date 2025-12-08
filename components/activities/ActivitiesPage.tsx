@@ -74,6 +74,7 @@ const ActivitiesPage = () => {
     setActivityQuantity,
     setSelectedTimeSlot,
     setCurrentStep,
+    landingSectionsHidden,
     // Multi-participant state
     participants: storeParticipants,
     activeParticipantId,
@@ -152,30 +153,16 @@ const ActivitiesPage = () => {
   const [showPrivateCoachingModal, setShowPrivateCoachingModal] = useState(false);
   const [selectedCeramicId, setSelectedCeramicId] = useState<string | null>(null);
   const [expandedCeramicIds, setExpandedCeramicIds] = useState<string[]>([]);
+  const [returnToCompleteAfterEdit, setReturnToCompleteAfterEdit] = useState(false);
+  const markTravelingModalShown = useCallback(() => {
+    setHasShownReservationTravelingModal(true);
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Persist whether the traveling modal was already shown (avoid re-triggering when navigating back)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedFlag = window.sessionStorage.getItem('hasShownReservationTravelingModal') === 'true';
-    if (storedFlag) {
-      setHasShownReservationTravelingModal(true);
-    }
-  }, []);
-
   // Load the current participant's name when showing completion screen
-  useEffect(() => {
-    if (activityFlowStep === 'complete' && activeParticipantId) {
-      const currentParticipant = storeParticipants.find(p => p.id === activeParticipantId);
-      if (currentParticipant) {
-        setCompletionName(currentParticipant.name);
-      }
-    }
-  }, [activityFlowStep, activeParticipantId, storeParticipants]);
-
   const participantCount = Math.max(
     storeParticipants.length,
     bookingData.guests && bookingData.guests > 0 ? bookingData.guests : 1
@@ -377,11 +364,17 @@ const ActivitiesPage = () => {
   );
 
   const handleShowPrivateCoachingModal = useCallback(() => {
-    // Only show modal if not already upgraded
-    if (!hasPrivateCoaching) {
-      setShowPrivateCoachingModal(true);
-    }
-  }, [hasPrivateCoaching]);
+    setShowPrivateCoachingModal(true);
+  }, []);
+
+  const showTravelingModalOnce = useCallback(
+    (nextStep: 'dates' | 'accommodation' | 'activities' | 'contact' | 'confirmation' | 'payment' | 'success' | 'find-reservation' | null) => {
+      markTravelingModalShown();
+      setNextStepAfterTraveling(nextStep);
+      setShowTravelingWithModal(true);
+    },
+    [markTravelingModalShown]
+  );
 
   const handleAcceptPrivateCoaching = useCallback(() => {
     setIsPrivateUpgrade(true);
@@ -418,8 +411,10 @@ const ActivitiesPage = () => {
       const classes = surfProgramToClasses(program);
       setSelectedSurfClasses(activityId, classes);
       setSelectedSurfPackage(activityId, `${classes}-classes` as SurfPackage);
+      // Reset private coaching so we can ask again for the new program
+      setIsPrivateUpgrade(false);
     },
-    [setSelectedSurfClasses, setSelectedSurfPackage]
+    [setSelectedSurfClasses, setSelectedSurfPackage, setIsPrivateUpgrade]
   );
 
   const handleQuantityChange = useCallback(
@@ -490,6 +485,52 @@ const ActivitiesPage = () => {
   const handleParticipantChange = (participantId: string) => {
     setActiveParticipant(participantId);
   };
+
+  const handleEditActivity = useCallback(
+    (activity: Activity) => {
+      const categoryToStep: Record<Activity["category"], 'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | null> = {
+        surf: 'surf',
+        yoga: 'yoga',
+        ice_bath: 'ice-bath',
+        transport: null,
+        hosting: 'hosting',
+        ceramics: 'ceramics',
+      };
+      const step = categoryToStep[activity.category];
+      if (step) {
+        setReturnToCompleteAfterEdit(true);
+        goToActivityStep(step);
+      }
+    },
+    [goToActivityStep]
+  );
+
+  const handleEditAllActivities = useCallback(
+    (participantId: string) => {
+      setActiveParticipant(participantId);
+      setReturnToCompleteAfterEdit(false);
+      goToActivityStep('surf');
+    },
+    [setActiveParticipant, goToActivityStep]
+  );
+
+  const handleAutoAdvance = useCallback(() => {
+    if (returnToCompleteAfterEdit) {
+      setReturnToCompleteAfterEdit(false);
+      goToActivityStep('complete');
+      return;
+    }
+    nextActivityStep();
+  }, [nextActivityStep, returnToCompleteAfterEdit, goToActivityStep]);
+
+  const handleSkipActivity = useCallback(() => {
+    if (returnToCompleteAfterEdit) {
+      setReturnToCompleteAfterEdit(false);
+      goToActivityStep('complete');
+      return;
+    }
+    skipCurrentActivity();
+  }, [returnToCompleteAfterEdit, goToActivityStep, skipCurrentActivity]);
 
   const handleCopyChoices = () => {
     copyChoicesToAll(activeParticipantId);
@@ -586,14 +627,12 @@ const ActivitiesPage = () => {
   };
 
   const handleCompleteAndContinue = () => {
-    // Only show modal if we haven't reached the maximum of 2 participants
-    if (storeParticipants.length < 2) {
-      setNextStepAfterTraveling(null);
-      setShowTravelingWithModal(true);
-    } else {
-      // Already at max capacity, go straight to continue
-      handleContinue();
+    const shouldPromptTraveling = storeParticipants.length < 2 && !hasShownReservationTravelingModal;
+    if (shouldPromptTraveling) {
+      showTravelingModalOnce(null);
+      return;
     }
+    handleContinue();
   };
 
   const handleSkipAddPerson = () => {
@@ -845,9 +884,9 @@ const ActivitiesPage = () => {
   }, [isAnyModalOpen]);
 
   return (
-    <div className="relative">
-      {/* Overlay behind widgets */}
-      <div className="absolute inset-0 bg-black/75 rounded-3xl -z-10"></div>
+    <div className="relative bg-white rounded-3xl shadow-xl">
+      {/* Solid white background - minimalist design */}
+      <div className="absolute inset-0 bg-white rounded-3xl -z-10"></div>
 
       <div
         className="mx-auto max-w-7xl px-3 md:px-4 py-3 md:py-4"
@@ -855,11 +894,11 @@ const ActivitiesPage = () => {
           pointerEvents: isAnyModalOpen ? 'none' : 'auto'
         }}
       >
-        <div className="hidden lg:block text-center text-white mb-5 lg:mb-7">
-          <h1 className="text-3xl xl:text-4xl font-heading font-bold leading-tight drop-shadow-[0_10px_35px_rgba(0,0,0,0.65)]">
+        <div className="hidden lg:block text-center mb-5 lg:mb-7">
+          <h1 className="text-3xl lg:text-[2.35rem] xl:text-[2.85rem] font-heading font-bold leading-tight text-gray-900 whitespace-nowrap">
             {heroMainTitle}
             {heroBrandTitle && (
-              <span className="block text-[11px] font-semibold tracking-[0.22em] text-[#ece97f] mt-2 uppercase">
+              <span className="block text-xs leading-5 lg:text-[2rem] lg:leading-[3rem] font-normal tracking-normal text-amber-700 mt-3">
                 {heroBrandTitle}
               </span>
             )}
@@ -910,13 +949,11 @@ const ActivitiesPage = () => {
                     <source src={activity.video} type="video/mp4" />
                   </video>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="relative p-4 text-white h-[220px] flex flex-col justify-end">
-                        <h3 className="text-lg font-bold mb-2">
-                          {t(`landing.activitiesShowcase.${activity.key}.title`)}
-                        </h3>
-                    <p className="text-sm text-gray-200 leading-snug line-clamp-2">
-                      {t(`landing.activitiesShowcase.${activity.key}.description`)}
-                    </p>
+                  <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.35)_0%,_rgba(0,0,0,0)_72%)]" />
+                  <div className="relative p-4 text-white h-[220px] flex items-end">
+                    <h3 className="text-lg font-bold">
+                      {t(`landing.activitiesShowcase.${activity.key}.title`)}
+                    </h3>
                   </div>
                 </div>
               ))}
@@ -931,31 +968,31 @@ const ActivitiesPage = () => {
                   className="relative w-full max-w-[308px] rounded-xl bg-black/60 border border-white/15 shadow-2xl p-2.5"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <button
-                    onClick={() => setLandingVideoId(null)}
-                    className="absolute -top-10 right-1 text-white/90 hover:text-white transition-colors"
-                    aria-label="Close video"
-                  >
-                    <svg
-                      className="w-7 h-7"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
                   <div className="relative aspect-[9/16] overflow-hidden rounded-lg border border-white/10 bg-black w-[90%] mx-auto">
+                    <button
+                      onClick={() => setLandingVideoId(null)}
+                      className="absolute top-2 right-2 z-10 text-white/90 hover:text-white transition-colors bg-black/50 rounded-full p-1.5"
+                      aria-label="Close video"
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                     <video
                       key={landingVideoId}
                       autoPlay
                       controls
                       className="absolute inset-0 w-full h-full object-cover"
                     >
-                  <source
-                    src={landingActivities.find((a) => a.id === landingVideoId)?.video}
-                    type="video/mp4"
-                  />
+                      <source
+                        src={landingActivities.find((a) => a.id === landingVideoId)?.video}
+                        type="video/mp4"
+                      />
                     </video>
                   </div>
                 </div>
@@ -963,13 +1000,15 @@ const ActivitiesPage = () => {
             )}
           </div>
         </div>
-        <HeaderPersonalization
-        name={personalizationName}
-        participants={participantCount}
-        locale={(locale as "es" | "en") || "es"}
-        onNameChange={setPersonalizationName}
-        onParticipantsChange={(value) => setBookingData({ guests: value })}
-      />
+        <div className={landingSectionsHidden ? "hidden md:block" : ""}>
+          <HeaderPersonalization
+            name={personalizationName}
+            participants={participantCount}
+            locale={(locale as "es" | "en") || "es"}
+            onNameChange={setPersonalizationName}
+            onParticipantsChange={(value) => setBookingData({ guests: value })}
+          />
+        </div>
 
       <AnimatePresence mode="wait">
         {activityFlowStep === 'complete' ? (
@@ -979,455 +1018,378 @@ const ActivitiesPage = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
-            className="max-w-3xl mx-auto"
+            className="max-w-4xl mx-auto"
           >
-            {/* PASS 2: mb-8 ? mb-5, icon w-16/h-16 mb-4 ? w-12/h-12 mb-2.5, text-2xl/3xl mb-2 ? text-xl/2xl mb-1.5 */}
-            <div className="text-center mb-5">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
-              >
-                <CheckCircle2 className="h-6 w-6 text-amber-300" />
-              </motion.div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
-                {locale === "es" ? "¡Actividades completadas!" : "Activities completed!"}
-              </h2>
-              <p className="text-[#6d5f57] text-sm md:text-base">
-                {locale === "es"
-                  ? "Revisa la selección de todos los participantes"
-                  : "Review the selection for all participants"}
-              </p>
-            </div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl border border-white/50 shadow-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-300/20 to-amber-500/20 border-b border-amber-400/30 px-6 md:px-8 py-6 flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/30 border border-amber-500/40">
+                  <CheckCircle2 className="h-6 w-6 text-amber-700" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-black font-heading">
+                    {locale === "es" ? "Actividades completadas" : "Activities completed"}
+                  </h2>
+                  <p className="text-sm md:text-base text-gray-700 mt-1">
+                    {locale === "es"
+                      ? "Revisa y confirma la seleccion de cada participante"
+                      : "Review and confirm each participant's selection"}
+                  </p>
+                </div>
+              </div>
 
-            {/* Desktop: ultra-compact spacing */}
-            <div className="space-y-2 mb-3 md:space-y-1.5 md:mb-2">
-              {storeParticipants.map((participant, participantIndex) => {
-                const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
-                  return sum + computeActivityPriceForParticipant(activity, participant);
-                }, 0);
-                const isExpanded = expandedParticipantId === participant.id;
+              <div className="p-5 md:p-8 space-y-5 md:space-y-6">
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm text-amber-900">
+                  {locale === "es"
+                    ? "Si algo no se ve bien, expandi el viajero y ajusta antes de continuar."
+                    : "If something looks off, expand the traveler and adjust before continuing."}
+                </div>
 
-                return (
-                  <motion.div
-                    key={participant.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + participantIndex * 0.1, duration: 0.4 }}
-                    className={`rounded-3xl border bg-[white]/70 shadow-xl overflow-hidden transition-all ${
-                      isExpanded
-                        ? 'border-amber-400/50'
-                        : 'border-[white]/50 hover:border-[white]/50'
-                    }`}
-                  >
-                    {/* Participant Header - Clickable */}
-                    <button
-                      onClick={() => setExpandedParticipantId(isExpanded ? null : participant.id)}
-                      className="w-full px-3 py-3 md:py-2.5 border-b border-[white]/50 bg-[white]/30 flex items-center justify-between hover:bg-[white]/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2.5 md:gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 md:w-7 md:h-7 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
-                          <User className="h-4 w-4 text-amber-300" />
-                        </div>
-                        <div className="text-left flex-1">
-                          <h3 className="text-base md:text-sm font-bold text-black">
-                            {participant.name}
-                            {participant.isYou && (
-                              <span className="ml-2 text-sm md:text-[11px] text-[#6d5f57]">
-                                ({locale === "es" ? "Tú" : "You"})
-                              </span>
-                            )}
-                            {/* Desktop: show activities + price inline */}
-                            <span className="hidden md:inline ml-2 text-base text-[#6d5f57] font-normal">
-                              • {participant.selectedActivities.length}{" "}
-                              {participant.selectedActivities.length === 1
-                                ? (locale === "es" ? "actividad" : "activity")
-                                : (locale === "es" ? "actividades" : "activities")}
-                              {" • "}
-                              <span className="text-[#6d5f57] font-bold text-base">
-                                {formatCurrency(participantTotal)}
-                              </span>
-                            </span>
-                          </h3>
-                          {/* Mobile: show activities + price on second line */}
-                          <p className="md:hidden text-sm text-[#6d5f57]">
-                            {participant.selectedActivities.length}{" "}
-                            {participant.selectedActivities.length === 1
-                              ? (locale === "es" ? "actividad" : "activity")
-                              : (locale === "es" ? "actividades" : "activities")}
-                            {" • "}
-                            <span className="text-[#6d5f57] font-bold text-sm">
-                              {formatCurrency(participantTotal)}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
+                <div className="space-y-3">
+                  {storeParticipants.map((participant, participantIndex) => {
+                    const participantTotal = participant.selectedActivities.reduce((sum, activity) => {
+                      return sum + computeActivityPriceForParticipant(activity, participant);
+                    }, 0);
+                    const isExpanded = expandedParticipantId === participant.id;
+
+                    return (
+                      <motion.div
+                        key={participant.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + participantIndex * 0.08, duration: 0.35 }}
+                        className={`rounded-2xl border bg-gray-50 shadow-sm overflow-hidden transition-all ${
+                          isExpanded ? 'border-amber-300 shadow-md' : 'border-gray-200 hover:border-amber-200'
+                        }`}
+                      >
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveParticipant(participant.id);
-                            setIsPrivateUpgrade(false); // Reset private coaching when editing
-                            resetActivityFlow();
-                          }}
-                          className="p-2 rounded-lg hover:bg-[white]/50 transition-colors text-[#6d5f57] hover:text-amber-300"
-                          title={locale === "es" ? "Editar actividades" : "Edit activities"}
+                          onClick={() => setExpandedParticipantId(isExpanded ? null : participant.id)}
+                          className="w-full px-4 py-3 md:py-3.5 border-b border-gray-200 bg-white flex items-center justify-between hover:bg-amber-50/40 transition-colors cursor-pointer gap-2 md:gap-0"
+                          style={{ width: 'calc(100% + 12px)', marginLeft: '-6px', marginRight: '-6px' }}
                         >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        {storeParticipants.length > 1 && participantIndex > 0 && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteConfirmId(participant.id);
-                            }}
-                            className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-[#6d5f57] hover:text-red-400 group"
-                            title={locale === "es" ? "Eliminar participante" : "Remove participant"}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                        <motion.div
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="text-[#6d5f57]"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </motion.div>
-                      </div>
-                    </button>
-
-                    {/* Participant Activities - Collapsible */}
-                    <AnimatePresence initial={false}>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.3, ease: "easeInOut" }}
-                          className="overflow-hidden"
-                        >
-                          <div className="p-4 md:p-3 space-y-2 md:space-y-1.5">
-                            {participant.selectedActivities.length === 0 ? (
-                              <p className="text-[#6d5f57] text-center py-4">
-                                {locale === "es" ? "No hay actividades seleccionadas" : "No activities selected"}
+                          <div className="flex items-center gap-2.5 md:gap-3.5">
+                            <div className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-full bg-amber-100 text-amber-700 font-semibold flex-shrink-0">
+                              <User className="h-5 w-5" />
+                            </div>
+                            <div className="text-left flex-1">
+                              <h3 className="text-base md:text-lg font-bold text-gray-900">
+                                {participant.name}
+                                {participant.isYou && (
+                                  <span className="ml-2 text-sm md:text-xs text-gray-600">
+                                    ({locale === "es" ? "Tu" : "You"})
+                                  </span>
+                                )}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {participant.selectedActivities.length}{" "}
+                                {participant.selectedActivities.length === 1
+                                  ? (locale === "es" ? "actividad" : "activity")
+                                  : (locale === "es" ? "actividades" : "activities")}
+                                {" - "}
+                                <span className="font-semibold text-gray-900">
+                                  {formatCurrency(participantTotal)}
+                                </span>
                               </p>
-                            ) : (
-                              participant.selectedActivities.map((activity, index) => {
-                                const Icon = getActivityIcon(activity.category);
-                                const details = getActivityDetailsForParticipant(activity, participant);
-                                const price = computeActivityBasePriceForParticipant(activity, participant);
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAllActivities(participant.id);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-[11px] md:text-sm font-semibold text-amber-700 bg-amber-100/70 hover:bg-amber-100 px-2 py-1 rounded-lg border border-amber-200 shadow-sm min-h-0"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-amber-700" />
+                              <span className="text-amber-700">{locale === "es" ? "Editar todo" : "Edit all"}</span>
+                            </button>
+                            <span className="text-xs md:text-sm font-semibold text-gray-600 hidden md:inline">
+                              {isExpanded
+                                ? (locale === "es" ? "Cerrar" : "Close")
+                                : (locale === "es" ? "Ver detalle" : "See details")}
+                            </span>
+                            <svg
+                              className={`w-5 h-5 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </button>
 
-                                // For surf activities, show program name instead of generic name
-                                let displayName = activity.name;
-                                if (activity.category === 'surf') {
-                                  const classes = participant.selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES;
-                                  const programId = surfClassesToProgram(classes);
-                                  const program = SURF_PROGRAMS[programId];
-                                  // Remove video analysis session info (everything in parentheses)
-                                  displayName = program.name[locale === 'en' ? 'en' : 'es'].replace(/\s*\([^)]*\)/, '');
-                                }
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="py-4 md:px-5 md:py-5 bg-gray-50"
+                            >
+                              <div className="space-y-3">
+                                {participant.selectedActivities.map((activity) => {
+                                  const isSurf = activity.category === "surf";
+                                  const isYoga = activity.category === "yoga";
+                                  const isCeramics = activity.category === "ceramics";
+                                  const showQuantity = quantityCategories.has(activity.category);
+                                  const showTime = timeSlotCategories.has(activity.category);
+                                  const activityTotal = computeActivityPriceForParticipant(activity, participant);
 
-                                return (
-                                  <motion.div
-                                    key={activity.id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: index * 0.05, duration: 0.3 }}
-                                    className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-[white]/40 border-[white]/30 hover:bg-[white]/60 transition-all"
-                                    style={{ borderWidth: '1px' }}
-                                  >
-                                    <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
-                                      <Icon className="h-5 w-5 md:h-4 md:w-4 text-amber-300" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="text-sm md:text-xs font-bold text-black truncate">
-                                        {displayName}
-                                      </h4>
-                                      {details && (
-                                        <p className="text-sm md:text-[10px] text-[#6d5f57] mt-0.5 md:mt-0">{details}</p>
+                                  return (
+                                    <div
+                                      key={activity.id}
+                                      className="rounded-xl border border-gray-200 bg-white px-3.5 py-3 md:px-4 md:py-3 flex items-center justify-between gap-2 md:gap-4 flex-wrap"
+                                    >
+                                      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-nowrap">
+                                        <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-bold uppercase flex-shrink-0">
+                                          {activity.name.slice(0, 2)}
+                                        </div>
+                                        <div className="flex flex-col md:flex-row md:items-center md:gap-2 min-w-0">
+                                          <p className="text-sm md:text-base font-semibold text-gray-900">{activity.name}</p>
+                                          <div className="flex items-center gap-1 md:gap-2 text-xs text-gray-600 leading-tight flex-wrap md:mt-0">
+                                            {isSurf && (
+                                              <>
+                                                <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700">
+                                                  {locale === "es" ? "Clases" : "Classes"}: {selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES}
+                                                </span>
+                                                <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hidden md:inline-flex">
+                                                  {locale === "es" ? "Programa" : "Program"}: {SURF_PROGRAMS[surfClassesToProgram(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES)].name[locale as "es" | "en"]}
+                                                </span>
+                                              </>
+                                            )}
+                                            {isYoga && (
+                                              <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700">
+                                                {locale === "es" ? "Yoga" : "Yoga"}: {yogaClasses[activity.id] ?? 1}
+                                              </span>
+                                            )}
+                                            {/* Ceramics badge removed to avoid repeating the title */}
+                                            {showTime && (
+                                              <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700 hidden md:inline-flex">
+                                                {selectedTimeSlots[activity.id] ?? "7:00 AM"}
+                                              </span>
+                                            )}
+                                            {showQuantity && (
+                                              <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700">
+                                                {locale === "es" ? "Sesiones" : "Sessions"}: {activityQuantities[activity.id] ?? 1}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 flex-shrink-0 text-left md:w-auto w-full justify-end">
+                                        <div className="flex items-center gap-2 w-full md:w-auto">
+                                          <div className="text-left flex-1">
+                                            <p className="text-base font-bold text-gray-900">{formatCurrency(activityTotal)}</p>
+                                            <p className="text-xs text-gray-500">
+                                              {perGuestCategories.has(activity.category)
+                                                ? (locale === "es" ? "por persona" : "per person")
+                                                : (locale === "es" ? "total" : "total")}
+                                            </p>
+                                          </div>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleEditActivity(activity)}
+                                            className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 border border-amber-200 bg-amber-50 px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors ml-auto min-h-0"
+                                          >
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                            {locale === "es" ? "Editar" : "Edit"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                      {isSurf && participant.hasPrivateCoaching && (
+                                        <div className="w-full flex items-center justify-between text-xs text-gray-700 mt-1">
+                                          <span className="px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                                            {locale === "es" ? "Upgrade 1:1 coaching" : "1:1 coaching upgrade"}
+                                          </span>
+                                          <span className="font-semibold text-gray-900">
+                                            {formatCurrency(calculatePrivateCoachingUpgrade(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES))}
+                                          </span>
+                                        </div>
                                       )}
                                     </div>
-                                    <div className="text-right">
-                                      <p className="text-base md:text-base font-bold text-[#6d5f57]">
-                                        {formatCurrency(price)}
-                                      </p>
-                                    </div>
-                                  </motion.div>
-                                );
-                              })
-                            )}
-
-                            {/* 1:1 Private Coaching Upgrade - shown as separate line if selected */}
-                            {isPrivateUpgrade && computePrivateCoachingUpgradeForParticipant(participant) > 0 && (
-                              <motion.div
-                                initial={{ opacity: 0, x: -20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: participant.selectedActivities.length * 0.05, duration: 0.3 }}
-                                className="flex items-center gap-3 md:gap-2.5 p-3 md:py-2 md:px-2.5 rounded-xl md:rounded-lg bg-amber-100/60 border border-amber-300/50 hover:bg-amber-100/80 transition-all"
-                                style={{ borderWidth: '1px' }}
-                              >
-                                <div className="flex items-center justify-center w-10 h-10 md:w-8 md:h-8 rounded-full bg-amber-400/70 backdrop-blur-md border border-amber-500/40">
-                                  <User className="h-5 w-5 md:h-4 md:w-4 text-white" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-sm md:text-xs font-bold text-black truncate">
-                                    {locale === 'es' ? 'Coaching 1:1 Privado' : '1:1 Private Coaching'}
-                                  </h4>
-                                  <p className="text-sm md:text-[10px] text-amber-700 mt-0.5 md:mt-0">
-                                    {locale === 'es' ? 'Mejora' : 'Upgrade'}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-base md:text-base font-bold text-earth-600">
-                                    {formatCurrency(computePrivateCoachingUpgradeForParticipant(participant))}
-                                  </p>
-                                </div>
-                              </motion.div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Grand Total - Only show if multiple participants */}
-            {storeParticipants.length > 1 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="rounded-3xl md:rounded-2xl border-2 border-amber-400/30 bg-gradient-to-br from-slate-900/90 to-slate-800/90 shadow-2xl overflow-hidden mb-4 md:mb-2 md:mt-2"
-              >
-                <div className="px-4 py-3 md:px-3 md:py-2.5 flex items-center justify-between">
-                  <span className="text-lg md:text-sm font-bold text-white">
-                    {locale === "es" ? "Total General" : "Grand Total"}
-                  </span>
-                  <span className="text-2xl md:text-xl font-bold text-earth-600">
-                    {formatCurrency(calculateGrandTotal())}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Action Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-              className="flex flex-col md:flex-row gap-3 justify-center"
-            >
-              <motion.button
-                onClick={handleCompleteAndContinue}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full md:w-auto px-8 py-3 md:py-2.5 bg-[#FDCB2E] text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-[#FCD34D] hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2"
-              >
-                {t("activities.selectAccommodation")}
-                <ArrowRight className="h-5 w-5" />
-              </motion.button>
-              <motion.button
-                onClick={() => {
-                  setNextStepAfterTraveling("find-reservation");
-                  if (!hasShownReservationTravelingModal) {
-                    setShowTravelingWithModal(true);
-                    setHasShownReservationTravelingModal(true);
-                    if (typeof window !== 'undefined') {
-                      window.sessionStorage.setItem('hasShownReservationTravelingModal', 'true');
-                    }
-                  } else {
-                    setShowTravelingWithModal(false);
-                    setCurrentStep("find-reservation");
-                  }
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full md:w-auto px-8 py-3 md:py-2.5 bg-white/90 text-slate-900 rounded-2xl font-bold text-base shadow-xl hover:bg-white hover:shadow-2xl transition-all duration-150 flex items-center justify-center gap-2 border-2 border-[#FDCB2E]"
-              >
-                {t("activities.haveReservation")}
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        ) : currentActivity ? (
-          <motion.div
-            key={`${activeParticipantId}-${activityFlowStep}`}
-            data-activity-card-container
-            initial={{
-              opacity: 0,
-              x: activityFlowDirection === 'forward' ? 30 : -30,
-            }}
-            animate={{
-              opacity: 1,
-              x: 0,
-            }}
-            exit={{
-              opacity: 0,
-              x: activityFlowDirection === 'forward' ? -120 : 120,
-            }}
-            transition={{
-              duration: 0.4,
-              ease: [0.25, 0.1, 0.25, 1],
-              opacity: { duration: 0.3 }
-            }}
-            className="space-y-4 md:space-y-3.5"
-          >
-            {activityFlowStep === 'ceramics' ? (
-              (() => {
-                const ceramicPrograms = currentStepActivities;
-                if (!ceramicPrograms.length) return null;
-
-                const selectedCeramicOption =
-                  ceramicPrograms.find((activity) => activity.id === selectedCeramicId) ||
-                  ceramicPrograms[0];
-                const isCeramicSelected = selectedActivities.some(
-                  (item) => item.category === 'ceramics'
-                );
-
-                return (
-                  <div className="relative space-y-4">
-                    {/* Active Participant Badge - Top Right */}
-                    {storeParticipants.length > 1 && activeParticipant && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-blue-500/90 border border-cyan-400/60 shadow-xl backdrop-blur-md"
-                      >
-                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 border border-white/30">
-                          <User className="h-3 w-3 text-white" />
-                        </div>
-                        <span className="text-xs font-bold text-white">
-                          {activeParticipant.name}
-                          {activeParticipant.isYou && (
-                            <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
                           )}
-                        </span>
+                        </AnimatePresence>
                       </motion.div>
-                    )}
+                    );
+                  })}
+                </div>
+                <div className="flex flex-col md:flex-row gap-3 justify-end pt-2">
+                  {(() => {
+                    const shouldSkipTravelingModal = hasShownReservationTravelingModal || storeParticipants.length >= 2;
+                    return (
+                      <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (shouldSkipTravelingModal) {
+                            setNextStepAfterTraveling(null);
+                            handleContinue();
+                          } else {
+                            showTravelingModalOnce(null);
+                          }
+                        }}
+                        className="flex-1 md:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 font-bold shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all"
+                      >
+                        {locale === "es" ? "Continuar con la reserva" : "Continue with reservation"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (shouldSkipTravelingModal) {
+                            setCurrentStep('find-reservation');
+                          } else {
+                            showTravelingModalOnce('find-reservation');
+                          }
+                        }}
+                        className="flex-1 md:flex-none px-6 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all font-semibold"
+                      >
+                        {locale === "es" ? "Ya tengo mi reserva" : "I already have a reservation"}
+                      </button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={activityFlowStep}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4 }}
+      >
+        {activityFlowStep === 'ceramics' ? (
+          (() => {
+            const ceramicPrograms = currentStepActivities;
+            if (!ceramicPrograms.length) return null;
+            const selectedOption =
+              ceramicPrograms.find((a) => a.id === selectedCeramicId) || ceramicPrograms[0];
+            const isSelected = selectedActivities.some((item) => item.category === 'ceramics');
 
-                    <ActivityCard
-                      key="ceramics-card"
-                      activity={{
-                        ...(selectedCeramicOption ?? {
-                          id: 'ceramics-workshop',
-                          name: locale === "es" ? "Talleres de Cerámica" : "Ceramic Workshops",
-                          description: "",
-                          price: 0,
-                          duration: 0,
-                          maxParticipants: 0,
-                          category: 'ceramics' as const,
-                        }),
-                        id: 'ceramics-workshop',
-                        name: locale === "es" ? "Talleres de Cerámica" : "Ceramic Workshops",
-                        description:
-                          locale === "es"
-                            ? "Un solo lugar para conocer las dos propuestas: pintura de piezas y taller inmersivo."
-                            : "One card that walks you through both options: painting existing pieces or a full clay immersion.",
-                        category: 'ceramics',
-                      }}
-                      locale={(locale as "es" | "en") || "es"}
-                      participants={1}
-                      isSelected={isCeramicSelected}
-                      onToggle={handleToggleCeramics}
-                      onAutoAdvance={nextActivityStep}
-                      onSkip={skipCurrentActivity}
-                      onBack={handleBackStep}
-                      isFirstStep={false}
-                      isSurfMandatory={false}
-                      price={selectedCeramicOption?.price ?? 0}
-                      pricePerPerson={undefined}
-                      formatPrice={formatCurrency}
-                    >
-                      <div className="space-y-4 mt-4">
-                        <p className="text-sm text-gray-700">
-                          {locale === "es"
-                            ? "Elegí el formato que prefieras. Coordinamos fechas y horarios según tu agenda."
-                            : "Choose the format you prefer. We'll align dates and times with your schedule."}
-                        </p>
-
-                        <div className="space-y-3">
-                          {ceramicPrograms.map((activity) => {
-                            const isOptionChosen = selectedCeramicId === activity.id;
-                            const isOptionActive = selectedActivities.some((item) => item.id === activity.id);
-                            const isExpanded = expandedCeramicIds.includes(activity.id);
-                            return (
-                              <label
-                                key={activity.id}
-                                className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm cursor-pointer transition-all ${
-                                  isOptionChosen
-                                    ? 'border-emerald-400 bg-emerald-50/70'
-                                    : 'border-gray-200 bg-white hover:border-emerald-200'
-                                }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="ceramic-program"
-                                  className="mt-1 h-4 w-4 text-emerald-500 focus:ring-emerald-500"
-                                  checked={isOptionChosen}
-                                  onChange={() => handleCeramicsProgramChange(activity.id)}
-                                />
-                                <div className="flex-1 space-y-1">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        toggleCeramicDetails(activity.id);
-                                      }}
-                                      className="flex items-center gap-2 text-left"
-                                    >
-                                      <span className="font-semibold text-gray-900">{activity.name}</span>
-                                      <ChevronDown
-                                        className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                      />
-                                    </button>
-                                    {isExpanded && (
-                                      <div className="flex items-center gap-2">
-                                        {isOptionActive && (
-                                          <span className="rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold px-2 py-0.5">
-                                            {locale === "es" ? "Seleccionado" : "Selected"}
-                                          </span>
-                                        )}
-                                        <span className="font-semibold text-gray-900">
-                                          {formatCurrency(activity.price)}
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  {isExpanded && (
-                                    <p className="text-sm text-gray-600">{activity.description}</p>
-                                  )}
+            return (
+              <ActivityCard
+                key="ceramics-card"
+                activity={selectedOption}
+                locale={(locale as "es" | "en") || "es"}
+                participants={1}
+                isSelected={isSelected}
+                onToggle={handleToggleCeramics}
+                onAutoAdvance={handleAutoAdvance}
+                onSkip={handleSkipActivity}
+                onBack={handleBackStep}
+                isFirstStep={false}
+                isSurfMandatory={false}
+                price={selectedOption?.price ?? 0}
+                pricePerPerson={undefined}
+                formatPrice={formatCurrency}
+              >
+                <div className="space-y-4 mt-4">
+                  <p className="text-sm text-gray-700">
+                    {locale === "es"
+                      ? "Elegí el formato que prefieras. Coordinamos fechas y horarios según tu agenda."
+                      : "Choose the format you prefer. We'll align dates and times with your schedule."}
+                  </p>
+                  <div className="space-y-3">
+                    {ceramicPrograms.map((activity) => {
+                      const isOptionChosen = selectedCeramicId === activity.id;
+                      const isOptionActive = selectedActivities.some((item) => item.id === activity.id);
+                      const ceramicBullets =
+                        activity.id === 'ceramic-stories'
+                          ? locale === 'es'
+                            ? [
+                                'Pinta piezas creadas por otros viajeros y agrega tu estilo.',
+                                'Deja tu propia pieza para el siguiente viajero.',
+                                'Horneado en ~24h; luego la retiras.',
+                              ]
+                            : [
+                                'Paint traveler-made pieces and add your style.',
+                                'Leave your creation for the next traveler.',
+                                'Kiln-fired in ~24h; ready for pickup.',
+                              ]
+                          : locale === 'es'
+                            ? [
+                                'Día 1: modelado con arcilla natural.',
+                                'Día 2 (dentro de 7 días): esmaltar y pintar.',
+                                'Horneado y listo en ~9 días en total.',
+                              ]
+                            : [
+                                'Day 1: hand-build with natural clay.',
+                                'Day 2 (within 7 days): glaze and paint.',
+                                'Kiln finished in ~9 days total.',
+                              ];
+                      return (
+                        <label
+                          key={activity.id}
+                          className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm cursor-pointer transition-all ${
+                            isOptionChosen
+                              ? 'border-amber-300 bg-amber-50/70 shadow-md'
+                              : 'border-gray-200 bg-white hover:border-amber-200'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="ceramic-program"
+                            className="mt-1 h-4 w-4 text-emerald-500 focus:ring-emerald-500"
+                            checked={isOptionChosen}
+                            onChange={() => handleCeramicsProgramChange(activity.id)}
+                          />
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-gray-900">{activity.name}</span>
+                                {isOptionActive && (
+                                  <span className="rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold px-2 py-0.5">
+                                    {locale === "es" ? "Seleccionado" : "Selected"}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="font-semibold text-gray-900">
+                                {formatCurrency(activity.price)}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {ceramicBullets.map((item, idx) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                  </svg>
+                                  <span className="text-sm text-gray-700 leading-snug">{item}</span>
                                 </div>
-                              </label>
-                            );
-                          })}
-                        </div>
-
-                        <p className="text-xs text-gray-500">
-                          {locale === "es"
-                            ? "Un programa por persona. Ajustamos detalles contigo luego de la reserva."
-                            : "One program per person. We'll confirm details with you after booking."}
-                        </p>
-                      </div>
-                    </ActivityCard>
+                              ))}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
-                );
-              })()
-            ) : (
-              // Normal rendering for other activities
-              (() => {
+                  <p className="text-xs text-gray-500">
+                    {locale === "es"
+                      ? "Un programa por persona. Ajustamos detalles contigo luego de la reserva."
+                      : "One program per person. We'll confirm details with you after booking."}
+                  </p>
+                </div>
+              </ActivityCard>
+            );
+          })()
+        ) : currentActivity ? (
+          (() => {
                 const isSelected = selectedActivities.some((item) => item.id === currentActivity.id);
                 const individualPrice = computeActivityPrice(currentActivity);
                 const isYoga = currentActivity.category === "yoga";
                 const isSurf = currentActivity.category === "surf";
                 const supportsQuantity = quantityCategories.has(currentActivity.category);
                 const supportsTime = timeSlotCategories.has(currentActivity.category);
+                const surfDisplayPrice = isSurf
+                  ? calculateSurfPrice(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES)
+                  : individualPrice;
 
                 // Determine if surf is mandatory for this participant
                 const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
@@ -1448,7 +1410,7 @@ const ActivitiesPage = () => {
                         <span className="text-xs font-bold text-white">
                           {activeParticipant.name}
                           {activeParticipant.isYou && (
-                            <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                            <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tu" : "You"})</span>
                           )}
                         </span>
                       </motion.div>
@@ -1460,35 +1422,35 @@ const ActivitiesPage = () => {
                       locale={(locale as "es" | "en") || "es"}
                       participants={1}
                       isSelected={isSelected}
-                    onToggle={() => handleToggleActivity(currentActivity)}
-                    onAutoAdvance={nextActivityStep}
-                    onSkip={skipCurrentActivity}
-                    onBack={handleBackStep}
-                    isFirstStep={activityFlowStep === 'surf'}
-                    isSurfMandatory={isSurfMandatory}
-                    price={individualPrice}
-                    pricePerPerson={undefined}
-                    formatPrice={formatCurrency}
-                    yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
-                    onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
-                    yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
-                    onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
-                    surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
-                    onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
-                    onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
-                    hasQuantitySelector={supportsQuantity}
-                    quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
-                    onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
-                    hasTimeSelector={supportsTime}
-                    timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
-                    onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
-                  />
+                      onToggle={() => handleToggleActivity(currentActivity)}
+                      onAutoAdvance={handleAutoAdvance}
+                      onSkip={handleSkipActivity}
+                      onBack={handleBackStep}
+                      isFirstStep={activityFlowStep === 'surf'}
+                      isSurfMandatory={isSurfMandatory}
+                      price={surfDisplayPrice}
+                      pricePerPerson={undefined}
+                      formatPrice={formatCurrency}
+                      yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
+                      onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
+                      yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
+                      onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
+                      surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
+                      onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
+                      onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
+                      hasQuantitySelector={supportsQuantity}
+                      quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
+                      onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
+                      hasTimeSelector={supportsTime}
+                      timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
+                      onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
+                    />
                   </div>
                 );
               })()
-            )}
+            ) : null}
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
 
       {/* Overview Summary Modal */}

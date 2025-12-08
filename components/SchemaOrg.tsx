@@ -85,8 +85,8 @@ export default function SchemaOrg() {
               '@type': 'Service',
               name: isSpanish ? 'Alojamiento Frente al Mar' : 'Beachfront Accommodation',
               description: isSpanish
-                ? 'Cuartos compartidos, cabañas privadas y estudios deluxe frente al mar'
-                : 'Shared rooms, private cabins, and deluxe studios on the beach',
+                ? 'Cuartos compartidos, cabañas privadas y eprivate houses private frente al mar'
+                : 'Shared rooms, private cabins, and private private houses on the beach',
             },
           },
         ],

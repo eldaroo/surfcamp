@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
       const accommodationNames = {
         'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
         'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-        'casas-deluxe': locale === 'es' ? 'Casas Deluxe' : 'Deluxe Studio'
+        'casas-deluxe': locale === 'es' ? 'Casa Privada' : 'Private House'
       };
       const accommodationType = accommodationNames[roomTypeId as keyof typeof accommodationNames] || roomTypeId;
 

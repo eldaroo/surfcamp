@@ -213,7 +213,7 @@ export default function AccommodationSelector() {
             <BackButton variant="minimal" />
             <div>
               <h1 className="text-[24px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
-              <p className="text-[14px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
+              <p className="text-[14px] text-white">{t('accommodation.subtitle')}</p>
             </div>
           </div>
 
@@ -241,7 +241,7 @@ export default function AccommodationSelector() {
           <BackButton variant="minimal" />
           <div>
             <h1 className="text-[24px] font-bold text-white font-heading">{t('accommodation.title')}</h1>
-            <p className="text-[14px] text-[var(--brand-text-dim)]">{t('accommodation.subtitle')}</p>
+            <p className="text-[14px] text-white">{t('accommodation.subtitle')}</p>
           </div>
         </div>
 

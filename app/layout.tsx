@@ -146,11 +146,7 @@ export default function RootLayout({
         <div
           className="min-h-screen relative overflow-hidden lg:bg-none"
           style={{
-            backgroundImage: 'url(/assets/background.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed'
+            backgroundColor: '#ffffff',
           }}
         >
           {/* Contenido principal */}

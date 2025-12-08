@@ -51,7 +51,7 @@ export default function FAQSection() {
   };
 
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 bg-gray-100">
       <div className="container mx-auto px-4">
         {/* Title */}
         <div className="text-center mb-16">
@@ -63,55 +63,47 @@ export default function FAQSection() {
           </p>
         </div>
 
-        {/* FAQ Accordion */}
-        <div className="max-w-4xl mx-auto">
-          <div className="space-y-4">
-            {faqs.map((faq) => (
+        {/* FAQ Accordion - styled like Not Included */}
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-4">
+            {faqs.map((faq, index) => (
               <div
                 key={faq.id}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors"
+                className={`${index === faqs.length - 1 ? 'md:col-span-2' : ''}`}
               >
-                <button
-                  onClick={() => toggleItem(faq.id)}
-                  className="w-full px-6 py-5 flex items-center justify-between text-left bg-white hover:bg-gray-50 transition-colors"
-                  aria-expanded={openItems.includes(faq.id)}
-                >
-                  <span className="text-lg font-semibold text-gray-900 pr-4">
-                    {faq.question}
-                  </span>
-                  <div
-                    className={`flex-shrink-0 w-8 h-8 rounded-full bg-[#163237] flex items-center justify-center transition-transform duration-200 ${
-                      openItems.includes(faq.id) ? 'rotate-180' : ''
-                    }`}
+                <div className="border-t border-black">
+                  <button
+                    onClick={() => toggleItem(faq.id)}
+                    className="w-full py-6 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                    aria-expanded={openItems.includes(faq.id)}
                   >
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <span className="text-lg md:text-xl font-medium text-gray-900 pr-4">
+                      {faq.question}
+                    </span>
+                    <div
+                      className={`flex-shrink-0 w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center transition-transform duration-200 ${
+                        openItems.includes(faq.id) ? 'rotate-45' : ''
+                      }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </div>
-                </button>
-                {openItems.includes(faq.id) && (
-                  <div className="px-6 pb-5 bg-gray-50">
-                    <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
-                  </div>
-                )}
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                  </button>
+                  {openItems.includes(faq.id) && (
+                    <div className="pb-6 pr-14">
+                      <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
+          <div className="border-t border-black mt-0" />
         </div>
 
         {/* Contact CTA */}
         <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">Still have questions?</p>
           <a
             href="https://wa.link/cqy47y"
             target="_blank"

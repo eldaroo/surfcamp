@@ -411,7 +411,7 @@ return (
                   </svg>
                 </motion.div>
                 <h1 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">{t('dates.title')}</h1>
-                <p className="text-[#6d5f57] text-sm md:text-base">{t('dates.subtitle')}</p>
+                <p className="text-white text-sm md:text-base">{t('dates.subtitle')}</p>
               </div>
             </div>
           )}
@@ -485,7 +485,7 @@ return (
                           >
                             <span className="text-black text-lg font-bold">-</span>
                           </button>
-                          <span className="text-2xl font-bold text-amber-400 w-12 text-center">
+                          <span className="text-2xl font-bold text-gray-800 w-12 text-center">
                             {guests}
                           </span>
                           <button
@@ -700,7 +700,7 @@ return (
                     <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
                       {t('accommodation.title')}
                     </h2>
-                    <p className="text-[#6d5f57] text-sm md:text-base">
+                    <p className="text-white text-sm md:text-base">
                       {t('accommodation.subtitle')}
                     </p>
                   </div>

@@ -6,7 +6,7 @@ export default function CTABanner() {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-xl md:text-2xl font-bold text-black">
+            <h2 className="text-2xl md:text-3xl font-normal font-sans text-black text-center md:text-left">
               Any Questions or Doubts? Don&apos;t hesitate to chat with us!
             </h2>
           </div>

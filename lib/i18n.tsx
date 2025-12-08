@@ -125,9 +125,9 @@ const translations = {
           features: ["Privada", "Tranquila", "Independiente"]
         },
         "casas-deluxe": {
-          name: "Casas Deluxe",
-          description: "Casas premium con todas las comodidades, perfectas para quienes buscan lujo y confort.",
-          features: ["Premium", "Espaciosa", "Comodidades Deluxe"]
+          name: "Casa Privada",
+          description: "Casa privada con cocina, baño de agua caliente, Wi‑Fi y A/C, a pasos de la playa. Ideal para parejas que buscan confort y privacidad.",
+          features: ["Privada", "Cocina propia", "A/C + Wi‑Fi"]
         }
       },
       pricePerNight: "por noche",
@@ -698,9 +698,9 @@ const translations = {
           features: ["Private", "Quiet", "Independent"]
         },
         "casas-deluxe": {
-          name: "Deluxe Studio",
-          description: "Premium studio with all amenities, perfect for those seeking luxury and comfort.",
-          features: ["Premium", "Spacious", "Deluxe Amenities"]
+          name: "Private House",
+          description: "Private house steps from the beach with kitchen, hot-water bath, Wi‑Fi, and A/C. Perfect for couples seeking comfort and privacy.",
+          features: ["Private", "Kitchen included", "A/C + Wi‑Fi"]
         }
       },
       pricePerNight: "per night",
@@ -737,8 +737,8 @@ const translations = {
           mobile: "Private cottage with garden view, Wi-Fi, and A/C."
         },
         "casas-deluxe": {
-          desktop: "Private studio just steps from the beach. Includes a private kitchen, hot-water bathroom, Wi-Fi, and A/C — perfect for couples seeking comfort and privacy.",
-          mobile: "Beachfront studio for 2 guests with kitchen, Wi-Fi, A/C, and king-size bed."
+          desktop: "Private house just steps from the beach. Includes a private kitchen, hot-water bathroom, Wi‑Fi, and A/C — perfect for couples seeking comfort and privacy.",
+          mobile: "Beachfront private house for 2 guests with kitchen, Wi‑Fi, A/C, and king bed."
         }
       },
       features: {
