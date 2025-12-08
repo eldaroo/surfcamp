@@ -169,6 +169,72 @@ const SURF_PROGRAMS = {
   }
 } as const;
 
+// Ceramics Options - Two distinct creative experiences
+const CERAMICS_OPTIONS = {
+  stories: {
+    id: 'ceramic-stories',
+    name: {
+      es: 'Historias de Barro',
+      en: 'Ceramic Stories'
+    },
+    tagline: {
+      es: 'Pinta, recoge en 24h',
+      en: 'Paint & pickup in 24h'
+    },
+    price: 40,
+    duration: '1-1.5 hours',
+    description: {
+      es: 'En esta experiencia única en nuestro estudio, pintarás piezas de cerámica creadas por viajeros anteriores y te llevarás contigo tu obra terminada. También dejarás tus propias creaciones de barro para los próximos viajeros que lleguen.',
+      en: 'In this unique studio experience, you\'ll paint ceramic pieces made by past travelers and take them home! You\'ll also make and leave your own handmade creations for the next ones who arrive.'
+    },
+    includes: {
+      es: [
+        'Materiales y herramientas incluidos',
+        'Piezas pre-hechas para pintar',
+        'Horneado durante la noche',
+        'Listo para recoger en 24 horas'
+      ],
+      en: [
+        'Materials and tools included',
+        'Pre-made pieces to paint',
+        'Overnight kiln firing',
+        'Ready for pickup in 24 hours'
+      ]
+    }
+  },
+  immersion: {
+    id: 'ceramic-immersion',
+    name: {
+      es: 'Forma y Esmalte',
+      en: 'Shape & Shade'
+    },
+    tagline: {
+      es: 'Dos sesiones, proceso completo',
+      en: 'Two sessions, full process'
+    },
+    price: 80,
+    duration: '2 sessions over 7 days',
+    description: {
+      es: '¡Viví toda la magia de la cerámica en solo dos encuentros! Durante este taller con arcilla 100% natural, exploraremos distintas técnicas para dar forma a tus propias piezas el primer día y volverás en un plazo de 7 días para elegir esmaltes y pintarlas.',
+      en: 'Experience the full magic of pottery in just two days! During this immersive workshop with natural clay, you\'ll shape your own ceramic pieces on the first day and return within 7 days to give them colour!'
+    },
+    includes: {
+      es: [
+        'Arcilla 100% natural',
+        'Sesión 1: Modelado con torno o mano',
+        'Sesión 2: Esmaltado y pintura (dentro de 7 días)',
+        'Proceso completo: ~9 días totales'
+      ],
+      en: [
+        '100% natural clay',
+        'Session 1: Shaping (wheel or hand)',
+        'Session 2: Glazing & painting (within 7 days)',
+        'Full process: ~9 days total'
+      ]
+    }
+  }
+} as const;
+
 // Our Integrated Surf Coaching Method
 const COACHING_METHOD = {
   title: {
@@ -227,6 +293,7 @@ type ActivityCardProps = {
   hasTimeSelector?: boolean;
   timeSlot?: "7:00 AM" | "3:00 PM";
   onTimeSlotChange?: (value: "7:00 AM" | "3:00 PM") => void;
+  children?: React.ReactNode;
 };
 
 const localeCopy = {
@@ -450,6 +517,10 @@ const activityImages = {
     image: `/assets/Icebath.jpg?v=${CACHE_VERSION}`,
     hasImage: true,
   },
+  ceramics: {
+    image: `/assets/ceramica/ceramica.jpg?v=${CACHE_VERSION}`,
+    hasImage: true,
+  },
   transport: {
     gradient: "from-orange-500 via-amber-400 to-yellow-500",
     hasImage: false,
@@ -527,19 +598,21 @@ const descriptiveContent = {
   },
   hosting: {
     es: {
-      description: "Atención personalizada con concierge local dedicado. Planificamos tu experiencia completa según tus preferencias.",
+      description: "Personalized support from your dedicated local host. We take care of your arrival and departure logistics, coordinate your activities with our professionals, and build a personalized schedule so your entire experience flows effortlessly. Your trusted point-person throughout your stay.",
       features: [
-        { icon: HeadphonesIcon, text: "Disponible 7 días" },
-        { icon: Star, text: "Reservas prioritarias" },
-        { icon: Clock, text: "Soporte 24/7" },
+        { icon: Clock, text: "Personalized itinerary & daily coordination" },
+        { icon: MapPin, text: "Arrival & departure support" },
+        { icon: Star, text: "Activity scheduling with surf coaches, yoga, photography & transport" },
+        { icon: HeadphonesIcon, text: "Continuous assistance to ensure everything goes smoothly" },
       ],
     },
     en: {
-      description: "Personalized attention with dedicated local concierge. We plan your complete experience according to your preferences.",
+      description: "Personalized support from your dedicated local host. We take care of your arrival and departure logistics, coordinate your activities with our professionals, and build a personalized schedule so your entire experience flows effortlessly. Your trusted point-person throughout your stay.",
       features: [
-        { icon: HeadphonesIcon, text: "Available 7 days" },
-        { icon: Star, text: "Priority bookings" },
-        { icon: Clock, text: "24/7 support" },
+        { icon: Clock, text: "Personalized itinerary & daily coordination" },
+        { icon: MapPin, text: "Arrival & departure support" },
+        { icon: Star, text: "Activity scheduling with surf coaches, yoga, photography & transport" },
+        { icon: HeadphonesIcon, text: "Continuous assistance to ensure everything goes smoothly" },
       ],
     },
   },
@@ -572,6 +645,7 @@ const ActivityCard = ({
   hasTimeSelector,
   timeSlot = "7:00 AM",
   onTimeSlotChange,
+  children,
 }: ActivityCardProps) => {
   const copy = localeCopy[locale] ?? localeCopy.es;
   const marketing = marketingContent[activity.category as keyof typeof marketingContent] ?? marketingContent.default;
@@ -594,6 +668,7 @@ const ActivityCard = ({
   const [isMounted, setIsMounted] = useState(false);
   const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(null);
   const [hasExpandedProgram, setHasExpandedProgram] = useState(false);
+  const [expandedCeramicsOption, setExpandedCeramicsOption] = useState<'stories' | 'immersion' | null>(null);
 
   // Set mounted state for portal (SSR safety)
   useEffect(() => {
@@ -1132,6 +1207,94 @@ const handleChoose = async (e: React.MouseEvent) => {
     );
   };
 
+  const renderCeramicsOptions = () => {
+    if (activity.id !== 'ceramics') return null;
+
+    const options = ['stories', 'immersion'] as const;
+
+    return (
+      <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
+        <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#6d5f57] block">
+          {locale === 'es' ? 'Elige tu experiencia' : 'Choose your experience'}
+        </span>
+
+        {/* Options List */}
+        <div className="space-y-2 md:space-y-2.5">
+          {options.map((optionId) => {
+            const option = CERAMICS_OPTIONS[optionId];
+            const isExpanded = expandedCeramicsOption === optionId;
+
+            return (
+              <motion.button
+                key={optionId}
+                type="button"
+                onClick={() => {
+                  // Toggle expansion
+                  setExpandedCeramicsOption(isExpanded ? null : optionId);
+                }}
+                whileHover={{ scale: 1.005 }}
+                whileTap={{ scale: 0.995 }}
+                className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer border-[white]/50 bg-[white]/40 hover:border-[white]/60 hover:bg-[white]/60`}
+              >
+                {/* Header: Name + Price */}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm md:text-base font-extrabold text-black font-heading">
+                    {option.name[locale]}
+                  </span>
+                  <span className="text-lg md:text-xl font-bold text-[#6d5f57]">
+                    ${option.price}
+                  </span>
+                </div>
+
+                {/* Tagline and Description - Only show when expanded */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      {/* Tagline */}
+                      <p className="text-[11px] md:text-[13px] text-black/70 font-light italic mt-0.5 mb-2">
+                        {option.tagline[locale]}
+                      </p>
+
+                      {/* Description */}
+                      <p className="text-xs md:text-sm text-black/80 font-light leading-relaxed mb-3">
+                        {option.description[locale]}
+                      </p>
+
+                      {/* Features List */}
+                      <div className="space-y-1">
+                        {option.includes[locale].map((feature, idx) => (
+                          <div key={idx} className="flex items-start gap-1.5">
+                            <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                            </svg>
+                            <span className="text-[11px] md:text-[13.5px] text-black font-light leading-tight md:leading-[1.25]">
+                              {feature}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Duration info */}
+                      <p className="text-[10px] md:text-xs text-[#6d5f57] font-medium mt-2 italic">
+                        {locale === 'es' ? 'Duración: ' : 'Duration: '}{option.duration}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const handleQuantityChange = (newQuantity: number) => {
     if (onQuantityChange) {
       onQuantityChange(newQuantity);
@@ -1515,6 +1678,8 @@ const handleChoose = async (e: React.MouseEvent) => {
             </p>
           )}
 
+          {children}
+
           {/* 2. Features - Bullet Points with Golden Checkmarks (only if features exist) */}
           {descriptive && descriptive.features && descriptive.features.length > 0 && (
             <div className={isSurf ? "space-y-1.5 md:space-y-2.5" : "space-y-1 md:space-y-1.5"}>
@@ -1537,10 +1702,11 @@ const handleChoose = async (e: React.MouseEvent) => {
           )}
 
           {/* 3. Class/Session Selector */}
-          {(renderYogaSelector() || renderSurfProgramSelector() || renderQuantityControl() || renderTimeSlot()) && (
+          {(renderYogaSelector() || renderSurfProgramSelector() || renderCeramicsOptions() || renderQuantityControl() || renderTimeSlot()) && (
             <div>
               {renderYogaSelector()}
               {renderSurfProgramSelector()}
+              {renderCeramicsOptions()}
               {renderQuantityControl()}
               {renderTimeSlot()}
             </div>

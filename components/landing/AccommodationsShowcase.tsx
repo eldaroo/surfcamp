@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useI18n } from '@/lib/i18n';
 import { getAltTags } from '@/lib/altTags';
@@ -183,17 +184,24 @@ export default function AccommodationsShowcase() {
                 {/* Image Carousel */}
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <AnimatePresence mode="wait">
-                    <motion.img
+                    <motion.div
                       key={currentImageIndex}
-                      src={accommodation.images[currentImageIndex]}
-                      alt={getAccommodationAlt(accommodation.id, currentImageIndex)}
-                      className="w-full h-full object-cover cursor-pointer"
+                      className="w-full h-full cursor-pointer"
                       initial={{ opacity: 0, scale: 1.1 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.5 }}
                       onClick={() => openModal(accommodation.id, currentImageIndex)}
-                    />
+                    >
+                      <Image
+                        src={accommodation.images[currentImageIndex]}
+                        alt={getAccommodationAlt(accommodation.id, currentImageIndex)}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                        loading="lazy"
+                      />
+                    </motion.div>
                   </AnimatePresence>
 
                   {/* Image Navigation */}
@@ -322,16 +330,23 @@ export default function AccommodationsShowcase() {
                   {/* Image Container */}
                   <div className="relative aspect-[4/3] bg-black rounded-lg overflow-hidden">
                     <AnimatePresence mode="wait">
-                      <motion.img
+                      <motion.div
                         key={modalImageIndex}
-                        src={selectedAccommodation.images[modalImageIndex]}
-                        alt={getAccommodationAlt(selectedAccommodation.id, modalImageIndex)}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full"
                         initial={{ opacity: 0, x: 100 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -100 }}
                         transition={{ duration: 0.3 }}
-                      />
+                      >
+                        <Image
+                          src={selectedAccommodation.images[modalImageIndex]}
+                          alt={getAccommodationAlt(selectedAccommodation.id, modalImageIndex)}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 80vw"
+                          className="object-contain"
+                          priority
+                        />
+                      </motion.div>
                     </AnimatePresence>
 
                     {/* Navigation Arrows */}

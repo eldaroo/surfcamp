@@ -475,7 +475,7 @@ export default function PaymentSection() {
     };
   }, [closePaymentWindow]);
 
-  const handlePayment = async () => {
+  const handlePayment = async (isTestMode: boolean = false) => {
     if (!isReadyForPayment) {
       setError(t('payment.error.missingData'));
       return;
@@ -485,7 +485,7 @@ export default function PaymentSection() {
     setError('');
 
     try {
-      console.log('💳 Starting payment process...');
+      console.log(isTestMode ? '🧪 Starting TEST payment process ($0)...' : '💳 Starting payment process...');
 
       // Abrir ventana inmediatamente para evitar bloqueo de pop-ups
       // y mostrar mensaje de carga
@@ -619,7 +619,7 @@ export default function PaymentSection() {
               participant_fees: "none"
             },
             pricing: {
-              price: Math.round(activitiesTotal),
+              price: isTestMode ? 0 : Math.round(activitiesTotal), // 🧪 Force $0 for test mode
               payment_plan: {
                 allow_auto_payment: false,
                 allow_partial_payment: false,
@@ -632,12 +632,17 @@ export default function PaymentSection() {
 
         console.log('✅ Existing reservation payload built:', {
           existingReservationId: bookingData.existingReservationId,
-          activitiesTotal,
-          participantsCount: serializedParticipants.length
+          activitiesTotal: isTestMode ? 0 : activitiesTotal,
+          participantsCount: serializedParticipants.length,
+          testMode: isTestMode
         });
       } else {
         // 🏠 NEW RESERVATION: Send complete booking data
         console.log('🏠 Building payload for new reservation');
+        console.log('💰 DEBUG - total value:', total);
+        console.log('💰 DEBUG - accommodationTotal:', accommodationTotal);
+        console.log('💰 DEBUG - activitiesTotal:', activitiesTotal);
+        console.log('💰 DEBUG - isTestMode:', isTestMode);
 
         // Convertir fechas Date objects a formato ISO string para la API
         const formatDateForAPI = (date: Date | string) => {
@@ -711,7 +716,7 @@ export default function PaymentSection() {
               participant_fees: "none"
             },
             pricing: {
-              price: Math.round(total), // TOTAL price - backend will calculate deposit
+              price: isTestMode ? 0 : Math.round(total), // 🧪 Force $0 for test mode - otherwise TOTAL price (backend will calculate deposit)
               payment_plan: {
                 allow_auto_payment: false,
                 allow_partial_payment: false,
@@ -722,12 +727,14 @@ export default function PaymentSection() {
           }
         };
 
-        console.log('✅ New reservation payload built');
+        console.log('✅ New reservation payload built', { total: isTestMode ? 0 : total, testMode: isTestMode });
       }
 
-      console.log('💰 Total price:', total);
-      console.log('💰 10% Deposit will be charged by backend:', Math.round(total * 0.10));
+      console.log('💰 Total price:', isTestMode ? 0 : total);
+      console.log('💰 Deposit will be charged by backend:', isTestMode ? 0 : Math.round(total * 0.10));
       console.log('📤 Sending request to payment API with full booking data');
+      console.log(isTestMode ? '🧪 TEST MODE: Payment will be $0' : '💳 PRODUCTION MODE: Real payment');
+      console.log('💰 DEBUG - Final price in payload:', paymentPayload.wetravelData?.pricing?.price);
       console.log('👥 [PaymentSection] Serialized participants being sent:', JSON.stringify(serializedParticipants, null, 2));
       console.log('🏠 [PaymentSection] selectedRoom data:', {
         roomTypeId: selectedRoom?.roomTypeId,
@@ -968,7 +975,7 @@ export default function PaymentSection() {
 
           {/* Pay Button */}
           <button
-            onClick={handlePayment}
+            onClick={() => handlePayment(false)}
             disabled={isProcessing}
             className="w-full px-6 py-4 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
@@ -983,6 +990,16 @@ export default function PaymentSection() {
                 <span>→</span>
               </>
             )}
+          </button>
+
+          {/* Test Payment Button */}
+          <button
+            onClick={() => handlePayment(true)}
+            disabled={isProcessing}
+            className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl shadow-lg border-2 border-purple-300 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">🧪</span>
+            <span>TEST $0 Payment</span>
           </button>
         </div>
 

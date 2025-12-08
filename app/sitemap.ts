@@ -19,7 +19,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages = [
     "",
     "/surf-programs",
-    "/blog",
+    "/surf-camp",
+    "/surf-lessons-santa-teresa",
+    "/yoga-retreat-santa-teresa",
+    "/accommodation-santa-teresa",
+    "/yoga",
+    "/ice-bath",
+    "/ceramics",
+    "/surf-blog",
   ];
 
   const locales = ["en", "es"];
@@ -48,14 +55,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   for (const slug of blogSlugs) {
     for (const locale of locales) {
       urls.push({
-        url: `${base}/${locale}/blog/${slug}`,
+        url: `${base}/${locale}/surf-blog/${slug}`,
         lastModified: new Date(),
         changeFrequency: "weekly",
         priority: 0.8,
         alternates: {
           languages: {
-            en: `${base}/en/blog/${slug}`,
-            es: `${base}/es/blog/${slug}`,
+            en: `${base}/en/surf-blog/${slug}`,
+            es: `${base}/es/surf-blog/${slug}`,
           },
         },
       });

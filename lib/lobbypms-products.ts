@@ -74,6 +74,12 @@ export const LOBBYPMS_ACTIVITY_PRODUCTS: Record<string, ActivityProductMapping> 
   },
   'hosting-service': {
     defaultProductId: '494398'
+  },
+  'ceramic-stories': {
+    defaultProductId: '502740'
+  },
+  'ceramic-immersion': {
+    defaultProductId: '502741'
   }
 };
 

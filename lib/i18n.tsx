@@ -461,12 +461,31 @@ const translations = {
         home: "Inicio",
         experience: "Experiencia",
         stories: "Historias",
+        testimonials: "Testimonios",
         accommodation: "Alojamiento",
         activities: "Actividades",
         faqs: "Preguntas",
         contact: "Contacto",
         blog: "Blog",
-        bookNow: "Reservar Ahora"
+        bookNow: "Reservar Ahora",
+        dropdown: {
+          surfCamp: {
+            title: "Programas de Surf",
+            description: "Coaching profesional de surf"
+          },
+          yoga: {
+            title: "Yoga",
+            description: "Sesiones diarias de yoga"
+          },
+          iceBath: {
+            title: "Baños de Hielo",
+            description: "Terapia de frío"
+          },
+          ceramics: {
+            title: "Cerámica",
+            description: "Artes creativas"
+          }
+        }
       },
       hero: {
         title: "Santa Teresa Surf & Yoga Experience\nby Zeneidas Surf Garden",
@@ -1015,12 +1034,31 @@ const translations = {
         home: "Home",
         experience: "Experience",
         stories: "Stories",
+        testimonials: "Testimonials",
         accommodation: "Accommodation",
         activities: "Activities",
         faqs: "FAQs",
         contact: "Contact",
         blog: "Blog",
-        bookNow: "Book Now"
+        bookNow: "Book Now",
+        dropdown: {
+          surfCamp: {
+            title: "Surf Programs",
+            description: "Professional surf coaching"
+          },
+          yoga: {
+            title: "Yoga",
+            description: "Daily yoga sessions"
+          },
+          iceBath: {
+            title: "Ice Bath",
+            description: "Cold therapy"
+          },
+          ceramics: {
+            title: "Ceramics",
+            description: "Creative arts"
+          }
+        }
       },
       hero: {
         title: "Santa Teresa Surf & Yoga Experience\nby Zeneidas Surf Garden",

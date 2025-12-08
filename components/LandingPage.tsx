@@ -1,18 +1,31 @@
 'use client';
 
-import {
-  Navigation,
-  Footer,
-  HeroSection,
-  StoriesSlider,
-  CTABanner,
-  NotIncludedSection,
-  FAQSection,
-  ActivitiesShowcase,
-  AccommodationsShowcase,
-  SunDecorator,
-} from './landing';
+import dynamic from 'next/dynamic';
+import { Navigation, Footer, SunDecorator } from './landing';
 import { useBookingStore } from '@/lib/store';
+
+// Lazy load heavy components below the fold
+const HeroSection = dynamic(() => import('./landing').then(mod => ({ default: mod.HeroSection })), {
+  loading: () => <div className="h-screen bg-slate-900" />,
+});
+
+const StoriesSlider = dynamic(() => import('./landing').then(mod => ({ default: mod.StoriesSlider })), {
+  loading: () => <div className="h-96 bg-slate-900" />,
+});
+
+const CTABanner = dynamic(() => import('./landing').then(mod => ({ default: mod.CTABanner })));
+
+const NotIncludedSection = dynamic(() => import('./landing').then(mod => ({ default: mod.NotIncludedSection })));
+
+const FAQSection = dynamic(() => import('./landing').then(mod => ({ default: mod.FAQSection })));
+
+const ActivitiesShowcase = dynamic(() => import('./landing').then(mod => ({ default: mod.ActivitiesShowcase })), {
+  loading: () => <div className="h-screen bg-slate-900" />,
+});
+
+const AccommodationsShowcase = dynamic(() => import('./landing').then(mod => ({ default: mod.AccommodationsShowcase })), {
+  loading: () => <div className="h-screen bg-slate-900" />,
+});
 
 interface LandingPageProps {
   bookingWidget?: React.ReactNode;

@@ -5,20 +5,35 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useI18n, type Locale } from '@/lib/i18n';
 import { usePathname, useRouter } from 'next/navigation';
+import { ChevronDown } from 'lucide-react';
+
+interface DropdownItem {
+  key: string;
+  href: string;
+  description?: string;
+}
 
 interface MenuItem {
   key: string;
-  href: string;
+  href?: string;
   isExternal?: boolean;
+  dropdown?: DropdownItem[];
 }
 
 const menuItems: MenuItem[] = [
-  { key: 'experience', href: '#' },
-  { key: 'activities', href: '#activities' },
-  { key: 'accommodation', href: '#accommodation' },
-  { key: 'stories', href: '#stories' },
-  { key: 'faqs', href: '#faqs' },
-  { key: 'blog', href: '/en/blog', isExternal: true },
+  { key: 'experience', href: '/' },
+  {
+    key: 'activities',
+    dropdown: [
+      { key: 'surfCamp', href: '/surf-camp', description: 'Surf coaching programs' },
+      { key: 'yoga', href: '/yoga', description: 'Daily yoga sessions' },
+      { key: 'iceBath', href: '/ice-bath', description: 'Cold therapy' },
+      { key: 'ceramics', href: '/ceramics', description: 'Creative arts' }
+    ]
+  },
+  { key: 'accommodation', href: '/accommodation-santa-teresa', isExternal: true },
+  { key: 'testimonials', href: '/#stories' },
+  { key: 'blog', href: '/en/surf-blog', isExternal: true },
 ];
 
 export default function Navigation() {
@@ -27,6 +42,7 @@ export default function Navigation() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,6 +66,13 @@ export default function Navigation() {
   }, [pathname]);
 
   const scrollToSection = (href: string) => {
+    // Route to main page when using a path
+    if (href.startsWith('/')) {
+      router.push(href === '/' ? `/${locale}` : `/${locale}${href}`);
+      setIsOpen(false);
+      return;
+    }
+
     // If href is just '#', scroll to top
     if (href === '#') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -79,6 +102,10 @@ export default function Navigation() {
     } else {
       router.push(`/${newLocale}`);
     }
+  };
+
+  const toggleMobileDropdown = (key: string) => {
+    setActiveDropdown(activeDropdown === key ? null : key);
   };
 
   return (
@@ -136,25 +163,61 @@ export default function Navigation() {
 
           {/* Desktop Menu */}
           <div className="hidden lg:flex items-center space-x-8">
-            {menuItems.map((item) =>
-              item.isExternal ? (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-                >
-                  {t(`landing.navigation.${item.key}`)}
-                </Link>
-              ) : (
-                <button
-                  key={item.href}
-                  onClick={() => scrollToSection(item.href)}
-                  className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-                >
-                  {t(`landing.navigation.${item.key}`)}
-                </button>
-              )
-            )}
+            {menuItems.map((item) => {
+              if (item.dropdown) {
+                // Dropdown menu
+                return (
+                  <div key={item.key} className="relative group">
+                    <button className="flex items-center gap-1 text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200 py-2">
+                      {t(`landing.navigation.${item.key}`)}
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+
+                    {/* Dropdown panel - with padding bridge to prevent gap */}
+                    <div className="absolute hidden group-hover:block top-full left-0 pt-2 z-50">
+                      <div className="w-64 bg-white shadow-lg rounded-lg border border-gray-200 py-2">
+                        {item.dropdown.map((subItem) => (
+                          <Link
+                            key={subItem.key}
+                            href={`/${locale}${subItem.href}`}
+                            className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="font-semibold text-gray-900">
+                              {t(`landing.navigation.dropdown.${subItem.key}.title`)}
+                            </div>
+                            <div className="text-sm text-gray-600 mt-0.5">
+                              {t(`landing.navigation.dropdown.${subItem.key}.description`)}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              } else if (item.isExternal) {
+                // External link
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href!}
+                    className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                  >
+                    {t(`landing.navigation.${item.key}`)}
+                  </Link>
+                );
+              } else {
+                // Regular button (scroll to section)
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => scrollToSection(item.href!)}
+                    className="text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                  >
+                    {t(`landing.navigation.${item.key}`)}
+                  </button>
+                );
+              }
+            })}
 
             {/* Language Switcher */}
             <div className="flex gap-1 bg-gray-100 rounded-full p-1">
@@ -216,27 +279,63 @@ export default function Navigation() {
         {isOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4 pt-4">
-              {menuItems.map((item) =>
-                item.isExternal ? (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {t(`landing.navigation.${item.key}`)}
-                  </Link>
-                ) : (
-                  <button
-                    key={item.href}
-                    onClick={() => scrollToSection(item.href)}
-                    className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
-                  >
-                    {t(`landing.navigation.${item.key}`)}
-                  </button>
-                )
-              )}
-
+              {menuItems.map((item) => {
+                if (item.dropdown) {
+                  // Mobile dropdown (accordion)
+                  return (
+                    <div key={item.key}>
+                      <button
+                        onClick={() => toggleMobileDropdown(item.key)}
+                        className="flex items-center justify-between w-full text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                      >
+                        {t(`landing.navigation.${item.key}`)}
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            activeDropdown === item.key ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                      {activeDropdown === item.key && (
+                        <div className="pl-4 mt-2 space-y-2">
+                          {item.dropdown.map((subItem) => (
+                            <Link
+                              key={subItem.key}
+                              href={`/${locale}${subItem.href}`}
+                              className="block py-2 text-gray-600 hover:text-[#163237] text-sm"
+                              onClick={() => setIsOpen(false)}
+                            >
+                              {t(`landing.navigation.dropdown.${subItem.key}.title`)}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                } else if (item.isExternal) {
+                  // External link
+                  return (
+                    <Link
+                      key={item.key}
+                      href={item.href!}
+                      className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      {t(`landing.navigation.${item.key}`)}
+                    </Link>
+                  );
+                } else {
+                  // Regular button (scroll to section)
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => scrollToSection(item.href!)}
+                      className="text-left text-gray-700 hover:text-[#163237] font-medium transition-colors duration-200"
+                    >
+                      {t(`landing.navigation.${item.key}`)}
+                    </button>
+                  );
+                }
+              })}
             </div>
           </div>
         )}

@@ -90,10 +90,24 @@
       "value": "100.00",
       "infinite_inventory": 1,
       "stock": null
+    },
+    {
+      "service_id": 502740,
+      "name": "Ceramica 1 sesion",
+      "value": "50.00",
+      "infinite_inventory": 1,
+      "stock": null
+    },
+    {
+      "service_id": 502741,
+      "name": "Ceramica 2 sesiones",
+      "value": "80.00",
+      "infinite_inventory": 1,
+      "stock": null
     }
   ],
   "meta": {
-    "total_records": 13,
+    "total_records": 15,
     "current_page": 1,
     "records_per_page": 100,
     "total_pages": 1

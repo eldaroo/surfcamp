@@ -38,6 +38,20 @@ export const ACTIVITY_BASE_DATA = [
     maxParticipants: 1,
     category: 'hosting' as const,
   },
+  {
+    id: 'ceramic-stories',
+    price: ACTIVITY_PRICES.ceramic_stories.basePrice,
+    duration: 120,
+    maxParticipants: 8,
+    category: 'ceramics' as const,
+  },
+  {
+    id: 'ceramic-immersion',
+    price: ACTIVITY_PRICES.ceramic_immersion.basePrice,
+    duration: 240,
+    maxParticipants: 6,
+    category: 'ceramics' as const,
+  },
 ];
 
 // Localized activity content
@@ -63,6 +77,14 @@ export const ACTIVITY_TRANSLATIONS = {
       name: 'Servicio de Hosting',
       description: 'Organización personalizada de actividades y acompañamiento durante tu estadía. Incluye planificación de horarios, coordinación con instructores y asistencia personalizada.',
     },
+    'ceramic-stories': {
+      name: 'Historias de Barro! Crea Arte que Viaje por el Mundo',
+      description: 'Dale color a tu viaje! En esta experiencia única en nuestro estudio, pintarás piezas de cerámica creadas por viajeros anteriores y te llevarás contigo tu obra terminada. También dejarás tus propias creaciones de barro para los próximos viajeros que lleguen. Cada pieza se convierte en un recuerdo compartido: una pequeña obra de arte que sigue viajando alrededor del mundo. La magia del horno toma 24 horas: podrás retirar tu pieza al día siguiente!',
+    },
+    'ceramic-immersion': {
+      name: 'Cerámica en la Selva - Manos de barro. Corazones de fuego.',
+      description: '¡Viví toda la magia de la cerámica en solo dos encuentros! Durante este taller con arcilla 100% natural, exploraremos distintas técnicas para dar forma a tus propias piezas el primer día y volverás en un plazo de 7 días para elegir esmaltes y pintarlas! Hacelo, Esmaltalo, y Enamórate del Proceso Cerámico! El proceso completo requiere aproximadamente 9 días en total!',
+    },
   },
   en: {
     'surf-package': {
@@ -84,6 +106,14 @@ export const ACTIVITY_TRANSLATIONS = {
     'hosting-service': {
       name: 'Hosting Service',
       description: 'Personalized activity organization and accompaniment during your stay. Includes schedule planning, instructor coordination and personalized assistance.',
+    },
+    'ceramic-stories': {
+      name: 'Ceramic Stories! Make Art That Travels the World',
+      description: 'Bring colour into your journey! In this unique studio experience, you\'ll paint ceramic pieces made by past travelers and take them home! You\'ll also make and leave your own handmade creations for the next ones who arrive. Each piece becomes a shared memory, a small piece of art that keeps moving around the world. Let your piece transform in the kiln! Ready for you in 24 hours!',
+    },
+    'ceramic-immersion': {
+      name: 'Shape & Shade - Pottery Immersion',
+      description: 'Experience the full magic of pottery in just two days! During this immersive workshop with natural clay, you\'ll shape your own ceramic pieces on the first day and return within 7 days to give them colour! Make It, Paint It, Love It. The full process requires around 9 days in total.',
     },
   },
 };

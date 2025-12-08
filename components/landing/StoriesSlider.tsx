@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
 import { getAltTags } from '@/lib/altTags';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -24,6 +25,18 @@ export default function StoriesSlider() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [avatarError, setAvatarError] = useState(false);
   const alts = getAltTags(locale as 'en' | 'es');
+
+  // Map review names to story slugs
+  const getStorySlug = (name: string): string | null => {
+    const slugMap: { [key: string]: string } = {
+      'Luján Sánchez': 'lujan-sanchez',
+      'Catherine Cormier': 'catherine-cormier',
+      'Taylor Evans': 'taylor-evans',
+      'Marcelo García': 'marcelo-garcia',
+      'Eilin Ørgland': 'eilin-orgland',
+    };
+    return slugMap[name] || null;
+  };
 
   // Get review alt-tag based on avatar path
   const getReviewAlt = (avatar: string): string => {
@@ -145,9 +158,19 @@ export default function StoriesSlider() {
                   <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
                     {currentReview.name}
                   </h3>
-                  <p className="text-slate-300 text-sm md:text-base">
+                  <p className="text-slate-300 text-sm md:text-base mb-4">
                     {currentReview.age} {t('landing.reviews.years')} • {currentReview.country} • {currentReview.occupation}
                   </p>
+
+                  {/* Read Full Story Link */}
+                  {getStorySlug(currentReview.name) && (
+                    <Link
+                      href={`/${locale}/stories/${getStorySlug(currentReview.name)}`}
+                      className="inline-block mt-4 px-6 py-3 bg-[#ece97f] text-[#163237] font-semibold rounded-lg hover:bg-[#e0dd6f] transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105"
+                    >
+                      {locale === 'es' ? 'Leer Historia Completa' : 'Read Full Story'} →
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

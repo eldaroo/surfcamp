@@ -38,6 +38,17 @@ export const ACTIVITY_PRICES = {
   hosting: {
     basePrice: 250, // Precio por estadía
     packages: {}
+  },
+
+  // Talleres de cerámica
+  ceramic_stories: {
+    basePrice: 50, // Ceramic Stories - Pintar piezas existentes (24h)
+    packages: {}
+  },
+
+  ceramic_immersion: {
+    basePrice: 80, // Shape & Shade - Taller completo de 2 días (9 días total)
+    packages: {}
   }
 };
 

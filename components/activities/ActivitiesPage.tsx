@@ -13,7 +13,7 @@ import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
 import ActiveParticipantBanner from "../ActiveParticipantBanner";
 import PrivateCoachingUpsellModal from "./PrivateCoachingUpsellModal";
-import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2, Trash2 } from "lucide-react";
+import { ArrowRight, Users, Copy, Waves, User, Snowflake, Car, Home, CheckCircle2, Edit2, Trash2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type SurfPackage = '3-classes' | '4-classes' | '5-classes' | '6-classes' | '7-classes' | '8-classes' | '9-classes' | '10-classes';
@@ -150,6 +150,8 @@ const ActivitiesPage = () => {
   const [addPersonChoice, setAddPersonChoice] = useState<'copy' | 'customize'>('copy');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [showPrivateCoachingModal, setShowPrivateCoachingModal] = useState(false);
+  const [selectedCeramicId, setSelectedCeramicId] = useState<string | null>(null);
+  const [expandedCeramicIds, setExpandedCeramicIds] = useState<string[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -182,6 +184,39 @@ const ActivitiesPage = () => {
     () => getLocalizedActivities((locale as "es" | "en") || "es"),
     [locale]
   );
+  const ceramicOptions = useMemo(
+    () => localizedActivities.filter((activity) => activity.category === 'ceramics'),
+    [localizedActivities]
+  );
+
+  useEffect(() => {
+    const existingCeramic = selectedActivities.find((activity) => activity.category === 'ceramics');
+    if (existingCeramic) {
+      setSelectedCeramicId(existingCeramic.id);
+      return;
+    }
+
+    if (!selectedCeramicId && ceramicOptions.length > 0) {
+      setSelectedCeramicId(ceramicOptions[0].id);
+    }
+  }, [ceramicOptions, selectedActivities, selectedCeramicId, setSelectedCeramicId]);
+
+  useEffect(() => {
+    const ceramicSelections = selectedActivities.filter((activity) => activity.category === 'ceramics');
+    if (ceramicSelections.length <= 1) return;
+
+    const targetId = selectedCeramicId || ceramicSelections[0].id;
+    const chosenActivity =
+      ceramicOptions.find((activity) => activity.id === targetId) ||
+      ceramicSelections[0];
+
+    const cleanedActivities = [
+      ...selectedActivities.filter((activity) => activity.category !== 'ceramics'),
+      chosenActivity,
+    ];
+
+    setSelectedActivities(cleanedActivities);
+  }, [ceramicOptions, selectedActivities, selectedCeramicId, setSelectedActivities]);
 
   // Sync participants with guest count
   useEffect(() => {
@@ -286,6 +321,47 @@ const ActivitiesPage = () => {
       storeParticipants,
     ]
   );
+
+  const handleCeramicsProgramChange = useCallback(
+    (activityId: string) => {
+      setSelectedCeramicId(activityId);
+      setExpandedCeramicIds((prev) =>
+        prev.includes(activityId) ? prev : [...prev, activityId]
+      );
+      const chosenActivity = ceramicOptions.find((activity) => activity.id === activityId);
+      if (!chosenActivity) return;
+
+      const activitiesWithoutCeramics = selectedActivities.filter((activity) => activity.category !== 'ceramics');
+      const hasCeramicsSelected = activitiesWithoutCeramics.length !== selectedActivities.length;
+
+      if (hasCeramicsSelected) {
+        setSelectedActivities([...activitiesWithoutCeramics, chosenActivity]);
+      }
+    },
+    [ceramicOptions, selectedActivities, setSelectedActivities, setSelectedCeramicId]
+  );
+
+  const handleToggleCeramics = useCallback(() => {
+    const chosenActivity =
+      ceramicOptions.find((activity) => activity.id === selectedCeramicId) ??
+      ceramicOptions[0];
+
+    if (!chosenActivity) return;
+
+    const activitiesWithoutCeramics = selectedActivities.filter((activity) => activity.category !== 'ceramics');
+    const hasCeramicsSelected = activitiesWithoutCeramics.length !== selectedActivities.length;
+    const updatedActivities = hasCeramicsSelected
+      ? activitiesWithoutCeramics
+      : [...activitiesWithoutCeramics, chosenActivity];
+
+    setSelectedActivities(updatedActivities);
+  }, [ceramicOptions, selectedActivities, selectedCeramicId, setSelectedActivities]);
+
+  const toggleCeramicDetails = useCallback((activityId: string) => {
+    setExpandedCeramicIds((prev) =>
+      prev.includes(activityId) ? prev.filter((id) => id !== activityId) : [...prev, activityId]
+    );
+  }, []);
 
   const handleYogaClassesChange = useCallback(
     (activityId: string, classes: number) => {
@@ -473,6 +549,9 @@ const ActivitiesPage = () => {
         return localizedActivities.find(a => a.category === 'yoga');
       case 'ice-bath':
         return localizedActivities.find(a => a.category === 'ice_bath');
+      case 'ceramics':
+        // Return first ceramic activity (will show all ceramics in the UI)
+        return localizedActivities.find(a => a.category === 'ceramics');
       case 'hosting':
         return localizedActivities.find(a => a.category === 'hosting');
       default:
@@ -480,7 +559,17 @@ const ActivitiesPage = () => {
     }
   };
 
+  const getCurrentStepActivities = () => {
+    if (activityFlowStep === 'ceramics') {
+      // For ceramics, return all ceramic workshops
+      return localizedActivities.filter(a => a.category === 'ceramics');
+    }
+    const single = getCurrentStepActivity();
+    return single ? [single] : [];
+  };
+
   const currentActivity = getCurrentStepActivity();
+  const currentStepActivities = getCurrentStepActivities();
 
   const handleAddPerson = () => {
     // Safety check: don't add if we already have 2 participants
@@ -1188,71 +1277,216 @@ const ActivitiesPage = () => {
             }}
             className="space-y-4 md:space-y-3.5"
           >
-            {(() => {
-              const isSelected = selectedActivities.some((item) => item.id === currentActivity.id);
-              const individualPrice = computeActivityPrice(currentActivity);
-              const isYoga = currentActivity.category === "yoga";
-              const isSurf = currentActivity.category === "surf";
-              const supportsQuantity = quantityCategories.has(currentActivity.category);
-              const supportsTime = timeSlotCategories.has(currentActivity.category);
+            {activityFlowStep === 'ceramics' ? (
+              (() => {
+                const ceramicPrograms = currentStepActivities;
+                if (!ceramicPrograms.length) return null;
 
-              // Determine if surf is mandatory for this participant
-              const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
-              const isSurfMandatory = isFirstParticipant;
+                const selectedCeramicOption =
+                  ceramicPrograms.find((activity) => activity.id === selectedCeramicId) ||
+                  ceramicPrograms[0];
+                const isCeramicSelected = selectedActivities.some(
+                  (item) => item.category === 'ceramics'
+                );
 
-              return (
-                <div className="relative">
-                  {/* Active Participant Badge - Top Right */}
-                  {storeParticipants.length > 1 && activeParticipant && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-blue-500/90 border border-cyan-400/60 shadow-xl backdrop-blur-md"
+                return (
+                  <div className="relative space-y-4">
+                    {/* Active Participant Badge - Top Right */}
+                    {storeParticipants.length > 1 && activeParticipant && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-blue-500/90 border border-cyan-400/60 shadow-xl backdrop-blur-md"
+                      >
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 border border-white/30">
+                          <User className="h-3 w-3 text-white" />
+                        </div>
+                        <span className="text-xs font-bold text-white">
+                          {activeParticipant.name}
+                          {activeParticipant.isYou && (
+                            <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                          )}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <ActivityCard
+                      key="ceramics-card"
+                      activity={{
+                        ...(selectedCeramicOption ?? {
+                          id: 'ceramics-workshop',
+                          name: locale === "es" ? "Talleres de Cerámica" : "Ceramic Workshops",
+                          description: "",
+                          price: 0,
+                          duration: 0,
+                          maxParticipants: 0,
+                          category: 'ceramics' as const,
+                        }),
+                        id: 'ceramics-workshop',
+                        name: locale === "es" ? "Talleres de Cerámica" : "Ceramic Workshops",
+                        description:
+                          locale === "es"
+                            ? "Un solo lugar para conocer las dos propuestas: pintura de piezas y taller inmersivo."
+                            : "One card that walks you through both options: painting existing pieces or a full clay immersion.",
+                        category: 'ceramics',
+                      }}
+                      locale={(locale as "es" | "en") || "es"}
+                      participants={1}
+                      isSelected={isCeramicSelected}
+                      onToggle={handleToggleCeramics}
+                      onAutoAdvance={nextActivityStep}
+                      onSkip={skipCurrentActivity}
+                      onBack={handleBackStep}
+                      isFirstStep={false}
+                      isSurfMandatory={false}
+                      price={selectedCeramicOption?.price ?? 0}
+                      pricePerPerson={undefined}
+                      formatPrice={formatCurrency}
                     >
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 border border-white/30">
-                        <User className="h-3 w-3 text-white" />
-                      </div>
-                      <span className="text-xs font-bold text-white">
-                        {activeParticipant.name}
-                        {activeParticipant.isYou && (
-                          <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
-                        )}
-                      </span>
-                    </motion.div>
-                  )}
+                      <div className="space-y-4 mt-4">
+                        <p className="text-sm text-gray-700">
+                          {locale === "es"
+                            ? "Elegí el formato que prefieras. Coordinamos fechas y horarios según tu agenda."
+                            : "Choose the format you prefer. We'll align dates and times with your schedule."}
+                        </p>
 
-                  <ActivityCard
-                    key={currentActivity.id}
-                    activity={currentActivity}
-                    locale={(locale as "es" | "en") || "es"}
-                    participants={1}
-                    isSelected={isSelected}
-                  onToggle={() => handleToggleActivity(currentActivity)}
-                  onAutoAdvance={nextActivityStep}
-                  onSkip={skipCurrentActivity}
-                  onBack={handleBackStep}
-                  isFirstStep={activityFlowStep === 'surf'}
-                  isSurfMandatory={isSurfMandatory}
-                  price={individualPrice}
-                  pricePerPerson={undefined}
-                  formatPrice={formatCurrency}
-                  yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
-                  onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
-                  yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
-                  onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
-                  surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
-                  onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
-                  onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
-                  hasQuantitySelector={supportsQuantity}
-                  quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
-                  onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
-                  hasTimeSelector={supportsTime}
-                  timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
-                  onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
-                />
-                </div>
-              );
-            })()}
+                        <div className="space-y-3">
+                          {ceramicPrograms.map((activity) => {
+                            const isOptionChosen = selectedCeramicId === activity.id;
+                            const isOptionActive = selectedActivities.some((item) => item.id === activity.id);
+                            const isExpanded = expandedCeramicIds.includes(activity.id);
+                            return (
+                              <label
+                                key={activity.id}
+                                className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-sm cursor-pointer transition-all ${
+                                  isOptionChosen
+                                    ? 'border-emerald-400 bg-emerald-50/70'
+                                    : 'border-gray-200 bg-white hover:border-emerald-200'
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name="ceramic-program"
+                                  className="mt-1 h-4 w-4 text-emerald-500 focus:ring-emerald-500"
+                                  checked={isOptionChosen}
+                                  onChange={() => handleCeramicsProgramChange(activity.id)}
+                                />
+                                <div className="flex-1 space-y-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleCeramicDetails(activity.id);
+                                      }}
+                                      className="flex items-center gap-2 text-left"
+                                    >
+                                      <span className="font-semibold text-gray-900">{activity.name}</span>
+                                      <ChevronDown
+                                        className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                      />
+                                    </button>
+                                    {isExpanded && (
+                                      <div className="flex items-center gap-2">
+                                        {isOptionActive && (
+                                          <span className="rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold px-2 py-0.5">
+                                            {locale === "es" ? "Seleccionado" : "Selected"}
+                                          </span>
+                                        )}
+                                        <span className="font-semibold text-gray-900">
+                                          {formatCurrency(activity.price)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {isExpanded && (
+                                    <p className="text-sm text-gray-600">{activity.description}</p>
+                                  )}
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        <p className="text-xs text-gray-500">
+                          {locale === "es"
+                            ? "Un programa por persona. Ajustamos detalles contigo luego de la reserva."
+                            : "One program per person. We'll confirm details with you after booking."}
+                        </p>
+                      </div>
+                    </ActivityCard>
+                  </div>
+                );
+              })()
+            ) : (
+              // Normal rendering for other activities
+              (() => {
+                const isSelected = selectedActivities.some((item) => item.id === currentActivity.id);
+                const individualPrice = computeActivityPrice(currentActivity);
+                const isYoga = currentActivity.category === "yoga";
+                const isSurf = currentActivity.category === "surf";
+                const supportsQuantity = quantityCategories.has(currentActivity.category);
+                const supportsTime = timeSlotCategories.has(currentActivity.category);
+
+                // Determine if surf is mandatory for this participant
+                const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
+                const isSurfMandatory = isFirstParticipant;
+
+                return (
+                  <div className="relative">
+                    {/* Active Participant Badge - Top Right */}
+                    {storeParticipants.length > 1 && activeParticipant && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="absolute top-4 right-4 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-blue-500/90 border border-cyan-400/60 shadow-xl backdrop-blur-md"
+                      >
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20 border border-white/30">
+                          <User className="h-3 w-3 text-white" />
+                        </div>
+                        <span className="text-xs font-bold text-white">
+                          {activeParticipant.name}
+                          {activeParticipant.isYou && (
+                            <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tú" : "You"})</span>
+                          )}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <ActivityCard
+                      key={currentActivity.id}
+                      activity={currentActivity}
+                      locale={(locale as "es" | "en") || "es"}
+                      participants={1}
+                      isSelected={isSelected}
+                    onToggle={() => handleToggleActivity(currentActivity)}
+                    onAutoAdvance={nextActivityStep}
+                    onSkip={skipCurrentActivity}
+                    onBack={handleBackStep}
+                    isFirstStep={activityFlowStep === 'surf'}
+                    isSurfMandatory={isSurfMandatory}
+                    price={individualPrice}
+                    pricePerPerson={undefined}
+                    formatPrice={formatCurrency}
+                    yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
+                    onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
+                    yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
+                    onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
+                    surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
+                    onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
+                    onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
+                    hasQuantitySelector={supportsQuantity}
+                    quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
+                    onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
+                    hasTimeSelector={supportsTime}
+                    timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
+                    onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
+                  />
+                  </div>
+                );
+              })()
+            )}
           </motion.div>
         ) : null}
       </AnimatePresence>

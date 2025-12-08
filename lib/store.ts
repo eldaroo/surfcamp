@@ -63,7 +63,7 @@ interface BookingStore {
   error: string | null;
 
   // Activity flow state (sequential guided experience)
-  activityFlowStep: 'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete';
+  activityFlowStep: 'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete';
   activityFlowDirection: 'forward' | 'backward';
   
   // Actions
@@ -107,7 +107,7 @@ interface BookingStore {
   nextActivityStep: () => void;
   previousActivityStep: () => void;
   skipCurrentActivity: () => void;
-  goToActivityStep: (step: 'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete') => void;
+  goToActivityStep: (step: 'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete') => void;
   resetActivityFlow: () => void;
 }
 
@@ -827,7 +827,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
   // Activity flow implementations
   nextActivityStep: () =>
     set((state) => {
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'ceramics', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
       return {
@@ -838,7 +838,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
 
   previousActivityStep: () =>
     set((state) => {
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'ceramics', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const prevIndex = Math.max(currentIndex - 1, 0);
       return {
@@ -855,48 +855,68 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       });
 
       // Map activity flow step to activity ID
-      const activityIdMap: Record<string, string> = {
+      const activityIdMap: Record<string, string | string[]> = {
         'surf': 'surf-package',
         'yoga': 'yoga-package',
         'ice-bath': 'ice-bath-session',
+        'ceramics': ['ceramic-stories', 'ceramic-immersion'],
         'hosting': 'hosting-service',
       };
 
-      const activityIdToRemove = activityIdMap[state.activityFlowStep];
+      const activityIdsToRemoveRaw = activityIdMap[state.activityFlowStep];
+      const activityIdsToRemove = Array.isArray(activityIdsToRemoveRaw)
+        ? activityIdsToRemoveRaw
+        : activityIdsToRemoveRaw
+          ? [activityIdsToRemoveRaw]
+          : [];
 
       // Remove this activity from the active participant's selections
       const activeParticipant = state.participants.find(p => p.id === state.activeParticipantId);
-      if (activeParticipant && activityIdToRemove) {
+      if (activeParticipant && activityIdsToRemove.length > 0) {
         console.log('[STORE] skipCurrentActivity - removing activity', {
-          activityId: activityIdToRemove,
+          activityIds: activityIdsToRemove,
           currentActivities: activeParticipant.selectedActivities.map(a => a.id),
         });
 
         const updatedActivities = activeParticipant.selectedActivities.filter(
-          activity => activity.id !== activityIdToRemove
+          activity => !activityIdsToRemove.includes(activity.id)
         );
 
         // Clean up related data for this activity
         const newActivityQuantities = { ...activeParticipant.activityQuantities };
-        delete newActivityQuantities[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newActivityQuantities[activityId];
+        });
 
         const newSelectedTimeSlots = { ...activeParticipant.selectedTimeSlots };
-        delete newSelectedTimeSlots[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newSelectedTimeSlots[activityId];
+        });
 
         const newYogaClasses = { ...activeParticipant.yogaClasses };
-        delete newYogaClasses[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newYogaClasses[activityId];
+        });
 
         const newYogaUsePackDiscount = { ...activeParticipant.yogaUsePackDiscount };
-        delete newYogaUsePackDiscount[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newYogaUsePackDiscount[activityId];
+        });
 
         const newSelectedYogaPackages = { ...activeParticipant.selectedYogaPackages };
-        delete newSelectedYogaPackages[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newSelectedYogaPackages[activityId];
+        });
 
         const newSelectedSurfPackages = { ...activeParticipant.selectedSurfPackages };
-        delete newSelectedSurfPackages[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newSelectedSurfPackages[activityId];
+        });
 
         const newSelectedSurfClasses = { ...activeParticipant.selectedSurfClasses };
-        delete newSelectedSurfClasses[activityIdToRemove];
+        activityIdsToRemove.forEach((activityId) => {
+          delete newSelectedSurfClasses[activityId];
+        });
 
         const updatedParticipants = state.participants.map(p =>
           p.id === state.activeParticipantId
@@ -919,7 +939,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
         });
 
         // Move to next step
-        const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
+        const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'ceramics', 'hosting', 'complete'];
         const currentIndex = stepOrder.indexOf(state.activityFlowStep);
         const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
 
@@ -939,7 +959,7 @@ export const useBookingStore: UseBoundStore<StoreApi<BookingStore>> = create<Boo
       }
 
       // If no activity to remove, just move to next step
-      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'hosting', 'complete'];
+      const stepOrder: Array<'surf' | 'yoga' | 'ice-bath' | 'ceramics' | 'hosting' | 'complete'> = ['surf', 'yoga', 'ice-bath', 'ceramics', 'hosting', 'complete'];
       const currentIndex = stepOrder.indexOf(state.activityFlowStep);
       const nextIndex = Math.min(currentIndex + 1, stepOrder.length - 1);
       return {

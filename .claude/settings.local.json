@@ -95,7 +95,9 @@
       "Bash(find:*)",
       "Bash(move:*)",
       "Bash(cat:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(npx next build)",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []

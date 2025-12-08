@@ -141,6 +141,7 @@ export default function ActivitiesShowcase() {
                     muted
                     loop
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-cover"
                   >
                     {mobileActivities[currentSlide] && (
@@ -264,6 +265,7 @@ export default function ActivitiesShowcase() {
                         muted
                         loop
                         playsInline
+                        preload="metadata"
                         className="absolute inset-0 w-full h-full object-cover"
                       >
                         <source src={activity.video} type="video/mp4" />
@@ -345,6 +347,7 @@ export default function ActivitiesShowcase() {
                   autoPlay
                   controls
                   loop
+                  preload="metadata"
                   className="w-full h-full rounded-lg"
                 >
                   <source

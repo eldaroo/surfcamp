@@ -72,17 +72,20 @@ export async function POST(request: NextRequest) {
         nights: payloadNights
       } = body;
 
-      // 🧪 TESTING MODE: Support $0 payments when ENABLE_ZERO_PAYMENT_TESTING is true
+      // 🧪 TESTING MODE: Support $0 payments when ENABLE_ZERO_PAYMENT_TESTING is true OR when price is explicitly 0
       const enableZeroPaymentTesting = process.env.ENABLE_ZERO_PAYMENT_TESTING === 'true';
 
       // Get price from wetravelData if provided, otherwise use fallback
-      // If wetravelData.pricing.price is explicitly 0 and testing is enabled, use 0
-      // Otherwise default to $1 for testing
+      // If testing mode is enabled, ALWAYS use $0 regardless of payload
       let price: number;
-      if (wetravelData?.pricing?.price !== undefined) {
-        price = wetravelData.pricing.price;
-      } else if (enableZeroPaymentTesting) {
-        price = 0; // $0 for testing mode
+      if (enableZeroPaymentTesting) {
+        price = 0; // 🧪 FORCE $0 for testing mode (env var)
+        console.log('🧪 [TESTING MODE ACTIVE - ENV VAR] Forcing price to $0');
+      } else if (wetravelData?.pricing?.price !== undefined) {
+        price = wetravelData.pricing.price; // Accept explicit price from payload (including 0)
+        if (price === 0) {
+          console.log('🧪 [TESTING MODE ACTIVE - EXPLICIT $0] Price is explicitly $0 from payload');
+        }
       } else {
         price = 1; // $1 default fallback
       }
@@ -112,8 +115,8 @@ export async function POST(request: NextRequest) {
       let depositAmount: number;
       let paymentBreakdown: any = null;
 
-      // 🧪 If price is $0 (testing mode), use $0 deposit
-      if (price === 0 && enableZeroPaymentTesting) {
+      // 🧪 If price is $0 (testing mode - either from env var or explicit $0), use $0 deposit
+      if (price === 0) {
         depositAmount = 0;
         console.log('🧪 [TESTING MODE] Using $0 payment for testing');
       } else if (surfPrograms.length > 0) {

@@ -5,6 +5,7 @@ import Script from 'next/script';
 import Providers from '@/components/Providers';
 import SchemaOrg from '@/components/SchemaOrg';
 import { Metadata } from 'next';
+// import LenisProvider from '@/components/LenisProvider'; // Disabled for performance
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -106,6 +107,27 @@ export default function RootLayout({
   return (
     <html lang={lang}>
       <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
+        {/* Google Tag Manager */}
+        <Script id="gtm-script" strategy="afterInteractive">
+          {`
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer','GTM-5MSQT7BX');
+          `}
+        </Script>
+
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-5MSQT7BX"
+            height="0"
+            width="0"
+            style={{display: 'none', visibility: 'hidden'}}
+          />
+        </noscript>
+
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-9LGV9LTKDC"

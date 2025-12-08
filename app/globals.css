@@ -46,6 +46,11 @@
     color: white;
   }
 
+  /* Line height específico para h2 */
+  h2 {
+    line-height: 1.5 !important;
+  }
+
   /* Asegurar que los párrafos usen Roboto */
   p, div, button, input, label, a {
     font-family: var(--font-roboto), sans-serif;

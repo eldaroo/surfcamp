@@ -626,10 +626,10 @@ const AccommodationCard = ({
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wide">Per night</p>
-                    <p className="text-xs text-slate-400 font-medium">${roomPrice}</p>
+                    <p className="text-[10px] text-earth-500 uppercase tracking-wide">Per night</p>
+                    <p className="text-xs text-earth-600 font-medium">${roomPrice}</p>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <p className="text-[9px] text-slate-500 mt-0.5">
+                      <p className="text-[9px] text-earth-500 mt-0.5">
                         ({room.roomsNeeded} {locale === 'es' ? 'unidades' : 'units'})
                       </p>
                     )}
@@ -697,11 +697,11 @@ const AccommodationCard = ({
 
                   {/* Price per night info */}
                   <div className="text-center mt-2 pt-2 border-t border-slate-600/30">
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-earth-600">
                       {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
                     </p>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <p className="text-[9px] text-slate-500 mt-0.5">
+                      <p className="text-[9px] text-earth-500 mt-0.5">
                         ({room.roomsNeeded} {locale === 'es' ? 'habitaciones' : 'rooms'} × ${room.pricePerNight})
                       </p>
                     )}
