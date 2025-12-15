@@ -193,9 +193,7 @@ export default function Navigation() {
             </button>
 
             <Link
-              href="https://zeneidasgarden.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/"
               className="flex items-center space-x-2"
             >
               <Image

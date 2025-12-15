@@ -441,6 +441,31 @@ export async function POST(request: NextRequest) {
           console.error('❌ Failed to update payment with WeTravel response:', updateError);
         } else {
           console.log('✅ Payment updated with WeTravel response in Supabase');
+
+          // If this is a $0 test payment, immediately mark it as booking_created so the flow continues
+          if (bookingData?.depositAmountCents === 0) {
+            console.log('[TEST PAYMENT] $0 deposit detected - auto-marking booking as created');
+
+            const { error: zeroStatusError } = await supabase
+              .from('payments')
+              .update({ status: 'booking_created', updated_at: new Date().toISOString() })
+              .eq('id', paymentId);
+
+            if (zeroStatusError) {
+              console.error('Failed to mark $0 payment as booking_created:', zeroStatusError);
+            } else if (orderId) {
+              const { error: zeroOrderError } = await supabase
+                .from('orders')
+                .update({ status: 'booking_created', updated_at: new Date().toISOString() })
+                .eq('id', orderId);
+
+              if (zeroOrderError) {
+                console.error('Failed to mark $0 order as booking_created:', zeroOrderError);
+              } else {
+                console.log('$0 flow: payment and order marked as booking_created');
+              }
+            }
+          }
         }
       } catch (updateErr) {
         console.error('❌ Error updating payment:', updateErr);
