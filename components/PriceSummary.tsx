@@ -189,7 +189,7 @@ export default function PriceSummary({
     const accommodationNames = {
       'casa-playa': locale === 'es' ? 'Casa de Playa (Cuarto Compartido)' : 'Beach House (Shared Room)',
       'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-      'casas-deluxe': locale === 'es' ? 'Casa Privada' : 'Private House',
+      'casas-deluxe': locale === 'es' ? 'Studio Deluxe' : 'Deluxe Studio',
     };
 
     return accommodationNames[selectedRoom.roomTypeId as keyof typeof accommodationNames] || selectedRoom.roomTypeName;

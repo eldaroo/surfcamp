@@ -125,7 +125,7 @@ const translations = {
           features: ["Privada", "Tranquila", "Independiente"]
         },
         "casas-deluxe": {
-          name: "Casa Privada",
+          name: "Studio Deluxe",
           description: "Casa privada con cocina, baño de agua caliente, Wi‑Fi y A/C, a pasos de la playa. Ideal para parejas que buscan confort y privacidad.",
           features: ["Privada", "Cocina propia", "A/C + Wi‑Fi"]
         }
@@ -693,12 +693,12 @@ const translations = {
           features: ["Shared", "Affordable", "Social"]
         },
         "casitas-privadas": {
-          name: "Private House",
+          name: "Deluxe Studio",
           description: "Independent cottages with total privacy, ideal for couples or travelers seeking tranquility.",
           features: ["Private", "Quiet", "Independent"]
         },
         "casas-deluxe": {
-          name: "Private House",
+          name: "Deluxe Studio",
           description: "Private house steps from the beach with kitchen, hot-water bath, Wi‑Fi, and A/C. Perfect for couples seeking comfort and privacy.",
           features: ["Private", "Kitchen included", "A/C + Wi‑Fi"]
         }

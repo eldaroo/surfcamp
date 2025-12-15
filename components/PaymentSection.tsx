@@ -669,7 +669,7 @@ export default function PaymentSection() {
         const accommodationNames = {
           'casa-playa': locale === 'es' ? 'Casa de Playa' : 'Beach House',
           'casitas-privadas': locale === 'es' ? 'Casitas Privadas' : 'Private House',
-          'casas-deluxe': locale === 'es' ? 'Casa Privada' : 'Private House'
+          'casas-deluxe': locale === 'es' ? 'Studio Deluxe' : 'Deluxe Studio'
         };
         const accommodationType = accommodationNames[selectedRoom?.roomTypeId as keyof typeof accommodationNames] || selectedRoom?.roomTypeId || 'Room';
 

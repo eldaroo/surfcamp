@@ -1,15 +1,10 @@
-﻿"use client";
+"use client";
 
-import { ChangeEvent, useMemo } from "react";
-import { motion } from "framer-motion";
+import { ChangeEvent, useMemo, useState } from "react";
+import ActivitiesList from "../ActivitiesList";
+import DateSelector from "../DateSelector";
+import { useBookingStore } from "@/lib/store";
 import { Sparkles } from "lucide-react";
-
-export interface Participant {
-  id: string;
-  name: string;
-  isYou: boolean;
-  activitiesCount: number;
-}
 
 interface HeaderPersonalizationProps {
   name: string;
@@ -19,81 +14,90 @@ interface HeaderPersonalizationProps {
   onParticipantsChange: (value: number) => void;
 }
 
-const PARTICIPANT_OPTIONS = [1, 2, 3, 4, 5];
-
 const translations = {
   es: {
-    title: "Personaliza tu experiencia",
-    nameLabel: "Nombre del huésped principal",
-    namePlaceholder: "Tu nombre",
+    activitiesTitle: "Personaliza tu experiencia",
+    activitiesSubtitle: "Personaliza la experiencia antes de continuar.",
+    datesTitle: "Selecciona tus fechas",
+    datesSubtitle: "Elige fechas de check-in y check-out",
     participantLabel: "Participantes",
-    participantSuffix: (count: number) =>
-      count === 1 ? "huésped" : "huéspedes",
-    summaryPrefix: "Personalizando para",
-    defaultGroup: "tu grupo",
+    participantSuffix: (count: number) => (count === 1 ? "huésped" : "huéspedes"),
+    helper: "Elegí un programa de surf para habilitar el alojamiento.",
+    chooseAccommodation: "Choose accommodation",
+    backToActivities: "Volver a actividades",
   },
   en: {
-    title: "Personalize your experience",
-    nameLabel: "Lead guest name",
-    namePlaceholder: "Your name",
+    activitiesTitle: "Personalize your experience",
+    activitiesSubtitle: "Personalize your experience before you continue.",
+    datesTitle: "Select your dates",
+    datesSubtitle: "Choose check-in and check-out dates",
     participantLabel: "Participants",
-    participantSuffix: (count: number) =>
-      count === 1 ? "guest" : "guests",
-    summaryPrefix: "Customizing for",
-    defaultGroup: "your group",
+    participantSuffix: (count: number) => (count === 1 ? "guest" : "guests"),
+    helper: "Choose a surf program to unlock accommodation.",
+    chooseAccommodation: "Choose accommodation",
+    backToActivities: "Back to activities",
   },
 };
 
 const HeaderPersonalization = ({
-  name,
-  participants,
   locale,
-  onNameChange,
-  onParticipantsChange,
 }: HeaderPersonalizationProps) => {
-  const t = translations[locale] ?? translations.es;
+  const t = translations[locale] ?? translations.en;
+  const [showDates, setShowDates] = useState(false);
+  const { selectedActivities, setLandingSectionsHidden } = useBookingStore();
+  const hasSurfSelected = selectedActivities.some((a) => a.category === "surf");
 
-  const summary = useMemo(() => {
-    const count = participants;
-    return `${count} ${t.participantSuffix(count)}`;
-  }, [participants, t]);
-
-  const handleParticipantChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    onParticipantsChange(Number(event.target.value));
-  };
+  const displayTitle = showDates ? t.datesTitle : t.activitiesTitle;
+  const displaySubtitle = showDates ? t.datesSubtitle : t.activitiesSubtitle;
 
   return (
     <div
       id="personalize-experience"
-      className="mb-3 md:mb-4 rounded-3xl border border-gray-200 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.25)] overflow-hidden"
+      className="mb-3 md:mb-4 rounded-3xl border border-amber-200 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.25)] overflow-hidden"
     >
-      {/* PASS 2: reduced padding p-4/6 ? p-3/4, gaps 2.5/3 ? 2/2.5 */}
-      <div className="p-3 md:p-10 text-center bg-white">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col items-center gap-2 md:gap-2.5 bg-white"
-        >
-          {/* PASS 2: icon w-10/12 h-10/12 ? w-8/10 h-8/10 */}
-          <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/20">
-            <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-amber-300" />
-          </div>
-
-          {/* Title - Increased size */}
-          <h1 className="text-2xl md:text-3xl font-heading text-black tracking-tight">
-            {t.title}
-          </h1>
-
-          {/* Subtitle - Much larger */}
-          <p className="text-sm md:text-base text-[#6d5f57] max-w-3xl mx-auto leading-relaxed">
-            {locale === 'es'
-              ? 'A pasos del mar en Santa Teresa, te abrimos un espacio para descubrir, aprender y crear tu propia experiencia. Surf, yoga, breathwork, ice baths y naturaleza: vos eleg?s el ritmo, la intensidad y lo que quer?s vivir.'
-              : 'Just steps from the ocean in Santa Teresa, we open a space for you to discover, learn, and create your own experience. Surf, yoga, breathwork, ice baths, and nature, you choose the rhythm, the intensity, and what you want to live.'}
+      <div className="bg-gradient-to-r from-amber-300/20 to-amber-500/20 border-b border-amber-400/30 px-5 md:px-8 py-5 flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-center md:text-center md:gap-4">
+        <div className="hidden md:flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/30 border border-amber-500/40 order-1">
+          <Sparkles className="h-6 w-6 text-amber-700" />
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-black font-heading order-2 md:order-2 text-center md:text-center w-full">
+          {displayTitle}
+        </h2>
+        <div className="flex items-center gap-3 order-3 md:order-3 w-full md:w-auto md:justify-center">
+          <p className="text-sm md:text-base text-gray-700 mt-0 md:mt-1 text-center md:text-center w-full">
+            You <strong>choose the rhythm</strong>, the intensity, and everything you want to live.
           </p>
-        </motion.div>
+        </div>
       </div>
 
+      <div className="px-0 py-4 md:p-6 text-center bg-white">
+        <div className="mt-6 text-left space-y-4">
+          {!showDates ? (
+            <>
+              <ActivitiesList
+                onChooseAccommodation={() => {
+                  setLandingSectionsHidden(true);
+                  setShowDates(true);
+                }}
+                hasSurfSelected={hasSurfSelected}
+                helperText={t.helper}
+              />
+            </>
+          ) : (
+            <>
+              <DateSelector />
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowDates(false)}
+                  className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white text-black px-5 py-3 font-semibold shadow-md hover:bg-gray-50 transition"
+                >
+                  {t.backToActivities}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

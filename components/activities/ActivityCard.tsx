@@ -820,10 +820,6 @@ const handleChoose = async (e: React.MouseEvent) => {
       onToggle();
     }
 
-    if (isSurf) {
-      setLandingSectionsHidden(true);
-    }
-
     // Brief visual feedback before auto-advance (600ms)
     await new Promise(resolve => setTimeout(resolve, 600));
 
@@ -1208,7 +1204,8 @@ const handleChoose = async (e: React.MouseEvent) => {
   };
 
   const renderCeramicsOptions = () => {
-    if (activity.id !== 'ceramics') return null;
+    // Show ceramic program options for any ceramics activity card
+    if (activity.category !== 'ceramics') return null;
 
     const options = ['stories', 'immersion'] as const;
 
@@ -1521,14 +1518,8 @@ const handleChoose = async (e: React.MouseEvent) => {
               </motion.div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-black/0 pointer-events-none"></div>
 
-              {/* Clickable overlay - opens modal when clicked */}
-              <div
-                className="absolute inset-0 z-10 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleOpenImageModal(currentSurfImageIndex);
-                }}
-              />
+              {/* Non-clickable overlay - disable image click */}
+              <div className="absolute inset-0 z-10 pointer-events-none" />
 
               {/* Navigation Arrows Desktop */}
               <button
@@ -1556,17 +1547,14 @@ const handleChoose = async (e: React.MouseEvent) => {
                 <ChevronRight className="w-7 h-7" />
               </button>
 
-              {/* Pagination Dots Desktop */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
+              {/* Pagination Dots Desktop (display only) */}
+              <div
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full pointer-events-none"
+                aria-hidden="true"
+              >
                 {surfImagesDesktop.map((_, index) => (
-                  <button
+                  <div
                     key={index}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setCurrentSurfImageIndex(index);
-                    }}
                     style={{
                       width: index === currentSurfImageIndex ? '12px' : '6px',
                       height: '6px',
@@ -1576,9 +1564,8 @@ const handleChoose = async (e: React.MouseEvent) => {
                     className={`rounded-full transition-all ${
                       index === currentSurfImageIndex
                         ? 'bg-amber-400'
-                        : 'bg-white/40 hover:bg-white/70'
+                        : 'bg-white/40'
                     }`}
-                    aria-label={`Go to image ${index + 1}`}
                   />
                 ))}
               </div>

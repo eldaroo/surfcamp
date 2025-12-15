@@ -393,29 +393,6 @@ return (
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          {/* Header Section */}
-          {!(hasRequestedAvailability && availableRooms && availableRooms.length > 0) && (
-            <div className="mb-5">
-              <div className="flex items-center gap-3 mb-4">
-                <BackButton variant="minimal" />
-              </div>
-              <div className="text-center">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                  className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
-                >
-                  <svg className="h-6 w-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </motion.div>
-                <h1 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">{t('dates.title')}</h1>
-                <p className="text-white text-sm md:text-base">{t('dates.subtitle')}</p>
-              </div>
-            </div>
-          )}
-
           {/* Main Content Container */}
           <div className={`rounded-3xl border border-[white]/50 bg-[white]/70 shadow-xl overflow-visible mb-3 ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`}>
             <div className={`grid grid-cols-1 ${hasRequestedAvailability ? 'lg:grid-cols-1' : 'lg:grid-cols-2'} gap-0 transition-all duration-300 ease-in-out ${!isDateSelectorCollapsed ? 'min-h-[420px] md:min-h-[336px]' : ''}`} lang={locale === 'en' ? 'en-US' : 'es-ES'}>
@@ -540,45 +517,44 @@ return (
 
                     {/* Summary */}
                     {(bookingData.checkIn || bookingData.checkOut) && (
-                      <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-4 border border-white/40 relative">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <h3 className="font-bold text-black mb-2 font-heading text-sm">{t('dates.summary.title')}</h3>
-                            <div className="space-y-1.5 text-sm">
-                              {bookingData.checkIn && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkIn')}:</span>
-                                  <span className="font-semibold text-black">
-                                    {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    })}
-                                  </span>
-                                </div>
-                              )}
-                              {bookingData.checkOut && (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkOut')}:</span>
-                                  <span className="font-semibold text-black">
-                                    {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    })}
-                                  </span>
-                                </div>
-                              )}
+                    <div className="bg-white/30 backdrop-blur-sm rounded-2xl p-4 border border-white/40 relative">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-black mb-2 font-heading text-sm">{t('dates.summary.title')}</h3>
+                          <div className="space-y-1.5 text-sm">
+                            {bookingData.checkIn && (
                               <div className="flex items-center gap-2">
-                                <span className="text-black/70 font-medium text-xs">{t('dates.summary.guests')}:</span>
-                                <span className="font-semibold text-black">{guests}</span>
+                                <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkIn')}:</span>
+                                <span className="font-semibold text-black">
+                                  {new Date(bookingData.checkIn).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })}
+                                </span>
                               </div>
-                              {nights > 0 && (
-                                <div className="mt-2 text-sm text-amber-600 font-bold">
-                                  {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
-                                </div>
-                              )}
+                            )}
+                            {bookingData.checkOut && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-black/70 font-medium text-xs">{t('dates.summary.checkOut')}:</span>
+                                <span className="font-semibold text-black">
+                                  {new Date(bookingData.checkOut).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="text-black/70 font-medium text-xs">{t('dates.summary.guests')}:</span>
+                              <span className="font-semibold text-black">{guests}</span>
                             </div>
+                            {nights > 0 && (
+                              <div className="mt-2 text-sm text-amber-600 font-bold">
+                                {nights} {nights === 1 ? t('dates.night') : t('dates.nights')}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <button
@@ -587,11 +563,12 @@ return (
                             markAvailabilityAsStale();
                             setBookingData({ checkIn: undefined, checkOut: undefined, guests: participantCount });
                           }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-600 bg-amber-100 hover:bg-amber-200 transition-colors self-start md:self-center"
                         >
                           {t('common.edit')}
                         </button>
                       </div>
+                    </div>
                     )}
 
                     {/* Error Message */}
@@ -680,33 +657,6 @@ return (
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mt-3"
             >
-              {/* Accommodation Header */}
-              {availableRooms && availableRooms.length > 0 && (
-                <div className="mb-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <BackButton variant="minimal" />
-                  </div>
-                  <div className="text-center">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.2, duration: 0.4 }}
-                      className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-amber-300/20 to-amber-500/20 border border-amber-400/30 mb-2.5"
-                    >
-                      <svg className="h-6 w-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                    </motion.div>
-                    <h2 className="text-xl md:text-2xl font-bold text-white font-heading mb-1.5">
-                      {t('accommodation.title')}
-                    </h2>
-                    <p className="text-white text-sm md:text-base">
-                      {t('accommodation.subtitle')}
-                    </p>
-                  </div>
-                </div>
-              )}
-
               {/* Error Message */}
               {hasRequestedAvailability && globalError && (
                 <motion.div

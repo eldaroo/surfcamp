@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n';
 import { Volume2, VolumeX } from 'lucide-react';
 
 export default function HeroSection() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroTitle = t('landing.hero.title');
@@ -58,6 +58,11 @@ export default function HeroSection() {
     ? 'opacity-100 translate-y-0 pointer-events-auto'
     : 'opacity-0 translate-y-3 pointer-events-none';
 
+  const videoSrc =
+    locale === 'es'
+      ? '/assets/videos/Reel1ByTessSpanish.mp4'
+      : '/assets/videos/Reel1ByTessEnglish.mp4';
+
   return (
     <section className="relative min-h-[90vh] md:min-h-screen flex items-start justify-center overflow-hidden">
       {/* Background Video */}
@@ -71,7 +76,7 @@ export default function HeroSection() {
           preload="metadata"
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/assets/Reel 1.mp4" type="video/mp4" />
+          <source src={videoSrc} type="video/mp4" />
         </video>
       </div>
 

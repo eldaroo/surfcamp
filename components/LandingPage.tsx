@@ -55,7 +55,7 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
               <ActivitiesShowcase />
             </section>
 
-            <div className="order-1 lg:order-3 -mt-4 lg:-mt-12">
+            <div className="order-1 lg:order-3 lg:-mt-12">
               <SunDecorator />
             </div>
           </>

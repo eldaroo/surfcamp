@@ -1698,51 +1698,7 @@ export async function POST(request: NextRequest) {
             bookingIds.push(participantBookingId);
             createdReservations.push(participantReservation);
 
-            // Add participant-specific activities
-            const participantActivities = participant.selectedActivities || [];
-            if (participantActivities.length > 0) {
-              // Enrich activities with participant-specific data (classes, packages, quantities)
-              const enrichedActivities = participantActivities.map((activity: any) => {
-                const baseActivity = getActivityById(activity.id);
-                const enriched: any = {
-                  id: activity.id,
-                  name: activity.name || baseActivity?.name,
-                  category: activity.category || baseActivity?.category,
-                };
-
-                // Add surf classes if applicable
-                if (enriched.category === 'surf' && participant.selectedSurfClasses) {
-                  const surfClasses = participant.selectedSurfClasses[activity.id];
-                  if (surfClasses !== undefined) {
-                    enriched.classCount = surfClasses;
-                    enriched.package = `${surfClasses}-classes`;
-                  }
-                }
-
-                // Add yoga package if applicable
-                if (enriched.category === 'yoga' && participant.selectedYogaPackages) {
-                  const yogaPackage = participant.selectedYogaPackages[activity.id];
-                  if (yogaPackage) {
-                    enriched.package = yogaPackage;
-                    const classMatch = yogaPackage.match(/(\d+)/);
-                    if (classMatch) {
-                      enriched.classCount = parseInt(classMatch[1], 10);
-                    }
-                  }
-                }
-
-                // Add quantity if applicable (ice_bath, transport, etc.)
-                if (participant.activityQuantities && participant.activityQuantities[activity.id]) {
-                  enriched.quantity = participant.activityQuantities[activity.id];
-                }
-
-                return enriched;
-              });
-              const participantConsumptionItems = buildParticipantConsumptionItems(participant);
-              if (participantConsumptionItems.length > 0) {
-                await lobbyPMSClient.addProductsToBooking(participantBookingId, participantConsumptionItems);
-              }
-            }
+            // Skip adding activities to Lobby reservation (request: reserve without activities)
           }
         } catch (participantError) {
           // Continue with other participants even if one fails
@@ -2360,4 +2316,3 @@ export async function POST(request: NextRequest) {
     });
   }
 }
-

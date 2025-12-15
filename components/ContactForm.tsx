@@ -62,7 +62,7 @@ const buildLeadGuestName = (firstName: string, lastName: string) =>
 const ACCOMMODATION_NAMES = {
   'casa-playa': { es: 'Casa de Playa', en: 'Beach House' },
   'casitas-privadas': { es: 'Casitas Privadas', en: 'Private House' },
-  'casas-deluxe': { es: 'Casa Privada', en: 'Private House' }
+  'casas-deluxe': { es: 'Studio Deluxe', en: 'Deluxe Studio' }
 } as const;
 
 // Surf program names
@@ -321,6 +321,23 @@ const priceBreakdown = useMemo(
   [accommodationTotal, activitiesTotal, total]
 );
 
+  const finalizePaymentSuccess = useCallback(() => {
+    const prices = {
+      accommodation: accommodationTotal,
+      activities: activitiesTotal,
+      subtotal: total,
+      tax: 0,
+      total,
+      currency: 'USD'
+    };
+    setPriceBreakdown(prices);
+    setIsWaitingForPayment(false);
+    setIsCheckingPaymentStatus(false);
+    setCurrentStep('success');
+    closePaymentWindow();
+    window.focus();
+  }, [accommodationTotal, activitiesTotal, total, setPriceBreakdown, setCurrentStep, closePaymentWindow]);
+
   const serializedParticipants = useMemo(
     () =>
       participants.map((participant, index) => {
@@ -528,7 +545,7 @@ const priceBreakdown = useMemo(
     }
   };
 
-  const handlePayment = async () => {
+  const handlePayment = async (priceOverride?: number) => {
     // First validate and save contact info
     if (!validateForm()) {
       return;
@@ -558,8 +575,15 @@ const priceBreakdown = useMemo(
       const paymentWindow = paymentWindowRef.current;
 
       if (paymentWindow) {
-        const loadingTitle = t('payment.generatingLink');
-        const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
+        const isZeroPayment = typeof priceOverride === 'number' && priceOverride === 0;
+        const loadingTitle = isZeroPayment
+          ? (locale === 'es' ? 'Generando link de prueba ($0)' : 'Generating $0 test link')
+          : t('payment.generatingLink');
+        const loadingMessage = isZeroPayment
+          ? (locale === 'es'
+              ? 'Simularemos un pago de $0 para probar el flujo completo.'
+              : 'We will simulate a $0 payment to test the full flow.')
+          : (t('payment.pleaseWait') || 'Please wait a moment...');
 
         paymentWindow.document.write(`
           <!DOCTYPE html>
@@ -618,10 +642,6 @@ const priceBreakdown = useMemo(
       const checkInFormatted = formatDateForAPI(bookingData.checkIn!);
       const checkOutFormatted = formatDateForAPI(bookingData.checkOut!);
 
-      const today = new Date();
-      const checkInDate = new Date(checkInFormatted);
-      const daysBeforeDeparture = Math.max(1, Math.ceil((checkInDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) - 1);
-
       // Build dynamic title based on booking
       const customerName = `${formData.firstName} ${formData.lastName}`.trim() || 'Guest';
 
@@ -635,11 +655,12 @@ const priceBreakdown = useMemo(
 
       const nightsCount = Math.ceil((new Date(checkOutFormatted).getTime() - new Date(checkInFormatted).getTime()) / (1000 * 60 * 60 * 24));
       const nightsText = nightsCount === 1 ? (locale === 'es' ? '1 noche' : '1 night') : `${nightsCount} ${locale === 'es' ? 'noches' : 'nights'}`;
-      const guestsText = bookingData.guests === 1 ? (locale === 'es' ? '1 huésped' : '1 guest') : `${bookingData.guests} ${locale === 'es' ? 'huéspedes' : 'guests'}`;
-      const depositLabel = locale === 'es' ? 'Depósito' : 'Deposit';
+      const guestsText = bookingData.guests === 1 ? (locale === 'es' ? '1 hu?sped' : '1 guest') : `${bookingData.guests} ${locale === 'es' ? 'hu?spedes' : 'guests'}`;
+      const depositLabel = locale === 'es' ? 'Dep?sito' : 'Deposit';
       const dynamicTitle = `${customerName} - ${accommodationType} (${nightsText}, ${guestsText}) - ${depositLabel}`;
 
-      console.log('📝 Generated dynamic title:', dynamicTitle);
+      console.log('?? Generated dynamic title:', dynamicTitle);
+      const effectiveTotal = typeof priceOverride === 'number' ? priceOverride : Math.round(total);
 
       const paymentPayload = {
         checkIn: checkInFormatted,
@@ -675,7 +696,7 @@ const priceBreakdown = useMemo(
             participant_fees: "none"
           },
           pricing: {
-            price: Math.round(total), // TOTAL price - backend will calculate 10% deposit
+            price: effectiveTotal, // TOTAL price (can be forced to 0 for test)
             payment_plan: {
               allow_auto_payment: false,
               allow_partial_payment: false,
@@ -686,8 +707,8 @@ const priceBreakdown = useMemo(
         }
       };
 
-      console.log('💰 Total price:', total);
-      console.log('💰 10% Deposit will be charged by backend:', Math.round(total * 0.10));
+      console.log('?? Total price (real):', total);
+      console.log('?? Price sent to WeTravel:', effectiveTotal);
 
       const wetravelResponse = await fetch('/api/wetravel-payment', {
         method: 'POST',
@@ -731,6 +752,8 @@ const priceBreakdown = useMemo(
       setIsProcessingPayment(false);
     }
   };
+
+  const handleTestPaymentLink = () => handlePayment(0);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -1196,6 +1219,19 @@ const priceBreakdown = useMemo(
                   </div>
                 )}
               </motion.button>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  disabled={isProcessingPayment}
+                  onClick={handleTestPaymentLink}
+                  className="w-full py-3 px-4 rounded-lg text-sm font-semibold bg-gray-700 text-white hover:bg-gray-600 transition-all border border-gray-600"
+                >
+                  {locale === 'es' ? 'Payment link de prueba ($0)' : 'Test payment link ($0)'}
+                </button>
+                <p className="text-xs text-gray-400 text-center mt-2">
+                  {locale === 'es' ? 'Usalo solo para QA: confirma la reserva sin cobrar.' : 'For QA only: confirms booking without charging.'}
+                </p>
+              </div>
 
               {/* Waiting for Payment */}
               {isWaitingForPayment && (

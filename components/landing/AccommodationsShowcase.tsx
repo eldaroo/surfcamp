@@ -186,7 +186,7 @@ export default function AccommodationsShowcase() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentImageIndex}
-                      className="w-full h-full cursor-pointer"
+                      className="relative w-full h-full cursor-pointer"
                       initial={{ opacity: 0, scale: 1.1 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.9 }}
@@ -332,7 +332,7 @@ export default function AccommodationsShowcase() {
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={modalImageIndex}
-                        className="w-full h-full"
+                        className="relative w-full h-full"
                         initial={{ opacity: 0, x: 100 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -100 }}

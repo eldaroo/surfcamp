@@ -483,7 +483,7 @@ const AccommodationCard = ({
 
         {/* Back Face - Details with Mini Carousel at Bottom */}
         <div
-          className={`flip-card-face flip-card-back ${isFlipped ? 'relative' : 'absolute inset-0'} w-full rounded-3xl cursor-pointer min-h-[400px] md:min-h-[200px]`}
+          className={`flip-card-face flip-card-back ${isFlipped ? 'relative' : 'absolute inset-0'} w-full rounded-3xl cursor-pointer min-h-[400px] md:min-h-[200px] text-gray-900`}
           style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
@@ -491,17 +491,17 @@ const AccommodationCard = ({
           }}
           onClick={handleFlip}
         >
-          <div className="flex w-full flex-col md:flex-row items-stretch rounded-3xl border border-slate-700/60 bg-slate-900/70 shadow-xl shadow-black/20 backdrop-blur transition hover:border-amber-300/70 hover:shadow-amber-300/20 overflow-hidden min-h-[400px] md:min-h-[200px]">
-            <div className="flex flex-1 flex-col px-3 md:px-3 py-3 md:py-2 gap-1.5 md:gap-1">
+          <div className="flex w-full flex-col md:flex-row items-stretch rounded-3xl border border-amber-200 bg-white shadow-[0_4px_16px_rgba(0,0,0,0.25)] transition hover:border-amber-300 hover:shadow-[0_6px_20px_rgba(251,191,36,0.3)] overflow-hidden min-h-[400px] md:min-h-[200px]">
+            <div className="flex flex-1 flex-col px-3 md:px-5 py-3 md:py-3 gap-1.5 md:gap-1 text-gray-900">
               <div className="flex items-start justify-between flex-shrink-0">
                 <div className="flex-1 min-w-0">
                   {/* Mobile Title - Below image, above description */}
-                  <h3 className="md:hidden text-xl font-bold text-white font-heading mb-3">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
+                  <h3 className="md:hidden text-xl font-bold text-gray-900 font-heading mb-3">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
 
                   <div className="hidden md:flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5">
-                    <h3 className="text-lg md:text-xl font-bold text-slate-100 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900 font-heading">{t(`accommodation.roomTypes.${room.roomTypeId}.name`)}</h3>
                     {isSelected && (
-                      <CheckCircle2 className="h-5 md:h-6 w-5 md:w-6 text-amber-300" aria-hidden="true" />
+                      <CheckCircle2 className="h-5 md:h-6 w-5 md:w-6 text-amber-500" aria-hidden="true" />
                     )}
                   </div>
 
@@ -512,16 +512,16 @@ const AccommodationCard = ({
                       borderColor: 'var(--brand-orange)'
                     }}>
                       <div className="flex items-start gap-2">
-                        <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-300 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <div className="flex-1 min-w-0">
-                          <p className="text-amber-200 text-xs md:text-sm font-bold mb-0.5">
+                          <p className="text-amber-700 text-xs md:text-sm font-bold mb-0.5">
                             {locale === 'es'
                               ? `Necesitas ${room.roomsNeeded} habitaciones separadas`
                               : `You need ${room.roomsNeeded} separate rooms`}
                           </p>
-                          <p className="text-slate-300 text-[10px] md:text-xs leading-snug">
+                          <p className="text-gray-700 text-[10px] md:text-xs leading-snug">
                             {locale === 'es'
                               ? `Para ${guests} huéspedes se reservarán ${room.roomsNeeded} unidades independientes (${room.availableRooms} disponibles)`
                               : `For ${guests} guests, ${room.roomsNeeded} independent units will be booked (${room.availableRooms} available)`}
@@ -534,7 +534,7 @@ const AccommodationCard = ({
                   {/* Availability + Capacity */}
                   <div className="flex items-center gap-2 md:gap-2 mb-2 md:mb-1.5 flex-wrap">
                     <div
-                      className="rounded-full px-2 md:px-2 py-0.5 md:py-0.5 text-white text-[10px] md:text-[11px] font-medium border"
+                      className="rounded-full px-2 md:px-2 py-0.5 md:py-0.5 text-[10px] md:text-[11px] font-medium border text-gray-900"
                       style={{
                         backgroundColor: 'color-mix(in srgb, var(--brand-aqua) 18%, transparent)',
                         borderColor: 'color-mix(in srgb, var(--brand-aqua) 40%, transparent)'
@@ -543,7 +543,7 @@ const AccommodationCard = ({
                       {room.availableRooms} {room.availableRooms === 1 ? 'available' : 'available'}
                     </div>
 
-                    <div className="flex items-center text-slate-300 text-[10px] md:text-[11px] font-medium">
+                    <div className="flex items-center text-gray-900 text-[10px] md:text-[11px] font-medium">
                       <svg className="w-3 md:w-3.5 h-3 md:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -552,22 +552,22 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Feature Tags */}
-                  <div className="flex flex-wrap gap-1.5 md:gap-1.5 mb-2 md:mb-1.5">
+                  <div className="flex flex-wrap gap-1.5 md:gap-1.5 mb-2 md:mb-1.5 pt-1">
                     {visibleFeatures.map((feature, index) => (
                       <span
                         key={index}
-                        className={getFeatureChipStyle(feature.color)}
+                        className={`${getFeatureChipStyle(feature.color).replace('text-white', '')} text-gray-900`}
                       >
                         {feature.label}
                       </span>
                     ))}
                     {hiddenCount > 0 && (
                       <span
-                        className="px-2 py-1 rounded-full text-xs font-medium border"
+                        className="px-2 py-1 rounded-full text-xs font-medium border text-gray-900"
                         style={{
-                          backgroundColor: 'color-mix(in srgb, white 5%, transparent)',
-                          borderColor: 'color-mix(in srgb, var(--brand-border) 60%, transparent)',
-                          color: 'color-mix(in srgb, white 80%, transparent)'
+                          backgroundColor: 'color-mix(in srgb, gray 10%, transparent)',
+                          borderColor: 'color-mix(in srgb, gray 30%, transparent)',
+                          color: 'color-mix(in srgb, gray 100%, transparent)'
                         }}
                       >
                         +{hiddenCount}
@@ -576,17 +576,17 @@ const AccommodationCard = ({
                   </div>
 
                   {/* Description */}
-                  <p className="text-[13px] md:text-[13px] leading-snug md:leading-tight text-slate-300 mb-2 md:mb-1 mt-2 md:mt-3 pl-1 md:pl-1.5">
-                    <span className="md:hidden">{typeof description === 'object' ? description.mobile : description}</span>
-                    <span className="hidden md:inline">{typeof description === 'object' ? description.desktop : description}</span>
+                  <p className="text-[13px] md:text-[13px] leading-snug md:leading-tight text-black mb-2 md:mb-1 mt-2 md:mt-3">
+                    <span className="md:hidden text-black">{typeof description === 'object' ? description.mobile : description}</span>
+                    <span className="hidden md:inline text-black">{typeof description === 'object' ? description.desktop : description}</span>
                   </p>
                 </div>
               </div>
 
               {/* Mini Photo Carousel - Bottom of left section */}
               {gallery.length > 0 && (
-                <div className="mt-auto pt-2 md:pt-1.5 border-t border-slate-700/40">
-                  <div className="flex items-center gap-1.5 md:gap-1.5 overflow-x-auto scrollbar-hide pb-2 md:pb-1">
+                <div className="mt-auto pt-3 md:pt-2 border-t border-amber-100">
+                  <div className="flex items-center gap-2 md:gap-2 overflow-x-auto scrollbar-hide pb-3 md:pb-2 pl-1 md:pl-2">
                     {gallery.map((img, idx) => (
                       <motion.button
                         key={idx}
@@ -594,7 +594,7 @@ const AccommodationCard = ({
                         onClick={(e) => openLightbox(idx, e)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="relative flex-shrink-0 w-12 h-12 md:w-12 md:h-12 rounded-md md:rounded-md overflow-hidden border-2 border-slate-600/60 hover:border-amber-300/80 transition-all group/thumb"
+                        className="relative flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-md md:rounded-lg overflow-hidden border-2 border-amber-200 hover:border-amber-400 transition-all group/thumb"
                       >
                         <Image
                           src={img}
@@ -615,7 +615,7 @@ const AccommodationCard = ({
 
             {/* Price and Action Panel */}
             <div
-              className="flex flex-col justify-center items-center gap-2 md:gap-2 border-t md:border-t-0 md:border-l border-slate-700/60 bg-slate-800/30 px-3 md:px-3 py-3 md:py-2 md:min-w-[200px] flex-shrink-0"
+              className="flex flex-col justify-center items-center gap-2 md:gap-2 border-t md:border-t-0 md:border-l border-amber-100 bg-amber-50/50 px-3 md:px-3 py-3 md:py-2 md:min-w-[200px] flex-shrink-0"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Mobile: Compact Price + Button Layout */}
@@ -623,23 +623,23 @@ const AccommodationCard = ({
                 {/* Price Row - Horizontal on Mobile */}
                 <div className="flex items-center justify-between mb-3 px-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">
+                    <span className="text-[10px] uppercase tracking-wide text-gray-600 font-medium">
                       {nights} {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
                     </span>
-                    <div className="text-xl font-bold text-white">
+                    <div className="text-xl font-bold text-gray-900">
                       ${totalPrice}
                     </div>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <span className="text-[9px] text-slate-400 mt-0.5">
+                      <span className="text-[9px] text-gray-600 mt-0.5">
                         {room.roomsNeeded} × ${room.pricePerNight}/noche
                       </span>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-earth-500 uppercase tracking-wide">Per night</p>
-                    <p className="text-xs text-white font-medium">${roomPrice}</p>
+                    <p className="text-[10px] text-gray-600 uppercase tracking-wide">Per night</p>
+                    <p className="text-xs text-gray-900 font-medium">${roomPrice}</p>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <p className="text-[9px] text-earth-500 mt-0.5">
+                      <p className="text-[9px] text-gray-600 mt-0.5">
                         ({room.roomsNeeded} {locale === 'es' ? 'unidades' : 'units'})
                       </p>
                     )}
@@ -656,7 +656,7 @@ const AccommodationCard = ({
                   disabled={isUnavailable}
                   className={`w-full rounded-xl px-4 py-3 text-sm font-bold transition ${
                     isSelected
-                      ? "bg-slate-800/90 text-amber-200 border border-amber-300/30"
+                      ? "bg-amber-100 text-amber-700 border border-amber-300"
                       : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-md shadow-amber-300/30"
                   } ${isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
@@ -672,46 +672,46 @@ const AccommodationCard = ({
               {/* Desktop: Horizontal Layout - 3 columns */}
               <div className="hidden md:flex md:flex-col md:items-center md:gap-3 w-full">
                 {/* Unified Price Container - 3 Column Horizontal Layout */}
-                <div className="w-full py-3 px-3 rounded-xl bg-slate-700/50 border border-slate-600/50">
+                <div className="w-full py-3 px-3 rounded-xl bg-amber-100/50 border border-amber-200">
                   <div className="flex items-center justify-center gap-3 py-1">
                     {/* Nights */}
-                    <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
-                      <p className="text-[10px] text-slate-400 mb-1">
+                    <div className="flex flex-col items-center flex-1 border-r border-amber-200/50">
+                      <p className="text-[10px] text-gray-600 mb-1">
                         {nights === 1 ? (locale === 'es' ? 'noche' : 'night') : (locale === 'es' ? 'noches' : 'nights')}
                       </p>
-                      <p className="text-xl font-bold text-slate-200">
+                      <p className="text-xl font-bold text-gray-900">
                         {nights}
                       </p>
                     </div>
 
                     {/* Guests */}
-                    <div className="flex flex-col items-center flex-1 border-r border-slate-600/50">
-                      <p className="text-[10px] text-slate-400 mb-1">
+                    <div className="flex flex-col items-center flex-1 border-r border-amber-200/50">
+                      <p className="text-[10px] text-gray-600 mb-1">
                         {guests === 1 ? (locale === 'es' ? 'huésped' : 'guest') : (locale === 'es' ? 'huéspedes' : 'guests')}
                       </p>
-                      <p className="text-xl font-bold text-slate-200">
+                      <p className="text-xl font-bold text-gray-900">
                         {guests}
                       </p>
                     </div>
 
                     {/* Total Price */}
                     <div className="flex flex-col items-center flex-1">
-                      <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">
+                      <span className="text-[10px] font-medium uppercase tracking-wide text-gray-600 mb-1">
                         Total
                       </span>
-                      <div className="text-xl font-bold text-white">
+                      <div className="text-xl font-bold text-gray-900">
                         ${totalPrice}
                       </div>
                     </div>
                   </div>
 
                   {/* Price per night info */}
-                  <div className="text-center mt-2 pt-2 border-t border-slate-600/30">
-                    <p className="text-[10px] text-white">
+                  <div className="text-center mt-2 pt-2 border-t border-amber-200/30">
+                    <p className="text-[10px] text-gray-900">
                       {locale === 'es' ? 'a' : 'at'} ${roomPrice}/{locale === 'es' ? 'noche' : 'night'}
                     </p>
                     {room.requiresMultipleRooms && room.roomsNeeded && (
-                      <p className="text-[9px] text-earth-500 mt-0.5">
+                      <p className="text-[9px] text-gray-600 mt-0.5">
                         ({room.roomsNeeded} {locale === 'es' ? 'habitaciones' : 'rooms'} × ${room.pricePerNight})
                       </p>
                     )}
@@ -728,7 +728,7 @@ const AccommodationCard = ({
                   disabled={isUnavailable}
                   className={`w-full rounded-2xl px-6 py-3.5 text-base font-semibold transition ${
                     isSelected
-                      ? "bg-slate-800/90 text-amber-200 hover:bg-slate-800 border border-amber-300/30"
+                      ? "bg-amber-100 text-amber-700 hover:bg-amber-100 border border-amber-300"
                       : "bg-gradient-to-r from-amber-300 via-amber-300 to-amber-400 text-slate-900 shadow-lg shadow-amber-300/40 hover:from-amber-200 hover:to-amber-300"
                   } ${isUnavailable ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >

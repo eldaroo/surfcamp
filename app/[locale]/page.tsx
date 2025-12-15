@@ -156,8 +156,8 @@ export default function HomePage() {
   return (
     <LandingPage
       bookingWidget={
-        <main id="booking" className="container mx-auto px-4 py-8 md:py-12 scroll-mt-20">
-          <div className="mx-auto max-w-6xl pb-3 lg:pb-6">
+        <main id="booking" className="container mx-auto px-4 pb-0 md:pb-0 scroll-mt-20">
+          <div className="mx-auto max-w-6xl pb-0 lg:pb-0">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
