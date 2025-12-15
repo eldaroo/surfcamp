@@ -9,7 +9,7 @@ import { getActivityTotalPrice, calculateSurfPrice, calculateYogaPrice, calculat
 import { formatCurrency } from "@/lib/utils";
 import { Activity } from "@/types";
 import ActivityCard from "./ActivityCard";
-import HeaderPersonalization, { Participant } from "./HeaderPersonalization";
+import HeaderPersonalization from "./HeaderPersonalization";
 import OverviewSummary from "./OverviewSummary";
 import ActiveParticipantBanner from "../ActiveParticipantBanner";
 import PrivateCoachingUpsellModal from "./PrivateCoachingUpsellModal";
@@ -475,7 +475,7 @@ const ActivitiesPage = () => {
   );
 
   // Prepare participants data for tabs
-  const participantTabsData: Participant[] = storeParticipants.map((p) => ({
+  const participantTabsData = storeParticipants.map((p) => ({
     id: p.id,
     name: p.name,
     isYou: p.isYou,
@@ -1610,4 +1610,3 @@ const ActivitiesPage = () => {
 };
 
 export default ActivitiesPage;
-
