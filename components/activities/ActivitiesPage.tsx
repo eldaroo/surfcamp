@@ -1297,15 +1297,16 @@ const ActivitiesPage = () => {
           })()
         ) : currentActivity ? (
           (() => {
-                if (!currentActivity) return null;
-                const isSelected = selectedActivities.some((item) => item.id === currentActivity.id);
-                const individualPrice = computeActivityPrice(currentActivity);
-                const isYoga = currentActivity.category === "yoga";
-                const isSurf = currentActivity.category === "surf";
-                const supportsQuantity = quantityCategories.has(currentActivity.category);
-                const supportsTime = timeSlotCategories.has(currentActivity.category);
+                const activity = currentActivity;
+                if (!activity) return null;
+                const isSelected = selectedActivities.some((item) => item.id === activity.id);
+                const individualPrice = computeActivityPrice(activity);
+                const isYoga = activity.category === "yoga";
+                const isSurf = activity.category === "surf";
+                const supportsQuantity = quantityCategories.has(activity.category);
+                const supportsTime = timeSlotCategories.has(activity.category);
                 const surfDisplayPrice = isSurf
-                  ? calculateSurfPrice(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES)
+                  ? calculateSurfPrice(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES)
                   : individualPrice;
 
                 // Determine if surf is mandatory for this participant
