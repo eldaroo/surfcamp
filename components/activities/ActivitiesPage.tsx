@@ -1348,19 +1348,19 @@ const ActivitiesPage = () => {
                       price={surfDisplayPrice}
                       pricePerPerson={undefined}
                       formatPrice={formatCurrency}
-                      yogaClasses={isYoga ? yogaClasses[currentActivity.id] ?? 1 : undefined}
-                      onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(currentActivity.id, classes) : undefined}
-                      yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[currentActivity.id] ?? false : undefined}
-                      onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(currentActivity.id, useDiscount) : undefined}
-                      surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[currentActivity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
-                      onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(currentActivity.id, program) : undefined}
+                      yogaClasses={isYoga ? yogaClasses[activity.id] ?? 1 : undefined}
+                      onYogaClassesChange={isYoga ? (classes) => handleYogaClassesChange(activity.id, classes) : undefined}
+                      yogaUsePackDiscount={isYoga ? yogaUsePackDiscount[activity.id] ?? false : undefined}
+                      onYogaPackDiscountChange={isYoga ? (useDiscount) => handleYogaPackDiscountChange(activity.id, useDiscount) : undefined}
+                      surfProgram={isSurf ? surfClassesToProgram(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES) : undefined}
+                      onSurfProgramChange={isSurf ? (program) => handleSurfProgramChange(activity.id, program) : undefined}
                       onShowPrivateCoachingModal={isSurf ? handleShowPrivateCoachingModal : undefined}
                       hasQuantitySelector={supportsQuantity}
-                      quantity={supportsQuantity ? activityQuantities[currentActivity.id] ?? 1 : undefined}
-                      onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(currentActivity.id, value) : undefined}
+                      quantity={supportsQuantity ? activityQuantities[activity.id] ?? 1 : undefined}
+                      onQuantityChange={supportsQuantity ? (value) => handleQuantityChange(activity.id, value) : undefined}
                       hasTimeSelector={supportsTime}
-                      timeSlot={supportsTime ? selectedTimeSlots[currentActivity.id] ?? "7:00 AM" : undefined}
-                      onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(currentActivity.id, slot) : undefined}
+                      timeSlot={supportsTime ? selectedTimeSlots[activity.id] ?? "7:00 AM" : undefined}
+                      onTimeSlotChange={supportsTime ? (slot) => handleTimeSlotChange(activity.id, slot) : undefined}
                     />
                   </div>
                 );
