@@ -495,6 +495,7 @@ const ActivitiesPage = () => {
         transport: null,
         hosting: 'hosting',
         ceramics: 'ceramics',
+        other: null,
       };
       const step = categoryToStep[activity.category];
       if (step) {
