@@ -1334,8 +1334,8 @@ const ActivitiesPage = () => {
                     )}
 
                     <ActivityCard
-                      key={currentActivity.id}
-                      activity={currentActivity}
+                      key={activity.id}
+                      activity={activity}
                       locale={(locale as "es" | "en") || "es"}
                       participants={1}
                       isSelected={isSelected}
