@@ -1339,7 +1339,7 @@ const ActivitiesPage = () => {
                       locale={(locale as "es" | "en") || "es"}
                       participants={1}
                       isSelected={isSelected}
-                      onToggle={() => handleToggleActivity(currentActivity)}
+                      onToggle={() => handleToggleActivity(activity)}
                       onAutoAdvance={handleAutoAdvance}
                       onSkip={handleSkipActivity}
                       onBack={handleBackStep}
