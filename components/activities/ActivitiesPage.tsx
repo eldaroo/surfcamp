@@ -1325,8 +1325,8 @@ const ActivitiesPage = () => {
                           <User className="h-3 w-3 text-white" />
                         </div>
                         <span className="text-xs font-bold text-white">
-                          {activeParticipant.name}
-                          {activeParticipant.isYou && (
+                          {activeParticipant?.name}
+                          {activeParticipant?.isYou && (
                             <span className="ml-1 text-[10px] opacity-80">({locale === "es" ? "Tu" : "You"})</span>
                           )}
                         </span>
