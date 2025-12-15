@@ -1297,8 +1297,7 @@ const ActivitiesPage = () => {
           })()
         ) : currentActivity ? (
           (() => {
-                const activity = currentActivity;
-                if (!activity) return null;
+                const activity = currentActivity!;
                 const isSelected = selectedActivities.some((item) => item.id === activity.id);
                 const individualPrice = computeActivityPrice(activity);
                 const isYoga = activity.category === "yoga";
