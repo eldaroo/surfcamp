@@ -988,15 +988,6 @@ export default function PaymentSection() {
             )}
           </button>
 
-          {/* Test Payment Button */}
-          <button
-            onClick={() => handlePayment(true)}
-            disabled={isProcessing}
-            className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-xl shadow-lg border-2 border-purple-300 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <span className="text-xl">🧪</span>
-            <span>TEST $0 Payment</span>
-          </button>
         </div>
 
         {/* Waiting for Payment Status */}
