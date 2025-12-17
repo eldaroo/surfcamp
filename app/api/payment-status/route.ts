@@ -200,7 +200,10 @@ export async function GET(request: NextRequest) {
           const booking = orderData.booking_data;
 
           try {
-            const reserveUrl = `${request.nextUrl.origin}/api/reserve`;
+            const reserveBase =
+              process.env.INTERNAL_API_BASE_URL ||
+              `http://127.0.0.1:${process.env.PORT || 3000}`;
+            const reserveUrl = `${reserveBase}/api/reserve`;
 
           const reservePayload = {
             checkIn: booking.checkIn,

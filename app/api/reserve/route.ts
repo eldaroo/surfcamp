@@ -26,6 +26,20 @@ import {
   getAccommodationTotal
 } from '@/lib/wetravel-pricing';
 
+// Toggle to control whether activities are pushed into LobbyPMS bookings
+const LOBBY_ACTIVITIES_ENABLED = false;
+const addProductsToLobby = async (bookingId: number | string, items: any[]) => {
+  if (!items || items.length === 0) return;
+  if (!LOBBY_ACTIVITIES_ENABLED) {
+    console.log('dY? [RESERVE] Activity sync disabled - skipping LobbyPMS products', {
+      bookingId,
+      count: items.length
+    });
+    return;
+  }
+  return lobbyPMSClient.addProductsToBooking(bookingId, items);
+};
+
 // Mapeo de roomTypeId a category_id de LobbyPMS (múltiples opciones por tipo)
 // TODO: Verificar los category_ids correctos para cada casita en LobbyPMS
 const ROOM_TYPE_MAPPING_MULTIPLE = {
@@ -700,7 +714,7 @@ export async function POST(request: NextRequest) {
 
         // 3. Add products to the existing reservation
         console.log('🏨 [RESERVE] Adding products to existing reservation...');
-        await lobbyPMSClient.addProductsToBooking(bookingIdNum, allActivityItems);
+        await addProductsToLobby(bookingIdNum, allActivityItems);
         console.log('🏨 [RESERVE] ✅ Successfully added activities to reservation');
 
         // 4. Calculate the total price of added activities
@@ -1430,7 +1444,7 @@ export async function POST(request: NextRequest) {
 
             if (consumptionItems.length > 0) {
               try {
-                await lobbyPMSClient.addProductsToBooking(roomBookingId, consumptionItems);
+                await addProductsToLobby(roomBookingId, consumptionItems);
                 console.log(`✅ [RESERVE] Added ${consumptionItems.length} activities to room ${roomIndex + 1}`);
               } catch (consumptionError) {
                 console.error(`❌ [RESERVE] Failed to add activities to room ${roomIndex + 1}:`, consumptionError);
@@ -2035,7 +2049,7 @@ export async function POST(request: NextRequest) {
             );
           }
           if (consumptionItems.length > 0) {
-            await lobbyPMSClient.addProductsToBooking(bookingId, consumptionItems);
+            await addProductsToLobby(bookingId, consumptionItems);
           } else {
           }
         } catch (consumptionError) {
@@ -2238,7 +2252,7 @@ export async function POST(request: NextRequest) {
                 { hasDetailedSelections: hasDetailedActivityPayload }
               );
               if (consumptionItems.length > 0) {
-                await lobbyPMSClient.addProductsToBooking(adjustedBookingId, consumptionItems);
+                await addProductsToLobby(adjustedBookingId, consumptionItems);
               } else {
               }
             } catch (consumptionError) {

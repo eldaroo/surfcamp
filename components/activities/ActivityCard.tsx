@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Activity } from "@/types";
 import { useBookingStore } from "@/lib/store";
+import { calculateYogaPrice } from "@/lib/prices";
 import {
   CheckCircle2,
   Sparkles,
@@ -181,7 +182,7 @@ const CERAMICS_OPTIONS = {
       es: 'Pinta, recoge en 24h',
       en: 'Paint & pickup in 24h'
     },
-    price: 40,
+    price: 50,
     duration: '1-1.5 hours',
     description: {
       es: 'En esta experiencia única en nuestro estudio, pintarás piezas de cerámica creadas por viajeros anteriores y te llevarás contigo tu obra terminada. También dejarás tus propias creaciones de barro para los próximos viajeros que lleguen.',
@@ -293,6 +294,8 @@ type ActivityCardProps = {
   hasTimeSelector?: boolean;
   timeSlot?: "7:00 AM" | "3:00 PM";
   onTimeSlotChange?: (value: "7:00 AM" | "3:00 PM") => void;
+  selectedCeramicId?: string;
+  onCeramicOptionChange?: (optionId: string) => void;
   children?: React.ReactNode;
 };
 
@@ -645,6 +648,8 @@ const ActivityCard = ({
   hasTimeSelector,
   timeSlot = "7:00 AM",
   onTimeSlotChange,
+  selectedCeramicId,
+  onCeramicOptionChange,
   children,
 }: ActivityCardProps) => {
   const copy = localeCopy[locale] ?? localeCopy.es;
@@ -669,6 +674,22 @@ const ActivityCard = ({
   const [expandedSurfProgram, setExpandedSurfProgram] = useState<'fundamental' | 'progressionPlus' | 'highPerformance' | null>(null);
   const [hasExpandedProgram, setHasExpandedProgram] = useState(false);
   const [expandedCeramicsOption, setExpandedCeramicsOption] = useState<'stories' | 'immersion' | null>(null);
+  const ceramicSelectedId =
+    selectedCeramicId ||
+    (expandedCeramicsOption ? CERAMICS_OPTIONS[expandedCeramicsOption].id : undefined) ||
+    activity.id;
+  const displayedPrice = useMemo(() => {
+    if (activity.category === "yoga") {
+      return calculateYogaPrice(yogaClasses ?? 1, yogaUsePackDiscount ?? false);
+    }
+
+    if (activity.category === "ceramics") {
+      const ceramicOption = Object.values(CERAMICS_OPTIONS).find((opt) => opt.id === ceramicSelectedId);
+      return ceramicOption?.price ?? price;
+    }
+
+    return price;
+  }, [activity.category, activity.id, ceramicSelectedId, yogaClasses, yogaUsePackDiscount, price]);
 
   // Set mounted state for portal (SSR safety)
   useEffect(() => {
@@ -1208,6 +1229,7 @@ const handleChoose = async (e: React.MouseEvent) => {
     if (activity.category !== 'ceramics') return null;
 
     const options = ['stories', 'immersion'] as const;
+    const activeCeramicId = ceramicSelectedId;
 
     return (
       <div className="space-y-3 md:space-y-3.5" onClick={(e) => e.stopPropagation()}>
@@ -1220,19 +1242,21 @@ const handleChoose = async (e: React.MouseEvent) => {
           {options.map((optionId) => {
             const option = CERAMICS_OPTIONS[optionId];
             const isExpanded = expandedCeramicsOption === optionId;
+            const isSelectedOption = activeCeramicId === option.id;
 
             return (
               <motion.button
                 key={optionId}
                 type="button"
                 onClick={() => {
-                  // Toggle expansion
+                  // Toggle expansion and notify parent about selection
                   setExpandedCeramicsOption(isExpanded ? null : optionId);
+                  onCeramicOptionChange?.(option.id);
                 }}
                 whileHover={{ scale: 1.005 }}
                 whileTap={{ scale: 0.995 }}
                 className={`w-full rounded-xl px-3.5 md:px-4 py-2 md:py-2.5 border-2 transition-all text-left cursor-pointer ${
-                  isExpanded
+                  isSelectedOption
                     ? 'border-amber-300 bg-amber-50/70 shadow-md'
                     : 'border-[white]/50 bg-[white]/40 hover:border-amber-200 hover:bg-[white]/60'
                 }`}
@@ -1724,7 +1748,7 @@ const handleChoose = async (e: React.MouseEvent) => {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {formatPrice(price)}
+                  {formatPrice(displayedPrice)}
                 </motion.div>
                 {participants > 1 && typeof pricePerPerson === "number" && (
                   <p className="text-xs text-[#6d5f57] font-medium">

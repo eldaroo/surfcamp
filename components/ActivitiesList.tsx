@@ -172,15 +172,20 @@ export default function ActivitiesList({
       const nextQty = current ? current.quantity + 1 : 1;
       return { ...prev, [activity.id]: { activity: { ...activity, price: unitPrice }, quantity: nextQty } };
     });
+
+    // Save activity to store (for all activities)
+    const exists = storeActivities.some((a) => a.id === activity.id);
+    if (!exists) {
+      setSelectedActivities([...storeActivities, activity]);
+    }
+
+    // Set surf-specific config
     if (activity.category === "surf") {
-      const exists = storeActivities.some((a) => a.id === activity.id);
       const classes = SURF_PROGRAM_TO_CLASSES[surfProgram] ?? SURF_PROGRAM_TO_CLASSES.fundamental;
       setSelectedSurfClasses(activity.id, classes);
       setSelectedSurfPackage(activity.id, `${classes}-classes` as any);
-      if (!exists) {
-        setSelectedActivities([...storeActivities, activity]);
-      }
     }
+
     setToast(locale === "es" ? "Agregado a tu plan" : "Added to your plan");
     setTimeout(() => setToast(null), 1800);
   };
@@ -403,11 +408,10 @@ export default function ActivitiesList({
                       [activeActivity.id]: { activity: { ...activeActivity, price: unitPrice }, quantity: nextQty },
                     };
                   });
-                  if (activeActivity.category === "surf") {
-                    const exists = storeActivities.some((a) => a.id === activeActivity.id);
-                    if (!exists) {
-                      setSelectedActivities([...storeActivities, activeActivity]);
-                    }
+                  // Save activity to store (for all activities, not just surf)
+                  const exists = storeActivities.some((a) => a.id === activeActivity.id);
+                  if (!exists) {
+                    setSelectedActivities([...storeActivities, activeActivity]);
                   }
                   setActiveActivity(null);
                   setToast(locale === "es" ? "Agregado a tu plan" : "Added to your plan");

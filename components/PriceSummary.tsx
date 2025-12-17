@@ -56,6 +56,12 @@ export default function PriceSummary({
     selectedRoom,
     priceBreakdown,
     participants,
+    selectedActivities,
+    selectedSurfClasses,
+    selectedYogaPackages,
+    yogaClasses,
+    yogaUsePackDiscount,
+    activityQuantities,
     isPrivateUpgrade,
     setCurrentStep,
   } = useBookingStore();
@@ -119,6 +125,38 @@ export default function PriceSummary({
   };
 
   // Build list of all activity selections grouped by participant
+  // Simplified logic: directly use participants from store as the source of truth
+  const participantsForSummary = useMemo(() => {
+    // If we have participants with activities, use them directly
+    if (participants.length > 0 && participants.some((p) => p.selectedActivities.length > 0)) {
+      return participants;
+    }
+
+    // Fallback: create a minimal participant if nothing exists
+    const fallbackName = `${bookingData.contactInfo?.firstName || ''} ${bookingData.contactInfo?.lastName || ''}`.trim() || 'You';
+
+    return [
+      {
+        id: 'primary-participant',
+        name: fallbackName,
+        isYou: true,
+        selectedActivities: [],
+        selectedSurfClasses: {},
+        selectedYogaPackages: {},
+        yogaClasses: {},
+        yogaUsePackDiscount: {},
+        activityQuantities: {},
+        selectedTimeSlots: {},
+        selectedSurfPackages: {},
+        hasPrivateCoaching: false,
+      },
+    ];
+  }, [
+    participants,
+    bookingData.contactInfo?.firstName,
+    bookingData.contactInfo?.lastName,
+  ]);
+
   const allActivitySelections = useMemo(() => {
     const selections: Array<{
       activity: any;
@@ -127,8 +165,8 @@ export default function PriceSummary({
       packageInfo: string;
     }> = [];
 
-    participants.forEach((participant) => {
-      participant.selectedActivities.forEach((activity: any) => {
+    participantsForSummary.forEach((participant) => {
+      (participant.selectedActivities || []).forEach((activity: any) => {
         const details = getActivityDetailsForParticipant(activity, participant);
         selections.push({
           activity,
@@ -138,8 +176,15 @@ export default function PriceSummary({
       });
     });
 
-    return selections;
-  }, [participants]);
+    // Avoid duplicating identical activities if both participant and fallback carry the same entry
+    const seen = new Set<string>();
+    return selections.filter(({ activity, participant }) => {
+      const key = `${participant?.id ?? 'unknown'}-${activity?.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [participantsForSummary]);
 
   // Calculate totals
   const accommodationTotal =
@@ -156,8 +201,8 @@ export default function PriceSummary({
     if (!isPrivateUpgrade) return 0;
 
     let total = 0;
-    participants.forEach((participant) => {
-      participant.selectedActivities.forEach((activity: any) => {
+    participantsForSummary.forEach((participant) => {
+      (participant.selectedActivities || []).forEach((activity: any) => {
         if (activity.category === 'surf') {
           const surfClasses = participant.selectedSurfClasses[activity.id];
           const classes = surfClasses !== undefined ? surfClasses : 4;
@@ -166,7 +211,7 @@ export default function PriceSummary({
       });
     });
     return total;
-  }, [participants, isPrivateUpgrade]);
+  }, [participantsForSummary, isPrivateUpgrade]);
 
   const subtotal = accommodationTotal + activitiesTotal + privateCoachingUpgradeTotal;
   const fees = priceBreakdown?.tax || 0;
@@ -241,7 +286,7 @@ export default function PriceSummary({
         {/* Activities - showing each participant's selections */}
         {allActivitySelections.map((selection, index) => {
           const { activity, participant, price, packageInfo } = selection;
-          const showParticipantName = participants.length > 1;
+          const showParticipantName = participantsForSummary.length > 1;
 
           // For surf activities, show program name instead of generic activity name
           let displayName = activity.name;

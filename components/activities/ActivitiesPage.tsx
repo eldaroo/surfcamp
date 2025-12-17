@@ -319,11 +319,8 @@ const ActivitiesPage = () => {
       if (!chosenActivity) return;
 
       const activitiesWithoutCeramics = selectedActivities.filter((activity) => activity.category !== 'ceramics');
-      const hasCeramicsSelected = activitiesWithoutCeramics.length !== selectedActivities.length;
-
-      if (hasCeramicsSelected) {
-        setSelectedActivities([...activitiesWithoutCeramics, chosenActivity]);
-      }
+      // Always replace ceramics choice with the newly selected option
+      setSelectedActivities([...activitiesWithoutCeramics, chosenActivity]);
     },
     [ceramicOptions, selectedActivities, setSelectedActivities, setSelectedCeramicId]
   );
@@ -1188,6 +1185,10 @@ const ActivitiesPage = () => {
             if (!ceramicPrograms.length) return null;
             const selectedOption =
               ceramicPrograms.find((a) => a.id === selectedCeramicId) || ceramicPrograms[0];
+            const selectedPrice =
+              ceramicPrograms.find((a) => a.id === selectedCeramicId)?.price ??
+              selectedOption?.price ??
+              0;
             const isSelected = selectedActivities.some((item) => item.category === 'ceramics');
 
             return (
@@ -1196,6 +1197,8 @@ const ActivitiesPage = () => {
                 activity={selectedOption}
                 locale={(locale as "es" | "en") || "es"}
                 participants={1}
+                selectedCeramicId={selectedCeramicId || selectedOption?.id}
+                onCeramicOptionChange={handleCeramicsProgramChange}
                 isSelected={isSelected}
                 onToggle={handleToggleCeramics}
                 onAutoAdvance={handleAutoAdvance}
@@ -1203,7 +1206,7 @@ const ActivitiesPage = () => {
                 onBack={handleBackStep}
                 isFirstStep={false}
                 isSurfMandatory={false}
-                price={selectedOption?.price ?? 0}
+                price={selectedPrice}
                 pricePerPerson={undefined}
                 formatPrice={formatCurrency}
               >
@@ -1304,9 +1307,18 @@ const ActivitiesPage = () => {
                 const isSurf = activity.category === "surf";
                 const supportsQuantity = quantityCategories.has(activity.category);
                 const supportsTime = timeSlotCategories.has(activity.category);
-                const surfDisplayPrice = isSurf
-                  ? calculateSurfPrice(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES)
-                  : individualPrice;
+                const surfDisplayPrice = calculateSurfPrice(selectedSurfClasses[activity.id] ?? DEFAULT_SURF_CLASSES);
+                const yogaDisplayPrice = isYoga
+                  ? calculateYogaPrice(
+                      yogaClasses[activity.id] ?? 1,
+                      yogaUsePackDiscount[activity.id] ?? false
+                    )
+                  : undefined;
+                const displayPrice = isSurf
+                  ? surfDisplayPrice
+                  : isYoga
+                    ? (yogaDisplayPrice ?? individualPrice)
+                    : individualPrice;
 
                 // Determine if surf is mandatory for this participant
                 const isFirstParticipant = activeParticipant?.isYou || storeParticipants.findIndex(p => p.id === activeParticipantId) === 0;
@@ -1345,7 +1357,7 @@ const ActivitiesPage = () => {
                       onBack={handleBackStep}
                       isFirstStep={activityFlowStep === 'surf'}
                       isSurfMandatory={isSurfMandatory}
-                      price={surfDisplayPrice}
+                      price={displayPrice}
                       pricePerPerson={undefined}
                       formatPrice={formatCurrency}
                       yogaClasses={isYoga ? yogaClasses[activity.id] ?? 1 : undefined}
