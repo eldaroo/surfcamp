@@ -118,6 +118,7 @@ export default function ContactForm() {
   const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
 
@@ -163,6 +164,98 @@ export default function ContactForm() {
       closePaymentWindow();
     };
   }, [closePaymentWindow]);
+
+  // Monitor payment window and redirect when payment is confirmed and window is closed
+  useEffect(() => {
+    if (!paymentConfirmed) {
+      console.log('⏸️ [ContactForm] Payment not confirmed yet, not checking window status');
+      return;
+    }
+
+    if (!paymentWindowRef.current) {
+      console.log('⚠️ [ContactForm] Payment window ref is null, cannot check window status');
+      return;
+    }
+
+    console.log('👀 [ContactForm] Starting to monitor payment window closure...');
+
+    const checkWindowClosed = setInterval(() => {
+      const windowRef = paymentWindowRef.current;
+
+      if (!windowRef) {
+        console.log('⚠️ [ContactForm] Window ref became null during monitoring');
+        return;
+      }
+
+      const isClosed = windowRef.closed;
+      console.log('🔍 [ContactForm] Window status check - closed:', isClosed);
+
+      if (isClosed) {
+        console.log('✅ [ContactForm] Payment window closed, redirecting to success page');
+        clearInterval(checkWindowClosed);
+
+        // Calculate final prices inline (to avoid dependency issues)
+        const calcNights = bookingData.checkIn && bookingData.checkOut
+          ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
+          : 0;
+
+        const calcAccommodation = selectedRoom ? (
+          selectedRoom.isSharedRoom
+            ? selectedRoom.pricePerNight * calcNights * (bookingData.guests || 1)
+            : selectedRoom.pricePerNight * calcNights
+        ) : 0;
+
+        let calcActivities = 0;
+        participants.forEach(participant => {
+          participant.selectedActivities.forEach((activity: any) => {
+            if (activity.category === 'yoga') {
+              const yogaPackage = participant.selectedYogaPackages[activity.id];
+              const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
+              const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
+              if (yogaPackage) {
+                calcActivities += 50; // Assuming package price
+              } else {
+                const pricePerClass = useDiscount ? 8 : 10;
+                calcActivities += yogaClassCount * pricePerClass;
+              }
+            } else if (activity.category === 'surf') {
+              const surfClasses = participant.selectedSurfClasses[activity.id];
+              if (surfClasses) {
+                calcActivities += surfClasses * 100; // Assuming per-class price
+              }
+            } else {
+              const quantity = participant.activityQuantities[activity.id] || 1;
+              calcActivities += activity.price * quantity;
+            }
+          });
+        });
+
+        const calcTotal = calcAccommodation + calcActivities;
+
+        const prices = {
+          accommodation: calcAccommodation,
+          activities: calcActivities,
+          subtotal: calcTotal,
+          tax: 0,
+          total: calcTotal,
+          currency: 'USD'
+        };
+        setPriceBreakdown(prices);
+
+        // Redirect to success
+        setIsWaitingForPayment(false);
+        setIsCheckingPaymentStatus(false);
+        setCurrentStep('success');
+        closePaymentWindow();
+        window.focus();
+      }
+    }, 500);
+
+    return () => {
+      console.log('🧹 [ContactForm] Cleaning up window monitor');
+      clearInterval(checkWindowClosed);
+    };
+  }, [paymentConfirmed, bookingData, selectedRoom, participants, setPriceBreakdown, setCurrentStep, closePaymentWindow]);
 
   // Calculate prices
   const calculateNights = () => {
@@ -434,7 +527,12 @@ const priceBreakdown = useMemo(
       });
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('✅ [PAYMENT-STATUS] Success detected! Stopping polling and showing success page...');
+        console.log('✅ [PAYMENT-STATUS] Success detected! Waiting for user to close payment window...');
+        console.log('📊 Payment data:', {
+          is_booking_created: data.is_booking_created,
+          is_completed: data.is_completed,
+          has_lobbypms_reservation: data.order?.lobbypms_reservation_id
+        });
 
         // STOP POLLING IMMEDIATELY
         if (paymentStatusInterval.current) {
@@ -443,21 +541,9 @@ const priceBreakdown = useMemo(
           console.log('🛑 [PAYMENT-STATUS] Polling stopped');
         }
 
-        const prices = {
-          accommodation: accommodationTotal,
-          activities: activitiesTotal,
-          subtotal: total,
-          tax: 0,
-          total,
-          currency: 'USD'
-        };
-        setPriceBreakdown(prices);
-
-        setIsWaitingForPayment(false);
-        setIsCheckingPaymentStatus(false);
-        setCurrentStep('success');
-        closePaymentWindow();
-        window.focus();
+        // Mark payment as confirmed (will redirect when window closes)
+        console.log('✅ Setting paymentConfirmed = true (ContactForm)');
+        setPaymentConfirmed(true);
       }
 
       return data;
@@ -568,6 +654,7 @@ const priceBreakdown = useMemo(
 
     setIsProcessingPayment(true);
     setPaymentError('');
+    setPaymentConfirmed(false); // Reset payment confirmation status
 
     try {
       closePaymentWindow();

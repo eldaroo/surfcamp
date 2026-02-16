@@ -912,7 +912,7 @@ const ActivitiesPage = () => {
           </>
         )}
         {/* Desktop activities carousel removed per request - videos now live inside the Activities List */}
-        <div className={landingSectionsHidden ? "hidden md:block" : ""}>
+        <div>
           <HeaderPersonalization
             name={personalizationName}
             participants={participantCount}

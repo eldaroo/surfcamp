@@ -176,94 +176,22 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check if booking_created but no LobbyPMS reservation yet
-    if (payment.status === 'booking_created') {
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('booking_data, lobbypms_reservation_id')
-        .eq('id', payment.order_id)
-        .single();
-
-      if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
-        // 🔒 RACE CONDITION PROTECTION: Use optimistic locking
-        const claimTimestamp = new Date().toISOString();
-        const { data: claimResult, error: claimError } = await supabase
-          .from('orders')
-          .update({
-            lobbypms_reservation_id: `CREATING_${claimTimestamp}`
-          })
-          .eq('id', payment.order_id)
-          .is('lobbypms_reservation_id', null)
-          .select();
-
-        if (!claimError && claimResult && claimResult.length > 0) {
-          const booking = orderData.booking_data;
-
-          try {
-            const reserveBase =
-              process.env.INTERNAL_API_BASE_URL ||
-              `http://127.0.0.1:${process.env.PORT || 3000}`;
-            const reserveUrl = `${reserveBase}/api/reserve`;
-
-          const reservePayload = {
-            checkIn: booking.checkIn,
-            checkOut: booking.checkOut,
-            guests: booking.guests,
-            roomTypeId: booking.roomTypeId,
-            isSharedRoom: booking.isSharedRoom ?? booking.selectedRoom?.isSharedRoom ?? false,
-            contactInfo: booking.contactInfo,
-            activityIds: booking.selectedActivities?.map((a: any) => a.id) || [],
-            selectedActivities: booking.selectedActivities || [],
-            participants: booking.participants || [],
-            locale: booking.locale || 'es',
-            priceBreakdown: booking.priceBreakdown || null,
-            selectedRoom: booking.selectedRoom || null,
-            nights: booking.nights,
-            discountedAccommodationTotal: booking.discountedAccommodationTotal || null
-          };
-          const reserveResponse = await fetch(reserveUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(reservePayload)
-          });
-
-          const reserveData = await reserveResponse.json();
-
-          if (reserveResponse.ok) {
-            let reservationId;
-            if (reserveData.multipleReservations && reserveData.reservationIds) {
-              reservationId = Array.isArray(reserveData.reservationIds)
-                ? reserveData.reservationIds[0]
-                : reserveData.reservationIds;
-            } else {
-              reservationId = reserveData.reservationId ||
-                             reserveData.reservation?.id ||
-                             reserveData.lobbyPMSResponse?.booking?.booking_id ||
-                             reserveData.lobbyPMSResponse?.id;
-            }
-
-            if (reservationId) {
-              await supabase
-                .from('orders')
-                .update({
-                  lobbypms_reservation_id: reservationId,
-                  lobbypms_data: reserveData
-                })
-                .eq('id', payment.order_id);
-            } else {
-              console.error('❌ [PAYMENT-STATUS] Could not extract reservation ID');
-            }
-          } else {
-            console.error('❌ [PAYMENT-STATUS] /api/reserve failed:', reserveData.error);
-          }
-        } catch (lobbyError) {
-          console.error('❌ [PAYMENT-STATUS] Error calling /api/reserve:', lobbyError);
-        }
-        }
-      }
-    }
+    // ⚠️ DISABLED: LobbyPMS reservation creation moved to webhook handler only
+    // This code was creating reservations from the polling endpoint, which caused
+    // premature reservation creation for $0 test payments before users saw the payment page.
+    // Now ONLY the WeTravel webhook handler creates reservations after receiving booking.created event.
+    //
+    // if (payment.status === 'booking_created') {
+    //   const { data: orderData } = await supabase
+    //     .from('orders')
+    //     .select('booking_data, lobbypms_reservation_id')
+    //     .eq('id', payment.order_id)
+    //     .single();
+    //
+    //   if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
+    //     ... [LobbyPMS reservation creation code disabled] ...
+    //   }
+    // }
 
     // Get order details
     let order = await getOrderById(payment.order_id);

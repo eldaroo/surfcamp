@@ -682,16 +682,17 @@ async function handleBookingCreated(
       eventType: 'booking.created'
     });
 
-    // 🔄 FALLBACK: If no match found, try searching by recent pending payments
+    // 🔄 FALLBACK: If no match found, try searching by recent pending/booking_created payments
     if (!match && context.tripId) {
-      console.log('⚠️ [WEBHOOK] No match found, trying fallback search by recent pending payments...');
+      console.log('⚠️ [WEBHOOK] No match found, trying fallback search by recent payments...');
 
-      // Get the most recent pending payment (within last 5 minutes)
+      // Get the most recent pending OR booking_created payment (within last 5 minutes)
+      // Note: payment might already be booking_created if polling detected it first
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const { data: recentPayments } = await supabase
         .from('payments')
         .select('id, order_id, wetravel_data, wetravel_order_id, status, created_at')
-        .eq('status', 'pending')
+        .in('status', ['pending', 'booking_created'])
         .gte('created_at', fiveMinutesAgo)
         .order('created_at', { ascending: false })
         .limit(3);

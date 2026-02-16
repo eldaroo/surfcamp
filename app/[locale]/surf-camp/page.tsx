@@ -62,10 +62,9 @@ export default function SurfCampPage({ params }: PageProps) {
         options: [
           {
             duration: 'Core Surf Program',
-            price: '$450',
+            price: '$390',
             sessions: '4 surf sessions',
             videoAnalysis: '2 video analysis sessions',
-            photoSession: 'Photo session (optional)',
             droneSession: null,
             continuityPlan: 'Continuity plan',
             nutritionPlan: 'Basic nutrition guide',
@@ -75,28 +74,26 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Intensive Surf Program',
-            price: '$650',
+            price: '$540',
             sessions: '6 surf sessions',
             videoAnalysis: '4 video analysis sessions',
-            photoSession: '1 photo session included',
             droneSession: null,
             continuityPlan: 'Final practice plan',
             nutritionPlan: 'Personalized nutrition plan',
             level: 'Any Level',
-            description: 'Deeper dive into your surf progression with more water time and detailed video analysis. Four analysis sessions allow us to work on multiple aspects of your surfing and track improvement over time. Includes photo session and comprehensive practice plan.',
+            description: 'Deeper dive into your surf progression with more water time and detailed video analysis. Four analysis sessions allow us to work on multiple aspects of your surfing and track improvement over time. Includes a comprehensive practice plan.',
             ideal: 'Ideal for: Serious progression, week-long surf trips, breaking through plateaus',
           },
           {
             duration: 'Elite Surf Program',
-            price: '$910',
+            price: '$850',
             sessions: '8 high-performance sessions',
             videoAnalysis: '5 advanced video analysis sessions',
-            photoSession: 'Photo session included',
             droneSession: 'Drone footage included',
             continuityPlan: 'Extended final review',
             nutritionPlan: 'Complete nutrition plan',
             level: 'Any Level',
-            description: 'Maximum commitment to surf improvement with the most water time and deepest video analysis. Five sessions allow frame-by-frame technique refinement and comprehensive progress tracking. Includes photo + drone footage and extended final review.',
+            description: 'Maximum commitment to surf improvement with the most water time and deepest video analysis. Five sessions allow frame-by-frame technique refinement and comprehensive progress tracking. Includes drone footage and an extended final review.',
             ideal: 'Ideal for: Total transformation, extended stays, competitive surfers, serious enthusiasts',
           },
         ],
@@ -109,7 +106,6 @@ export default function SurfCampPage({ params }: PageProps) {
           'Complete surf equipment (board, wetsuit, leash, wax)',
           'Transport to multiple surf breaks based on conditions',
           'Small group instruction (max 2-3 students per instructor)',
-          'Optional photo sessions (Intensive & Elite include photo/drone)',
           'Continuity plan to keep progressing after your program',
           'Ocean safety and surf etiquette training',
           'Access to all Zeneidas facilities (yoga, ice bath, communal spaces)',
@@ -222,10 +218,9 @@ export default function SurfCampPage({ params }: PageProps) {
         options: [
           {
             duration: 'Core Surf Program',
-            price: '$450',
+            price: '$390',
             sessions: '4 sesiones de surf',
             videoAnalysis: '2 sesiones de videoanálisis',
-            photoSession: 'Sesión de fotos (opcional)',
             droneSession: null,
             continuityPlan: 'Plan de continuidad',
             nutritionPlan: 'Guía nutricional básica',
@@ -235,28 +230,26 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Intensive Surf Program',
-            price: '$650',
+            price: '$540',
             sessions: '6 sesiones de surf',
             videoAnalysis: '4 sesiones de videoanálisis',
-            photoSession: '1 sesión de fotos incluida',
             droneSession: null,
             continuityPlan: 'Plan de práctica final',
             nutritionPlan: 'Plan nutricional personalizado',
             level: 'Cualquier Nivel',
-            description: 'Inmersión profunda en tu progresión con más tiempo en el agua y videoanálisis detallado. Cuatro sesiones de análisis nos permiten trabajar en múltiples aspectos de tu surf y seguir tu mejora a lo largo del tiempo. Incluye sesión de fotos y plan de práctica completo.',
+            description: 'Inmersión profunda en tu progresión con más tiempo en el agua y videoanálisis detallado. Cuatro sesiones de análisis nos permiten trabajar en múltiples aspectos de tu surf y seguir tu mejora a lo largo del tiempo. Incluye plan de práctica completo.',
             ideal: 'Ideal para: Progresión seria, viajes de una semana, superar estancamientos',
           },
           {
             duration: 'Elite Surf Program',
-            price: '$910',
+            price: '$850',
             sessions: '8 sesiones de alto rendimiento',
             videoAnalysis: '5 sesiones avanzadas de videoanálisis',
-            photoSession: 'Sesión de fotos incluida',
             droneSession: 'Video con drone incluido',
             continuityPlan: 'Revisión final extendida',
             nutritionPlan: 'Plan nutricional completo',
             level: 'Cualquier Nivel',
-            description: 'Máximo compromiso con la mejora en el surf con más tiempo en el agua y el videoanálisis más profundo. Cinco sesiones permiten refinamiento técnico cuadro por cuadro y seguimiento completo de progreso. Incluye fotos + drone y revisión final extendida.',
+            description: 'Máximo compromiso con la mejora en el surf con más tiempo en el agua y el videoanálisis más profundo. Cinco sesiones permiten refinamiento técnico cuadro por cuadro y seguimiento completo de progreso. Incluye video con drone y revisión final extendida.',
             ideal: 'Ideal para: Transformación total, estadías extendidas, surfistas competitivos, entusiastas serios',
           },
         ],
@@ -269,7 +262,6 @@ export default function SurfCampPage({ params }: PageProps) {
           'Equipo completo de surf (tabla, traje, leash, cera)',
           'Transporte a múltiples rompientes según las condiciones',
           'Instrucción en grupos pequeños (máx 2-3 estudiantes por instructor)',
-          'Sesiones de fotos opcionales (Intensive & Elite incluyen foto/drone)',
           'Plan de continuidad para seguir progresando después de tu programa',
           'Entrenamiento en seguridad oceánica y etiqueta del surf',
           'Acceso a todas las instalaciones de Zeneidas (yoga, baño de hielo, espacios comunes)',
@@ -449,12 +441,6 @@ export default function SurfCampPage({ params }: PageProps) {
                       <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                       <span className="text-gray-900">{program.videoAnalysis}</span>
                     </div>
-                    {program.photoSession && (
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <span className="text-gray-900">{program.photoSession}</span>
-                      </div>
-                    )}
                     {program.droneSession && (
                       <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
                         <Check className="w-4 h-4 text-green-600 flex-shrink-0" />

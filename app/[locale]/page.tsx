@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useI18n } from "@/lib/i18n";
 import { useBookingStore } from "@/lib/store";
 import StepLoader from "@/components/StepLoader";
+import SuccessPage from "@/components/SuccessPage";
 
 const StepLoaderFallback = () => <StepLoader />;
 
@@ -23,9 +24,6 @@ const ContactForm = dynamic(() => import("@/components/ContactForm"), {
   loading: StepLoaderFallback,
 });
 const PaymentSection = dynamic(() => import("@/components/PaymentSection"), {
-  loading: StepLoaderFallback,
-});
-const SuccessPage = dynamic(() => import("@/components/SuccessPage"), {
   loading: StepLoaderFallback,
 });
 const FindReservation = dynamic(() => import("@/components/FindReservation"), {

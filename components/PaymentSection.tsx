@@ -53,11 +53,12 @@ export default function PaymentSection() {
   const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
-  const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation'>('waiting');
+  const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation' | 'payment_confirmed'>('waiting');
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   const closePaymentWindow = useCallback(() => {
     if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
@@ -331,28 +332,25 @@ export default function PaymentSection() {
       }
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('🎉 Payment successful, redirecting to success page');
-
-        // Calculate final prices before redirecting
-        const prices = calculatePrices();
-        if (prices) {
-          setPriceBreakdown(prices);
-          console.log('💰 Price breakdown calculated:', prices);
-        } else {
-          console.warn('⚠️ Could not calculate price breakdown');
-        }
+        console.log('🎉 Payment confirmed! Waiting for user to close payment window...');
+        console.log('📊 Payment data:', {
+          is_booking_created: data.is_booking_created,
+          is_completed: data.is_completed,
+          has_lobbypms_reservation: data.order?.lobbypms_reservation_id
+        });
 
         // Clear the interval
         if (paymentStatusInterval.current) {
           clearInterval(paymentStatusInterval.current);
           paymentStatusInterval.current = null;
         }
-        setIsWaitingForPayment(false);
-        setIsCheckingPaymentStatus(false);
-        // Redirect to success page
-        setCurrentStep('success');
-        closePaymentWindow();
-        window.focus();
+
+        // Update status message
+        setPaymentStatusMessage('payment_confirmed');
+
+        // Mark payment as confirmed (will redirect when window closes)
+        console.log('✅ Setting paymentConfirmed = true');
+        setPaymentConfirmed(true);
       }
 
       return data;
@@ -388,25 +386,19 @@ export default function PaymentSection() {
         if (data.type === 'connected') {
           console.log('🔗 SSE connected for order:', data.orderId);
         } else if (data.type === 'reservation_complete') {
-          console.log('🎉 Reservation complete! Data:', data);
-
-          // Calculate final prices
-          const prices = calculatePrices();
-          if (prices) {
-            setPriceBreakdown(prices);
-            console.log('💰 Price breakdown calculated:', prices);
-          }
+          console.log('🎉 Reservation complete (SSE)! Waiting for user to close payment window...');
+          console.log('📊 SSE data:', data);
 
           // Close SSE connection
           eventSource.close();
           eventSourceRef.current = null;
 
-          // Update UI
-          setIsWaitingForPayment(false);
-          setIsCheckingPaymentStatus(false);
-          setCurrentStep('success');
-          closePaymentWindow();
-          window.focus();
+          // Update status message
+          setPaymentStatusMessage('payment_confirmed');
+
+          // Mark payment as confirmed (will redirect when window closes)
+          console.log('✅ Setting paymentConfirmed = true (from SSE)');
+          setPaymentConfirmed(true);
         }
       } catch (error) {
         console.error('❌ Error parsing SSE message:', error);
@@ -462,6 +454,55 @@ export default function PaymentSection() {
     }, 10 * 60 * 1000);
   };
 
+  // Monitor payment window and redirect when payment is confirmed and window is closed
+  useEffect(() => {
+    if (!paymentConfirmed) {
+      console.log('⏸️ Payment not confirmed yet, not checking window status');
+      return;
+    }
+
+    if (!paymentWindowRef.current) {
+      console.log('⚠️ Payment window ref is null, cannot check window status');
+      return;
+    }
+
+    console.log('👀 Starting to monitor payment window closure...');
+
+    const checkWindowClosed = setInterval(() => {
+      const windowRef = paymentWindowRef.current;
+
+      if (!windowRef) {
+        console.log('⚠️ Window ref became null during monitoring');
+        return;
+      }
+
+      const isClosed = windowRef.closed;
+      console.log('🔍 Window status check - closed:', isClosed);
+
+      if (isClosed) {
+        console.log('✅ Payment window closed, redirecting to success page');
+        clearInterval(checkWindowClosed);
+
+        // Calculate final prices
+        const prices = calculatePrices();
+        if (prices) {
+          setPriceBreakdown(prices);
+        }
+
+        // Redirect to success
+        setIsWaitingForPayment(false);
+        setIsCheckingPaymentStatus(false);
+        setCurrentStep('success');
+        window.focus();
+      }
+    }, 500);
+
+    return () => {
+      console.log('🧹 Cleaning up window monitor');
+      clearInterval(checkWindowClosed);
+    };
+  }, [paymentConfirmed]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -483,6 +524,8 @@ export default function PaymentSection() {
 
     setIsProcessing(true);
     setError('');
+    setPaymentConfirmed(false); // Reset payment confirmation status
+    setPaymentStatusMessage('waiting'); // Reset status message
 
     try {
       console.log(isTestMode ? '🧪 Starting TEST payment process ($0)...' : '💳 Starting payment process...');
@@ -790,6 +833,9 @@ export default function PaymentSection() {
           tripUuid
         });
 
+        // Set waiting state
+        setIsWaitingForPayment(true);
+
         // Start SSE connection for real-time updates
         startPaymentStatusSSE(orderId);
 
@@ -1026,7 +1072,17 @@ export default function PaymentSection() {
                     </p>
                   </>
                 )}
-                {isCheckingPaymentStatus && (
+                {paymentStatusMessage === 'payment_confirmed' && (
+                  <>
+                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
+                      🎉 ¡Reserva Confirmada!
+                    </h3>
+                    <p className="text-blue-300 text-sm">
+                      Tu pago fue procesado y tu reserva está confirmada. Puedes cerrar la ventana de pago.
+                    </p>
+                  </>
+                )}
+                {isCheckingPaymentStatus && paymentStatusMessage !== 'payment_confirmed' && (
                   <p className="text-green-300 text-xs mt-3 animate-pulse">
                     🔄 Verificando estado automáticamente...
                   </p>

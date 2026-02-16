@@ -45,7 +45,7 @@ const SURF_PROGRAMS = {
       es: 'Inicio rápido, base sólida, coaching personalizado',
       en: 'Fast start, strong foundation, personalized coaching'
     },
-    price: 450,
+    price: 390,
     sessions: 4,
     includes: {
       es: [
@@ -53,7 +53,6 @@ const SURF_PROGRAMS = {
         '2 sesiones de videoanálisis',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
-        'Sesión de fotos',
         'Plan de continuidad'
       ],
       en: [
@@ -61,7 +60,6 @@ const SURF_PROGRAMS = {
         '2 video analysis sessions',
         'Gear (board + lycra)',
         'Surf theory',
-        'Photo session',
         'Continuity plan'
       ]
     },
@@ -87,7 +85,7 @@ const SURF_PROGRAMS = {
       es: 'Progreso consistente mediante repetición, coaching y feedback',
       en: 'Consistent progress through repetition, coaching and feedback'
     },
-    price: 650,
+    price: 540,
     sessions: 6,
     includes: {
       es: [
@@ -96,7 +94,6 @@ const SURF_PROGRAMS = {
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
-        '1 sesión de fotos',
         'Plan de práctica final'
       ],
       en: [
@@ -105,7 +102,6 @@ const SURF_PROGRAMS = {
         'Transport to nearby surf spots',
         'Gear (board + lycra)',
         'Surf theory',
-        '1 photo session',
         'Final practice plan'
       ]
     },
@@ -131,7 +127,7 @@ const SURF_PROGRAMS = {
       es: 'Transformación técnica profunda y análisis de alta calidad',
       en: 'Deep technical transformation and high-quality analysis'
     },
-    price: 910,
+    price: 850,
     sessions: 8,
     includes: {
       es: [
@@ -140,7 +136,6 @@ const SURF_PROGRAMS = {
         'Transporte a spots de surf cercanos',
         'Equipo (tabla + lycra)',
         'Teoría del surf',
-        'Sesión de fotos + drone',
         'Revisión final extendida'
       ],
       en: [
@@ -149,7 +144,6 @@ const SURF_PROGRAMS = {
         'Transport to nearby surf spots',
         'Gear (board + lycra)',
         'Surf theory',
-        'Photo + drone session',
         'Extended final review'
       ]
     },
@@ -158,13 +152,13 @@ const SURF_PROGRAMS = {
         'Técnica & biomecánica: Análisis biomecánico profundo para crear cambios duraderos en tus patrones específicos',
         'Mentalidad & confianza: Desarrollo de resiliencia, adaptabilidad y flow state en tu zona óptima',
         'Nutrición & recuperación: Protocolos deportivos completos con periodización y estrategias personalizadas',
-        'Feedback visual: Análisis exhaustivo con drone y fotografía, más plan detallado de continuidad'
+        'Feedback visual: Análisis exhaustivo con drone, más plan detallado de continuidad'
       ],
       en: [
         'Technique & biomechanics: Deep biomechanical analysis to create lasting changes in your specific patterns',
         'Mindset & confidence: Development of resilience, adaptability, and flow state in your optimal zone',
         'Nutrition & recovery: Complete sports protocols with periodization and personalized strategies',
-        'Visual feedback: Comprehensive analysis with drone and photography, plus detailed continuity plan'
+        'Visual feedback: Comprehensive analysis with drone, plus detailed continuity plan'
       ]
     }
   }

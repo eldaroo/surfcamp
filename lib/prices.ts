@@ -81,12 +81,12 @@ export const getActivityBasePrice = (category: string): number => {
 
 // Fixed pricing for surf programs
 export const calculateSurfPrice = (classes: number): number => {
-  // Core program: 4 classes = $450
-  if (classes <= 4) return 450;
-  // Intensive program: 6 classes = $650
-  if (classes <= 6) return 650;
-  // Elite program: 8 classes = $910
-  return 910;
+  // Core program: 4 classes = $390
+  if (classes <= 4) return 390;
+  // Intensive program: 6 classes = $540
+  if (classes <= 6) return 540;
+  // Elite program: 8 classes = $850
+  return 850;
 };
 
 // Private coaching upgrade pricing based on program

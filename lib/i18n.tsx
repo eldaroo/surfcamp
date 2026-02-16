@@ -270,14 +270,13 @@ const translations = {
           name: "Core Surf Program",
           level: "Principiante - Nivel 1.1, 1.2, 1.3",
           tagline: "Construye una base sólida y evita malos hábitos desde el día uno",
-          price: "450",
+          price: "390",
           includes: {
             title: "Incluye:",
             items: [
               "4 sesiones de surf",
               "2 sesiones de videoanálisis",
               "Tabla + lycra + transporte",
-              "Sesión de fotos opcional",
               "Plan de continuidad"
             ]
           },
@@ -295,13 +294,12 @@ const translations = {
           name: "Intensive Surf Program",
           level: "Principiante con experiencia / Intermedio temprano - Nivel 1.2, 1.3, 2.1",
           tagline: "Corrige patrones clave, lee mejor las olas y desbloquea tu siguiente nivel",
-          price: "650",
+          price: "540",
           includes: {
             title: "Incluye:",
             items: [
               "6 sesiones de surf",
               "4 sesiones de videoanálisis",
-              "1 sesión de fotos",
               "Plan de práctica final"
             ]
           },
@@ -319,13 +317,12 @@ const translations = {
           name: "Elite Surf Program",
           level: "Intermedio-Avanzado - Nivel 2.1, 2.2",
           tagline: "Entrena como un atleta y transforma tu manera de surfear",
-          price: "910",
+          price: "850",
           includes: {
             title: "Incluye:",
             items: [
               "8 sesiones de alto rendimiento",
               "5 sesiones de videoanálisis avanzado",
-              "Sesión de fotos + drone",
               "Revisión final extendida"
             ]
           },
@@ -693,7 +690,7 @@ const translations = {
           features: ["Shared", "Affordable", "Social"]
         },
         "casitas-privadas": {
-          name: "Deluxe Studio",
+          name: "Private Cottages",
           description: "Independent cottages with total privacy, ideal for couples or travelers seeking tranquility.",
           features: ["Private", "Quiet", "Independent"]
         },
@@ -843,14 +840,13 @@ const translations = {
           name: "Core Surf Program",
           level: "Beginner - Level 1.1, 1.2, 1.3",
           tagline: "Build a strong foundation and avoid bad habits from day one",
-          price: "450",
+          price: "390",
           includes: {
             title: "Includes:",
             items: [
               "4 surf sessions",
               "2 video analysis sessions",
               "Board + wetsuit + transport",
-              "Optional photo session",
               "Continuity plan"
             ]
           },
@@ -868,13 +864,12 @@ const translations = {
           name: "Intensive Surf Program",
           level: "Early Intermediate - Level 1.2, 1.3, 2.1",
           tagline: "Correct key patterns, read waves better and unlock your next level",
-          price: "650",
+          price: "540",
           includes: {
             title: "Includes:",
             items: [
               "6 surf sessions",
               "4 video analysis sessions",
-              "1 photo session",
               "Final practice plan"
             ]
           },
@@ -892,13 +887,12 @@ const translations = {
           name: "Elite Surf Program",
           level: "Intermediate-Advanced - Level 2.1, 2.2",
           tagline: "Train like an athlete and transform the way you surf",
-          price: "910",
+          price: "850",
           includes: {
             title: "Includes:",
             items: [
               "8 high-performance sessions",
               "5 advanced video analysis sessions",
-              "Photo + drone session",
               "Extended final review"
             ]
           },
