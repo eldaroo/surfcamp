@@ -1,0 +1,22 @@
+.git
+.github
+.next
+.dist
+.specstory
+.claude
+.vscode
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+.env.production.local
+links generator/.next
+links generator/node_modules
+links generator/.env.local
+links generator/tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo
+tmp_patch.txt
+tmp_script.py
+update.patch

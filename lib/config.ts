@@ -1,9 +1,9 @@
 // Configuration file for API keys and environment variables
 export const config = {
   wetravel: {
-    apiKey: process.env.WETRAVEL_API_KEY || 'eyJraWQiOiJkNjFiYzMxMiIsImFsZyI6IkVTMjU2In0.eyJpZCI6ODMzODkxLCJ2ZXIiOjUsInB1YiI6dHJ1ZSwic2NvcGVzIjpbInJ3OmFsbCJdLCJleHAiOjIwNzE4NzIwMDAsImp0aSI6IjZlYmUxNzNmLTVkYmUtNDYxYS05NWNlLWYwZmRkMjBhYmQxYyIsImtpbmQiOiJyZWZyZXNoIiwic2JkIjpudWxsfQ.mWX68Hh4rkM-vDpB1JevInkiJnFIr1YFS0ax9mNMQWQLLYlyy84vp0CuURP0OD7aA5OONJnqZyM5pq-NE5bB5Q',
-    authUrl: 'https://api.wetravel.com/v2/auth/tokens/access',
-    apiUrl: 'https://api.wetravel.com/v2/payment_links',
+    apiKey: process.env.WETRAVEL_API_KEY || '',
+    authUrl: process.env.WETRAVEL_AUTH_URL || 'https://api.wetravel.com/v2/auth/tokens/access',
+    apiUrl: process.env.WETRAVEL_API_URL || 'https://api.wetravel.com/v2/payment_links',
   },
   // Add other API configurations here if needed
   stripe: {
@@ -16,16 +16,16 @@ export const config = {
 
 // Helper function to check if required config is present
 export const isConfigValid = () => {
-  const requiredKeys = [
-    config.wetravel.apiKey,
-  ];
-  
-  return requiredKeys.every(key => key && key.length > 0);
+  return Boolean(config.wetravel.apiKey);
 };
 
 // Function to get WeTravel access token
 export const getWeTravelAccessToken = async (): Promise<string> => {
   try {
+    if (!config.wetravel.apiKey) {
+      throw new Error('WETRAVEL_API_KEY is not configured');
+    }
+
     console.log('🔑 Getting WeTravel access token...');
     
     const response = await fetch(config.wetravel.authUrl, {

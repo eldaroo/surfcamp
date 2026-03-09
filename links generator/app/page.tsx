@@ -28,10 +28,10 @@ type ApiResult = {
     accommodationDeposit: number;
     programDifference: number;
     coachingCost: number;
-    detectedPrograms: SurfProgram[];
-    coachingPrograms: SurfProgram[];
-  };
-  payloadSent?: unknown;
+      detectedPrograms: SurfProgram[];
+      coachingPrograms: SurfProgram[];
+    };
+  payloadSent?: Record<string, unknown> | null;
 };
 
 export default function HomePage() {
@@ -237,7 +237,7 @@ export default function HomePage() {
             </div>
           )}
 
-          {result?.payloadSent && (
+          {result?.payloadSent != null && (
             <div className="result-item" style={{ marginTop: 18 }}>
               <dt>Payload sent to WeTravel</dt>
               <dd>

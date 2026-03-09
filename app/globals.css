@@ -1,6 +1,6 @@
-/* Fonts are loaded via next/font in layout.tsx and available as CSS variables:
-   --font-roboto (Google Font)
-   --font-bochan (Local font: BochanSerif.ttf)
+/* Fonts are loaded via layout.tsx/CSS variables:
+   --font-roboto (system stack)
+   --font-bochan (local font: BochanSerif.ttf)
 */
 
 @tailwind base;
@@ -9,6 +9,7 @@
 
 @layer base {
   :root {
+    --font-roboto: system-ui, -apple-system, "Segoe UI", sans-serif;
     --brand-bg: #0f2a2b;
     --brand-surface: #14363a;
     --brand-border: #2a4c4f;

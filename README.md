@@ -61,7 +61,31 @@ STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
 npm run dev
 ```
 
-5. **Abre tu navegador** en [http://localhost:3000](http://localhost:3000)
+5. **Abre tu navegador** en [http://localhost:3001](http://localhost:3001)
+
+## Docker
+
+El `docker-compose.yml` de este repo levanta solo `surfcamp`:
+
+- `surfcamp` en `http://localhost:3001`
+
+1. Crea los archivos de entorno:
+```bash
+cp .env.example .env.local
+```
+
+2. Completa las credenciales reales en `.env.local`.
+
+3. Levanta los contenedores:
+```bash
+docker compose up --build
+```
+
+4. Accede a:
+- `http://localhost:3001`
+
+Nota:
+La ruta `/linkgenerator` sigue existiendo en `surfcamp`, pero embebe el proyecto independiente `links generator` si lo corrés aparte en `http://localhost:3010`. Ese proyecto no forma parte del `docker-compose` principal.
 
 ## 🏗️ Estructura del Proyecto
 

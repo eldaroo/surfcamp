@@ -1,4 +1,3 @@
-import { Roboto } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
 import Script from 'next/script';
@@ -6,12 +5,6 @@ import Providers from '@/components/Providers';
 import SchemaOrg from '@/components/SchemaOrg';
 import { Metadata } from 'next';
 // import LenisProvider from '@/components/LenisProvider'; // Disabled for performance
-
-const roboto = Roboto({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
-  variable: '--font-roboto'
-});
 
 const bochanSerif = localFont({
   src: '../public/fonts/BochanSerif.ttf',
@@ -106,7 +99,7 @@ export default function RootLayout({
 
   return (
     <html lang={lang}>
-      <body className={`${roboto.variable} ${bochanSerif.variable} font-body`}>
+      <body className={`${bochanSerif.variable} font-body`}>
         {/* Google Tag Manager */}
         <Script id="gtm-script" strategy="afterInteractive">
           {`

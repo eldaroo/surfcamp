@@ -123,6 +123,14 @@ export interface WeTravelPaymentBreakdown {
   coachingPrograms: SurfProgram[];
 }
 
+export interface MinimalLinkPayload {
+  fullName: string;
+  surfProgram: SurfProgram | '';
+  checkIn: string;
+  checkOut: string;
+  totalPrice: number;
+}
+
 export function calculateWeTravelPayment(input: LinkRequestPayload): WeTravelPaymentBreakdown {
   const detectedPrograms = input.participants
     .map((participant) => participant.surfProgram)
@@ -183,13 +191,7 @@ export function calculateWeTravelPayment(input: LinkRequestPayload): WeTravelPay
   };
 }
 
-export function buildMinimalPayload(input: {
-  fullName: string;
-  surfProgram: SurfProgram | '';
-  checkIn: string;
-  checkOut: string;
-  totalPrice: number;
-}): LinkRequestPayload {
+export function buildMinimalPayload(input: MinimalLinkPayload): LinkRequestPayload {
   const splitName = splitFullName(input.fullName);
   const emailLocalPart = slugify(splitName.fullName || 'guest');
   const generatedEmail = `${emailLocalPart || 'guest'}+${Date.now()}@surfcamp.local`;
@@ -276,13 +278,19 @@ export function getNightCount(checkIn: string, checkOut: string) {
 export function sanitizePayload(raw: unknown): LinkRequestPayload {
   const payload = raw as Partial<LinkRequestPayload>;
 
-  const participants = Array.isArray(payload.participants)
-    ? payload.participants.map((participant, index) => ({
-        id: String(participant?.id || `participant-${index + 1}`),
-        name: String(participant?.name || `Participant ${index + 1}`),
-        surfProgram: isSurfProgram(participant?.surfProgram) ? participant.surfProgram : '',
-        hasPrivateCoaching: Boolean(participant?.hasPrivateCoaching),
-      }))
+  const participants: ParticipantInput[] = Array.isArray(payload.participants)
+    ? payload.participants.map((participant, index) => {
+        const surfProgram = isSurfProgram(participant?.surfProgram)
+          ? participant.surfProgram
+          : '';
+
+        return {
+          id: String(participant?.id || `participant-${index + 1}`),
+          name: String(participant?.name || `Participant ${index + 1}`),
+          surfProgram,
+          hasPrivateCoaching: Boolean(participant?.hasPrivateCoaching),
+        };
+      })
     : [];
 
   return {
@@ -322,7 +330,7 @@ export function validatePayload(payload: LinkRequestPayload) {
   return errors;
 }
 
-export function sanitizeMinimalPayload(raw: unknown) {
+export function sanitizeMinimalPayload(raw: unknown): MinimalLinkPayload {
   const payload = raw as Partial<{
     fullName: string;
     surfProgram: SurfProgram | '';
@@ -340,13 +348,7 @@ export function sanitizeMinimalPayload(raw: unknown) {
   };
 }
 
-export function validateMinimalPayload(payload: {
-  fullName: string;
-  surfProgram: SurfProgram | '';
-  checkIn: string;
-  checkOut: string;
-  totalPrice: number;
-}) {
+export function validateMinimalPayload(payload: MinimalLinkPayload) {
   const errors: string[] = [];
 
   if (!payload.fullName) errors.push('Name is required.');

@@ -3,7 +3,7 @@ import { LobbyPMSBooking } from '@/types';
 
 // LobbyPMS API Configuration - REAL CREDENTIALS
 const LOBBYPMS_BASE_URL = process.env.LOBBYPMS_API_URL || 'https://api.lobbypms.com/api/v1';
-const LOBBYPMS_API_TOKEN = process.env.LOBBYPMS_API_KEY || 'JNjeoLeXxTHFQSwUPQCgwBnCZktRVv7pfQ48uz2tyoNu6K9dW6D2US1cN9Mu';
+const LOBBYPMS_API_TOKEN = process.env.LOBBYPMS_API_KEY || '';
 
 export interface LobbyPMSRoom {
   id: string;
