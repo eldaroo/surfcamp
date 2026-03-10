@@ -10,6 +10,8 @@ import {
 // 🔒 SUPABASE: Use @supabase/supabase-js for better integration
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
 // Helper function to format dates for WeTravel API (YYYY-MM-DD)
 function formatDateForWeTravel(date: string | Date): string {
   if (!date) return '';
