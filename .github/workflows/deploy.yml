@@ -1,0 +1,61 @@
+name: Build and Deploy Surfcamp
+
+# Required GitHub secrets:
+#   INFRA_READ_TOKEN         – Fine-grained PAT with read access to neozero86/infrastructure
+#   NOMAD_TOKEN              – Nomad management token
+#   LOBBYPMS_API_KEY
+#   STRIPE_SECRET_KEY
+#   STRIPE_PUBLISHABLE_KEY
+#   SUPABASE_SERVICE_ROLE_KEY
+#   DATABASE_URL
+#   DATABASE_URL_DIRECT
+#   WETRAVEL_API_KEY
+#   WETRAVEL_WEBHOOK_SECRET
+#   BREVO_API_KEY
+#   GREEN_API_INSTANCE
+#   GREEN_API_TOKEN
+#
+# Required GitHub variables (Settings → Variables):
+#   NOMAD_ADDR               – Nomad server URL
+#   NEXT_PUBLIC_SUPABASE_URL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout infrastructure
+        uses: actions/checkout@v4
+        with:
+          repository: neozero86/infrastructure
+          path: _infra
+          token: ${{ secrets.INFRA_READ_TOKEN }}
+
+      - uses: ./_infra/.github/actions/nomad-deploy
+        with:
+          project_name: surfcamp
+          nomad_token:  ${{ secrets.NOMAD_TOKEN }}
+          nomad_addr:   ${{ vars.NOMAD_ADDR }}
+          build_args: |
+            NEXT_PUBLIC_BASE_URL=https://surfcamp.duckdns.org
+            NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.duckdns.org
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          project_secrets: |
+            LOBBYPMS_API_KEY=${{ secrets.LOBBYPMS_API_KEY }}
+            STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+            STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_URL_DIRECT=${{ secrets.DATABASE_URL_DIRECT }}
+            WETRAVEL_API_KEY=${{ secrets.WETRAVEL_API_KEY }}
+            WETRAVEL_WEBHOOK_SECRET=${{ secrets.WETRAVEL_WEBHOOK_SECRET }}
+            BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}
+            GREEN_API_INSTANCE=${{ secrets.GREEN_API_INSTANCE }}
+            GREEN_API_TOKEN=${{ secrets.GREEN_API_TOKEN }}
