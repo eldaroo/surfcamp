@@ -3,6 +3,7 @@ name: Build and Deploy Surfcamp
 # Required GitHub secrets:
 #   INFRA_READ_TOKEN         – Fine-grained PAT with read access to neozero86/infrastructure
 #   NOMAD_TOKEN              – Nomad management token
+#   GHCR_READ_TOKEN          – Classic PAT with read:packages scope for Nomad image pulls
 #   LOBBYPMS_API_KEY
 #   STRIPE_SECRET_KEY
 #   STRIPE_PUBLISHABLE_KEY
@@ -43,6 +44,7 @@ jobs:
           project_name: surfcamp
           nomad_token:  ${{ secrets.NOMAD_TOKEN }}
           nomad_addr:   ${{ vars.NOMAD_ADDR }}
+          ghcr_token:   ${{ secrets.GHCR_READ_TOKEN }}
           build_args: |
             NEXT_PUBLIC_BASE_URL=https://surfcamp.duckdns.org
             NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.duckdns.org
