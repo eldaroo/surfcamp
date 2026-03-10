@@ -10,17 +10,7 @@ import {
 // 🔒 SUPABASE: Use @supabase/supabase-js for better integration
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client with service role (bypasses RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, // This key bypasses RLS
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+export const dynamic = 'force-dynamic';
 
 // Helper function to format dates for WeTravel API (YYYY-MM-DD)
 function formatDateForWeTravel(date: string | Date): string {
@@ -43,6 +33,17 @@ function formatDateForWeTravel(date: string | Date): string {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+
   try {
     const body = await request.json();
     
