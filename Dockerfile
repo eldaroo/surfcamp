@@ -38,4 +38,4 @@ RUN mkdir -p /app/.next/cache/images && chown -R nextjs:nodejs /app/.next
 USER nextjs
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "mkdir -p /app/.next/cache/images && exec npm run start"]
