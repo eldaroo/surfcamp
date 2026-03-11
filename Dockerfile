@@ -33,7 +33,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder /app/next.config.js ./next.config.js
 
-RUN mkdir -p /app/.next/cache/images && chown -R nextjs:nodejs /app/.next/cache
+RUN mkdir -p /app/.next/cache/images && chown -R nextjs:nodejs /app/.next
 
 USER nextjs
 EXPOSE 3000
