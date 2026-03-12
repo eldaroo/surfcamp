@@ -409,6 +409,7 @@ const AccommodationCard = ({
                   src={accommodationImages[room.roomTypeId]}
                   alt={getMainImageAlt(room.roomTypeId)}
                   fill
+                  sizes="(max-width: 640px) 92vw, 600px"
                   className="object-cover transition-transform duration-300 scale-[1.3] group-hover/card:scale-[1.4]"
                   priority
                 />
