@@ -35,13 +35,21 @@ function verifyWebhookSignature(payload: string, signature: string, secret: stri
     .createHmac('sha256', secret)
     .update(payload, 'utf8')
     .digest('hex');
-  
+
   const expectedSignature = `sha256=${computedSignature}`;
-  
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'utf8'),
-    Buffer.from(signature, 'utf8')
-  );
+
+  const expected = Buffer.from(expectedSignature, 'utf8');
+  const actual = Buffer.from(signature, 'utf8');
+
+  if (expected.length !== actual.length) {
+    console.error('❌ [WEBHOOK] Signature length mismatch:', {
+      expected: expectedSignature,
+      received: signature,
+    });
+    return false;
+  }
+
+  return crypto.timingSafeEqual(expected, actual);
 }
 
 // Tipos para el webhook de WeTravel (formato real)
