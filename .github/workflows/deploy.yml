@@ -61,6 +61,8 @@ jobs:
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           project_secrets: |
             LOBBYPMS_API_KEY=${{ secrets.LOBBYPMS_API_KEY }}
+            LOBBYPMS_API_URL=${{ vars.LOBBYPMS_API_URL }}
+            DEV_RESERVE_BASE_URL=${{ vars.DEV_RESERVE_BASE_URL }}
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
             SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

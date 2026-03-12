@@ -718,7 +718,15 @@ export class LobbyPMSClient {
         end_date: '2025-01-02'
       });
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ [LOBBYPMS] testConnection failed:', {
+        message: error?.message,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        baseURL: this.baseURL,
+        hasToken: !!this.apiToken,
+      });
       return false;
     }
   }
