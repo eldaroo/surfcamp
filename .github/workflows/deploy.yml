@@ -56,8 +56,8 @@ jobs:
           nomad_addr:   ${{ vars.NOMAD_ADDR }}
           ghcr_token:   ${{ secrets.GHCR_READ_TOKEN }}
           build_args: |
-            NEXT_PUBLIC_BASE_URL=https://surfcamp.duckdns.org
-            NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.duckdns.org
+            NEXT_PUBLIC_BASE_URL=https://surfcamp.mdlautomations.duckdns.org
+            NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.mdlautomations.duckdns.org
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           project_secrets: |
             LOBBYPMS_API_KEY=${{ secrets.LOBBYPMS_API_KEY }}
