@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
   const supabase = createFreshSupabaseClient();
 
   try {
-    const signature = request.headers.get('x-webhook-signature') || '';
+    const signature = request.headers.get('x-wetravel-signature') || request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
 
     console.log('🔔 [WEBHOOK] ========== NEW WEBHOOK RECEIVED ==========');
