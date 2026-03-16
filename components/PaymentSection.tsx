@@ -463,8 +463,15 @@ export default function PaymentSection() {
       return;
     }
 
-    if (!paymentWindowRef.current) {
-      console.log('⚠️ Payment window ref is null, cannot check window status');
+    if (!paymentWindowRef.current || paymentWindowRef.current.closed) {
+      // Window ref is null (popup blocked) or already closed — go to success immediately
+      console.log('✅ Payment confirmed, window already closed/null — redirecting to success');
+      const prices = calculatePrices();
+      if (prices) setPriceBreakdown(prices);
+      setIsWaitingForPayment(false);
+      setIsCheckingPaymentStatus(false);
+      setCurrentStep('success');
+      window.focus();
       return;
     }
 
