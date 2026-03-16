@@ -55,8 +55,10 @@ export default function PaymentSection() {
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation' | 'payment_confirmed'>('waiting');
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
+  const slowPollingRef = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
+  const currentOrderIdRef = useRef<string | null>(null);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
@@ -503,11 +505,57 @@ export default function PaymentSection() {
     };
   }, [paymentConfirmed]);
 
+  // When paymentConfirmed fires, stop slow polling (no longer needed)
+  useEffect(() => {
+    if (paymentConfirmed && slowPollingRef.current) {
+      clearInterval(slowPollingRef.current);
+      slowPollingRef.current = null;
+    }
+  }, [paymentConfirmed]);
+
+  // Monitor payment window closure independently of SSE/polling.
+  // WeTravel can delay webhooks up to ~30 min, so when the user closes
+  // the payment window we start a slow poll (every 30s for 40 min) instead
+  // of giving up after 10 min.
+  useEffect(() => {
+    if (!isWaitingForPayment || paymentConfirmed) return;
+
+    const monitor = setInterval(() => {
+      const win = paymentWindowRef.current;
+      if (!win?.closed) return;
+
+      // Window is now closed
+      clearInterval(monitor);
+      if (paymentConfirmed) return; // already handled
+
+      console.log('🪟 Payment window closed — starting slow poll (30s × 40min) for WeTravel webhook...');
+
+      const poll = () => checkPaymentStatus(currentOrderIdRef.current ?? undefined);
+      poll(); // immediate check
+
+      slowPollingRef.current = setInterval(poll, 30_000);
+
+      // Give up after 40 min
+      setTimeout(() => {
+        if (slowPollingRef.current) {
+          clearInterval(slowPollingRef.current);
+          slowPollingRef.current = null;
+          console.log('⏰ Slow polling timed out after 40 min');
+        }
+      }, 40 * 60_000);
+    }, 1000);
+
+    return () => clearInterval(monitor);
+  }, [isWaitingForPayment, paymentConfirmed]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (paymentStatusInterval.current) {
         clearInterval(paymentStatusInterval.current);
+      }
+      if (slowPollingRef.current) {
+        clearInterval(slowPollingRef.current);
       }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
@@ -820,6 +868,7 @@ export default function PaymentSection() {
 
         // Start polling for payment status using order_id, trip_id, and trip_uuid
         const orderId = wetravelData.order_id;
+        currentOrderIdRef.current = orderId;
         const tripId = wetravelData.trip_id;
         // Extract trip_uuid from various possible locations
         const tripUuid = wetravelData.trip_uuid ||
