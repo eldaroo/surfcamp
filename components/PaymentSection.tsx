@@ -404,15 +404,7 @@ export default function PaymentSection() {
       startPaymentStatusPolling(orderId, undefined);
     };
 
-    // Timeout after 10 minutes
-    setTimeout(() => {
-      if (eventSourceRef.current) {
-        console.log('⏰ SSE connection timeout');
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-        setIsCheckingPaymentStatus(false);
-      }
-    }, 10 * 60 * 1000);
+    // Server closes connection after 30 min or on completion — no client-side timeout needed
   };
 
   // Fallback: Polling function (used if SSE fails)
@@ -463,6 +455,9 @@ export default function PaymentSection() {
     setIsCheckingPaymentStatus(false);
     setPaymentConfirmed(true);
     setCurrentStep('success');
+
+    // Change tab title so user sees the update even when looking at another tab
+    document.title = '✅ ¡Reserva confirmada! — Surfcamp';
 
     // Nuclear fallback: dispatch a global event so the parent page can also react.
     // This works even when React batches/defers state updates in background tabs.
