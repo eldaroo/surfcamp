@@ -1,35 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { query, queryOne, updatePayment, updateOrder, updateWetravelEventByKey } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
   try {
     console.log('🔧 Manual fix for orphaned events requested');
 
     // Get all orphaned events
-    const { data: orphanedEvents, error: orphanError } = await supabase
-      .from('wetravel_events')
-      .select('*')
-      .eq('event_type', 'booking.created')
-      .is('payment_id', null);
+    const orphanedEvents = await query(
+      `SELECT * FROM wetravel_events
+       WHERE event_type = 'booking.created' AND payment_id IS NULL`
+    );
 
-    if (orphanError) {
-      console.error('❌ Error fetching orphaned events:', orphanError);
+    if (!orphanedEvents) {
+      console.error('❌ Error fetching orphaned events');
       return NextResponse.json({ error: 'Error fetching orphaned events' }, { status: 500 });
     }
 
-    console.log('🔍 Found orphaned events:', orphanedEvents?.length || 0);
+    console.log('🔍 Found orphaned events:', orphanedEvents.length || 0);
 
     let fixed = 0;
     let errors = 0;
@@ -37,7 +26,7 @@ export async function POST(request: NextRequest) {
     for (const event of orphanedEvents || []) {
       try {
         // Extract trip_id from event_key (format: booking.created_tripId_timestamp)
-        const eventKeyParts = event.event_key.split('_');
+        const eventKeyParts = (event as any).event_key.split('_');
         let tripId = null;
 
         // Try different formats
@@ -54,39 +43,36 @@ export async function POST(request: NextRequest) {
         }
 
         if (!tripId) {
-          console.log('⚠️ Could not extract trip_id from event_key:', event.event_key);
+          console.log('⚠️ Could not extract trip_id from event_key:', (event as any).event_key);
           errors++;
           continue;
         }
 
-        console.log('🔍 Processing event:', event.event_key, 'trip_id:', tripId);
+        console.log('🔍 Processing event:', (event as any).event_key, 'trip_id:', tripId);
 
         // Find payment by trip_id
-        const { data: payments, error: findError } = await supabase
-          .from('payments')
-          .select('id, order_id, wetravel_data, status')
-          .contains('wetravel_data', { trip_id: tripId })
-          .limit(1);
+        const payments = await query(
+          `SELECT id, order_id, wetravel_data, status
+           FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+          [JSON.stringify({ trip_id: tripId })]
+        );
 
-        if (findError || !payments || payments.length === 0) {
+        if (!payments || payments.length === 0) {
           console.log('⚠️ Could not find payment for trip_id:', tripId);
           errors++;
           continue;
         }
 
-        const payment = payments[0];
+        const payment = payments[0] as any;
         console.log('✅ Found payment:', payment.id, 'order:', payment.order_id);
 
         // Update the event
-        const { error: updateError } = await supabase
-          .from('wetravel_events')
-          .update({
+        try {
+          await updateWetravelEventByKey((event as any).event_key, {
             payment_id: payment.id,
             order_id: payment.order_id
-          })
-          .eq('event_key', event.event_key);
-
-        if (updateError) {
+          });
+        } catch (updateError) {
           console.error('❌ Error updating event:', updateError);
           errors++;
           continue;
@@ -94,15 +80,8 @@ export async function POST(request: NextRequest) {
 
         // Update payment status if needed
         if (payment.status === 'pending') {
-          await supabase
-            .from('payments')
-            .update({ status: 'booking_created' })
-            .eq('id', payment.id);
-
-          await supabase
-            .from('orders')
-            .update({ status: 'booking_created' })
-            .eq('id', payment.order_id);
+          await updatePayment(payment.id, { status: 'booking_created' });
+          await updateOrder(payment.order_id, { status: 'booking_created' });
 
           console.log('✅ Updated payment and order status for:', payment.id);
         }
@@ -110,7 +89,7 @@ export async function POST(request: NextRequest) {
         fixed++;
 
       } catch (error) {
-        console.error('❌ Error processing event:', event.event_key, error);
+        console.error('❌ Error processing event:', (event as any).event_key, error);
         errors++;
       }
     }
@@ -135,27 +114,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
   try {
     // Just check how many orphaned events we have
-    const { data: orphanedEvents, error } = await supabase
-      .from('wetravel_events')
-      .select('event_key, processed_at')
-      .eq('event_type', 'booking.created')
-      .is('payment_id', null);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    const orphanedEvents = await query(
+      `SELECT event_key, processed_at FROM wetravel_events
+       WHERE event_type = 'booking.created' AND payment_id IS NULL`
+    );
 
     return NextResponse.json({
       orphaned_events: orphanedEvents?.length || 0,

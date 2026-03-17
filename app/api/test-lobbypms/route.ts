@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { query, getOrderById, updateOrder } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-
   try {
     console.log('');
     console.log('🔵 [LOBBYPMS-DEBUG] ='.repeat(40));
@@ -22,23 +11,22 @@ export async function GET(request: NextRequest) {
     console.log('🔵 [LOBBYPMS-DEBUG] ='.repeat(40));
 
     // Get the most recent completed payment
-    const { data: payments, error: paymentError } = await supabase
-      .from('payments')
-      .select('id, order_id, status, wetravel_data')
-      .eq('status', 'booking_created')
-      .order('created_at', { ascending: false })
-      .limit(1);
+    const payments = await query(
+      `SELECT id, order_id, status, wetravel_data
+       FROM payments WHERE status = 'booking_created'
+       ORDER BY created_at DESC LIMIT 1`
+    );
 
-    if (paymentError || !payments || payments.length === 0) {
+    if (!payments || payments.length === 0) {
       console.log('🔵 [LOBBYPMS-DEBUG] ❌ No booking_created payments found');
       return NextResponse.json({
         success: false,
         error: 'No booking_created payments found',
-        details: paymentError
+        details: null
       });
     }
 
-    const payment = payments[0];
+    const payment = payments[0] as any;
     console.log('🔵 [LOBBYPMS-DEBUG] 📋 Found payment:', {
       id: payment.id,
       order_id: payment.order_id,
@@ -46,18 +34,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Get order details
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .select('booking_data')
-      .eq('id', payment.order_id)
-      .single();
+    const orderData = await getOrderById(payment.order_id) as any;
 
-    if (orderError || !orderData?.booking_data) {
+    if (!orderData?.booking_data) {
       console.log('🔵 [LOBBYPMS-DEBUG] ❌ No booking data found');
       return NextResponse.json({
         success: false,
         error: 'No booking data found',
-        details: orderError
+        details: null
       });
     }
 
@@ -114,16 +98,13 @@ export async function GET(request: NextRequest) {
       console.log('🔵 [LOBBYPMS-DEBUG] 🔑 Reservation ID:', reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id);
 
       // Update order with LobbyPMS reservation ID
-      const updateResult = await supabase
-        .from('orders')
-        .update({
-          lobbypms_reservation_id: reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id,
-          lobbypms_data: reserveData
-        })
-        .eq('id', payment.order_id);
+      const updateResult = await updateOrder(payment.order_id, {
+        lobbypms_reservation_id: reserveData.reservation?.id || reserveData.lobbyPMSResponse?.id,
+        lobbypms_data: reserveData
+      });
 
       console.log('🔵 [LOBBYPMS-DEBUG] 💾 Order update result:', {
-        error: updateResult.error,
+        rowsAffected: updateResult,
         orderId: payment.order_id
       });
 

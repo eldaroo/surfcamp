@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { query, queryOne, getRecentPayments } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-
   try {
     const { searchParams } = request.nextUrl;
     const tripId = searchParams.get('trip_id');
@@ -30,42 +19,64 @@ export async function GET(request: NextRequest) {
 
     // Search 1: If we have tripId, search by wetravel_data
     if (tripId) {
-      const { data: paymentsByTrip, error: tripError } = await supabase
-        .from('payments')
-        .select('id, order_id, status, wetravel_data, created_at, updated_at')
-        .contains('wetravel_data', { trip_id: tripId });
-
-      results.searches.push({
-        method: 'wetravel_data contains trip_id',
-        tripId,
-        found: paymentsByTrip?.length || 0,
-        payments: paymentsByTrip,
-        error: tripError
-      });
+      try {
+        const paymentsByTrip = await query(
+          `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+           FROM payments WHERE wetravel_data @> $1::jsonb`,
+          [JSON.stringify({ trip_id: tripId })]
+        );
+        results.searches.push({
+          method: 'wetravel_data contains trip_id',
+          tripId,
+          found: paymentsByTrip?.length || 0,
+          payments: paymentsByTrip,
+          error: null
+        });
+      } catch (tripError) {
+        results.searches.push({
+          method: 'wetravel_data contains trip_id',
+          tripId,
+          found: 0,
+          payments: null,
+          error: tripError instanceof Error ? tripError.message : 'Unknown error'
+        });
+      }
     }
 
     // Search 2: If we have orderId, search by order_id
     if (orderId) {
-      const { data: paymentsByOrder, error: orderError } = await supabase
-        .from('payments')
-        .select('id, order_id, status, wetravel_data, created_at, updated_at')
-        .eq('order_id', orderId);
-
-      results.searches.push({
-        method: 'direct order_id match',
-        orderId,
-        found: paymentsByOrder?.length || 0,
-        payments: paymentsByOrder,
-        error: orderError
-      });
+      try {
+        const paymentsByOrder = await query(
+          `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+           FROM payments WHERE order_id = $1`,
+          [orderId]
+        );
+        results.searches.push({
+          method: 'direct order_id match',
+          orderId,
+          found: paymentsByOrder?.length || 0,
+          payments: paymentsByOrder,
+          error: null
+        });
+      } catch (orderError) {
+        results.searches.push({
+          method: 'direct order_id match',
+          orderId,
+          found: 0,
+          payments: null,
+          error: orderError instanceof Error ? orderError.message : 'Unknown error'
+        });
+      }
     }
 
     // Search 3: Get recent payments for context
-    const { data: recentPayments, error: recentError } = await supabase
-      .from('payments')
-      .select('id, order_id, status, wetravel_data, created_at')
-      .order('created_at', { ascending: false })
-      .limit(5);
+    let recentPayments: any[] = [];
+    let recentError: any = null;
+    try {
+      recentPayments = await getRecentPayments(5);
+    } catch (e) {
+      recentError = e instanceof Error ? e.message : 'Unknown error';
+    }
 
     results.recent_payments = {
       found: recentPayments?.length || 0,
@@ -74,11 +85,15 @@ export async function GET(request: NextRequest) {
     };
 
     // Search 4: Get recent events with timing analysis
-    const { data: recentEvents, error: eventsError } = await supabase
-      .from('wetravel_events')
-      .select('*')
-      .order('processed_at', { ascending: false })
-      .limit(10);
+    let recentEvents: any[] = [];
+    let eventsError: any = null;
+    try {
+      recentEvents = await query(
+        `SELECT * FROM wetravel_events ORDER BY processed_at DESC LIMIT 10`
+      );
+    } catch (e) {
+      eventsError = e instanceof Error ? e.message : 'Unknown error';
+    }
 
     // Add timing analysis to events
     const eventsWithTiming = recentEvents?.map((event: any) => {
@@ -103,71 +118,79 @@ export async function GET(request: NextRequest) {
 
     // Search 5: If tripId provided, check if any payment has this tripId anywhere
     if (tripId) {
-      const { data: anyMatch, error: anyError } = await supabase
-        .from('payments')
-        .select('id, order_id, status, wetravel_data, created_at')
-        .or(`wetravel_data->>trip_id.eq.${tripId},wetravel_data->>order_id.eq.${tripId}`);
-
-      results.searches.push({
-        method: 'any field contains tripId',
-        tripId,
-        found: anyMatch?.length || 0,
-        payments: anyMatch,
-        error: anyError
-      });
+      try {
+        const anyMatch = await query(
+          `SELECT id, order_id, status, wetravel_data, created_at
+           FROM payments
+           WHERE wetravel_data->>'trip_id' = $1 OR wetravel_data->>'order_id' = $1`,
+          [tripId]
+        );
+        results.searches.push({
+          method: 'any field contains tripId',
+          tripId,
+          found: anyMatch?.length || 0,
+          payments: anyMatch,
+          error: null
+        });
+      } catch (anyError) {
+        results.searches.push({
+          method: 'any field contains tripId',
+          tripId,
+          found: 0,
+          payments: null,
+          error: anyError instanceof Error ? anyError.message : 'Unknown error'
+        });
+      }
     }
 
     // Search 6: Get timing correlation for latest payment
-    if (orderId || recentPayments?.[0]?.order_id) {
-      const targetOrderId = orderId || recentPayments?.[0]?.order_id;
+    const targetOrderId = orderId || recentPayments?.[0]?.order_id;
+    if (targetOrderId) {
+      try {
+        const payment = await queryOne(
+          `SELECT * FROM payments WHERE order_id = $1`,
+          [targetOrderId]
+        );
 
-      // Get payment
-      const { data: payment } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('order_id', targetOrderId)
-        .single();
+        const order = await queryOne(
+          `SELECT * FROM orders WHERE id = $1`,
+          [targetOrderId]
+        );
 
-      // Get order
-      const { data: order } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', targetOrderId)
-        .single();
+        const events = await query(
+          `SELECT * FROM wetravel_events WHERE order_id = $1 ORDER BY processed_at ASC`,
+          [targetOrderId]
+        );
 
-      // Get related events
-      const { data: events } = await supabase
-        .from('wetravel_events')
-        .select('*')
-        .eq('order_id', targetOrderId)
-        .order('processed_at', { ascending: true });
+        if (payment && order) {
+          const paymentCreated = new Date((payment as any).created_at);
+          const orderCreated = new Date((order as any).created_at);
+          const paymentUpdated = (payment as any).updated_at ? new Date((payment as any).updated_at) : null;
+          const orderUpdated = (order as any).updated_at ? new Date((order as any).updated_at) : null;
 
-      if (payment && order) {
-        const paymentCreated = new Date(payment.created_at);
-        const orderCreated = new Date(order.created_at);
-        const paymentUpdated = payment.updated_at ? new Date(payment.updated_at) : null;
-        const orderUpdated = order.updated_at ? new Date(order.updated_at) : null;
-
-        results.timing_correlation = {
-          order_id: targetOrderId,
-          timeline: {
-            payment_created: paymentCreated.toISOString(),
-            order_created: orderCreated.toISOString(),
-            payment_updated: paymentUpdated?.toISOString() || 'N/A',
-            order_updated: orderUpdated?.toISOString() || 'N/A',
-            time_diff_payment_order_ms: orderCreated.getTime() - paymentCreated.getTime(),
-            time_diff_payment_updated_ms: paymentUpdated ? (paymentUpdated.getTime() - paymentCreated.getTime()) : null
-          },
-          payment_status: payment.status,
-          order_status: order.status,
-          has_lobbypms_reservation: !!order.lobbypms_reservation_id,
-          lobbypms_reservation_id: order.lobbypms_reservation_id,
-          events: events?.map((e: any) => ({
-            event_type: e.event_type,
-            processed_at: new Date(e.processed_at).toISOString(),
-            ms_after_payment_created: new Date(e.processed_at).getTime() - paymentCreated.getTime()
-          })) || []
-        };
+          results.timing_correlation = {
+            order_id: targetOrderId,
+            timeline: {
+              payment_created: paymentCreated.toISOString(),
+              order_created: orderCreated.toISOString(),
+              payment_updated: paymentUpdated?.toISOString() || 'N/A',
+              order_updated: orderUpdated?.toISOString() || 'N/A',
+              time_diff_payment_order_ms: orderCreated.getTime() - paymentCreated.getTime(),
+              time_diff_payment_updated_ms: paymentUpdated ? (paymentUpdated.getTime() - paymentCreated.getTime()) : null
+            },
+            payment_status: (payment as any).status,
+            order_status: (order as any).status,
+            has_lobbypms_reservation: !!(order as any).lobbypms_reservation_id,
+            lobbypms_reservation_id: (order as any).lobbypms_reservation_id,
+            events: events?.map((e: any) => ({
+              event_type: e.event_type,
+              processed_at: new Date(e.processed_at).toISOString(),
+              ms_after_payment_created: new Date(e.processed_at).getTime() - paymentCreated.getTime()
+            })) || []
+          };
+        }
+      } catch (correlationError) {
+        // ignore timing correlation errors
       }
     }
 

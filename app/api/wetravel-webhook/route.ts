@@ -1,34 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import {
+  getOrderById, updateOrder,
+  getPaymentByOrderId, updatePayment, findPaymentByField, findPaymentByWetravelData,
+  getRecentPendingPayments, getRecentPayments,
+  getWetravelEvent, insertWetravelEvent, updateWetravelEvents, updateWetravelEventByKey,
+} from '@/lib/db';
 import crypto from 'crypto';
 import { notifyOrderUpdate } from '@/lib/sse-manager';
 import { sendDarioWelcomeMessage } from '@/lib/whatsapp';
 
-// Helper to create fresh Supabase client (no cache, no pooling)
-// Force read/write to PRIMARY database to avoid replica lag
-function createFreshSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      },
-      db: {
-        schema: 'public'
-      },
-      global: {
-        headers: {
-          'cache-control': 'no-cache, no-store, must-revalidate',
-          'pragma': 'no-cache',
-          'expires': '0',
-          'x-supabase-read-preference': 'primary'
-        }
-      }
-    }
-  );
-}
 
 function verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
   const computedSignature = crypto
@@ -69,14 +49,14 @@ interface WeTravelWebhookData {
     payment_type?: string;
     created_at?: string;
     updated_at?: string;
-    
+
     // Buyer info
     buyer?: {
       email: string;
       first_name: string;
       last_name: string;
     };
-    
+
     // Trip info
     trip?: {
       uuid: string;
@@ -87,14 +67,14 @@ interface WeTravelWebhookData {
       recurring: boolean;
       trip_id?: string | null;
     };
-    
+
     // Participants
     participants?: Array<{
       email: string;
       first_name: string;
       last_name: string;
     }>;
-    
+
     // Legacy format support
     booking_note?: string;
     departure_date?: string;
@@ -188,52 +168,31 @@ function buildUpdatedWetravelData(
 }
 
 async function findMatchingPayment(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   context: PaymentSearchContext
 ): Promise<PaymentSearchResult | null> {
-  const selectColumns = 'id, order_id, status, wetravel_data, wetravel_order_id';
-  const attempts: Array<{
+  interface Attempt {
     label: string;
-    run: () => Promise<{ payment: PaymentRecord | null; error: any }>;
-  }> = [];
+    run: () => Promise<PaymentRecord | null>;
+  }
+  const attempts: Attempt[] = [];
 
-  const addEqAttempt = (field: string, value?: string | null, label?: string) => {
+  const addEqAttempt = (field: 'order_id' | 'wetravel_order_id', value?: string | null, label?: string) => {
     if (!value) return;
     attempts.push({
       label: label || `${field} = ${value}`,
-      run: async () => {
-        const { data, error } = await supabase
-          .from('payments')
-          .select(selectColumns)
-          .eq(field, value)
-          .maybeSingle();
-        return {
-          payment: (data as PaymentRecord | null) || null,
-          error
-        };
-      }
+      run: () => findPaymentByField(field, value) as Promise<PaymentRecord | null>
     });
   };
 
   const addContainsAttempt = (
-    value: Record<string, unknown>,
+    key: string,
+    value: string | null | undefined,
     label: string
   ) => {
-    if (!value || Object.keys(value).length === 0) return;
+    if (!value) return;
     attempts.push({
       label,
-      run: async () => {
-        const { data, error } = await supabase
-          .from('payments')
-          .select(selectColumns)
-          .contains('wetravel_data', value)
-          .limit(1);
-        const paymentArray = (data as PaymentRecord[] | null) || [];
-        return {
-          payment: paymentArray.length > 0 ? paymentArray[0] : null,
-          error
-        };
-      }
+      run: () => findPaymentByWetravelData(key, value) as Promise<PaymentRecord | null>
     });
   };
 
@@ -243,39 +202,25 @@ async function findMatchingPayment(
   addEqAttempt('wetravel_order_id', context.metadataOrderId, 'wetravel_order_id (metadataOrderId)');
   addEqAttempt('wetravel_order_id', context.wetravelOrderId, 'wetravel_order_id (WeTravel order_id)');
 
-  addContainsAttempt(
-    context.tripId ? { trip_id: context.tripId } : {},
-    'wetravel_data contains trip_id'
-  );
-  addContainsAttempt(
-    context.metadataOrderId ? { metadata_order_id: context.metadataOrderId } : {},
-    'wetravel_data contains metadata_order_id'
-  );
-  addContainsAttempt(
-    context.wetravelOrderId ? { wetravel_order_id: context.wetravelOrderId } : {},
-    'wetravel_data contains wetravel_order_id'
-  );
-  addContainsAttempt(
-    context.wetravelPaymentId ? { wetravel_payment_id: context.wetravelPaymentId } : {},
-    'wetravel_data contains wetravel_payment_id'
-  );
-  addContainsAttempt(
-    context.metadataPaymentId
-      ? { metadata: { payment_id: context.metadataPaymentId } }
-      : {},
-    'wetravel_data.metadata.payment_id'
-  );
+  if (context.tripId) {
+    addContainsAttempt('trip_id', context.tripId, 'wetravel_data contains trip_id');
+  }
+  if (context.metadataOrderId) {
+    addContainsAttempt('metadata_order_id', context.metadataOrderId, 'wetravel_data contains metadata_order_id');
+  }
+  if (context.wetravelOrderId) {
+    addContainsAttempt('wetravel_order_id', context.wetravelOrderId, 'wetravel_data contains wetravel_order_id');
+  }
+  if (context.wetravelPaymentId) {
+    addContainsAttempt('wetravel_payment_id', context.wetravelPaymentId, 'wetravel_data contains wetravel_payment_id');
+  }
 
   for (const attempt of attempts) {
     try {
-      const { payment, error } = await attempt.run();
-      if (error) {
-        continue;
-      }
-
+      const payment = await attempt.run();
       if (payment) {
         return {
-          payment,
+          payment: payment as PaymentRecord,
           matchedBy: attempt.label
         };
       }
@@ -286,16 +231,13 @@ async function findMatchingPayment(
 }
 
 export async function POST(request: NextRequest) {
-  // Create fresh Supabase client for this request (no cache)
-  const supabase = createFreshSupabaseClient();
-
   try {
     const signature = request.headers.get('x-wetravel-signature') || request.headers.get('x-webhook-signature') || '';
     const rawBody = await request.text();
 
     console.log('🔔 [WEBHOOK] ========== NEW WEBHOOK RECEIVED ==========');
     console.log('🔔 [WEBHOOK] Raw body length:', rawBody.length);
-    
+
     // Verify webhook signature
     const webhookSecret = process.env.WETRAVEL_WEBHOOK_SECRET;
     if (signature && webhookSecret) {
@@ -304,9 +246,9 @@ export async function POST(request: NextRequest) {
       }
     } else {
     }
-    
+
     // Signature verified
-    
+
     const body = JSON.parse(rawBody);
     // Validar que sea un webhook válido de WeTravel (soporta múltiples formatos)
     if (!body.type || !body.data) {
@@ -344,36 +286,29 @@ export async function POST(request: NextRequest) {
     let actualOrderId = metadataOrderId || null;
     if (actualOrderId) {
     } else if (eventType === 'booking.created') {
-      
+
     }
 
     // Save event to database for audit trail and deduplication
     // Use actual order_id if found, otherwise fallback to provided IDs
     const eventKey = `${eventType}_${actualOrderId || metadataOrderId || orderId || tripId || 'no_id'}_${tripId || 'no_trip'}`;
-    
+
     // Check for duplicate events
-    const { data: existingEvent } = await supabase
-      .from('wetravel_events')
-      .select('event_key')
-      .eq('event_key', eventKey)
-      .single();
-    
+    const existingEvent = await getWetravelEvent(eventKey);
+
     if (existingEvent) {
       return NextResponse.json({ status: 'duplicate', event_key: eventKey });
     }
-    
+
     // Save event to database
-    const { error: eventError } = await supabase
-      .from('wetravel_events')
-      .insert({
+    try {
+      await insertWetravelEvent({
         event_key: eventKey,
         event_type: eventType,
         payment_id: null, // Will be updated if we find matching payment
         order_id: actualOrderId || metadataOrderId || null
       });
-    
-    if (eventError) {
-    } else {
+    } catch (eventError) {
     }
 
     // After processing, try to fix orphaned events if this is a booking.created
@@ -396,23 +331,23 @@ export async function POST(request: NextRequest) {
 
     switch (eventType) {
       case 'payment.created':
-        await handlePaymentCreated(supabase, webhookData, baseSearchContext);
+        await handlePaymentCreated(webhookData, baseSearchContext);
         break;
 
       case 'payment.completed':
-        await handlePaymentCompleted(supabase, webhookData, baseSearchContext, eventType);
+        await handlePaymentCompleted(webhookData, baseSearchContext, eventType);
         break;
 
       case 'payment.failed':
-        await handlePaymentFailed(supabase, webhookData, baseSearchContext);
+        await handlePaymentFailed(webhookData, baseSearchContext);
         break;
 
       case 'payment.updated':
-        await handlePaymentUpdated(supabase, webhookData, baseSearchContext);
+        await handlePaymentUpdated(webhookData, baseSearchContext);
         break;
 
       case 'booking.created':
-        await handleBookingCreated(supabase, webhookData, baseSearchContext, { eventKey, actualOrderId });
+        await handleBookingCreated(webhookData, baseSearchContext, { eventKey, actualOrderId });
         break;
 
       // Legacy events
@@ -473,12 +408,11 @@ async function handleBookingUpdated(webhookData: WeTravelWebhookData) {
 
 // Función para manejar pagos creados
 async function handlePaymentCreated(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
   try {
-    const match = await findMatchingPayment(supabase, {
+    const match = await findMatchingPayment({
       ...context,
       eventType: 'payment.created'
     });
@@ -508,13 +442,9 @@ async function handlePaymentCreated(
       updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
     }
 
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update(updatePayload)
-      .eq('id', payment.id);
-
-    if (updateError) {
-    } else {
+    try {
+      await updatePayment(payment.id, updatePayload);
+    } catch (updateError) {
     }
   } catch (error) {
     throw error;
@@ -523,12 +453,11 @@ async function handlePaymentCreated(
 
 // Función para manejar pagos actualizados
 async function handlePaymentUpdated(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
   try {
-    const match = await findMatchingPayment(supabase, {
+    const match = await findMatchingPayment({
       ...context,
       eventType: 'payment.updated'
     });
@@ -558,13 +487,9 @@ async function handlePaymentUpdated(
       updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
     }
 
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update(updatePayload)
-      .eq('id', payment.id);
-
-    if (updateError) {
-    } else {
+    try {
+      await updatePayment(payment.id, updatePayload);
+    } catch (updateError) {
     }
   } catch (error) {
     throw error;
@@ -573,13 +498,12 @@ async function handlePaymentUpdated(
 
 // Función para manejar pagos completados
 async function handlePaymentCompleted(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext,
   eventType?: string
 ) {
   try {
-    const match = await findMatchingPayment(supabase, {
+    const match = await findMatchingPayment({
       ...context,
       eventType: eventType || 'payment.completed'
     });
@@ -610,31 +534,20 @@ async function handlePaymentCompleted(
       updatePayload.wetravel_order_id = context.wetravelOrderId || context.metadataOrderId;
     }
 
-    const { error: updatePaymentError } = await supabase
-      .from('payments')
-      .update(updatePayload)
-      .eq('id', payment.id);
-
-    if (updatePaymentError) {
+    const rowCount = await updatePayment(payment.id, updatePayload);
+    if (!rowCount) {
       return;
     }
-    const { error: updateOrderError } = await supabase
-      .from('orders')
-      .update({ status: 'paid' })
-      .eq('id', payment.order_id);
 
-    if (updateOrderError) {
-    } else {
+    try {
+      await updateOrder(payment.order_id, { status: 'paid' });
+    } catch (updateOrderError) {
     }
 
-    await supabase
-      .from('wetravel_events')
-      .update({
-        payment_id: payment.id,
-        order_id: payment.order_id
-      })
-      .eq('event_type', eventType)
-      .like('event_key', `%${context.tripId || ''}%`);
+    await updateWetravelEvents(
+      { event_type: eventType, event_key_like: `%${context.tripId || ''}%` },
+      { payment_id: payment.id, order_id: payment.order_id }
+    );
   } catch (error) {
     throw error;
   }
@@ -642,7 +555,6 @@ async function handlePaymentCompleted(
 
 // Función para manejar pagos fallidos
 async function handlePaymentFailed(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext
 ) {
@@ -672,7 +584,6 @@ async function handleTripConfirmed(webhookData: WeTravelWebhookData) {
 
 // Función para manejar reserva creada
 async function handleBookingCreated(
-  supabase: ReturnType<typeof createFreshSupabaseClient>,
   webhookData: WeTravelWebhookData,
   context: PaymentSearchContext,
   bookingContext: BookingEventContext
@@ -685,7 +596,7 @@ async function handleBookingCreated(
       actualOrderId: context.actualOrderId
     });
 
-    let match = await findMatchingPayment(supabase, {
+    let match = await findMatchingPayment({
       ...context,
       eventType: 'booking.created'
     });
@@ -696,25 +607,17 @@ async function handleBookingCreated(
 
       // Get the most recent pending OR booking_created payment (within last 5 minutes)
       // Note: payment might already be booking_created if polling detected it first
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-      const { data: recentPayments } = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data, wetravel_order_id, status, created_at')
-        .in('status', ['pending', 'booking_created'])
-        .gte('created_at', fiveMinutesAgo)
-        .order('created_at', { ascending: false })
-        .limit(3);
+      const recentPayments = await getRecentPendingPayments(5);
 
       if (recentPayments && recentPayments.length > 0) {
         console.log(`🔍 [WEBHOOK] Found ${recentPayments.length} recent pending payments`);
 
         // Try to match by order_id similarity or just use the most recent one
-        const possibleMatch = recentPayments[0];
+        const possibleMatch = recentPayments[0] as any;
 
         // Update this payment with the trip_id for future reference
-        const { error: updateError } = await supabase
-          .from('payments')
-          .update({
+        try {
+          await updatePayment(possibleMatch.id, {
             wetravel_data: {
               ...(possibleMatch.wetravel_data as any || {}),
               trip_id: context.tripId,
@@ -723,15 +626,14 @@ async function handleBookingCreated(
               matched_at: new Date().toISOString()
             },
             wetravel_order_id: context.wetravelOrderId || possibleMatch.wetravel_order_id
-          })
-          .eq('id', possibleMatch.id);
-
-        if (!updateError) {
+          });
           console.log('✅ [WEBHOOK] Updated payment with trip_id via fallback');
           match = {
             payment: possibleMatch as any,
             matchedBy: 'fallback-recent-pending'
           };
+        } catch (updateError) {
+          // fallback update failed, continue
         }
       }
     }
@@ -740,21 +642,20 @@ async function handleBookingCreated(
       console.error('❌ [WEBHOOK] NO PAYMENT FOUND for booking.created');
       console.error('❌ [WEBHOOK] Search context was:', context);
 
-      const { data: allPayments, error: allPaymentsError } = await supabase
-        .from('payments')
-        .select('id, order_id, wetravel_data, wetravel_order_id, status, created_at')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (!allPaymentsError && allPayments) {
-        console.log('📋 [WEBHOOK] Recent payments in DB:', allPayments.map(p => ({
-          id: p.id,
-          order_id: p.order_id,
-          status: p.status,
-          created_at: p.created_at,
-          trip_id: (p.wetravel_data as any)?.trip_id,
-          wetravel_order_id: p.wetravel_order_id
-        })));
+      try {
+        const allPayments = await getRecentPayments(5);
+        if (allPayments) {
+          console.log('📋 [WEBHOOK] Recent payments in DB:', allPayments.map((p: any) => ({
+            id: p.id,
+            order_id: p.order_id,
+            status: p.status,
+            created_at: p.created_at,
+            trip_id: (p.wetravel_data as any)?.trip_id,
+            wetravel_order_id: p.wetravel_order_id
+          })));
+        }
+      } catch (e) {
+        // ignore logging errors
       }
 
       return; // Exit early if no payment found
@@ -787,34 +688,25 @@ async function handleBookingCreated(
         payload: paymentUpdatePayload
       });
 
-      const { data: updatedPayment, error: updatePaymentError } = await supabase
-        .from('payments')
-        .update(paymentUpdatePayload)
-        .eq('id', payment.id)
-        .select();
+      const updatedRows = await updatePayment(payment.id, paymentUpdatePayload);
 
-      if (updatePaymentError) {
-        console.error('❌ [WEBHOOK] Failed to update payment:', updatePaymentError);
+      if (!updatedRows) {
+        console.error('❌ [WEBHOOK] Failed to update payment');
         return;
       }
 
       console.log('✅ [WEBHOOK] Payment UPDATE result:', {
-        rowsAffected: updatedPayment?.length || 0,
-        updated: updatedPayment
+        rowsAffected: updatedRows
       });
       console.log('✅ [WEBHOOK] Payment marked as booking_created:', payment.id);
 
-      const { data: updatedOrder, error: updateOrderError } = await supabase
-        .from('orders')
-        .update({ status: 'booking_created' })
-        .eq('id', payment.order_id)
-        .select();
+      const orderRows = await updateOrder(payment.order_id, { status: 'booking_created' });
 
-      if (updateOrderError) {
-        console.error('❌ [WEBHOOK] Failed to update order:', updateOrderError);
+      if (!orderRows) {
+        console.error('❌ [WEBHOOK] Failed to update order');
       } else {
         console.log('✅ [WEBHOOK] Order UPDATE result:', {
-          rowsAffected: updatedOrder?.length || 0,
+          rowsAffected: orderRows,
           order_id: payment.order_id
         });
         console.log('✅ [WEBHOOK] Order marked as booking_created:', payment.order_id);
@@ -824,15 +716,9 @@ async function handleBookingCreated(
       // 🏨 CREATE LOBBYPMS RESERVATION DIRECTLY FROM WEBHOOK
       try {
         console.log('🔍 [WEBHOOK] Attempting to fetch order data for order_id:', payment.order_id);
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .select('booking_data, lobbypms_reservation_id')
-          .eq('id', payment.order_id)
-          .single();
+        const orderData = await getOrderById(payment.order_id) as any;
 
-        if (orderError) {
-          console.error('❌ [WEBHOOK] Error fetching order data:', orderError);
-        } else if (!orderData) {
+        if (!orderData) {
           console.error('❌ [WEBHOOK] No order data found for order_id:', payment.order_id);
         } else {
           console.log('📋 [WEBHOOK] Order data fetched:', {
@@ -905,18 +791,12 @@ async function handleBookingCreated(
               console.log('💾 [WEBHOOK] Reservation ID from /api/reserve:', reservationId);
 
               // Save reservation ID to database
-              const { error: updateError } = await supabase
-                .from('orders')
-                .update({
+              try {
+                await updateOrder(payment.order_id, {
                   lobbypms_reservation_id: reservationId,
                   lobbypms_data: reserveData,
                   status: 'booking_created'
-                })
-                .eq('id', payment.order_id);
-
-              if (updateError) {
-                console.error('❌ [WEBHOOK] Failed to save reservation ID:', updateError);
-              } else {
+                });
                 console.log('✅ [WEBHOOK] Reservation ID UPDATE executed');
 
                 // 🔄 VERIFY the update actually persisted by reading it back
@@ -925,11 +805,7 @@ async function handleBookingCreated(
                   console.log(`🔍 [WEBHOOK] Verifying reservation ID was saved (attempt ${attempt}/3)...`);
                   await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
 
-                  const { data: verifyOrder } = await supabase
-                    .from('orders')
-                    .select('lobbypms_reservation_id')
-                    .eq('id', payment.order_id)
-                    .single();
+                  const verifyOrder = await getOrderById(payment.order_id) as any;
 
                   if (verifyOrder?.lobbypms_reservation_id === reservationId.toString()) {
                     console.log('✅ [WEBHOOK] Reservation ID verified in database!');
@@ -943,6 +819,8 @@ async function handleBookingCreated(
                 if (!verified) {
                   console.error('❌ [WEBHOOK] Could not verify reservation ID after 3 attempts - replica lag issue');
                 }
+              } catch (updateError) {
+                console.error('❌ [WEBHOOK] Failed to save reservation ID:', updateError);
               }
 
               // ALSO update payment status to completed so frontend sees it immediately
@@ -956,17 +834,11 @@ async function handleBookingCreated(
                 timestamp: updateTimestamp
               });
 
-              const { error: paymentUpdateError } = await supabase
-                .from('payments')
-                .update({
+              try {
+                await updatePayment(payment.id, {
                   status: 'completed',
                   updated_at: updateTimestamp
-                })
-                .eq('id', payment.id);
-
-              if (paymentUpdateError) {
-                console.error('❌ [WEBHOOK] Failed to update payment to completed:', paymentUpdateError);
-              } else {
+                });
                 console.log('✅ [WEBHOOK] Payment status updated to completed',{
                   paymentId: payment.id,
                   updatedAt: updateTimestamp
@@ -984,6 +856,8 @@ async function handleBookingCreated(
                   message: 'Reservation created successfully!'
                 });
                 console.log('📡 [WEBHOOK] SSE notification sent for order:', payment.order_id);
+              } catch (paymentUpdateError) {
+                console.error('❌ [WEBHOOK] Failed to update payment to completed:', paymentUpdateError);
               }
             } else {
               console.error('❌ [WEBHOOK] Could not extract reservation ID from response');
@@ -1005,7 +879,7 @@ async function handleBookingCreated(
             order_id: payment.order_id
           });
         }
-        } // Close the else block started at line 828
+        } // Close the else block
       } catch (error) {
         console.error('❌ [WEBHOOK] Error creating reservation:', error);
         console.error('❌ [WEBHOOK] Error details:', {
@@ -1015,34 +889,21 @@ async function handleBookingCreated(
       }
 
       if (bookingContext.eventKey) {
-        await supabase
-          .from('wetravel_events')
-          .update({
-            payment_id: payment.id,
-            order_id: payment.order_id
-          })
-          .eq('event_key', bookingContext.eventKey);
-      } else {
-        await supabase
-          .from('wetravel_events')
-          .update({
-            payment_id: payment.id,
-            order_id: payment.order_id
-          })
-          .eq('event_type', 'booking.created')
-          .like('event_key', `%${context.tripId || ''}%`);
-      }
-
-      const { data: orphanUpdate, error: orphanError } = await supabase
-        .from('wetravel_events')
-        .update({
+        await updateWetravelEventByKey(bookingContext.eventKey, {
           payment_id: payment.id,
           order_id: payment.order_id
-        })
-        .eq('event_type', 'booking.created')
-        .like('event_key', `%${context.tripId || ''}%`)
-        .is('payment_id', null)
-        .select();
+        });
+      } else {
+        await updateWetravelEvents(
+          { event_type: 'booking.created', event_key_like: `%${context.tripId || ''}%` },
+          { payment_id: payment.id, order_id: payment.order_id }
+        );
+      }
+
+      await updateWetravelEvents(
+        { event_type: 'booking.created', event_key_like: `%${context.tripId || ''}%`, payment_id_null: true },
+        { payment_id: payment.id, order_id: payment.order_id }
+      );
     }
   } catch (error) {
     throw error;
@@ -1057,11 +918,8 @@ async function fixOrphanedEvents(
 ) {
   if (!tripId && !webhookOrderId && !metadataOrderId) return;
 
-  // Create fresh Supabase client for this background task
-  const supabase = createFreshSupabaseClient();
-
   try {
-    const match = await findMatchingPayment(supabase, {
+    const match = await findMatchingPayment({
       tripId: tripId || undefined,
       wetravelOrderId: webhookOrderId || undefined,
       metadataOrderId: metadataOrderId || undefined,
@@ -1073,30 +931,17 @@ async function fixOrphanedEvents(
     }
 
     const payment = match.payment;
-    const { data: updatedEvents, error: updateError } = await supabase
-      .from('wetravel_events')
-      .update({
-        payment_id: payment.id,
-        order_id: payment.order_id
-      })
-      .eq('event_type', 'booking.created')
-      .like('event_key', `%${tripId || ''}%`)
-      .is('payment_id', null)
-      .select();
+    try {
+      await updateWetravelEvents(
+        { event_type: 'booking.created', event_key_like: `%${tripId || ''}%`, payment_id_null: true },
+        { payment_id: payment.id, order_id: payment.order_id }
+      );
 
-    if (updateError) {
-    } else {
       if (payment.status === 'pending') {
-        await supabase
-          .from('payments')
-          .update({ status: 'booking_created' })
-          .eq('id', payment.id);
-
-        await supabase
-          .from('orders')
-          .update({ status: 'booking_created' })
-          .eq('id', payment.order_id);
+        await updatePayment(payment.id, { status: 'booking_created' });
+        await updateOrder(payment.order_id, { status: 'booking_created' });
       }
+    } catch (updateError) {
     }
 
   } catch (error) {

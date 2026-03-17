@@ -7,8 +7,7 @@ import {
   getAccommodationTotal
 } from '@/lib/wetravel-pricing';
 
-// 🔒 SUPABASE: Use @supabase/supabase-js for better integration
-import { createClient } from '@supabase/supabase-js';
+import { insertOrder, insertPayment, updatePayment, updateOrder } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,17 +32,6 @@ function formatDateForWeTravel(date: string | Date): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-
   try {
     const body = await request.json();
     
@@ -271,56 +259,38 @@ export async function POST(request: NextRequest) {
       orderId = Date.now().toString(); // Use timestamp as BIGINT
       paymentId = (Date.now() + 1).toString(); // Ensure different from orderId
       
-      console.log(`💾 Saving to Supabase - Order: ${orderId}, Payment: ${paymentId}`);
-      
+      console.log(`💾 Saving to DB - Order: ${orderId}, Payment: ${paymentId}`);
+
       try {
-        // Save order first
-        const { data: orderResult, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            id: orderId,
-            status: 'pending',
-            total_amount: bookingData.totalAmountCents,
-            currency: 'USD',
-            customer_name: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
-            customer_email: bookingData.contactInfo.email,
-            booking_data: bookingData
-          })
-          .select();
+        await insertOrder({
+          id: orderId,
+          status: 'pending',
+          total_amount: bookingData.totalAmountCents,
+          currency: 'USD',
+          customer_name: `${bookingData.contactInfo.firstName} ${bookingData.contactInfo.lastName}`,
+          customer_email: bookingData.contactInfo.email,
+          booking_data: bookingData,
+        });
+        console.log('✅ Order saved to DB:', orderId);
 
-        if (orderError) {
-          throw new Error(`Order insert failed: ${orderError.message}`);
-        }
+        const wetravelDataInit = {
+          created_from: 'payment_request',
+          booking_data: bookingData,
+          created_at: new Date().toISOString(),
+          metadata_order_id: orderId,
+          internal_payment_id: paymentId,
+        };
 
-        console.log('✅ Order saved to Supabase:', orderResult);
-
-        // Save payment
-        const { data: paymentResult, error: paymentError } = await supabase
-          .from('payments')
-          .insert({
-            id: paymentId,
-            order_id: orderId,
-            status: 'pending',
-            total_amount: bookingData.totalAmountCents,
-            currency: 'USD',
-            payment_method: 'card',
-            wetravel_data: {
-              created_from: 'payment_request',
-              booking_data: bookingData,
-              created_at: new Date().toISOString(),
-              metadata_order_id: orderId,
-              internal_payment_id: paymentId
-            }
-          })
-          .select();
-
-        if (paymentError) {
-          throw new Error(`Payment insert failed: ${paymentError.message}`);
-        }
-
-        console.log('✅ Payment saved to Supabase:', paymentResult);
-
-        createdPaymentRecord = paymentResult?.[0] || null;
+        createdPaymentRecord = await insertPayment({
+          id: paymentId,
+          order_id: orderId,
+          status: 'pending',
+          total_amount: bookingData.totalAmountCents,
+          currency: 'USD',
+          payment_method: 'card',
+          wetravel_data: wetravelDataInit,
+        });
+        console.log('✅ Payment saved to DB:', paymentId);
 
         // Add DB IDs to WeTravel metadata
         wetravelPayload.data.metadata = {
@@ -433,39 +403,15 @@ export async function POST(request: NextRequest) {
           paymentUpdatePayload.wetravel_order_id = wetravelOrderId || metadataOrderId;
         }
 
-        const { error: updateError } = await supabase
-          .from('payments')
-          .update(paymentUpdatePayload)
-          .eq('id', paymentId);
+        await updatePayment(paymentId, paymentUpdatePayload as any);
+        console.log('✅ Payment updated with WeTravel response in DB');
 
-        if (updateError) {
-          console.error('❌ Failed to update payment with WeTravel response:', updateError);
-        } else {
-          console.log('✅ Payment updated with WeTravel response in Supabase');
-
-          // If this is a $0 test payment, immediately mark it as booking_created so the flow continues
-          if (bookingData?.depositAmountCents === 0) {
-            console.log('[TEST PAYMENT] $0 deposit detected - auto-marking booking as created');
-
-            const { error: zeroStatusError } = await supabase
-              .from('payments')
-              .update({ status: 'booking_created', updated_at: new Date().toISOString() })
-              .eq('id', paymentId);
-
-            if (zeroStatusError) {
-              console.error('Failed to mark $0 payment as booking_created:', zeroStatusError);
-            } else if (orderId) {
-              const { error: zeroOrderError } = await supabase
-                .from('orders')
-                .update({ status: 'booking_created', updated_at: new Date().toISOString() })
-                .eq('id', orderId);
-
-              if (zeroOrderError) {
-                console.error('Failed to mark $0 order as booking_created:', zeroOrderError);
-              } else {
-                console.log('$0 flow: payment and order marked as booking_created');
-              }
-            }
+        if (bookingData?.depositAmountCents === 0) {
+          console.log('[TEST PAYMENT] $0 deposit detected - auto-marking booking as created');
+          await updatePayment(paymentId, { status: 'booking_created' });
+          if (orderId) {
+            await updateOrder(orderId, { status: 'booking_created' });
+            console.log('$0 flow: payment and order marked as booking_created');
           }
         }
       } catch (updateErr) {

@@ -1,30 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { query, queryOne, getOrderById, updateOrder, updatePayment } from '@/lib/db';
 import { notifyOrderUpdate } from '@/lib/sse-manager';
 
 export const dynamic = 'force-dynamic';
 
-function createFreshSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      },
-      global: {
-        headers: {
-          'cache-control': 'no-cache, no-store, must-revalidate'
-        }
-      }
-    }
-  );
-}
-
 export async function POST(request: NextRequest) {
-  const supabase = createFreshSupabaseClient();
-
   try {
     const body = await request.json();
     const { orderId, tripId, forceStatus } = body;
@@ -39,20 +19,18 @@ export async function POST(request: NextRequest) {
     console.log('🔧 [FIX-PAYMENT] Attempting to fix payment status for:', { orderId, tripId, forceStatus });
 
     // Find payment
-    let payment;
+    let payment: any = null;
     if (orderId) {
-      const { data } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('order_id', orderId)
-        .single();
-      payment = data;
+      payment = await queryOne(
+        `SELECT * FROM payments WHERE order_id = $1`,
+        [orderId]
+      );
     } else if (tripId) {
-      const { data } = await supabase
-        .from('payments')
-        .select('*')
-        .contains('wetravel_data', { trip_id: tripId });
-      payment = data && data.length > 0 ? data[0] : null;
+      const rows = await query(
+        `SELECT * FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+        [JSON.stringify({ trip_id: tripId })]
+      );
+      payment = rows.length > 0 ? rows[0] : null;
     }
 
     if (!payment) {
@@ -69,11 +47,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Get order data
-    const { data: orderData } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', payment.order_id)
-      .single();
+    const orderData = await getOrderById(payment.order_id) as any;
 
     if (!orderData) {
       return NextResponse.json(
@@ -107,44 +81,36 @@ export async function POST(request: NextRequest) {
 
     // Update payment status
     if (payment.status !== targetStatus && payment.status !== 'completed') {
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .update({
+      try {
+        await updatePayment(payment.id, {
           status: targetStatus,
           updated_at: new Date().toISOString()
-        })
-        .eq('id', payment.id);
-
-      if (paymentError) {
+        });
+        updates.payment.after.status = targetStatus;
+        updates.actions.push(`Updated payment status from '${payment.status}' to '${targetStatus}'`);
+        console.log(`✅ [FIX-PAYMENT] Payment status updated to ${targetStatus}`);
+      } catch (paymentError) {
         console.error('❌ [FIX-PAYMENT] Failed to update payment:', paymentError);
         return NextResponse.json(
-          { error: 'Failed to update payment', details: paymentError },
+          { error: 'Failed to update payment', details: paymentError instanceof Error ? paymentError.message : 'Unknown' },
           { status: 500 }
         );
       }
-
-      updates.payment.after.status = targetStatus;
-      updates.actions.push(`Updated payment status from '${payment.status}' to '${targetStatus}'`);
-      console.log(`✅ [FIX-PAYMENT] Payment status updated to ${targetStatus}`);
     } else {
       updates.actions.push(`Payment status already at '${payment.status}', no update needed`);
     }
 
     // Update order status if needed
     if (orderData.status === 'pending' || orderData.status === 'created') {
-      const { error: orderError } = await supabase
-        .from('orders')
-        .update({
+      try {
+        await updateOrder(payment.order_id, {
           status: targetStatus === 'completed' ? 'completed' : 'booking_created'
-        })
-        .eq('id', payment.order_id);
-
-      if (orderError) {
-        console.error('❌ [FIX-PAYMENT] Failed to update order:', orderError);
-      } else {
+        });
         updates.order.after.status = targetStatus === 'completed' ? 'completed' : 'booking_created';
         updates.actions.push(`Updated order status to '${targetStatus === 'completed' ? 'completed' : 'booking_created'}'`);
         console.log('✅ [FIX-PAYMENT] Order status updated');
+      } catch (orderError) {
+        console.error('❌ [FIX-PAYMENT] Failed to update order:', orderError);
       }
     }
 
@@ -194,23 +160,17 @@ export async function POST(request: NextRequest) {
           }
 
           if (reservationId) {
-            await supabase
-              .from('orders')
-              .update({
-                lobbypms_reservation_id: reservationId,
-                lobbypms_data: reserveData
-              })
-              .eq('id', payment.order_id);
+            await updateOrder(payment.order_id, {
+              lobbypms_reservation_id: reservationId,
+              lobbypms_data: reserveData
+            });
 
             updates.order.after.reservation_id = reservationId;
             updates.actions.push(`Created LobbyPMS reservation: ${reservationId}`);
             console.log('✅ [FIX-PAYMENT] Reservation created:', reservationId);
 
             // Update payment to completed
-            await supabase
-              .from('payments')
-              .update({ status: 'completed' })
-              .eq('id', payment.id);
+            await updatePayment(payment.id, { status: 'completed' });
 
             updates.payment.after.status = 'completed';
 
@@ -238,10 +198,7 @@ export async function POST(request: NextRequest) {
 
       // If reservation exists but status is not completed, update it
       if (payment.status !== 'completed') {
-        await supabase
-          .from('payments')
-          .update({ status: 'completed' })
-          .eq('id', payment.id);
+        await updatePayment(payment.id, { status: 'completed' });
 
         updates.payment.after.status = 'completed';
         updates.actions.push('Updated payment status to completed (reservation exists)');

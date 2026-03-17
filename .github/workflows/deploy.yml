@@ -7,9 +7,7 @@ name: Build and Deploy Surfcamp
 #   LOBBYPMS_API_KEY
 #   STRIPE_SECRET_KEY
 #   STRIPE_PUBLISHABLE_KEY
-#   SUPABASE_SERVICE_ROLE_KEY
-#   DATABASE_URL
-#   DATABASE_URL_DIRECT
+#   DATABASE_URL              – PostgreSQL connection string (Nomad internal)
 #   WETRAVEL_API_KEY
 #   WETRAVEL_WEBHOOK_SECRET
 #   BREVO_API_KEY
@@ -18,7 +16,7 @@ name: Build and Deploy Surfcamp
 #
 # Required GitHub variables (Settings → Variables):
 #   NOMAD_ADDR               – Nomad server URL
-#   NEXT_PUBLIC_SUPABASE_URL
+
 
 on:
   workflow_dispatch:
@@ -58,16 +56,14 @@ jobs:
           build_args: |
             NEXT_PUBLIC_BASE_URL=https://surfcamp.mdlautomations.duckdns.org
             NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.mdlautomations.duckdns.org
-            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+
           project_secrets: |
             LOBBYPMS_API_KEY=${{ secrets.LOBBYPMS_API_KEY }}
             LOBBYPMS_API_URL=${{ vars.LOBBYPMS_API_URL }}
             DEV_RESERVE_BASE_URL=${{ vars.DEV_RESERVE_BASE_URL }}
             STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
             STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
-            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
             DATABASE_URL=${{ secrets.DATABASE_URL }}
-            DATABASE_URL_DIRECT=${{ secrets.DATABASE_URL_DIRECT }}
             WETRAVEL_API_KEY=${{ secrets.WETRAVEL_API_KEY }}
             WETRAVEL_WEBHOOK_SECRET=${{ secrets.WETRAVEL_WEBHOOK_SECRET }}
             BREVO_API_KEY=${{ secrets.BREVO_API_KEY }}

@@ -1,33 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { getPaymentByOrderId, getOrderById } from '@/lib/db-direct';
+import { getPaymentByOrderId, getOrderById, updateOrder, updatePayment, query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    // Create fresh Supabase client for each request to avoid cache
-    // Force read from PRIMARY database to avoid replica lag
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        },
-        db: {
-          schema: 'public'
-        },
-        global: {
-          headers: {
-            'cache-control': 'no-cache, no-store, must-revalidate',
-            'x-supabase-read-preference': 'primary'
-          }
-        }
-      }
-    );
-
     const { searchParams } = new URL(request.url);
     const orderId = searchParams.get('order_id');
     const tripId = searchParams.get('trip_id');
@@ -39,53 +16,47 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    let payment;
-    let paymentError;
+    let payment: any = null;
+    let paymentError: any = null;
 
     if (orderId) {
       try {
         payment = await getPaymentByOrderId(orderId);
-
-        if (!payment) {
-          const { data, error } = await supabase
-            .from('payments')
-            .select('id, order_id, status, wetravel_data, created_at, updated_at')
-            .eq('order_id', orderId)
-            .single();
-
-          payment = data;
-          paymentError = error;
-        }
       } catch (error) {
         console.error('❌ [PAYMENT-STATUS] Error querying database:', error);
         paymentError = error;
       }
     } else if (tripId && tripId !== '') {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('id, order_id, status, wetravel_data, created_at, updated_at')
-        .contains('wetravel_data', { trip_id: tripId });
+      try {
+        const rows = await query(
+          `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+           FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+          [JSON.stringify({ trip_id: tripId })]
+        );
+        payment = rows.length > 0 ? rows[0] : null;
 
-      payment = data && data.length > 0 ? data[0] : null;
-      paymentError = error;
-
-      if (!payment && tripUuid && tripUuid !== '') {
-        const { data: uuidData, error: uuidError } = await supabase
-          .from('payments')
-          .select('id, order_id, status, wetravel_data, created_at, updated_at')
-          .contains('wetravel_data', { trip_uuid: tripUuid });
-
-        payment = uuidData && uuidData.length > 0 ? uuidData[0] : null;
-        paymentError = uuidError;
+        if (!payment && tripUuid && tripUuid !== '') {
+          const uuidRows = await query(
+            `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+             FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+            [JSON.stringify({ trip_uuid: tripUuid })]
+          );
+          payment = uuidRows.length > 0 ? uuidRows[0] : null;
+        }
+      } catch (error) {
+        paymentError = error;
       }
     } else if (tripUuid && tripUuid !== '') {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('id, order_id, status, wetravel_data, created_at, updated_at')
-        .contains('wetravel_data', { trip_uuid: tripUuid });
-
-      payment = data && data.length > 0 ? data[0] : null;
-      paymentError = error;
+      try {
+        const rows = await query(
+          `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+           FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+          [JSON.stringify({ trip_uuid: tripUuid })]
+        );
+        payment = rows.length > 0 ? rows[0] : null;
+      } catch (error) {
+        paymentError = error;
+      }
     }
 
     if (paymentError) {
@@ -117,27 +88,20 @@ export async function GET(request: NextRequest) {
           await new Promise(resolve => setTimeout(resolve, delay));
 
           // Retry the query from PRIMARY database (with fallback)
-          let retryPayment;
+          let retryPayment: any = null;
           if (orderId) {
             retryPayment = await getPaymentByOrderId(orderId);
-            if (!retryPayment) {
-              const { data } = await supabase
-                .from('payments')
-                .select('id, order_id, status, wetravel_data, created_at, updated_at')
-                .eq('order_id', orderId)
-                .single();
-              retryPayment = data;
-            }
           } else if (tripId) {
-            const { data } = await supabase
-              .from('payments')
-              .select('id, order_id, status, wetravel_data, created_at, updated_at')
-              .contains('wetravel_data', { trip_id: tripId });
-            retryPayment = data && data.length > 0 ? data[0] : null;
+            const rows = await query(
+              `SELECT id, order_id, status, wetravel_data, created_at, updated_at
+               FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
+              [JSON.stringify({ trip_id: tripId })]
+            );
+            retryPayment = rows.length > 0 ? rows[0] : null;
           }
 
           if (retryPayment) {
-            payment = retryPayment as typeof payment;
+            payment = retryPayment;
             if (retryPayment.status !== 'pending') {
               break;
             }
@@ -149,30 +113,26 @@ export async function GET(request: NextRequest) {
     // Check if this payment has orphaned events and fix them automatically
     if (tripId && payment.status === 'pending') {
       // Try to fix any orphaned events for this trip
-      const { data: orphanedEvents, error: orphanError } = await supabase
-        .from('wetravel_events')
-        .update({
-          payment_id: payment.id,
-          order_id: payment.order_id
-        })
-        .eq('event_type', 'booking.created')
-        .like('event_key', `%${tripId}%`)
-        .is('payment_id', null)
-        .select();
+      try {
+        const updatedCount = await query(
+          `UPDATE wetravel_events
+           SET payment_id = $1, order_id = $2
+           WHERE event_type = 'booking.created'
+             AND event_key LIKE $3
+             AND payment_id IS NULL
+           RETURNING id`,
+          [payment.id, payment.order_id, `%${tripId}%`]
+        );
 
-      if (orphanedEvents && orphanedEvents.length > 0) {
-        // Update payment and order status to booking_created
-        await supabase
-          .from('payments')
-          .update({ status: 'booking_created' })
-          .eq('id', payment.id);
-
-        await supabase
-          .from('orders')
-          .update({ status: 'booking_created' })
-          .eq('id', payment.order_id);
-        // Update the payment object to reflect the new status
-        payment.status = 'booking_created';
+        if (updatedCount && updatedCount.length > 0) {
+          // Update payment and order status to booking_created
+          await updatePayment(payment.id, { status: 'booking_created' });
+          await updateOrder(payment.order_id, { status: 'booking_created' });
+          // Update the payment object to reflect the new status
+          payment.status = 'booking_created';
+        }
+      } catch (orphanError) {
+        // ignore orphan fix errors
       }
     }
 
@@ -182,11 +142,7 @@ export async function GET(request: NextRequest) {
     // Now ONLY the WeTravel webhook handler creates reservations after receiving booking.created event.
     //
     // if (payment.status === 'booking_created') {
-    //   const { data: orderData } = await supabase
-    //     .from('orders')
-    //     .select('booking_data, lobbypms_reservation_id')
-    //     .eq('id', payment.order_id)
-    //     .single();
+    //   const orderData = await getOrderById(payment.order_id);
     //
     //   if (orderData && orderData.booking_data && !orderData.lobbypms_reservation_id) {
     //     ... [LobbyPMS reservation creation code disabled] ...
@@ -194,16 +150,7 @@ export async function GET(request: NextRequest) {
     // }
 
     // Get order details
-    let order = await getOrderById(payment.order_id);
-
-    if (!order) {
-      const { data } = await supabase
-        .from('orders')
-        .select('id, status, booking_data, lobbypms_reservation_id')
-        .eq('id', payment.order_id)
-        .single();
-      order = data;
-    }
+    let order: any = await getOrderById(payment.order_id);
 
     // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry
     if (!order?.lobbypms_reservation_id && payment.updated_at) {
@@ -216,29 +163,11 @@ export async function GET(request: NextRequest) {
           const delay = 500 + (attempt * 500);
           await new Promise(resolve => setTimeout(resolve, delay));
 
-          let retryPayment = await getPaymentByOrderId(payment.order_id);
-          let retryOrder = await getOrderById(payment.order_id);
-
-          if (!retryPayment) {
-            const { data } = await supabase
-              .from('payments')
-              .select('id, order_id, status, updated_at')
-              .eq('id', payment.id)
-              .single();
-            retryPayment = data;
-          }
-
-          if (!retryOrder) {
-            const { data } = await supabase
-              .from('orders')
-              .select('id, status, booking_data, lobbypms_reservation_id')
-              .eq('id', payment.order_id)
-              .single();
-            retryOrder = data;
-          }
+          const retryPayment = await getPaymentByOrderId(payment.order_id);
+          const retryOrder = await getOrderById(payment.order_id);
 
           if (retryPayment && retryPayment.status !== 'pending') {
-            payment = { ...payment, ...retryPayment } as typeof payment;
+            payment = { ...payment, ...retryPayment };
           }
 
           if (retryOrder) {

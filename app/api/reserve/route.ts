@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Activity, LobbyPMSReservationRequest } from '@/types';
 import { generateBookingReference } from '@/lib/utils';
 import { lobbyPMSClient, LobbyPMSCustomerPayload } from '@/lib/lobbypms';
-import { createClient } from '@supabase/supabase-js';
+import { queryOne, query, insertOrder } from '@/lib/db';
 import {
   sendBookingConfirmation,
   sendWhatsAppMessage,
@@ -557,32 +557,17 @@ export async function POST(request: NextRequest) {
     console.log('🏨 [RESERVE] Request body:', JSON.stringify(body, null, 2));
     // 🛡️ ANTI-DUPLICATE PROTECTION: Check if reservation already exists
     if (body.paymentIntentId || body.contactInfo?.dni) {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          },
-          global: {
-            headers: {
-              'x-supabase-read-preference': 'primary'
-            }
-          }
-        }
-      );
-
       // Search by payment_intent_id or DNI + dates
       let existingOrder = null;
 
       if (body.paymentIntentId) {
-        const { data } = await supabase
-          .from('orders')
-          .select('id, lobbypms_reservation_id, created_at')
-          .eq('payment_intent_id', body.paymentIntentId)
-          .not('lobbypms_reservation_id', 'is', null)
-          .maybeSingle();
+        const data = await queryOne<{ id: string; lobbypms_reservation_id: string | null; created_at: string }>(
+          `SELECT id, lobbypms_reservation_id, created_at
+           FROM orders
+           WHERE payment_intent_id = $1 AND lobbypms_reservation_id IS NOT NULL
+           LIMIT 1`,
+          [body.paymentIntentId]
+        );
 
         // CRITICAL: Ignore if it's a temporary placeholder ID
         if (data && data.lobbypms_reservation_id && !data.lobbypms_reservation_id.startsWith('CREATING_')) {
@@ -593,11 +578,12 @@ export async function POST(request: NextRequest) {
       if (!existingOrder && body.contactInfo?.dni && body.checkIn && body.checkOut) {
         // Fallback: search by DNI + dates (less than 5 minutes old)
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-        const { data } = await supabase
-          .from('orders')
-          .select('id, lobbypms_reservation_id, created_at, booking_data')
-          .gte('created_at', fiveMinutesAgo)
-          .not('lobbypms_reservation_id', 'is', null);
+        const data = await query<{ id: string; lobbypms_reservation_id: string | null; created_at: string; booking_data: any }>(
+          `SELECT id, lobbypms_reservation_id, created_at, booking_data
+           FROM orders
+           WHERE created_at >= $1 AND lobbypms_reservation_id IS NOT NULL`,
+          [fiveMinutesAgo]
+        );
 
         if (data && data.length > 0) {
           existingOrder = data.find((order: any) => {
@@ -724,37 +710,20 @@ export async function POST(request: NextRequest) {
         }
         console.log('🏨 [RESERVE] Activities total:', activitiesTotal);
 
-        // 5. Create order in Supabase for tracking
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
+        // 5. Create order in DB for tracking
+        const newOrderId = Date.now().toString();
+        try {
+          const order = await insertOrder({
+            id: newOrderId,
+            status: 'activities_added',
+            booking_data: body,
+            payment_intent_id: paymentIntentId || undefined,
+          });
+          if (order) {
+            console.log('🏨 [RESERVE] ✅ Order created in DB:', (order as any).id);
           }
-        );
-
-        const orderData = {
-          lobbypms_reservation_id: existingReservationId.toString(),
-          payment_intent_id: paymentIntentId || null,
-          booking_data: body,
-          amount: activitiesTotal,
-          status: 'activities_added',
-          created_at: new Date().toISOString(),
-        };
-
-        const { data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert(orderData)
-          .select()
-          .single();
-
-        if (orderError) {
-          console.error('🏨 [RESERVE] Error creating order in Supabase:', orderError);
-        } else {
-          console.log('🏨 [RESERVE] ✅ Order created in Supabase:', order.id);
+        } catch (orderError) {
+          console.error('🏨 [RESERVE] Error creating order in DB:', orderError);
         }
 
         // 6. Send notifications
