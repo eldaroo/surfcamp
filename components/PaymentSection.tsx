@@ -364,14 +364,14 @@ export default function PaymentSection() {
   };
 
   // Function to start SSE connection for real-time payment status
-  const startPaymentStatusSSE = (orderId: string) => {
+  const startPaymentStatusSSE = (orderId: string, retryCount = 0) => {
     // Close any existing connection
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
 
     setIsCheckingPaymentStatus(true);
-    console.log('📡 Starting SSE connection for order:', orderId);
+    console.log(`📡 Starting SSE connection for order: ${orderId} (attempt ${retryCount + 1})`);
 
     // Create EventSource connection
     const eventSource = new EventSource(`/api/payment-status-stream?order_id=${orderId}`);
@@ -379,7 +379,7 @@ export default function PaymentSection() {
 
     eventSource.onopen = () => {
       console.log('✅ SSE connection opened');
-      clientLog('sse-connected', { orderId });
+      clientLog('sse-connected', { orderId, attempt: retryCount + 1 });
     };
 
     eventSource.onmessage = (event) => {
@@ -390,8 +390,7 @@ export default function PaymentSection() {
         if (data.type === 'connected') {
           console.log('🔗 SSE connected for order:', data.orderId);
         } else if (data.type === 'reservation_complete') {
-          console.log('🎉 Reservation complete (SSE)! Waiting for user to close payment window...');
-          console.log('📊 SSE data:', data);
+          console.log('🎉 Reservation complete (SSE)!');
 
           // Close SSE connection
           eventSource.close();
@@ -409,16 +408,28 @@ export default function PaymentSection() {
       }
     };
 
+    const MAX_SSE_RETRIES = 4;
     eventSource.onerror = (error) => {
-      console.error('❌ SSE connection error:', error);
-      clientLog('sse-error');
+      console.error(`❌ SSE connection error (attempt ${retryCount + 1}):`, error);
+      clientLog('sse-error', { attempt: retryCount + 1 });
       eventSource.close();
       eventSourceRef.current = null;
 
-      // Fallback to polling after SSE failure
-      console.log('⚠️ Falling back to polling...');
-      clientLog('sse-fallback-to-polling');
-      startPaymentStatusPolling(orderId, undefined);
+      if (paymentConfirmedRef.current) return; // already done
+
+      if (retryCount < MAX_SSE_RETRIES) {
+        // Exponential back-off: 3s, 6s, 12s, 24s before retrying SSE
+        const delay = 3000 * Math.pow(2, retryCount);
+        clientLog('sse-retry', { attempt: retryCount + 2, delayMs: delay });
+        console.log(`⏳ SSE retry #${retryCount + 2} in ${delay / 1000}s...`);
+        setTimeout(() => {
+          if (!paymentConfirmedRef.current) startPaymentStatusSSE(orderId, retryCount + 1);
+        }, delay);
+      } else {
+        // Exhausted retries — fall back to polling (polling likely already running)
+        console.log('⚠️ SSE exhausted retries, relying on background polling...');
+        clientLog('sse-fallback-to-polling');
+      }
     };
 
     // Server closes connection after 30 min or on completion — no client-side timeout needed
@@ -551,6 +562,29 @@ export default function PaymentSection() {
       clearInterval(backgroundPollRef.current!);
       clearTimeout(timeout);
       backgroundPollRef.current = null;
+    };
+  }, [isWaitingForPayment, paymentConfirmed]);
+
+  // Tab visibility / focus recovery: immediately poll when the user switches back to this tab.
+  // Browser throttles setInterval in background tabs (Chrome can slow polls to once/minute),
+  // so background polls may not have fired while the user was on the WeTravel tab.
+  // This guarantees the redirect fires the moment the user looks at this tab again.
+  useEffect(() => {
+    if (!isWaitingForPayment || paymentConfirmed) return;
+
+    const checkNow = () => {
+      if (paymentConfirmedRef.current) return;
+      // Only act when the tab is actually becoming visible/focused (not when hiding)
+      if (document.visibilityState === 'hidden') return;
+      clientLog('tab-visible-check');
+      checkPaymentStatus(currentOrderIdRef.current ?? undefined);
+    };
+
+    document.addEventListener('visibilitychange', checkNow);
+    window.addEventListener('focus', checkNow);
+    return () => {
+      document.removeEventListener('visibilitychange', checkNow);
+      window.removeEventListener('focus', checkNow);
     };
   }, [isWaitingForPayment, paymentConfirmed]);
 
