@@ -63,6 +63,8 @@ export default function PaymentSection() {
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const paymentConfirmedRef = useRef(false); // ref mirror for use inside stale closures
+  // Always holds the latest redirect function — safe to call from any stale closure
+  const redirectToSuccessRef = useRef<() => void>(() => {});
 
   const closePaymentWindow = useCallback(() => {
     if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
@@ -336,35 +338,9 @@ export default function PaymentSection() {
       }
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('🎉 [PAYMENT] show_success detected! is_booking_created:', data.is_booking_created, 'is_completed:', data.is_completed);
-
-        // Guard: only fire once (stale closures may call this multiple times)
-        if (paymentConfirmedRef.current) {
-          console.log('⚠️ [PAYMENT] already confirmed, skipping duplicate');
-          return data;
-        }
-        paymentConfirmedRef.current = true;
-
-        // Clear the polling intervals
-        if (paymentStatusInterval.current) {
-          clearInterval(paymentStatusInterval.current);
-          paymentStatusInterval.current = null;
-        }
-        if (backgroundPollRef.current) {
-          clearInterval(backgroundPollRef.current);
-          backgroundPollRef.current = null;
-        }
-        if (slowPollingRef.current) {
-          clearInterval(slowPollingRef.current);
-          slowPollingRef.current = null;
-        }
-
-        // Update status message
+        console.log('🎉 [PAYMENT] show_success detected — calling redirect');
         setPaymentStatusMessage('payment_confirmed');
-
-        // Mark payment as confirmed — triggers the redirect effect
-        console.log('✅ [PAYMENT] Setting paymentConfirmed = true');
-        setPaymentConfirmed(true);
+        redirectToSuccessRef.current();
       }
 
       return data;
@@ -410,11 +386,8 @@ export default function PaymentSection() {
           // Update status message
           setPaymentStatusMessage('payment_confirmed');
 
-          if (!paymentConfirmedRef.current) {
-            paymentConfirmedRef.current = true;
-            console.log('✅ Setting paymentConfirmed = true (from SSE)');
-            setPaymentConfirmed(true);
-          }
+          console.log('✅ [SSE] Reservation complete — calling redirect');
+          redirectToSuccessRef.current();
         }
       } catch (error) {
         console.error('❌ Error parsing SSE message:', error);
@@ -470,40 +443,39 @@ export default function PaymentSection() {
     }, 10 * 60 * 1000);
   };
 
-    // When payment is confirmed, close the WeTravel window and redirect to success immediately.
-  // Also triggers on paymentStatusMessage='payment_confirmed' as a fallback in case
-  // the paymentConfirmed state update doesn't re-render correctly from a stale closure.
-  useEffect(() => {
-    if (!paymentConfirmed && paymentStatusMessage !== 'payment_confirmed') return;
-    if (!paymentConfirmedRef.current) return; // ref guard: only fire once
+  // Keep redirectToSuccessRef always pointing to the latest version of the redirect logic.
+  // This is the key pattern to avoid stale closures: the ref is updated on every render,
+  // so calling redirectToSuccessRef.current() from ANY stale closure always runs fresh code.
+  redirectToSuccessRef.current = () => {
+    if (paymentConfirmedRef.current) return; // already done, ignore duplicate calls
+    paymentConfirmedRef.current = true;
 
-    console.log('✅ Payment confirmed — closing payment window and redirecting to success');
+    console.log('✅ [REDIRECT] Redirecting to success');
 
-    try {
-      const prices = calculatePrices();
-      if (prices) setPriceBreakdown(prices);
-    } catch (e) {
-      console.warn('⚠️ calculatePrices error (ignored):', e);
-    }
+    // Stop all polling
+    if (paymentStatusInterval.current) { clearInterval(paymentStatusInterval.current); paymentStatusInterval.current = null; }
+    if (backgroundPollRef.current) { clearInterval(backgroundPollRef.current); backgroundPollRef.current = null; }
+    if (slowPollingRef.current) { clearInterval(slowPollingRef.current); slowPollingRef.current = null; }
+
+    try { const prices = calculatePrices(); if (prices) setPriceBreakdown(prices); } catch (_e) { /* ignore */ }
 
     setIsWaitingForPayment(false);
     setIsCheckingPaymentStatus(false);
+    setPaymentConfirmed(true);
     setCurrentStep('success');
     window.focus();
 
-    // Try to close the WeTravel tab repeatedly for 10 seconds (browser may block the first attempt)
+    // Try to close the WeTravel tab repeatedly
     const winRef = paymentWindowRef.current;
     if (winRef) {
       let attempts = 0;
       const closeLoop = setInterval(() => {
         attempts++;
-        try {
-          if (!winRef.closed) winRef.close();
-        } catch (e) { /* ignore cross-origin errors */ }
-        if (attempts >= 20 || !winRef || winRef.closed) clearInterval(closeLoop);
+        try { if (!winRef.closed) winRef.close(); } catch (_e) { /* ignore */ }
+        if (attempts >= 20 || winRef.closed) clearInterval(closeLoop);
       }, 500);
     }
-  }, [paymentConfirmed, paymentStatusMessage]);
+  };
 
   // Monitor payment window closure independently of SSE/polling.
   // WeTravel can delay webhooks up to ~30 min, so when the user closes
