@@ -866,8 +866,9 @@ async function handleBookingCreated(
 
             console.log('📞 [WEBHOOK] Calling /api/reserve with FULL payload:', JSON.stringify(reservePayload, null, 2));
 
-            // Call reserve endpoint
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://surfcampwidget.duckdns.org';
+            // Call reserve endpoint - use localhost for internal server-to-server calls
+            // (external domain not resolvable from within the container)
+            const baseUrl = process.env.INTERNAL_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
             console.log('🌐 [WEBHOOK] Using base URL:', baseUrl);
             console.log('🌐 [WEBHOOK] Full reserve endpoint:', `${baseUrl}/api/reserve`);
 
