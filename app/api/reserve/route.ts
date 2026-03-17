@@ -806,7 +806,7 @@ export async function POST(request: NextRequest) {
             ? 'Actividades agregadas exitosamente a tu reserva'
             : 'Activities successfully added to your reservation',
           activitiesTotal,
-          orderId: order?.id,
+          orderId: newOrderId,
         });
 
       } catch (error: any) {
