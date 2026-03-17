@@ -313,6 +313,16 @@ export default function PaymentSection() {
   [participants]
   );
 
+  // Helper: log client events to server so they appear in Nomad logs
+  const clientLog = (event: string, detail?: object) => {
+    const orderId = currentOrderIdRef.current;
+    fetch('/api/client-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, order_id: orderId, detail }),
+    }).catch(() => {/* ignore */});
+  };
+
   // Function to check payment status
   const checkPaymentStatus = async (orderId?: string, tripId?: string, tripUuid?: string) => {
     try {
@@ -337,8 +347,11 @@ export default function PaymentSection() {
         }
       }
 
+      clientLog('poll-result', { show_success: data.show_success, is_booking_created: data.is_booking_created, is_completed: data.is_completed, status: data.payment?.status });
+
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
         console.log('🎉 [PAYMENT] show_success detected — calling redirect');
+        clientLog('show-success-detected', { status: data.payment?.status });
         setPaymentStatusMessage('payment_confirmed');
         redirectToSuccessRef.current();
       }
@@ -366,6 +379,7 @@ export default function PaymentSection() {
 
     eventSource.onopen = () => {
       console.log('✅ SSE connection opened');
+      clientLog('sse-connected', { orderId });
     };
 
     eventSource.onmessage = (event) => {
@@ -387,6 +401,7 @@ export default function PaymentSection() {
           setPaymentStatusMessage('payment_confirmed');
 
           console.log('✅ [SSE] Reservation complete — calling redirect');
+          clientLog('sse-reservation-complete-received', { status: data.status });
           redirectToSuccessRef.current();
         }
       } catch (error) {
@@ -396,11 +411,13 @@ export default function PaymentSection() {
 
     eventSource.onerror = (error) => {
       console.error('❌ SSE connection error:', error);
+      clientLog('sse-error');
       eventSource.close();
       eventSourceRef.current = null;
 
       // Fallback to polling after SSE failure
       console.log('⚠️ Falling back to polling...');
+      clientLog('sse-fallback-to-polling');
       startPaymentStatusPolling(orderId, undefined);
     };
 
@@ -443,6 +460,7 @@ export default function PaymentSection() {
     paymentConfirmedRef.current = true;
 
     console.log('✅ [REDIRECT] Redirecting to success');
+    clientLog('redirect-fired');
 
     // Stop all polling
     if (paymentStatusInterval.current) { clearInterval(paymentStatusInterval.current); paymentStatusInterval.current = null; }
@@ -458,6 +476,7 @@ export default function PaymentSection() {
 
     // Change tab title so user sees the update even when looking at another tab
     document.title = '✅ ¡Reserva confirmada! — Surfcamp';
+    clientLog('set-current-step-success');
 
     // Nuclear fallback: dispatch a global event so the parent page can also react.
     // This works even when React batches/defers state updates in background tabs.

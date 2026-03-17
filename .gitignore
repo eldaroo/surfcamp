@@ -34,3 +34,4 @@ LPT2
 
 # Executable files
 *.exe
+.claude/settings.local.json

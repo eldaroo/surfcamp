@@ -32,10 +32,17 @@ export async function GET(request: NextRequest) {
       // Confirm connection to client
       send({ type: 'connected', orderId });
 
+      let pollCount = 0;
       const poll = async () => {
+        pollCount++;
         try {
           const payment = await getPaymentByOrderId(orderId);
-          if (!payment) return;
+          if (!payment) {
+            console.log(`📡 [SSE] poll #${pollCount} — order ${orderId}: payment NOT FOUND in DB`);
+            return;
+          }
+
+          console.log(`📡 [SSE] poll #${pollCount} — order ${orderId}: status=${payment.status}`);
 
           const isDone =
             payment.status === 'booking_created' ||
@@ -43,7 +50,7 @@ export async function GET(request: NextRequest) {
 
           if (isDone) {
             const order = await getOrderById(payment.order_id);
-            console.log(`📡 [SSE] DB poll found ${payment.status} for order ${orderId} — pushing to client`);
+            console.log(`📡 [SSE] PUSHING reservation_complete to client for order ${orderId} (status=${payment.status})`);
             send({
               type: 'reservation_complete',
               status: payment.status,
@@ -51,6 +58,7 @@ export async function GET(request: NextRequest) {
               order_id: payment.order_id,
               lobbypms_reservation_id: order?.lobbypms_reservation_id ?? null,
             });
+            console.log(`📡 [SSE] reservation_complete SENT — closing stream for order ${orderId}`);
             clearInterval(intervalId);
             clearTimeout(timeoutId);
             try { controller.close(); } catch (_e) { /* ignore */ }

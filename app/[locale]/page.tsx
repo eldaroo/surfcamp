@@ -106,6 +106,11 @@ export default function HomePage() {
   useEffect(() => {
     const onPaymentConfirmed = () => {
       console.log('🎉 [PAGE] surfcamp:payment-confirmed event received — going to success');
+      fetch('/api/client-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'page-listener-fired', order_id: 'unknown' }),
+      }).catch(() => {});
       setCurrentStep('success');
     };
     window.addEventListener('surfcamp:payment-confirmed', onPaymentConfirmed);
