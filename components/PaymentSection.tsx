@@ -62,6 +62,7 @@ export default function PaymentSection() {
   const currentOrderIdRef = useRef<string | null>(null);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const paymentConfirmedRef = useRef(false); // ref mirror for use inside stale closures
 
   const closePaymentWindow = useCallback(() => {
     if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
@@ -335,24 +336,34 @@ export default function PaymentSection() {
       }
 
       if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('🎉 Payment confirmed! Waiting for user to close payment window...');
-        console.log('📊 Payment data:', {
-          is_booking_created: data.is_booking_created,
-          is_completed: data.is_completed,
-          has_lobbypms_reservation: data.order?.lobbypms_reservation_id
-        });
+        console.log('🎉 [PAYMENT] show_success detected! is_booking_created:', data.is_booking_created, 'is_completed:', data.is_completed);
 
-        // Clear the interval
+        // Guard: only fire once (stale closures may call this multiple times)
+        if (paymentConfirmedRef.current) {
+          console.log('⚠️ [PAYMENT] already confirmed, skipping duplicate');
+          return data;
+        }
+        paymentConfirmedRef.current = true;
+
+        // Clear the polling intervals
         if (paymentStatusInterval.current) {
           clearInterval(paymentStatusInterval.current);
           paymentStatusInterval.current = null;
+        }
+        if (backgroundPollRef.current) {
+          clearInterval(backgroundPollRef.current);
+          backgroundPollRef.current = null;
+        }
+        if (slowPollingRef.current) {
+          clearInterval(slowPollingRef.current);
+          slowPollingRef.current = null;
         }
 
         // Update status message
         setPaymentStatusMessage('payment_confirmed');
 
-        // Mark payment as confirmed (will redirect when window closes)
-        console.log('✅ Setting paymentConfirmed = true');
+        // Mark payment as confirmed — triggers the redirect effect
+        console.log('✅ [PAYMENT] Setting paymentConfirmed = true');
         setPaymentConfirmed(true);
       }
 
@@ -399,9 +410,11 @@ export default function PaymentSection() {
           // Update status message
           setPaymentStatusMessage('payment_confirmed');
 
-          // Mark payment as confirmed (will redirect when window closes)
-          console.log('✅ Setting paymentConfirmed = true (from SSE)');
-          setPaymentConfirmed(true);
+          if (!paymentConfirmedRef.current) {
+            paymentConfirmedRef.current = true;
+            console.log('✅ Setting paymentConfirmed = true (from SSE)');
+            setPaymentConfirmed(true);
+          }
         }
       } catch (error) {
         console.error('❌ Error parsing SSE message:', error);
@@ -458,8 +471,11 @@ export default function PaymentSection() {
   };
 
     // When payment is confirmed, close the WeTravel window and redirect to success immediately.
+  // Also triggers on paymentStatusMessage='payment_confirmed' as a fallback in case
+  // the paymentConfirmed state update doesn't re-render correctly from a stale closure.
   useEffect(() => {
-    if (!paymentConfirmed) return;
+    if (!paymentConfirmed && paymentStatusMessage !== 'payment_confirmed') return;
+    if (!paymentConfirmedRef.current) return; // ref guard: only fire once
 
     console.log('✅ Payment confirmed — closing payment window and redirecting to success');
 
@@ -487,15 +503,7 @@ export default function PaymentSection() {
         if (attempts >= 20 || !winRef || winRef.closed) clearInterval(closeLoop);
       }, 500);
     }
-  }, [paymentConfirmed]);
-
-  // When paymentConfirmed fires, stop all polling (no longer needed)
-  useEffect(() => {
-    if (paymentConfirmed) {
-      if (slowPollingRef.current) { clearInterval(slowPollingRef.current); slowPollingRef.current = null; }
-      if (backgroundPollRef.current) { clearInterval(backgroundPollRef.current); backgroundPollRef.current = null; }
-    }
-  }, [paymentConfirmed]);
+  }, [paymentConfirmed, paymentStatusMessage]);
 
   // Monitor payment window closure independently of SSE/polling.
   // WeTravel can delay webhooks up to ~30 min, so when the user closes

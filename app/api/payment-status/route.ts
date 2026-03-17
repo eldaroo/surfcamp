@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log(`📊 [PAYMENT-STATUS] found payment ${payment.id} status=${payment.status}`);
+    console.log(`📊 [PAYMENT-STATUS] found payment ${payment.id} status=${payment.status} updated_at=${payment.updated_at}`);
 
     // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry multiple times with delays
     if (payment.status === 'pending' && payment.updated_at) {
@@ -210,6 +210,7 @@ export async function GET(request: NextRequest) {
       show_success: payment.status === 'booking_created' || payment.status === 'completed' || hasReservation
     };
 
+    console.log(`📤 [PAYMENT-STATUS] response → show_success=${response.show_success} is_booking_created=${response.is_booking_created} is_completed=${response.is_completed}`);
     return NextResponse.json(response);
 
   } catch (error) {
