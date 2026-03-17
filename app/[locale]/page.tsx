@@ -100,6 +100,18 @@ export default function HomePage() {
     [activitySummary, bookingData.guests, dateRange, selectedRoom?.roomTypeName, t]
   );
 
+  // Listen for payment-confirmed event dispatched by PaymentSection.
+  // This is the most reliable way to trigger the redirect: a global window event
+  // fires synchronously regardless of React batching or background-tab deferral.
+  useEffect(() => {
+    const onPaymentConfirmed = () => {
+      console.log('🎉 [PAGE] surfcamp:payment-confirmed event received — going to success');
+      setCurrentStep('success');
+    };
+    window.addEventListener('surfcamp:payment-confirmed', onPaymentConfirmed);
+    return () => window.removeEventListener('surfcamp:payment-confirmed', onPaymentConfirmed);
+  }, [setCurrentStep]);
+
   useEffect(() => {
     const preloadChain: Record<string, ComponentType[]> = {
       dates: [AccommodationSelector],

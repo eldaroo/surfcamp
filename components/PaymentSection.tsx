@@ -463,6 +463,10 @@ export default function PaymentSection() {
     setIsCheckingPaymentStatus(false);
     setPaymentConfirmed(true);
     setCurrentStep('success');
+
+    // Nuclear fallback: dispatch a global event so the parent page can also react.
+    // This works even when React batches/defers state updates in background tabs.
+    window.dispatchEvent(new CustomEvent('surfcamp:payment-confirmed'));
     window.focus();
 
     // Try to close the WeTravel tab repeatedly
