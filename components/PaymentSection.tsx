@@ -457,60 +457,27 @@ export default function PaymentSection() {
     }, 10 * 60 * 1000);
   };
 
-  // Monitor payment window and redirect when payment is confirmed and window is closed
+    // When payment is confirmed, close the WeTravel window and redirect to success immediately.
   useEffect(() => {
-    if (!paymentConfirmed) {
-      console.log('⏸️ Payment not confirmed yet, not checking window status');
-      return;
+    if (!paymentConfirmed) return;
+
+    console.log('✅ Payment confirmed — closing payment window and redirecting to success');
+
+    // Force-close the WeTravel popup (safe to call even if already closed)
+    try {
+      if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
+        paymentWindowRef.current.close();
+      }
+    } catch (e) {
+      // Cross-origin windows may throw — ignore
     }
 
-    if (!paymentWindowRef.current || paymentWindowRef.current.closed) {
-      // Window ref is null (popup blocked) or already closed — go to success immediately
-      console.log('✅ Payment confirmed, window already closed/null — redirecting to success');
-      const prices = calculatePrices();
-      if (prices) setPriceBreakdown(prices);
-      setIsWaitingForPayment(false);
-      setIsCheckingPaymentStatus(false);
-      setCurrentStep('success');
-      window.focus();
-      return;
-    }
-
-    console.log('👀 Starting to monitor payment window closure...');
-
-    const checkWindowClosed = setInterval(() => {
-      const windowRef = paymentWindowRef.current;
-
-      if (!windowRef) {
-        console.log('⚠️ Window ref became null during monitoring');
-        return;
-      }
-
-      const isClosed = windowRef.closed;
-      console.log('🔍 Window status check - closed:', isClosed);
-
-      if (isClosed) {
-        console.log('✅ Payment window closed, redirecting to success page');
-        clearInterval(checkWindowClosed);
-
-        // Calculate final prices
-        const prices = calculatePrices();
-        if (prices) {
-          setPriceBreakdown(prices);
-        }
-
-        // Redirect to success
-        setIsWaitingForPayment(false);
-        setIsCheckingPaymentStatus(false);
-        setCurrentStep('success');
-        window.focus();
-      }
-    }, 500);
-
-    return () => {
-      console.log('🧹 Cleaning up window monitor');
-      clearInterval(checkWindowClosed);
-    };
+    const prices = calculatePrices();
+    if (prices) setPriceBreakdown(prices);
+    setIsWaitingForPayment(false);
+    setIsCheckingPaymentStatus(false);
+    setCurrentStep('success');
+    window.focus();
   }, [paymentConfirmed]);
 
   // When paymentConfirmed fires, stop all polling (no longer needed)
