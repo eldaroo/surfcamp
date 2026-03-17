@@ -56,6 +56,7 @@ export default function PaymentSection() {
   const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation' | 'payment_confirmed'>('waiting');
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const slowPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const backgroundPollRef = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
   const currentOrderIdRef = useRef<string | null>(null);
@@ -512,11 +513,11 @@ export default function PaymentSection() {
     };
   }, [paymentConfirmed]);
 
-  // When paymentConfirmed fires, stop slow polling (no longer needed)
+  // When paymentConfirmed fires, stop all polling (no longer needed)
   useEffect(() => {
-    if (paymentConfirmed && slowPollingRef.current) {
-      clearInterval(slowPollingRef.current);
-      slowPollingRef.current = null;
+    if (paymentConfirmed) {
+      if (slowPollingRef.current) { clearInterval(slowPollingRef.current); slowPollingRef.current = null; }
+      if (backgroundPollRef.current) { clearInterval(backgroundPollRef.current); backgroundPollRef.current = null; }
     }
   }, [paymentConfirmed]);
 
@@ -555,6 +556,29 @@ export default function PaymentSection() {
     return () => clearInterval(monitor);
   }, [isWaitingForPayment, paymentConfirmed]);
 
+  // Background poll: always runs every 15s while waiting, independent of window state or SSE.
+  // This is the reliable fallback when SSE fails (multi-process) and the window-close
+  // monitor doesn't fire (popup blocked, ref lost, etc).
+  useEffect(() => {
+    if (!isWaitingForPayment || paymentConfirmed) return;
+
+    const poll = () => checkPaymentStatus(currentOrderIdRef.current ?? undefined);
+    backgroundPollRef.current = setInterval(poll, 15_000);
+
+    const timeout = setTimeout(() => {
+      if (backgroundPollRef.current) {
+        clearInterval(backgroundPollRef.current);
+        backgroundPollRef.current = null;
+      }
+    }, 40 * 60_000);
+
+    return () => {
+      clearInterval(backgroundPollRef.current!);
+      clearTimeout(timeout);
+      backgroundPollRef.current = null;
+    };
+  }, [isWaitingForPayment, paymentConfirmed]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -563,6 +587,9 @@ export default function PaymentSection() {
       }
       if (slowPollingRef.current) {
         clearInterval(slowPollingRef.current);
+      }
+      if (backgroundPollRef.current) {
+        clearInterval(backgroundPollRef.current);
       }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
