@@ -463,21 +463,30 @@ export default function PaymentSection() {
 
     console.log('✅ Payment confirmed — closing payment window and redirecting to success');
 
-    // Force-close the WeTravel popup (safe to call even if already closed)
     try {
-      if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
-        paymentWindowRef.current.close();
-      }
+      const prices = calculatePrices();
+      if (prices) setPriceBreakdown(prices);
     } catch (e) {
-      // Cross-origin windows may throw — ignore
+      console.warn('⚠️ calculatePrices error (ignored):', e);
     }
 
-    const prices = calculatePrices();
-    if (prices) setPriceBreakdown(prices);
     setIsWaitingForPayment(false);
     setIsCheckingPaymentStatus(false);
     setCurrentStep('success');
     window.focus();
+
+    // Try to close the WeTravel tab repeatedly for 10 seconds (browser may block the first attempt)
+    const winRef = paymentWindowRef.current;
+    if (winRef) {
+      let attempts = 0;
+      const closeLoop = setInterval(() => {
+        attempts++;
+        try {
+          if (!winRef.closed) winRef.close();
+        } catch (e) { /* ignore cross-origin errors */ }
+        if (attempts >= 20 || !winRef || winRef.closed) clearInterval(closeLoop);
+      }, 500);
+    }
   }, [paymentConfirmed]);
 
   // When paymentConfirmed fires, stop all polling (no longer needed)
@@ -530,6 +539,7 @@ export default function PaymentSection() {
     if (!isWaitingForPayment || paymentConfirmed) return;
 
     const poll = () => checkPaymentStatus(currentOrderIdRef.current ?? undefined);
+    poll(); // fire immediately, don't wait for first 15s tick
     backgroundPollRef.current = setInterval(poll, 15_000);
 
     const timeout = setTimeout(() => {
