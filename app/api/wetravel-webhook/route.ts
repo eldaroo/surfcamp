@@ -602,12 +602,11 @@ async function handleBookingCreated(
     });
 
     // 🔄 FALLBACK: If no match found, try searching by recent pending/booking_created payments
-    if (!match && context.tripId) {
+    // WeTravel can delay webhooks up to 30+ min, so search up to 2 hours back
+    if (!match) {
       console.log('⚠️ [WEBHOOK] No match found, trying fallback search by recent payments...');
 
-      // Get the most recent pending OR booking_created payment (within last 5 minutes)
-      // Note: payment might already be booking_created if polling detected it first
-      const recentPayments = await getRecentPendingPayments(5);
+      const recentPayments = await getRecentPendingPayments(120);
 
       if (recentPayments && recentPayments.length > 0) {
         console.log(`🔍 [WEBHOOK] Found ${recentPayments.length} recent pending payments`);
