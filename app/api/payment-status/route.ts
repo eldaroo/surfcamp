@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
     const tripId = searchParams.get('trip_id');
     const tripUuid = searchParams.get('trip_uuid');
 
+    console.log(`🔍 [PAYMENT-STATUS] poll received — order_id=${orderId} trip_id=${tripId}`);
+
     if (!orderId && !tripId && !tripUuid) {
       return NextResponse.json(
         { error: 'Either order_id, trip_id, or trip_uuid is required' },
@@ -67,12 +69,15 @@ export async function GET(request: NextRequest) {
     }
 
     if (!payment) {
+      console.log(`⚠️ [PAYMENT-STATUS] payment not found for order_id=${orderId}`);
       return NextResponse.json({
         found: false,
         status: 'not_found',
         message: 'Payment not found'
       });
     }
+
+    console.log(`📊 [PAYMENT-STATUS] found payment ${payment.id} status=${payment.status}`);
 
     // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry multiple times with delays
     if (payment.status === 'pending' && payment.updated_at) {

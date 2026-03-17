@@ -1148,7 +1148,13 @@ export default function PaymentSection() {
                   </p>
                 )}
               </div>
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => checkPaymentStatus(currentOrderIdRef.current ?? undefined)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors duration-200"
+                >
+                  ✅ Ya pagué — verificar
+                </button>
                 <button
                   onClick={() => window.open(wetravelResponse?.payment_url, '_blank')}
                   className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200"
