@@ -473,43 +473,6 @@ export default function AccommodationPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* What's Included Section */}
-        <section className="py-20 bg-white">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
-                {t.included.title}
-              </h2>
-              <p className="text-xl text-gray-600">
-                {t.included.subtitle}
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {t.included.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-[#163237] transition-all duration-300 text-slate-900"
-                >
-                  {item.icon === 'coffee' && <Coffee className="w-10 h-10 text-[#997146] mb-4" />}
-                  {item.icon === 'ice' && <Snowflake className="w-10 h-10 text-cyan-500 mb-4" />}
-                  {item.icon === 'wifi' && <Wifi className="w-10 h-10 text-blue-500 mb-4" />}
-                  {item.icon === 'home' && <Home className="w-10 h-10 text-green-600 mb-4" />}
-                  {item.icon === 'yoga' && <div className="w-10 h-10 text-purple-500 mb-4 text-3xl">??</div>}
-                  {item.icon === 'storage' && <div className="w-10 h-10 text-orange-500 mb-4 text-3xl">??</div>}
-
-                  <h3 className="text-xl font-heading font-bold text-gray-900 mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-slate-800 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Amenities Section */}
         <section className="py-20 bg-gradient-to-br from-[#163237] to-[#0f2328] text-white">
           <div className="container mx-auto px-4 max-w-6xl">
