@@ -1,0 +1,51 @@
+name: Build and Deploy WeTravel Link Generator
+
+# Required GitHub secrets (shared with surfcamp deploy):
+#   INFRA_READ_TOKEN   – Fine-grained PAT with read access to neozero86/infrastructure
+#   NOMAD_TOKEN        – Nomad management token
+#   GHCR_READ_TOKEN    – Classic PAT with read:packages scope for Nomad image pulls
+#   WETRAVEL_API_KEY
+#
+# Required GitHub variables:
+#   NOMAD_ADDR         – Nomad server URL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout infrastructure
+        uses: actions/checkout@v4
+        with:
+          repository: neozero86/infrastructure
+          path: _infra
+          token: ${{ secrets.INFRA_READ_TOKEN }}
+
+      - name: Collect deploy metadata
+        id: meta
+        run: |
+          echo "value<<__META_EOF__" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "branch=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          echo "deployed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "deployed_by=${{ github.actor }}" >> "$GITHUB_OUTPUT"
+          echo "__META_EOF__" >> "$GITHUB_OUTPUT"
+
+      - uses: ./_infra/.github/actions/nomad-deploy
+        with:
+          project_name:  wetravel-linkgenerator
+          build_context: "links generator"
+          dockerfile:    "links generator/Dockerfile"
+          nomad_token:   ${{ secrets.NOMAD_TOKEN }}
+          nomad_addr:    ${{ vars.NOMAD_ADDR }}
+          ghcr_token:    ${{ secrets.GHCR_READ_TOKEN }}
+          project_secrets: |
+            WETRAVEL_API_KEY=${{ secrets.WETRAVEL_API_KEY }}
+          deploy_meta: ${{ steps.meta.outputs.value }}
