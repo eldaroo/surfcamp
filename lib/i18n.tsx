@@ -270,7 +270,7 @@ const translations = {
           name: "Core Surf Program",
           level: "Principiante - Nivel 1.1, 1.2, 1.3",
           tagline: "Construye una base sólida y evita malos hábitos desde el día uno",
-          price: "390",
+          price: "400",
           includes: {
             title: "Incluye:",
             items: [
@@ -294,7 +294,7 @@ const translations = {
           name: "Intensive Surf Program",
           level: "Principiante con experiencia / Intermedio temprano - Nivel 1.2, 1.3, 2.1",
           tagline: "Corrige patrones clave, lee mejor las olas y desbloquea tu siguiente nivel",
-          price: "540",
+          price: "640",
           includes: {
             title: "Incluye:",
             items: [
@@ -317,7 +317,7 @@ const translations = {
           name: "Elite Surf Program",
           level: "Intermedio-Avanzado - Nivel 2.1, 2.2",
           tagline: "Entrena como un atleta y transforma tu manera de surfear",
-          price: "850",
+          price: "800",
           includes: {
             title: "Incluye:",
             items: [
@@ -840,7 +840,7 @@ const translations = {
           name: "Core Surf Program",
           level: "Beginner - Level 1.1, 1.2, 1.3",
           tagline: "Build a strong foundation and avoid bad habits from day one",
-          price: "390",
+          price: "400",
           includes: {
             title: "Includes:",
             items: [
@@ -864,7 +864,7 @@ const translations = {
           name: "Intensive Surf Program",
           level: "Early Intermediate - Level 1.2, 1.3, 2.1",
           tagline: "Correct key patterns, read waves better and unlock your next level",
-          price: "540",
+          price: "640",
           includes: {
             title: "Includes:",
             items: [
@@ -887,7 +887,7 @@ const translations = {
           name: "Elite Surf Program",
           level: "Intermediate-Advanced - Level 2.1, 2.2",
           tagline: "Train like an athlete and transform the way you surf",
-          price: "850",
+          price: "800",
           includes: {
             title: "Includes:",
             items: [
