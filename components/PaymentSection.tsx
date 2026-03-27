@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
 import { getActivityTotalPrice } from '@/lib/prices';
-import BookingConfirmation from './BookingConfirmation';
 import {
   detectSurfPrograms,
   getCoachingPrograms,
@@ -44,34 +43,12 @@ export default function PaymentSection() {
     selectedSurfClasses,
     activityQuantities,
     setCurrentStep,
-    setPriceBreakdown,
     participants,
     goBack
   } = useBookingStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
-  const [wetravelResponse, setWetravelResponse] = useState<any>(null);
-  const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
-  const [paymentStatusMessage, setPaymentStatusMessage] = useState<'waiting' | 'payment_received' | 'processing_reservation' | 'payment_confirmed'>('waiting');
-  const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
-  const slowPollingRef = useRef<NodeJS.Timeout | null>(null);
-  const backgroundPollRef = useRef<NodeJS.Timeout | null>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const paymentWindowRef = useRef<Window | null>(null);
-  const currentOrderIdRef = useRef<string | null>(null);
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
-  const paymentConfirmedRef = useRef(false); // ref mirror for use inside stale closures
-  // Always holds the latest redirect function — safe to call from any stale closure
-  const redirectToSuccessRef = useRef<() => void>(() => {});
-
-  const closePaymentWindow = useCallback(() => {
-    if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
-      paymentWindowRef.current.close();
-    }
-    paymentWindowRef.current = null;
-  }, []);
 
   // Check if this is adding activities to an existing reservation
   const hasExistingReservation = Boolean(bookingData.existingReservationId);
@@ -313,299 +290,6 @@ export default function PaymentSection() {
   [participants]
   );
 
-  // Helper: log client events to server so they appear in Nomad logs
-  const clientLog = (event: string, detail?: object) => {
-    const orderId = currentOrderIdRef.current;
-    fetch('/api/client-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, order_id: orderId, detail }),
-    }).catch(() => {/* ignore */});
-  };
-
-  // Function to check payment status
-  const checkPaymentStatus = async (orderId?: string, tripId?: string, tripUuid?: string) => {
-    try {
-      const params = new URLSearchParams();
-      if (orderId) params.append('order_id', orderId);
-      if (tripId && tripId !== '') params.append('trip_id', tripId);
-      if (tripUuid && tripUuid !== '') params.append('trip_uuid', tripUuid);
-
-      const response = await fetch(`/api/payment-status?${params.toString()}`);
-      const data = await response.json();
-
-      console.log('🔍 Payment status check:', data);
-      console.log('🔍 Debug - orderId:', orderId, 'tripId:', tripId, 'tripUuid:', tripUuid);
-      console.log('🔍 Debug - show_success:', data.show_success, 'is_booking_created:', data.is_booking_created, 'is_completed:', data.is_completed);
-
-      // Update status message based on payment state
-      if (data.payment?.status === 'booking_created' || data.payment?.status === 'completed') {
-        if (data.order?.lobbypms_reservation_id) {
-          setPaymentStatusMessage('processing_reservation');
-        } else {
-          setPaymentStatusMessage('payment_received');
-        }
-      }
-
-      clientLog('poll-result', { show_success: data.show_success, is_booking_created: data.is_booking_created, is_completed: data.is_completed, status: data.payment?.status });
-
-      if (data.show_success && (data.is_booking_created || data.is_completed)) {
-        console.log('🎉 [PAYMENT] show_success detected — calling redirect');
-        clientLog('show-success-detected', { status: data.payment?.status });
-        setPaymentStatusMessage('payment_confirmed');
-        redirectToSuccessRef.current();
-      }
-
-      return data;
-    } catch (error) {
-      console.error('❌ Error checking payment status:', error);
-      return null;
-    }
-  };
-
-  // Function to start SSE connection for real-time payment status
-  const startPaymentStatusSSE = (orderId: string, retryCount = 0) => {
-    // Close any existing connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    setIsCheckingPaymentStatus(true);
-    console.log(`📡 Starting SSE connection for order: ${orderId} (attempt ${retryCount + 1})`);
-
-    // Create EventSource connection
-    const eventSource = new EventSource(`/api/payment-status-stream?order_id=${orderId}`);
-    eventSourceRef.current = eventSource;
-
-    eventSource.onopen = () => {
-      console.log('✅ SSE connection opened');
-      clientLog('sse-connected', { orderId, attempt: retryCount + 1 });
-    };
-
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('📡 SSE message received:', data);
-
-        if (data.type === 'connected') {
-          console.log('🔗 SSE connected for order:', data.orderId);
-        } else if (data.type === 'reservation_complete') {
-          console.log('🎉 Reservation complete (SSE)!');
-
-          // Close SSE connection
-          eventSource.close();
-          eventSourceRef.current = null;
-
-          // Update status message
-          setPaymentStatusMessage('payment_confirmed');
-
-          console.log('✅ [SSE] Reservation complete — calling redirect');
-          clientLog('sse-reservation-complete-received', { status: data.status });
-          redirectToSuccessRef.current();
-        }
-      } catch (error) {
-        console.error('❌ Error parsing SSE message:', error);
-      }
-    };
-
-    const MAX_SSE_RETRIES = 4;
-    eventSource.onerror = (error) => {
-      console.error(`❌ SSE connection error (attempt ${retryCount + 1}):`, error);
-      clientLog('sse-error', { attempt: retryCount + 1 });
-      eventSource.close();
-      eventSourceRef.current = null;
-
-      if (paymentConfirmedRef.current) return; // already done
-
-      if (retryCount < MAX_SSE_RETRIES) {
-        // Exponential back-off: 3s, 6s, 12s, 24s before retrying SSE
-        const delay = 3000 * Math.pow(2, retryCount);
-        clientLog('sse-retry', { attempt: retryCount + 2, delayMs: delay });
-        console.log(`⏳ SSE retry #${retryCount + 2} in ${delay / 1000}s...`);
-        setTimeout(() => {
-          if (!paymentConfirmedRef.current) startPaymentStatusSSE(orderId, retryCount + 1);
-        }, delay);
-      } else {
-        // Exhausted retries — fall back to polling (polling likely already running)
-        console.log('⚠️ SSE exhausted retries, relying on background polling...');
-        clientLog('sse-fallback-to-polling');
-      }
-    };
-
-    // Server closes connection after 30 min or on completion — no client-side timeout needed
-  };
-
-  // Fallback: Polling function (used if SSE fails)
-  const startPaymentStatusPolling = (orderId?: string, tripId?: string, tripUuid?: string) => {
-    if (paymentStatusInterval.current) {
-      clearInterval(paymentStatusInterval.current);
-    }
-
-    setIsCheckingPaymentStatus(true);
-    console.log('🔄 Starting payment status polling for:', { orderId, tripId, tripUuid });
-
-    // Check immediately
-    checkPaymentStatus(orderId, tripId, tripUuid);
-
-    // Then check every 3 seconds
-    paymentStatusInterval.current = setInterval(() => {
-      checkPaymentStatus(orderId, tripId, tripUuid);
-    }, 3000);
-
-    // Stop polling after 10 minutes
-    setTimeout(() => {
-      if (paymentStatusInterval.current) {
-        clearInterval(paymentStatusInterval.current);
-        paymentStatusInterval.current = null;
-        setIsCheckingPaymentStatus(false);
-        console.log('⏰ Payment status polling timed out');
-      }
-    }, 10 * 60 * 1000);
-  };
-
-  // Keep redirectToSuccessRef always pointing to the latest version of the redirect logic.
-  // This is the key pattern to avoid stale closures: the ref is updated on every render,
-  // so calling redirectToSuccessRef.current() from ANY stale closure always runs fresh code.
-  redirectToSuccessRef.current = () => {
-    if (paymentConfirmedRef.current) return; // already done, ignore duplicate calls
-    paymentConfirmedRef.current = true;
-
-    console.log('✅ [REDIRECT] Redirecting to success');
-    clientLog('redirect-fired');
-
-    // Stop all polling
-    if (paymentStatusInterval.current) { clearInterval(paymentStatusInterval.current); paymentStatusInterval.current = null; }
-    if (backgroundPollRef.current) { clearInterval(backgroundPollRef.current); backgroundPollRef.current = null; }
-    if (slowPollingRef.current) { clearInterval(slowPollingRef.current); slowPollingRef.current = null; }
-
-    try { const prices = calculatePrices(); if (prices) setPriceBreakdown(prices); } catch (_e) { /* ignore */ }
-
-    setIsWaitingForPayment(false);
-    setIsCheckingPaymentStatus(false);
-    setPaymentConfirmed(true);
-    setCurrentStep('success');
-
-    // Change tab title so user sees the update even when looking at another tab
-    document.title = '✅ ¡Reserva confirmada! — Surfcamp';
-    clientLog('set-current-step-success');
-
-    // Nuclear fallback: dispatch a global event so the parent page can also react.
-    // This works even when React batches/defers state updates in background tabs.
-    window.dispatchEvent(new CustomEvent('surfcamp:payment-confirmed'));
-    window.focus();
-
-    // Try to close the WeTravel tab repeatedly
-    const winRef = paymentWindowRef.current;
-    if (winRef) {
-      let attempts = 0;
-      const closeLoop = setInterval(() => {
-        attempts++;
-        try { if (!winRef.closed) winRef.close(); } catch (_e) { /* ignore */ }
-        if (attempts >= 20 || winRef.closed) clearInterval(closeLoop);
-      }, 500);
-    }
-  };
-
-  // Monitor payment window closure independently of SSE/polling.
-  // WeTravel can delay webhooks up to ~30 min, so when the user closes
-  // the payment window we start a slow poll (every 30s for 40 min) instead
-  // of giving up after 10 min.
-  useEffect(() => {
-    if (!isWaitingForPayment || paymentConfirmed) return;
-
-    const monitor = setInterval(() => {
-      const win = paymentWindowRef.current;
-      if (!win?.closed) return;
-
-      // Window is now closed
-      clearInterval(monitor);
-      if (paymentConfirmed) return; // already handled
-
-      console.log('🪟 Payment window closed — starting slow poll (30s × 40min) for WeTravel webhook...');
-
-      const poll = () => checkPaymentStatus(currentOrderIdRef.current ?? undefined);
-      poll(); // immediate check
-
-      slowPollingRef.current = setInterval(poll, 30_000);
-
-      // Give up after 40 min
-      setTimeout(() => {
-        if (slowPollingRef.current) {
-          clearInterval(slowPollingRef.current);
-          slowPollingRef.current = null;
-          console.log('⏰ Slow polling timed out after 40 min');
-        }
-      }, 40 * 60_000);
-    }, 1000);
-
-    return () => clearInterval(monitor);
-  }, [isWaitingForPayment, paymentConfirmed]);
-
-  // Background poll: always runs every 15s while waiting, independent of window state or SSE.
-  // This is the reliable fallback when SSE fails (multi-process) and the window-close
-  // monitor doesn't fire (popup blocked, ref lost, etc).
-  useEffect(() => {
-    if (!isWaitingForPayment || paymentConfirmed) return;
-
-    const poll = () => checkPaymentStatus(currentOrderIdRef.current ?? undefined);
-    poll(); // fire immediately, don't wait for first 15s tick
-    backgroundPollRef.current = setInterval(poll, 15_000);
-
-    const timeout = setTimeout(() => {
-      if (backgroundPollRef.current) {
-        clearInterval(backgroundPollRef.current);
-        backgroundPollRef.current = null;
-      }
-    }, 40 * 60_000);
-
-    return () => {
-      clearInterval(backgroundPollRef.current!);
-      clearTimeout(timeout);
-      backgroundPollRef.current = null;
-    };
-  }, [isWaitingForPayment, paymentConfirmed]);
-
-  // Tab visibility / focus recovery: immediately poll when the user switches back to this tab.
-  // Browser throttles setInterval in background tabs (Chrome can slow polls to once/minute),
-  // so background polls may not have fired while the user was on the WeTravel tab.
-  // This guarantees the redirect fires the moment the user looks at this tab again.
-  useEffect(() => {
-    if (!isWaitingForPayment || paymentConfirmed) return;
-
-    const checkNow = () => {
-      if (paymentConfirmedRef.current) return;
-      // Only act when the tab is actually becoming visible/focused (not when hiding)
-      if (document.visibilityState === 'hidden') return;
-      clientLog('tab-visible-check');
-      checkPaymentStatus(currentOrderIdRef.current ?? undefined);
-    };
-
-    document.addEventListener('visibilitychange', checkNow);
-    window.addEventListener('focus', checkNow);
-    return () => {
-      document.removeEventListener('visibilitychange', checkNow);
-      window.removeEventListener('focus', checkNow);
-    };
-  }, [isWaitingForPayment, paymentConfirmed]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (paymentStatusInterval.current) {
-        clearInterval(paymentStatusInterval.current);
-      }
-      if (slowPollingRef.current) {
-        clearInterval(slowPollingRef.current);
-      }
-      if (backgroundPollRef.current) {
-        clearInterval(backgroundPollRef.current);
-      }
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      closePaymentWindow();
-    };
-  }, [closePaymentWindow]);
 
   const handlePayment = async (isTestMode: boolean = false) => {
     if (!isReadyForPayment) {
@@ -615,68 +299,9 @@ export default function PaymentSection() {
 
     setIsProcessing(true);
     setError('');
-    setPaymentConfirmed(false); // Reset payment confirmation status
-    setPaymentStatusMessage('waiting'); // Reset status message
 
     try {
       console.log(isTestMode ? '🧪 Starting TEST payment process ($0)...' : '💳 Starting payment process...');
-
-      // Abrir ventana inmediatamente para evitar bloqueo de pop-ups
-      // y mostrar mensaje de carga
-      closePaymentWindow();
-      paymentWindowRef.current = window.open('', '_blank');
-      const paymentWindow = paymentWindowRef.current;
-      if (paymentWindow) {
-        const loadingTitle = t('payment.generatingLink');
-        const loadingMessage = t('payment.pleaseWait') || 'Please wait a moment...';
-
-        paymentWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>${loadingTitle}</title>
-              <style>
-                body {
-                  margin: 0;
-                  padding: 0;
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  min-height: 100vh;
-                  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-                  color: white;
-                }
-                .loader {
-                  text-align: center;
-                }
-                .spinner {
-                  border: 4px solid rgba(255, 255, 255, 0.1);
-                  border-top: 4px solid #fbbf24;
-                  border-radius: 50%;
-                  width: 50px;
-                  height: 50px;
-                  animation: spin 1s linear infinite;
-                  margin: 0 auto 20px;
-                }
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-                h2 { margin: 0 0 10px; }
-                p { margin: 0; opacity: 0.8; }
-              </style>
-            </head>
-            <body>
-              <div class="loader">
-                <div class="spinner"></div>
-                <h2>${loadingTitle}</h2>
-                <p>${loadingMessage}</p>
-              </div>
-            </body>
-          </html>
-        `);
-      }
 
       // Generar link de pago con WeTravel
       console.log('🔗 Generating WeTravel payment link...');
@@ -890,60 +515,19 @@ export default function PaymentSection() {
 
       console.log('✅ WeTravel payment link generated successfully:', wetravelData);
 
-      // Guardar la respuesta de WeTravel en el estado
-      setWetravelResponse(wetravelData);
-
-      // Redirigir al usuario al link de pago
+      // Redirect the current tab to WeTravel — the return_url set in the API will bring
+      // the user back to /[locale]/payment/success?order_id=X after they pay.
       if (wetravelData.payment_url) {
-        // Actualizar la URL de la ventana ya abierta
-        if (paymentWindow) {
-          paymentWindow.location.href = wetravelData.payment_url;
-          paymentWindow.focus();
-        } else {
-          // Fallback si la ventana fue bloqueada
-          window.open(wetravelData.payment_url, '_blank');
-        }
-
-        // Mostrar estado de esperando procesar pago
-        setError(''); // Limpiar errores previos
-        setIsWaitingForPayment(true);
-        setPaymentStatusMessage('waiting'); // Reset message to initial state
-
-        // Start polling for payment status using order_id, trip_id, and trip_uuid
-        const orderId = wetravelData.order_id;
-        currentOrderIdRef.current = orderId;
-        const tripId = wetravelData.trip_id;
-        // Extract trip_uuid from various possible locations
-        const tripUuid = wetravelData.trip_uuid ||
-                        wetravelData.metadata?.trip?.uuid ||
-                        wetravelData.debug?.trip_id ||
-                        null;
-
-        console.log('🔗 Payment link opened in new tab, starting payment status monitoring...', {
-          orderId,
-          tripId,
-          tripUuid
-        });
-
-        // Set waiting state
-        setIsWaitingForPayment(true);
-
-        // Start SSE connection for real-time updates
-        startPaymentStatusSSE(orderId);
-
-        // ALSO start polling as fallback with all available IDs
-        startPaymentStatusPolling(orderId, tripId, tripUuid);
+        window.location.href = wetravelData.payment_url;
+        // No need to setIsProcessing(false) — browser navigates away
+        return;
       } else {
-        // Cerrar la ventana si no hay URL
-        closePaymentWindow();
         throw new Error('No payment URL received from WeTravel');
       }
-      
+
     } catch (error) {
       console.error('❌ Payment/WeTravel error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
-      // Cerrar la ventana de pago si ocurrió un error
-      closePaymentWindow();
     } finally {
       setIsProcessing(false);
     }
@@ -1127,82 +711,6 @@ export default function PaymentSection() {
           </button>
 
         </div>
-
-        {/* Waiting for Payment Status */}
-        {isWaitingForPayment && (
-          <div className="bg-white/10 border border-yellow-300/50 rounded-lg p-6 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-300"></div>
-              <div>
-                {paymentStatusMessage === 'waiting' && (
-                  <>
-                    <h3 className="text-lg font-semibold text-yellow-300 mb-2 font-heading">
-                      {t('payment.waitingForPayment.title')}
-                    </h3>
-                    <p className="text-blue-300 text-sm">
-                      {t('payment.waitingForPayment.description')}
-                    </p>
-                  </>
-                )}
-                {paymentStatusMessage === 'payment_received' && (
-                  <>
-                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
-                      ✅ ¡Pago Recibido!
-                    </h3>
-                    <p className="text-blue-300 text-sm">
-                      Procesando tu reserva, esto tomará solo unos segundos...
-                    </p>
-                  </>
-                )}
-                {paymentStatusMessage === 'processing_reservation' && (
-                  <>
-                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
-                      ✨ Confirmando Reserva...
-                    </h3>
-                    <p className="text-blue-300 text-sm">
-                      Tu pago fue procesado exitosamente. Estamos confirmando tu reserva en el sistema.
-                    </p>
-                  </>
-                )}
-                {paymentStatusMessage === 'payment_confirmed' && (
-                  <>
-                    <h3 className="text-lg font-semibold text-green-400 mb-2 font-heading">
-                      🎉 ¡Reserva Confirmada!
-                    </h3>
-                    <p className="text-blue-300 text-sm">
-                      Tu pago fue procesado y tu reserva está confirmada. Puedes cerrar la ventana de pago.
-                    </p>
-                  </>
-                )}
-                {isCheckingPaymentStatus && paymentStatusMessage !== 'payment_confirmed' && (
-                  <p className="text-green-300 text-xs mt-3 animate-pulse">
-                    🔄 Verificando estado automáticamente...
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => checkPaymentStatus(currentOrderIdRef.current ?? undefined)}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors duration-200"
-                >
-                  ✅ Ya pagué — verificar
-                </button>
-                <button
-                  onClick={() => window.open(wetravelResponse?.payment_url, '_blank')}
-                  className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors duration-200"
-                >
-                  {t('payment.waitingForPayment.openLinkButton')}
-                </button>
-                <button
-                  onClick={() => setIsWaitingForPayment(false)}
-                  className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition-colors duration-200"
-                >
-                  {t('payment.waitingForPayment.hideMessageButton')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Payment Summary */}
         <div className="space-y-6">

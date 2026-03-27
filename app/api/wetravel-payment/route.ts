@@ -299,6 +299,16 @@ export async function POST(request: NextRequest) {
           payment_id: paymentId
         };
 
+        // Add return_url so WeTravel redirects the customer back after payment
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://surfcamp.duckdns.org';
+        const returnUrl = `${appUrl}/${bookingData.locale || 'es'}/payment/success?order_id=${orderId}`;
+        wetravelPayload.data.settings = { return_url: returnUrl };
+        // Also attach at trip level (some WeTravel API versions use this field)
+        wetravelPayload.data.trip = {
+          ...wetravelPayload.data.trip,
+          return_url: returnUrl,
+        };
+
       } catch (dbError) {
         console.error('❌ Supabase error:', dbError);
         // Continue with WeTravel call even if DB fails (for now)
@@ -375,6 +385,16 @@ export async function POST(request: NextRequest) {
       wetravelData.data?.metadata?.booking_data?.order_id ||
       null;
 
+    // Append return_url as a query param to the payment URL (most reliable redirect mechanism)
+    let finalPaymentUrl = paymentUrl;
+    if (paymentUrl && orderId) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://surfcamp.duckdns.org';
+      const locale = bookingData?.locale || 'es';
+      const returnUrl = `${appUrl}/${locale}/payment/success?order_id=${orderId}`;
+      const separator = paymentUrl.includes('?') ? '&' : '?';
+      finalPaymentUrl = `${paymentUrl}${separator}return_url=${encodeURIComponent(returnUrl)}`;
+    }
+
     console.log('🔗 Extracted payment URL:', paymentUrl);
     console.log('🆔 Extracted trip ID:', tripId);
     console.log('🧾 Extracted WeTravel order ID:', wetravelOrderId);
@@ -422,7 +442,7 @@ export async function POST(request: NextRequest) {
     // Retornar la URL de pago generada
     const response = {
       success: true,
-      payment_url: paymentUrl,
+      payment_url: finalPaymentUrl,
       trip_id: tripId,
       wetravel_order_id: wetravelOrderId || metadataOrderId || null,
       wetravel_payment_id: wetravelPaymentId || null,
