@@ -79,42 +79,6 @@ export async function GET(request: NextRequest) {
 
     console.log(`📊 [PAYMENT-STATUS] found payment ${payment.id} status=${payment.status} updated_at=${payment.updated_at}`);
 
-    // 🔄 CACHE/TIMING FIX: If status is pending and recently updated, retry multiple times with delays
-    if (payment.status === 'pending' && payment.updated_at) {
-      const updatedAt = new Date(payment.updated_at);
-      const now = new Date();
-      const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
-
-      // If updated in last 60 seconds, might be read-after-write issue / replica lag
-      if (secondsSinceUpdate < 60) {
-        // Try up to 6 times with shorter delays: 1s, 1.5s, 2s, 2.5s, 3s, 3.5s (total ~13.5s)
-        for (let attempt = 1; attempt <= 6; attempt++) {
-          const delay = 500 + (attempt * 500);
-          await new Promise(resolve => setTimeout(resolve, delay));
-
-          // Retry the query from PRIMARY database (with fallback)
-          let retryPayment: any = null;
-          if (orderId) {
-            retryPayment = await getPaymentByOrderId(orderId);
-          } else if (tripId) {
-            const rows = await query(
-              `SELECT id, order_id, status, wetravel_data, created_at, updated_at
-               FROM payments WHERE wetravel_data @> $1::jsonb LIMIT 1`,
-              [JSON.stringify({ trip_id: tripId })]
-            );
-            retryPayment = rows.length > 0 ? rows[0] : null;
-          }
-
-          if (retryPayment) {
-            payment = retryPayment;
-            if (retryPayment.status !== 'pending') {
-              break;
-            }
-          }
-        }
-      }
-    }
-
     // Check if this payment has orphaned events and fix them automatically
     if (tripId && payment.status === 'pending') {
       // Try to fix any orphaned events for this trip
@@ -157,40 +121,21 @@ export async function GET(request: NextRequest) {
     // Get order details
     let order: any = await getOrderById(payment.order_id);
 
-    // 🔄 RETRY LOGIC: If no reservation ID but recently updated, retry
-    if (!order?.lobbypms_reservation_id && payment.updated_at) {
-      const updatedAt = new Date(payment.updated_at);
-      const now = new Date();
-      const secondsSinceUpdate = (now.getTime() - updatedAt.getTime()) / 1000;
-
-      if (secondsSinceUpdate < 60) {
-        for (let attempt = 1; attempt <= 6; attempt++) {
-          const delay = 500 + (attempt * 500);
-          await new Promise(resolve => setTimeout(resolve, delay));
-
-          const retryPayment = await getPaymentByOrderId(payment.order_id);
-          const retryOrder = await getOrderById(payment.order_id);
-
-          if (retryPayment && retryPayment.status !== 'pending') {
-            payment = { ...payment, ...retryPayment };
-          }
-
-          if (retryOrder) {
-            order = retryOrder;
-            if (retryOrder.lobbypms_reservation_id) {
-              break;
-            }
-          }
-        }
-      }
-    }
-
     // Check if reservation exists
     const hasReservation = order?.lobbypms_reservation_id &&
                           !order.lobbypms_reservation_id.startsWith('CREATING_');
 
+    // pending_confirmation = payment exists but webhook hasn't arrived yet
+    // Client should keep retrying instead of showing an error
+    const isPendingConfirmation = payment.status === 'pending' && (() => {
+      if (!payment.created_at) return false;
+      const ageMs = Date.now() - new Date(payment.created_at).getTime();
+      return ageMs < 5 * 60 * 1000; // within 5 minutes
+    })();
+
     const response = {
       found: true,
+      pending_confirmation: isPendingConfirmation,
       payment: {
         id: payment.id,
         order_id: payment.order_id,

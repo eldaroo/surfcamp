@@ -302,34 +302,38 @@ export default function PaymentSection() {
 
   // ─── Payment status helpers ───────────────────────────────────────────────
 
-  // Single status check — returns true if payment is confirmed.
-  const checkPaymentStatus = useCallback(async (orderId: string): Promise<boolean> => {
+  // Single status check — returns 'confirmed' | 'pending' | 'not_found'.
+  const checkPaymentStatus = useCallback(async (orderId: string): Promise<'confirmed' | 'pending' | 'not_found'> => {
     try {
       const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
-      if (!res.ok) return false;
+      if (!res.ok) return 'not_found';
       const data = await res.json();
       if (data.show_success) {
         redirectToSuccessRef.current();
-        return true;
+        return 'confirmed';
       }
-      return false;
+      // Webhook hasn't arrived yet but payment exists — keep retrying
+      if (data.pending_confirmation) return 'pending';
+      return 'not_found';
     } catch {
-      return false;
+      return 'not_found';
     }
   }, []);
 
   // Aggressive retry loop — runs when the user returns to this tab/window.
-  // No timers in background; this only fires from focus/visibility/popup-close events.
+  // Uses a fast initial sequence then slows down; no background timers.
   const checkWithRetry = useCallback(async (orderId: string) => {
     if (paymentConfirmedRef.current) return;
     setIsCheckingPaymentStatus(true);
-    const MAX_ATTEMPTS = 12;   // 12 × 1 500 ms ≈ 18 s max
-    const DELAY_MS = 1500;
-    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+    // Delays between attempts in ms (first attempt fires immediately at i=0)
+    const DELAYS = [0, 500, 1000, 2000, 3000, 5000, 8000, 8000, 8000];
+    for (let i = 0; i < DELAYS.length; i++) {
       if (paymentConfirmedRef.current) break;
-      const done = await checkPaymentStatus(orderId);
-      if (done) break;
-      if (i < MAX_ATTEMPTS - 1) await new Promise<void>(r => setTimeout(r, DELAY_MS));
+      if (DELAYS[i] > 0) await new Promise<void>(r => setTimeout(r, DELAYS[i]));
+      const result = await checkPaymentStatus(orderId);
+      if (result === 'confirmed') break;
+      // If clearly not found (no payment record at all) after first attempt, keep going
+      // — don't bail early; webhook may still be in flight
     }
     if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
   }, [checkPaymentStatus]);
@@ -357,7 +361,7 @@ export default function PaymentSection() {
         clearInterval(monitor);
         checkWithRetry(orderId);
       }
-    }, 600);
+    }, 1000);
 
     return () => clearInterval(monitor);
   }, [isWaitingForPayment, checkWithRetry]);
