@@ -19,21 +19,21 @@ interface SurfProgramPricing {
 // Surf program pricing configuration
 const SURF_PROGRAM_PRICING: Record<SurfProgram, SurfProgramPricing> = {
   fundamental: {
-    userPays: 390,
+    userPays: 400,
     lobbyPMSValue: 320,
-    difference: 70,
+    difference: 80,
     coachingCost: 90
   },
   progressionPlus: {
-    userPays: 540,
+    userPays: 640,
     lobbyPMSValue: 450,
-    difference: 90,
+    difference: 190,
     coachingCost: 110
   },
   highPerformance: {
-    userPays: 850,
+    userPays: 800,
     lobbyPMSValue: 780,
-    difference: 70,
+    difference: 20,
     coachingCost: 130
   }
 };

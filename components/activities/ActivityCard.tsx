@@ -45,7 +45,7 @@ const SURF_PROGRAMS = {
       es: 'Inicio rápido, base sólida, coaching personalizado',
       en: 'Fast start, strong foundation, personalized coaching'
     },
-    price: 390,
+    price: 400,
     sessions: 4,
     includes: {
       es: [
@@ -85,7 +85,7 @@ const SURF_PROGRAMS = {
       es: 'Progreso consistente mediante repetición, coaching y feedback',
       en: 'Consistent progress through repetition, coaching and feedback'
     },
-    price: 540,
+    price: 640,
     sessions: 6,
     includes: {
       es: [
@@ -127,7 +127,7 @@ const SURF_PROGRAMS = {
       es: 'Transformación técnica profunda y análisis de alta calidad',
       en: 'Deep technical transformation and high-quality analysis'
     },
-    price: 850,
+    price: 800,
     sessions: 8,
     includes: {
       es: [

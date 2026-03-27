@@ -62,7 +62,7 @@ export default function SurfCampPage({ params }: PageProps) {
         options: [
           {
             duration: 'Core Surf Program',
-            price: '$390',
+            price: '$400',
             sessions: '4 surf sessions',
             videoAnalysis: '2 video analysis sessions',
             droneSession: null,
@@ -74,7 +74,7 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Intensive Surf Program',
-            price: '$540',
+            price: '$640',
             sessions: '6 surf sessions',
             videoAnalysis: '4 video analysis sessions',
             droneSession: null,
@@ -86,7 +86,7 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Elite Surf Program',
-            price: '$850',
+            price: '$800',
             sessions: '8 high-performance sessions',
             videoAnalysis: '5 advanced video analysis sessions',
             droneSession: 'Drone footage included',
@@ -218,7 +218,7 @@ export default function SurfCampPage({ params }: PageProps) {
         options: [
           {
             duration: 'Core Surf Program',
-            price: '$390',
+            price: '$400',
             sessions: '4 sesiones de surf',
             videoAnalysis: '2 sesiones de videoanálisis',
             droneSession: null,
@@ -230,7 +230,7 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Intensive Surf Program',
-            price: '$540',
+            price: '$640',
             sessions: '6 sesiones de surf',
             videoAnalysis: '4 sesiones de videoanálisis',
             droneSession: null,
@@ -242,7 +242,7 @@ export default function SurfCampPage({ params }: PageProps) {
           },
           {
             duration: 'Elite Surf Program',
-            price: '$850',
+            price: '$800',
             sessions: '8 sesiones de alto rendimiento',
             videoAnalysis: '5 sesiones avanzadas de videoanálisis',
             droneSession: 'Video con drone incluido',

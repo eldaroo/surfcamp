@@ -38,9 +38,9 @@ const thumbMap: Record<Activity["id"], { src: string; type: "image" | "video" }>
 };
 
 const SURF_PROGRAM_PRICES: Record<'fundamental' | 'progressionPlus' | 'highPerformance', number> = {
-  fundamental: 390,
-  progressionPlus: 540,
-  highPerformance: 850,
+  fundamental: 400,
+  progressionPlus: 640,
+  highPerformance: 800,
 };
 
 const SURF_PROGRAM_LABELS: Record<
