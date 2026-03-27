@@ -57,6 +57,7 @@ export default function PaymentSection() {
   const paymentWindowRef = useRef<Window | null>(null);
   const currentOrderIdRef = useRef<string | null>(null);
   const paymentConfirmedRef = useRef(false);
+  const checkingRef = useRef(false); // prevent concurrent check loops
   // Updated every render so stale closures always call the latest version
   const redirectToSuccessRef = useRef<() => void>(() => {});
 
@@ -302,46 +303,43 @@ export default function PaymentSection() {
 
   // ─── Payment status helpers ───────────────────────────────────────────────
 
-  // Single status check — returns 'confirmed' | 'pending' | 'not_found'.
-  const checkPaymentStatus = useCallback(async (orderId: string): Promise<'confirmed' | 'pending' | 'not_found'> => {
-    try {
-      const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
-      if (!res.ok) return 'not_found';
-      const data = await res.json();
-      if (data.show_success) {
-        redirectToSuccessRef.current();
-        return 'confirmed';
-      }
-      // Webhook hasn't arrived yet but payment exists — keep retrying
-      if (data.pending_confirmation) return 'pending';
-      return 'not_found';
-    } catch {
-      return 'not_found';
-    }
-  }, []);
-
-  // Aggressive retry loop — runs when the user returns to this tab/window.
-  // Uses a fast initial sequence then slows down; no background timers.
+  // Single API check with fast-retry sequence built in.
+  // Uses checkingRef to prevent two loops from running in parallel.
   const checkWithRetry = useCallback(async (orderId: string) => {
     if (paymentConfirmedRef.current) return;
+    if (checkingRef.current) return; // already a loop in progress
+    checkingRef.current = true;
     setIsCheckingPaymentStatus(true);
-    // Delays between attempts in ms (first attempt fires immediately at i=0)
-    const DELAYS = [0, 500, 1000, 2000, 3000, 5000, 8000, 8000, 8000];
-    for (let i = 0; i < DELAYS.length; i++) {
-      if (paymentConfirmedRef.current) break;
-      if (DELAYS[i] > 0) await new Promise<void>(r => setTimeout(r, DELAYS[i]));
-      const result = await checkPaymentStatus(orderId);
-      if (result === 'confirmed') break;
-      // If clearly not found (no payment record at all) after first attempt, keep going
-      // — don't bail early; webhook may still be in flight
+
+    // First check fires immediately (0ms), then backs off
+    const DELAYS = [0, 500, 1000, 2000, 3000, 5000, 8000];
+    try {
+      for (const delay of DELAYS) {
+        if (paymentConfirmedRef.current) return;
+        if (delay > 0) await new Promise<void>(r => setTimeout(r, delay));
+        try {
+          const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.show_success) {
+              redirectToSuccessRef.current();
+              return;
+            }
+          }
+        } catch { /* network error — keep going */ }
+      }
+    } finally {
+      checkingRef.current = false;
+      if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
     }
-    if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
-  }, [checkPaymentStatus]);
+  }, []);
 
   // Keep redirectToSuccessRef pointing to the latest render values (stale-closure safety).
   redirectToSuccessRef.current = () => {
     if (paymentConfirmedRef.current) return;
     paymentConfirmedRef.current = true;
+    checkingRef.current = false;
+    sessionStorage.removeItem('pending_payment_order_id');
     setIsWaitingForPayment(false);
     setIsCheckingPaymentStatus(false);
     setCurrentStep('success');
@@ -350,37 +348,52 @@ export default function PaymentSection() {
     try { if (paymentWindowRef.current && !paymentWindowRef.current.closed) paymentWindowRef.current.close(); } catch { /* cross-origin */ }
   };
 
-  // ─── Effect: detect popup close ──────────────────────────────────────────
+  // ─── Restore pending order from sessionStorage on mount ──────────────────
+  // Handles the case where WeTravel opened in the same tab and navigated back.
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem('pending_payment_order_id');
+    if (pendingId && !paymentConfirmedRef.current) {
+      currentOrderIdRef.current = pendingId;
+      setIsWaitingForPayment(true);
+      // checkWithRetry will be called by the isWaitingForPayment effect below
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ─── Main effect: background poll + popup-close + focus/visibility ────────
   useEffect(() => {
     if (!isWaitingForPayment) return;
     const orderId = currentOrderIdRef.current;
     if (!orderId) return;
 
-    const monitor = setInterval(() => {
+    // Immediate check when we enter waiting state
+    checkWithRetry(orderId);
+
+    // Background poll every 5 s — catches cases where events don't fire
+    // (throttled to ~1 min when tab is hidden, but focus/visibility covers that)
+    const poll = setInterval(() => {
+      if (!paymentConfirmedRef.current) checkWithRetry(orderId);
+    }, 5000);
+
+    // Popup-close monitor — wakes up the retry loop the instant WeTravel closes
+    const popupMonitor = setInterval(() => {
       if (paymentWindowRef.current?.closed) {
-        clearInterval(monitor);
+        clearInterval(popupMonitor);
         checkWithRetry(orderId);
       }
     }, 1000);
 
-    return () => clearInterval(monitor);
-  }, [isWaitingForPayment, checkWithRetry]);
-
-  // ─── Effect: detect user returning to this tab ────────────────────────────
-  useEffect(() => {
-    if (!isWaitingForPayment) return;
-    const orderId = currentOrderIdRef.current;
-    if (!orderId) return;
-
+    // Wake up immediately when user switches back to this tab / window
     const handleReturn = () => {
-      if (paymentConfirmedRef.current) return;
-      if (document.visibilityState === 'hidden') return;
+      if (paymentConfirmedRef.current || document.visibilityState === 'hidden') return;
       checkWithRetry(orderId);
     };
-
     document.addEventListener('visibilitychange', handleReturn);
     window.addEventListener('focus', handleReturn);
+
     return () => {
+      clearInterval(poll);
+      clearInterval(popupMonitor);
       document.removeEventListener('visibilitychange', handleReturn);
       window.removeEventListener('focus', handleReturn);
     };
@@ -648,6 +661,8 @@ export default function PaymentSection() {
 
       setWetravelResponse(wetravelData);
       currentOrderIdRef.current = wetravelData.order_id;
+      // Persist so we can recover if WeTravel opens in the same tab and navigates back
+      sessionStorage.setItem('pending_payment_order_id', wetravelData.order_id);
       setIsWaitingForPayment(true);
 
     } catch (error) {
@@ -818,91 +833,92 @@ export default function PaymentSection() {
             </div>
           </div>
 
-          {/* Pay Button */}
-          <button
-            onClick={() => handlePayment(false)}
-            disabled={isProcessing}
-            className="w-full px-6 py-4 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isProcessing ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-900"></div>
-                <span>{t('payment.generatingLink')}</span>
-              </>
-            ) : (
-              <>
-                <span>{t('payment.generateLink')}</span>
-                <span>→</span>
-              </>
-            )}
-          </button>
-
-          {/* ── Waiting for payment state ─────────────────────────── */}
-          {isWaitingForPayment && (
-            <div className="bg-white/10 border border-yellow-300/50 rounded-xl p-5">
+          {/* ── Pay button OR waiting state (mutually exclusive) ──── */}
+          {isWaitingForPayment ? (
+            <div className="bg-amber-500/10 border-2 border-amber-400/60 rounded-xl p-5">
               <div className="flex flex-col items-center gap-4 text-center">
                 {isCheckingPaymentStatus ? (
                   <>
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-300" />
-                    <p className="text-yellow-200 font-semibold text-sm">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-400" />
+                    <p className="text-amber-200 font-semibold text-sm">
                       {locale === 'es' ? 'Verificando tu pago…' : 'Verifying your payment…'}
                     </p>
                   </>
                 ) : (
                   <>
-                    <div className="animate-pulse h-10 w-10 rounded-full bg-yellow-400/30 flex items-center justify-center">
-                      <span className="text-xl">⏳</span>
+                    <div className="animate-pulse h-10 w-10 rounded-full bg-amber-400/20 flex items-center justify-center">
+                      <span className="text-2xl">⏳</span>
                     </div>
                     <div>
-                      <p className="text-yellow-200 font-semibold text-sm mb-1">
+                      <p className="text-amber-200 font-bold text-base mb-1">
                         {locale === 'es'
-                          ? 'Completa el pago en la ventana de WeTravel'
-                          : 'Complete your payment in the WeTravel window'}
+                          ? 'Completa el pago en WeTravel'
+                          : 'Complete payment in WeTravel'}
                       </p>
                       <p className="text-slate-400 text-xs">
                         {locale === 'es'
-                          ? 'La reserva se confirmará automáticamente al volver aquí.'
-                          : 'Your booking will confirm automatically when you return here.'}
+                          ? 'Al volver aquí se confirmará automáticamente.'
+                          : 'It will confirm automatically when you return here.'}
                       </p>
                     </div>
                   </>
                 )}
 
-                <div className="flex flex-wrap gap-2 w-full justify-center">
-                  {/* Manual verify — also useful if popup was blocked */}
-                  <button
-                    onClick={() => {
-                      const id = currentOrderIdRef.current;
-                      if (id) checkWithRetry(id);
-                    }}
-                    disabled={isCheckingPaymentStatus}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
-                  >
-                    {isCheckingPaymentStatus
-                      ? (locale === 'es' ? 'Verificando…' : 'Checking…')
-                      : (locale === 'es' ? '✅ Ya pagué — verificar' : '✅ I paid — check now')}
-                  </button>
+                {/* Primary CTA — always active, never disabled */}
+                <button
+                  onClick={() => {
+                    const id = currentOrderIdRef.current;
+                    if (id) checkWithRetry(id);
+                  }}
+                  className="w-full py-3 bg-green-600 hover:bg-green-500 text-white text-sm font-bold rounded-xl transition-colors shadow-lg"
+                >
+                  {isCheckingPaymentStatus
+                    ? (locale === 'es' ? '⏳ Verificando…' : '⏳ Checking…')
+                    : (locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ I paid — confirm booking')}
+                </button>
 
+                <div className="flex gap-2 w-full">
                   {/* Re-open link if popup was blocked */}
                   <button
                     onClick={() => {
                       const url = wetravelResponse?.payment_url;
                       if (url) { paymentWindowRef.current = window.open(url, '_blank'); }
                     }}
-                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-sm font-semibold rounded-lg transition-colors"
+                    className="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 text-xs font-semibold rounded-lg transition-colors"
                   >
                     {locale === 'es' ? 'Abrir link de pago' : 'Open payment link'}
                   </button>
 
                   <button
-                    onClick={() => setIsWaitingForPayment(false)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-colors"
+                    onClick={() => {
+                      sessionStorage.removeItem('pending_payment_order_id');
+                      setIsWaitingForPayment(false);
+                    }}
+                    className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
                   >
                     {locale === 'es' ? 'Cancelar' : 'Cancel'}
                   </button>
                 </div>
               </div>
             </div>
+          ) : (
+            <button
+              onClick={() => handlePayment(false)}
+              disabled={isProcessing}
+              className="w-full px-6 py-4 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-900"></div>
+                  <span>{t('payment.generatingLink')}</span>
+                </>
+              ) : (
+                <>
+                  <span>{t('payment.generateLink')}</span>
+                  <span>→</span>
+                </>
+              )}
+            </button>
           )}
 
         </div>
