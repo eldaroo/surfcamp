@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useBookingStore } from '@/lib/store';
 import { useI18n } from '@/lib/i18n';
@@ -49,6 +49,16 @@ export default function PaymentSection() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [showBackConfirmation, setShowBackConfirmation] = useState(false);
+  const [isWaitingForPayment, setIsWaitingForPayment] = useState(false);
+  const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
+  const [wetravelResponse, setWetravelResponse] = useState<any>(null);
+
+  // Refs — survive re-renders and are safe to read from stale closures
+  const paymentWindowRef = useRef<Window | null>(null);
+  const currentOrderIdRef = useRef<string | null>(null);
+  const paymentConfirmedRef = useRef(false);
+  // Updated every render so stale closures always call the latest version
+  const redirectToSuccessRef = useRef<() => void>(() => {});
 
   // Check if this is adding activities to an existing reservation
   const hasExistingReservation = Boolean(bookingData.existingReservationId);
@@ -290,6 +300,94 @@ export default function PaymentSection() {
   [participants]
   );
 
+  // ─── Payment status helpers ───────────────────────────────────────────────
+
+  // Single status check — returns true if payment is confirmed.
+  const checkPaymentStatus = useCallback(async (orderId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data.show_success) {
+        redirectToSuccessRef.current();
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Aggressive retry loop — runs when the user returns to this tab/window.
+  // No timers in background; this only fires from focus/visibility/popup-close events.
+  const checkWithRetry = useCallback(async (orderId: string) => {
+    if (paymentConfirmedRef.current) return;
+    setIsCheckingPaymentStatus(true);
+    const MAX_ATTEMPTS = 12;   // 12 × 1 500 ms ≈ 18 s max
+    const DELAY_MS = 1500;
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      if (paymentConfirmedRef.current) break;
+      const done = await checkPaymentStatus(orderId);
+      if (done) break;
+      if (i < MAX_ATTEMPTS - 1) await new Promise<void>(r => setTimeout(r, DELAY_MS));
+    }
+    if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
+  }, [checkPaymentStatus]);
+
+  // Keep redirectToSuccessRef pointing to the latest render values (stale-closure safety).
+  redirectToSuccessRef.current = () => {
+    if (paymentConfirmedRef.current) return;
+    paymentConfirmedRef.current = true;
+    setIsWaitingForPayment(false);
+    setIsCheckingPaymentStatus(false);
+    setCurrentStep('success');
+    window.focus();
+    // Close the WeTravel popup if it's still open
+    try { if (paymentWindowRef.current && !paymentWindowRef.current.closed) paymentWindowRef.current.close(); } catch { /* cross-origin */ }
+  };
+
+  // ─── Effect: detect popup close ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isWaitingForPayment) return;
+    const orderId = currentOrderIdRef.current;
+    if (!orderId) return;
+
+    const monitor = setInterval(() => {
+      if (paymentWindowRef.current?.closed) {
+        clearInterval(monitor);
+        checkWithRetry(orderId);
+      }
+    }, 600);
+
+    return () => clearInterval(monitor);
+  }, [isWaitingForPayment, checkWithRetry]);
+
+  // ─── Effect: detect user returning to this tab ────────────────────────────
+  useEffect(() => {
+    if (!isWaitingForPayment) return;
+    const orderId = currentOrderIdRef.current;
+    if (!orderId) return;
+
+    const handleReturn = () => {
+      if (paymentConfirmedRef.current) return;
+      if (document.visibilityState === 'hidden') return;
+      checkWithRetry(orderId);
+    };
+
+    document.addEventListener('visibilitychange', handleReturn);
+    window.addEventListener('focus', handleReturn);
+    return () => {
+      document.removeEventListener('visibilitychange', handleReturn);
+      window.removeEventListener('focus', handleReturn);
+    };
+  }, [isWaitingForPayment, checkWithRetry]);
+
+  // ─── Cleanup on unmount ───────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      try { if (paymentWindowRef.current && !paymentWindowRef.current.closed) paymentWindowRef.current.close(); } catch { /* ignore */ }
+    };
+  }, []);
 
   const handlePayment = async (isTestMode: boolean = false) => {
     if (!isReadyForPayment) {
@@ -299,6 +397,22 @@ export default function PaymentSection() {
 
     setIsProcessing(true);
     setError('');
+    paymentConfirmedRef.current = false;
+
+    // Open a blank popup immediately (on the click event) to avoid popup blockers.
+    // We'll load the payment URL into it once we have it from the API.
+    try { if (paymentWindowRef.current && !paymentWindowRef.current.closed) paymentWindowRef.current.close(); } catch { /* ignore */ }
+    paymentWindowRef.current = window.open('', '_blank');
+    const paymentWindow = paymentWindowRef.current;
+    if (paymentWindow) {
+      paymentWindow.document.write(`<!DOCTYPE html><html><head><title>Cargando...</title>
+        <style>body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;
+        background:#0f172a;color:#fff;font-family:sans-serif;}
+        .spinner{border:4px solid rgba(255,255,255,.15);border-top-color:#fbbf24;border-radius:50%;
+        width:48px;height:48px;animation:spin 1s linear infinite;margin:0 auto 16px}
+        @keyframes spin{to{transform:rotate(360deg)}}</style></head>
+        <body><div style="text-align:center"><div class="spinner"></div><p>Generando link de pago…</p></div></body></html>`);
+    }
 
     try {
       console.log(isTestMode ? '🧪 Starting TEST payment process ($0)...' : '💳 Starting payment process...');
@@ -515,19 +629,28 @@ export default function PaymentSection() {
 
       console.log('✅ WeTravel payment link generated successfully:', wetravelData);
 
-      // Redirect the current tab to WeTravel — the return_url set in the API will bring
-      // the user back to /[locale]/payment/success?order_id=X after they pay.
-      if (wetravelData.payment_url) {
-        window.location.href = wetravelData.payment_url;
-        // No need to setIsProcessing(false) — browser navigates away
-        return;
-      } else {
+      if (!wetravelData.payment_url) {
         throw new Error('No payment URL received from WeTravel');
       }
+
+      // Load the payment URL into the already-open popup
+      if (paymentWindow && !paymentWindow.closed) {
+        paymentWindow.location.href = wetravelData.payment_url;
+        paymentWindow.focus();
+      } else {
+        // Popup was blocked — open directly (best effort)
+        paymentWindowRef.current = window.open(wetravelData.payment_url, '_blank');
+      }
+
+      setWetravelResponse(wetravelData);
+      currentOrderIdRef.current = wetravelData.order_id;
+      setIsWaitingForPayment(true);
 
     } catch (error) {
       console.error('❌ Payment/WeTravel error:', error);
       setError(error instanceof Error ? error.message : t('payment.error.processing'));
+      // Close the blank popup on error so the user isn't left with a dead window
+      try { if (paymentWindow && !paymentWindow.closed) paymentWindow.close(); } catch { /* ignore */ }
     } finally {
       setIsProcessing(false);
     }
@@ -709,6 +832,74 @@ export default function PaymentSection() {
               </>
             )}
           </button>
+
+          {/* ── Waiting for payment state ─────────────────────────── */}
+          {isWaitingForPayment && (
+            <div className="bg-white/10 border border-yellow-300/50 rounded-xl p-5">
+              <div className="flex flex-col items-center gap-4 text-center">
+                {isCheckingPaymentStatus ? (
+                  <>
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-300" />
+                    <p className="text-yellow-200 font-semibold text-sm">
+                      {locale === 'es' ? 'Verificando tu pago…' : 'Verifying your payment…'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="animate-pulse h-10 w-10 rounded-full bg-yellow-400/30 flex items-center justify-center">
+                      <span className="text-xl">⏳</span>
+                    </div>
+                    <div>
+                      <p className="text-yellow-200 font-semibold text-sm mb-1">
+                        {locale === 'es'
+                          ? 'Completa el pago en la ventana de WeTravel'
+                          : 'Complete your payment in the WeTravel window'}
+                      </p>
+                      <p className="text-slate-400 text-xs">
+                        {locale === 'es'
+                          ? 'La reserva se confirmará automáticamente al volver aquí.'
+                          : 'Your booking will confirm automatically when you return here.'}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div className="flex flex-wrap gap-2 w-full justify-center">
+                  {/* Manual verify — also useful if popup was blocked */}
+                  <button
+                    onClick={() => {
+                      const id = currentOrderIdRef.current;
+                      if (id) checkWithRetry(id);
+                    }}
+                    disabled={isCheckingPaymentStatus}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    {isCheckingPaymentStatus
+                      ? (locale === 'es' ? 'Verificando…' : 'Checking…')
+                      : (locale === 'es' ? '✅ Ya pagué — verificar' : '✅ I paid — check now')}
+                  </button>
+
+                  {/* Re-open link if popup was blocked */}
+                  <button
+                    onClick={() => {
+                      const url = wetravelResponse?.payment_url;
+                      if (url) { paymentWindowRef.current = window.open(url, '_blank'); }
+                    }}
+                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    {locale === 'es' ? 'Abrir link de pago' : 'Open payment link'}
+                  </button>
+
+                  <button
+                    onClick={() => setIsWaitingForPayment(false)}
+                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-colors"
+                  >
+                    {locale === 'es' ? 'Cancelar' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 
