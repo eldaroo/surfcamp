@@ -119,6 +119,7 @@ export default function ContactForm() {
   const [wetravelResponse, setWetravelResponse] = useState<any>(null);
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
   const pollingOrderIdRef = useRef<string | undefined>(undefined);
@@ -847,6 +848,7 @@ const priceBreakdown = useMemo(
         } else {
           window.open(wetravelData.payment_url, '_blank');
         }
+        setPaymentLinkOpened(true);
 
         setPaymentError('');
         setIsWaitingForPayment(true);
@@ -1371,13 +1373,29 @@ const priceBreakdown = useMemo(
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      <button
-                        onClick={() => window.open(wetravelResponse?.payment_url, '_blank')}
-                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
-                      >
-                        {t('payment.waitingForPayment.openLinkButton')}
-                      </button>
+                    <div className="flex flex-wrap gap-3 justify-center w-full">
+                      {paymentLinkOpened ? (
+                        <button
+                          onClick={() => {
+                            const orderId = pollingOrderIdRef.current;
+                            const tripId = pollingTripIdRef.current;
+                            if (orderId || tripId) checkPaymentStatus(orderId, tripId);
+                          }}
+                          className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors duration-200"
+                        >
+                          {locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ Payment done — confirm booking'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            window.open(wetravelResponse?.payment_url, '_blank');
+                            setPaymentLinkOpened(true);
+                          }}
+                          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+                        >
+                          {t('payment.waitingForPayment.openLinkButton')}
+                        </button>
+                      )}
                       <button
                         onClick={() => setIsWaitingForPayment(false)}
                         className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors duration-200"
