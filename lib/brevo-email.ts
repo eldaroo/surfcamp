@@ -150,15 +150,15 @@ export async function sendAdminNotificationEmail(params: AdminNotificationParams
 
     if (!res.ok) {
       const err = await res.json();
-      console.error('❌ [BREVO] Admin email error:', err);
-      return false;
+      console.error('❌ [BREVO] Admin email error:', JSON.stringify(err));
+      throw new Error(JSON.stringify(err));
     }
 
     console.log('✅ [BREVO] Admin notification email sent to', ADMIN_EMAIL);
     return true;
   } catch (error: any) {
     console.error('❌ [BREVO] Admin email exception:', error.message);
-    return false;
+    throw error;
   }
 }
 
