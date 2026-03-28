@@ -121,6 +121,8 @@ export default function ContactForm() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
+  const pollingOrderIdRef = useRef<string | undefined>(undefined);
+  const pollingTripIdRef = useRef<string | undefined>(undefined);
 
   const closePaymentWindow = useCallback(() => {
     if (paymentWindowRef.current && !paymentWindowRef.current.closed) {
@@ -256,6 +258,26 @@ export default function ContactForm() {
       clearInterval(checkWindowClosed);
     };
   }, [paymentConfirmed, bookingData, selectedRoom, participants, setPriceBreakdown, setCurrentStep, closePaymentWindow]);
+
+  // Immediate re-check when user switches back to this tab from WeTravel.
+  // setInterval is throttled to ~1 min in background tabs; visibilitychange fires instantly.
+  useEffect(() => {
+    if (!isWaitingForPayment || paymentConfirmed) return;
+
+    const handleVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const orderId = pollingOrderIdRef.current;
+      const tripId = pollingTripIdRef.current;
+      if (orderId || tripId) {
+        console.log('👁️ [ContactForm] Tab visible — immediate payment check');
+        checkPaymentStatus(orderId, tripId);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisible);
+    return () => document.removeEventListener('visibilitychange', handleVisible);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWaitingForPayment, paymentConfirmed]);
 
   // Calculate prices
   const calculateNights = () => {
@@ -564,6 +586,8 @@ const priceBreakdown = useMemo(
     }
 
     console.log('🔄 [PAYMENT-POLLING] Starting payment status polling', { orderId, tripId });
+    pollingOrderIdRef.current = orderId;
+    pollingTripIdRef.current = tripId;
     setIsCheckingPaymentStatus(true);
     checkPaymentStatus(orderId, tripId);
 
