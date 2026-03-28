@@ -169,97 +169,6 @@ export default function ContactForm() {
     };
   }, [closePaymentWindow]);
 
-  // Monitor payment window and redirect when payment is confirmed and window is closed
-  useEffect(() => {
-    if (!paymentConfirmed) {
-      console.log('⏸️ [ContactForm] Payment not confirmed yet, not checking window status');
-      return;
-    }
-
-    if (!paymentWindowRef.current) {
-      console.log('⚠️ [ContactForm] Payment window ref is null, cannot check window status');
-      return;
-    }
-
-    console.log('👀 [ContactForm] Starting to monitor payment window closure...');
-
-    const checkWindowClosed = setInterval(() => {
-      const windowRef = paymentWindowRef.current;
-
-      if (!windowRef) {
-        console.log('⚠️ [ContactForm] Window ref became null during monitoring');
-        return;
-      }
-
-      const isClosed = windowRef.closed;
-      console.log('🔍 [ContactForm] Window status check - closed:', isClosed);
-
-      if (isClosed) {
-        console.log('✅ [ContactForm] Payment window closed, redirecting to success page');
-        clearInterval(checkWindowClosed);
-
-        // Calculate final prices inline (to avoid dependency issues)
-        const calcNights = bookingData.checkIn && bookingData.checkOut
-          ? Math.ceil((new Date(bookingData.checkOut).getTime() - new Date(bookingData.checkIn).getTime()) / (1000 * 60 * 60 * 24))
-          : 0;
-
-        const calcAccommodation = selectedRoom ? (
-          selectedRoom.isSharedRoom
-            ? selectedRoom.pricePerNight * calcNights * (bookingData.guests || 1)
-            : selectedRoom.pricePerNight * calcNights
-        ) : 0;
-
-        let calcActivities = 0;
-        participants.forEach(participant => {
-          participant.selectedActivities.forEach((activity: any) => {
-            if (activity.category === 'yoga') {
-              const yogaPackage = participant.selectedYogaPackages[activity.id];
-              const yogaClassCount = participant.yogaClasses?.[activity.id] ?? 1;
-              const useDiscount = participant.yogaUsePackDiscount?.[activity.id] ?? false;
-              if (yogaPackage) {
-                calcActivities += 50; // Assuming package price
-              } else {
-                const pricePerClass = useDiscount ? 8 : 10;
-                calcActivities += yogaClassCount * pricePerClass;
-              }
-            } else if (activity.category === 'surf') {
-              const surfClasses = participant.selectedSurfClasses[activity.id];
-              if (surfClasses) {
-                calcActivities += surfClasses * 100; // Assuming per-class price
-              }
-            } else {
-              const quantity = participant.activityQuantities[activity.id] || 1;
-              calcActivities += activity.price * quantity;
-            }
-          });
-        });
-
-        const calcTotal = calcAccommodation + calcActivities;
-
-        const prices = {
-          accommodation: calcAccommodation,
-          activities: calcActivities,
-          subtotal: calcTotal,
-          tax: 0,
-          total: calcTotal,
-          currency: 'USD'
-        };
-        setPriceBreakdown(prices);
-
-        // Redirect to success
-        setIsWaitingForPayment(false);
-        setIsCheckingPaymentStatus(false);
-        setCurrentStep('success');
-        closePaymentWindow();
-        window.focus();
-      }
-    }, 500);
-
-    return () => {
-      console.log('🧹 [ContactForm] Cleaning up window monitor');
-      clearInterval(checkWindowClosed);
-    };
-  }, [paymentConfirmed, bookingData, selectedRoom, participants, setPriceBreakdown, setCurrentStep, closePaymentWindow]);
 
   // Immediate re-check when user switches back to this tab from WeTravel.
   // setInterval is throttled to ~1 min in background tabs; visibilitychange fires instantly.
@@ -685,7 +594,9 @@ const priceBreakdown = useMemo(
 
     setIsProcessingPayment(true);
     setPaymentError('');
-    setPaymentConfirmed(false); // Reset payment confirmation status
+    setPaymentConfirmed(false);
+    setPaymentLinkOpened(false);
+    setPaymentNotFoundMsg(false);
 
     try {
       closePaymentWindow();
