@@ -141,7 +141,7 @@ export async function sendAdminNotificationEmail(params: AdminNotificationParams
       method: 'POST',
       headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
       body: JSON.stringify({
-        sender: { name: 'Zeneidas Surf', email: process.env.BREVO_SENDER_EMAIL || 'darioegea@gmail.com' },
+        sender: { name: 'Zeneidas Surf', email: process.env.BREVO_SENDER_EMAIL || 'info@zeneidasgarden.com' },
         to: [{ email: ADMIN_EMAIL, name: 'Dario' }],
         subject: `🔔 Nueva Reserva ${bookingReference} — ${clientFullName}`,
         htmlContent: html
