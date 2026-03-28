@@ -57,7 +57,7 @@ export default function PaymentSection() {
   const paymentWindowRef = useRef<Window | null>(null);
   const currentOrderIdRef = useRef<string | null>(null);
   const paymentConfirmedRef = useRef(false);
-  const checkingRef = useRef(false); // prevent concurrent check loops
+  const checkGenRef = useRef(0); // incremented on each new trigger; lets new calls preempt sleeping ones
   // Updated every render so stale closures always call the latest version
   const redirectToSuccessRef = useRef<() => void>(() => {});
 
@@ -303,42 +303,42 @@ export default function PaymentSection() {
 
   // ─── Payment status helpers ───────────────────────────────────────────────
 
-  // Single API check with fast-retry sequence built in.
-  // Uses checkingRef to prevent two loops from running in parallel.
+  // Fast-retry sequence with generation counter.
+  // Each call increments the generation — sleeping loops from previous calls
+  // detect the mismatch and exit immediately, so a new visibilitychange or
+  // popup-close event always gets a fresh immediate check even if a throttled
+  // sleep (up to ~60s in background tabs) is in progress.
   const checkWithRetry = useCallback(async (orderId: string) => {
     if (paymentConfirmedRef.current) return;
-    if (checkingRef.current) return; // already a loop in progress
-    checkingRef.current = true;
+    const gen = ++checkGenRef.current;
     setIsCheckingPaymentStatus(true);
 
-    // First check fires immediately (0ms), then backs off
+    // First check fires immediately (0ms delay), then backs off
     const DELAYS = [0, 500, 1000, 2000, 3000, 5000, 8000];
-    try {
-      for (const delay of DELAYS) {
-        if (paymentConfirmedRef.current) return;
-        if (delay > 0) await new Promise<void>(r => setTimeout(r, delay));
-        try {
-          const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.show_success) {
-              redirectToSuccessRef.current();
-              return;
-            }
+    for (const delay of DELAYS) {
+      if (paymentConfirmedRef.current || checkGenRef.current !== gen) break;
+      if (delay > 0) await new Promise<void>(r => setTimeout(r, delay));
+      if (paymentConfirmedRef.current || checkGenRef.current !== gen) break;
+      try {
+        const res = await fetch(`/api/payment-status?order_id=${encodeURIComponent(orderId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.show_success) {
+            redirectToSuccessRef.current();
+            return;
           }
-        } catch { /* network error — keep going */ }
-      }
-    } finally {
-      checkingRef.current = false;
-      if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
+        }
+      } catch { /* network error — keep going */ }
     }
+
+    if (!paymentConfirmedRef.current) setIsCheckingPaymentStatus(false);
   }, []);
 
   // Keep redirectToSuccessRef pointing to the latest render values (stale-closure safety).
   redirectToSuccessRef.current = () => {
     if (paymentConfirmedRef.current) return;
     paymentConfirmedRef.current = true;
-    checkingRef.current = false;
+    checkGenRef.current++; // cancel any in-flight loop
     sessionStorage.removeItem('pending_payment_order_id');
     setIsWaitingForPayment(false);
     setIsCheckingPaymentStatus(false);
