@@ -18,7 +18,7 @@ import {
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
-import { sendBookingConfirmationEmailWithRetry, addContactToBrevoListWithRetry } from '@/lib/brevo-email';
+import { sendBookingConfirmationEmailWithRetry, addContactToBrevoListWithRetry, sendAdminNotificationEmail } from '@/lib/brevo-email';
 import {
   calculateWeTravelPayment,
   detectSurfPrograms,
@@ -1432,39 +1432,8 @@ export async function POST(request: NextRequest) {
             undefined // No participants array in this case
           );
 
-          // Send to ice bath instructor if there are ice bath sessions
-          if (iceBathParticipants.length > 0) {
-            await sendIceBathInstructorNotification({
-              clientFullName,
-              clientPhone,
-              checkIn,
-              checkOut,
-              participants: iceBathParticipants
-            });
-          }
-
-          // Send to surf instructor if there are surf classes
-          if (surfParticipants.length > 0) {
-            await sendSurfInstructorNotification({
-              clientFullName,
-              clientPhone,
-              checkIn,
-              checkOut,
-              participants: surfParticipants
-            });
-          }
-
-          // Send confirmation to client
-          await sendClientConfirmationMessage({
-            clientPhone,
-            clientFirstName: contactInfo.firstName,
-            checkIn,
-            checkOut,
-            locale
-          });
-
-          // Send notification to admin
-          await sendAdminNewBookingNotification({
+          // Send consolidated admin notification email (replaces all WhatsApp messages)
+          await sendAdminNotificationEmail({
             bookingReference,
             clientFullName,
             clientEmail: contactInfo.email,
@@ -1474,19 +1443,14 @@ export async function POST(request: NextRequest) {
             guests: calculatedGuestCount,
             roomTypeName: selectedRoom?.roomTypeName,
             totalAmount: priceBreakdown?.total,
-            depositAmount: undefined, // Will be calculated below
+            locale: locale as 'en' | 'es',
+            iceBathParticipants,
+            surfParticipants,
             activities: resolvedActivities.map(act => {
               const activity = getActivityById(act.id);
-              return {
-                name: activity?.name || act.id,
-                participants: [clientFullName],
-                quantity: act.quantity
-              };
+              return { name: activity?.name || act.id, participants: [clientFullName], quantity: act.quantity };
             })
-          });
-        } catch (whatsappError) {
-          console.error('WhatsApp notification error:', whatsappError);
-        }
+          }).catch(err => console.error('Admin notification email error:', err));
 
         // Send confirmation email
         try {
@@ -1742,41 +1706,8 @@ export async function POST(request: NextRequest) {
           uniqueParticipants
         );
 
-        // Send to ice bath instructor if there are ice bath sessions
-        if (iceBathParticipants.length > 0) {
-          await sendIceBathInstructorNotification({
-            clientFullName,
-            clientPhone,
-            checkIn,
-            checkOut,
-            participants: iceBathParticipants
-          });
-        }
-
-        // Send to surf instructor if there are surf classes
-        if (surfParticipants.length > 0) {
-          await sendSurfInstructorNotification({
-            clientFullName,
-            clientPhone,
-            checkIn,
-            checkOut,
-            participants: surfParticipants
-          });
-        }
-
-        // Send confirmation to client
-        if (contactInfo?.phone) {
-          await sendClientConfirmationMessage({
-            clientPhone,
-            clientFirstName: contactInfo.firstName,
-            checkIn,
-            checkOut,
-            locale
-          });
-        }
-
-        // Send notification to admin
-        await sendAdminNewBookingNotification({
+        // Send consolidated admin notification email (replaces all WhatsApp messages)
+        await sendAdminNotificationEmail({
           bookingReference,
           clientFullName,
           clientEmail: contactInfo.email,
@@ -1786,7 +1717,9 @@ export async function POST(request: NextRequest) {
           guests: calculatedGuestCount,
           roomTypeName: selectedRoom?.roomTypeName,
           totalAmount: priceBreakdown?.total,
-          depositAmount: undefined,
+          locale: locale as 'en' | 'es',
+          iceBathParticipants,
+          surfParticipants,
           activities: uniqueParticipants.flatMap((p: any) =>
             p.selectedActivities.map((act: any) => ({
               name: act.name,
@@ -1794,9 +1727,7 @@ export async function POST(request: NextRequest) {
               quantity: p.activityQuantities?.[act.id]
             }))
           )
-        });
-      } catch (whatsappError) {
-      }
+        }).catch(err => console.error('Admin notification email error:', err));
 
       // Send confirmation email
       try {
@@ -2041,41 +1972,8 @@ export async function POST(request: NextRequest) {
           hasMultipleParticipantsWithActivities ? participants : undefined
         );
 
-        // Send to ice bath instructor if there are ice bath sessions
-        if (iceBathParticipants.length > 0) {
-          await sendIceBathInstructorNotification({
-            clientFullName,
-            clientPhone,
-            checkIn,
-            checkOut,
-            participants: iceBathParticipants
-          });
-        }
-
-        // Send to surf instructor if there are surf classes
-        if (surfParticipants.length > 0) {
-          await sendSurfInstructorNotification({
-            clientFullName,
-            clientPhone,
-            checkIn,
-            checkOut,
-            participants: surfParticipants
-          });
-        }
-
-        // Send confirmation to client
-        if (contactInfo?.phone) {
-          await sendClientConfirmationMessage({
-            clientPhone,
-            clientFirstName: contactInfo.firstName,
-            checkIn,
-            checkOut,
-            locale
-          });
-        }
-
-        // Send notification to admin
-        await sendAdminNewBookingNotification({
+        // Send consolidated admin notification email (replaces all WhatsApp messages)
+        await sendAdminNotificationEmail({
           bookingReference,
           clientFullName,
           clientEmail: contactInfo.email,
@@ -2085,7 +1983,9 @@ export async function POST(request: NextRequest) {
           guests: calculatedGuestCount,
           roomTypeName: selectedRoom?.roomTypeName,
           totalAmount: priceBreakdown?.total,
-          depositAmount: undefined,
+          locale: locale as 'en' | 'es',
+          iceBathParticipants,
+          surfParticipants,
           activities: hasMultipleParticipantsWithActivities
             ? participants.flatMap((p: any) =>
                 p.selectedActivities.map((act: any) => ({
@@ -2096,17 +1996,9 @@ export async function POST(request: NextRequest) {
               )
             : resolvedActivities.map(act => {
                 const activity = getActivityById(act.id);
-                return {
-                  name: activity?.name || act.id,
-                  participants: [clientFullName],
-                  quantity: act.quantity
-                };
+                return { name: activity?.name || act.id, participants: [clientFullName], quantity: act.quantity };
               })
-        });
-
-      } catch (whatsappError) {
-        console.error('WhatsApp notification error:', whatsappError);
-      }
+        }).catch(err => console.error('Admin notification email error:', err));
 
       // Send confirmation email
       try {
