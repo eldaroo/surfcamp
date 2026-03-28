@@ -120,6 +120,7 @@ export default function ContactForm() {
   const [isCheckingPaymentStatus, setIsCheckingPaymentStatus] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [paymentLinkOpened, setPaymentLinkOpened] = useState(false);
+  const [paymentNotFoundMsg, setPaymentNotFoundMsg] = useState(false);
   const paymentStatusInterval = useRef<NodeJS.Timeout | null>(null);
   const paymentWindowRef = useRef<Window | null>(null);
   const pollingOrderIdRef = useRef<string | undefined>(undefined);
@@ -1375,16 +1376,31 @@ const priceBreakdown = useMemo(
                     </div>
                     <div className="flex flex-wrap gap-3 justify-center w-full">
                       {paymentLinkOpened ? (
-                        <button
-                          onClick={() => {
-                            const orderId = pollingOrderIdRef.current;
-                            const tripId = pollingTripIdRef.current;
-                            if (orderId || tripId) checkPaymentStatus(orderId, tripId);
-                          }}
-                          className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors duration-200"
-                        >
-                          {locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ Payment done — confirm booking'}
-                        </button>
+                        <div className="w-full flex flex-col gap-2">
+                          <button
+                            onClick={async () => {
+                              setPaymentNotFoundMsg(false);
+                              const orderId = pollingOrderIdRef.current;
+                              const tripId = pollingTripIdRef.current;
+                              if (!orderId && !tripId) return;
+                              const data = await checkPaymentStatus(orderId, tripId);
+                              if (data && !data.show_success) {
+                                setPaymentNotFoundMsg(true);
+                                setTimeout(() => setPaymentNotFoundMsg(false), 4000);
+                              }
+                            }}
+                            className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors duration-200"
+                          >
+                            {locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ Payment done — confirm booking'}
+                          </button>
+                          {paymentNotFoundMsg && (
+                            <p className="text-red-300 text-xs text-center">
+                              {locale === 'es'
+                                ? '⚠️ No encontramos tu pago aún. Asegúrate de completar el pago en WeTravel e intenta de nuevo.'
+                                : '⚠️ Payment not found yet. Make sure you completed the payment in WeTravel and try again.'}
+                            </p>
+                          )}
+                        </div>
                       ) : (
                         <button
                           onClick={() => {
