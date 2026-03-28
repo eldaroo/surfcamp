@@ -541,9 +541,14 @@ const priceBreakdown = useMemo(
           console.log('🛑 [PAYMENT-STATUS] Polling stopped');
         }
 
-        // Mark payment as confirmed (will redirect when window closes)
-        console.log('✅ Setting paymentConfirmed = true (ContactForm)');
+        // Navigate to success immediately — don't wait for window to close
+        console.log('✅ Payment confirmed, navigating to success (ContactForm)');
         setPaymentConfirmed(true);
+        setIsWaitingForPayment(false);
+        setIsCheckingPaymentStatus(false);
+        try { if (paymentWindowRef.current && !paymentWindowRef.current.closed) paymentWindowRef.current.close(); } catch { /* cross-origin */ }
+        setCurrentStep('success');
+        window.focus();
       }
 
       return data;
