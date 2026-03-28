@@ -426,14 +426,8 @@ export async function POST(request: NextRequest) {
         await updatePayment(paymentId, paymentUpdatePayload as any);
         console.log('✅ Payment updated with WeTravel response in DB');
 
-        if (bookingData?.depositAmountCents === 0) {
-          console.log('[TEST PAYMENT] $0 deposit detected - auto-marking booking as created');
-          await updatePayment(paymentId, { status: 'booking_created' });
-          if (orderId) {
-            await updateOrder(orderId, { status: 'booking_created' });
-            console.log('$0 flow: payment and order marked as booking_created');
-          }
-        }
+        // NOTE: $0 test payments are NOT auto-marked as booking_created here.
+        // The booking.created webhook from WeTravel handles this for all payment types.
       } catch (updateErr) {
         console.error('❌ Error updating payment:', updateErr);
       }
