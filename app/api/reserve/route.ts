@@ -1452,6 +1452,10 @@ export async function POST(request: NextRequest) {
             })
           }).catch(err => console.error('Admin notification email error:', err));
 
+        } catch (notifyError) {
+          console.error('Admin notification email error:', notifyError);
+        }
+
         // Send confirmation email
         try {
           // Calculate actual WeTravel deposit amount using the same formula
@@ -1729,6 +1733,10 @@ export async function POST(request: NextRequest) {
           )
         }).catch(err => console.error('Admin notification email error:', err));
 
+      } catch (notifyError) {
+        console.error('Admin notification email error:', notifyError);
+      }
+
       // Send confirmation email
       try {
         // Calculate actual WeTravel deposit amount using the same formula
@@ -1999,6 +2007,10 @@ export async function POST(request: NextRequest) {
                 return { name: activity?.name || act.id, participants: [clientFullName], quantity: act.quantity };
               })
         }).catch(err => console.error('Admin notification email error:', err));
+
+      } catch (notifyError) {
+        console.error('Admin notification email error:', notifyError);
+      }
 
       // Send confirmation email
       try {
