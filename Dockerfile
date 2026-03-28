@@ -15,6 +15,7 @@ ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 ENV NEXT_PUBLIC_LINK_GENERATOR_URL=$NEXT_PUBLIC_LINK_GENERATOR_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG CACHE_BUST
 RUN npm run build
 
 FROM node:20-bookworm-slim AS runner

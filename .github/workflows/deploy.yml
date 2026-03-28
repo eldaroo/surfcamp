@@ -56,6 +56,7 @@ jobs:
           build_args: |
             NEXT_PUBLIC_BASE_URL=https://surfcamp.mdlautomations.duckdns.org
             NEXT_PUBLIC_LINK_GENERATOR_URL=https://links.surfcamp.mdlautomations.duckdns.org
+            CACHE_BUST=${{ github.sha }}
 
           project_secrets: |
             LOBBYPMS_API_KEY=${{ secrets.LOBBYPMS_API_KEY }}
