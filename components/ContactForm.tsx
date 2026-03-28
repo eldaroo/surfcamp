@@ -1285,50 +1285,46 @@ const priceBreakdown = useMemo(
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 justify-center w-full">
-                      {paymentLinkOpened ? (
-                        <div className="w-full flex flex-col gap-2">
-                          <button
-                            onClick={async () => {
-                              setPaymentNotFoundMsg(false);
-                              const orderId = pollingOrderIdRef.current;
-                              const tripId = pollingTripIdRef.current;
-                              if (!orderId && !tripId) return;
-                              const data = await checkPaymentStatus(orderId, tripId);
-                              if (data && !data.show_success) {
-                                setPaymentNotFoundMsg(true);
-                                setTimeout(() => setPaymentNotFoundMsg(false), 4000);
-                              }
-                            }}
-                            className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors duration-200"
-                          >
-                            {locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ Payment done — confirm booking'}
-                          </button>
-                          {paymentNotFoundMsg && (
-                            <p className="text-red-300 text-xs text-center">
-                              {locale === 'es'
-                                ? '⚠️ No encontramos tu pago aún. Asegúrate de completar el pago en WeTravel e intenta de nuevo.'
-                                : '⚠️ Payment not found yet. Make sure you completed the payment in WeTravel and try again.'}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
+                    <div className="flex flex-col gap-2 w-full">
+                      <button
+                        onClick={async () => {
+                          setPaymentNotFoundMsg(false);
+                          const orderId = pollingOrderIdRef.current;
+                          const tripId = pollingTripIdRef.current;
+                          if (!orderId && !tripId) return;
+                          const data = await checkPaymentStatus(orderId, tripId);
+                          if (data && !data.show_success) {
+                            setPaymentNotFoundMsg(true);
+                            setTimeout(() => setPaymentNotFoundMsg(false), 4000);
+                          }
+                        }}
+                        className="w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors duration-200"
+                      >
+                        {locale === 'es' ? '✅ Ya pagué — confirmar reserva' : '✅ Payment done — confirm booking'}
+                      </button>
+                      {paymentNotFoundMsg && (
+                        <p className="text-red-300 text-xs text-center">
+                          {locale === 'es'
+                            ? '⚠️ No encontramos tu pago aún. Asegúrate de completar el pago en WeTravel e intenta de nuevo.'
+                            : '⚠️ Payment not found yet. Make sure you completed the payment in WeTravel and try again.'}
+                        </p>
+                      )}
+                      <div className="flex gap-2">
                         <button
                           onClick={() => {
-                            window.open(wetravelResponse?.payment_url, '_blank');
-                            setPaymentLinkOpened(true);
+                            if (wetravelResponse?.payment_url) window.open(wetravelResponse.payment_url, '_blank');
                           }}
-                          className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
+                          className="flex-1 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-sm font-semibold rounded-lg transition-colors duration-200"
                         >
                           {t('payment.waitingForPayment.openLinkButton')}
                         </button>
-                      )}
-                      <button
-                        onClick={() => setIsWaitingForPayment(false)}
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-lg transition-colors duration-200"
-                      >
-                        {t('payment.waitingForPayment.hideMessageButton')}
-                      </button>
+                        <button
+                          onClick={() => setIsWaitingForPayment(false)}
+                          className="flex-1 px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-sm font-semibold rounded-lg transition-colors duration-200"
+                        >
+                          {t('payment.waitingForPayment.hideMessageButton')}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
