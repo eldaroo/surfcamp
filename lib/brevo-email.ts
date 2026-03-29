@@ -19,12 +19,6 @@ interface AdminNotificationParams {
 }
 
 export async function sendAdminNotificationEmail(params: AdminNotificationParams): Promise<boolean> {
-  const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) {
-    console.error('❌ [BREVO] BREVO_API_KEY not configured');
-    return false;
-  }
-
   const {
     bookingReference, clientFullName, clientEmail, clientPhone,
     checkIn, checkOut, guests, roomTypeName, totalAmount, depositAmount,
@@ -136,28 +130,33 @@ export async function sendAdminNotificationEmail(params: AdminNotificationParams
       ${clientSection}
     </body></html>`;
 
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  if (!gmailPass) {
+    console.error('❌ [GMAIL] GMAIL_APP_PASSWORD not configured');
+    throw new Error('GMAIL_APP_PASSWORD not configured');
+  }
+
   try {
-    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: { 'accept': 'application/json', 'api-key': apiKey, 'content-type': 'application/json' },
-      body: JSON.stringify({
-        sender: { name: 'Zeneidas Surf', email: process.env.BREVO_SENDER_EMAIL || 'info@zeneidasgarden.com' },
-        to: [{ email: ADMIN_EMAIL, name: 'Dario' }],
-        subject: `🔔 Nueva Reserva ${bookingReference} — ${clientFullName}`,
-        htmlContent: html
-      })
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: ADMIN_EMAIL,
+        pass: gmailPass,
+      },
     });
 
-    if (!res.ok) {
-      const err = await res.json();
-      console.error('❌ [BREVO] Admin email error:', JSON.stringify(err));
-      throw new Error(JSON.stringify(err));
-    }
+    await transporter.sendMail({
+      from: `"Zeneidas Surf Garden" <${ADMIN_EMAIL}>`,
+      to: ADMIN_EMAIL,
+      subject: `🔔 Nueva Reserva ${bookingReference} — ${clientFullName}`,
+      html,
+    });
 
-    console.log('✅ [BREVO] Admin notification email sent to', ADMIN_EMAIL);
+    console.log('✅ [GMAIL] Admin notification email sent to', ADMIN_EMAIL);
     return true;
   } catch (error: any) {
-    console.error('❌ [BREVO] Admin email exception:', error.message);
+    console.error('❌ [GMAIL] Admin email exception:', error.message);
     throw error;
   }
 }
