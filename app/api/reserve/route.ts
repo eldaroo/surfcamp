@@ -18,7 +18,7 @@ import {
 } from '@/lib/whatsapp';
 import { getActivityById } from '@/lib/activities';
 import { lookupActivityProductId } from '@/lib/lobbypms-products';
-import { sendBookingConfirmationEmailWithRetry, addContactToBrevoListWithRetry, sendAdminNotificationEmail } from '@/lib/brevo-email';
+import { sendBookingConfirmationEmailWithRetry, addContactToBrevoListWithRetry, sendAdminNotificationEmail, sendClientConfirmationEmail } from '@/lib/brevo-email';
 import {
   calculateWeTravelPayment,
   detectSurfPrograms,
@@ -1503,6 +1503,16 @@ export async function POST(request: NextRequest) {
               remainingBalance
             }
           });
+
+          await sendClientConfirmationEmail({
+            clientFirstName: contactInfo.firstName,
+            clientEmail: contactInfo.email,
+            checkIn,
+            checkOut,
+            totalAmount,
+            depositAmount,
+            remainingBalance,
+          }).catch(err => console.error('Client confirmation email error:', err));
         } catch (emailError) {
           console.error('Brevo contact add error:', emailError);
         }
@@ -1784,6 +1794,16 @@ export async function POST(request: NextRequest) {
             remainingBalance
           }
         });
+
+        await sendClientConfirmationEmail({
+          clientFirstName: contactInfo.firstName,
+          clientEmail: contactInfo.email,
+          checkIn,
+          checkOut,
+          totalAmount,
+          depositAmount,
+          remainingBalance,
+        }).catch(err => console.error('Client confirmation email error:', err));
       } catch (emailError) {
         console.error('Brevo contact add error:', emailError);
       }
@@ -2059,6 +2079,16 @@ export async function POST(request: NextRequest) {
             remainingBalance
           }
         });
+
+        await sendClientConfirmationEmail({
+          clientFirstName: contactInfo.firstName,
+          clientEmail: contactInfo.email,
+          checkIn,
+          checkOut,
+          totalAmount,
+          depositAmount,
+          remainingBalance,
+        }).catch(err => console.error('Client confirmation email error:', err));
       } catch (emailError) {
         console.error('Brevo contact add error:', emailError);
       }
