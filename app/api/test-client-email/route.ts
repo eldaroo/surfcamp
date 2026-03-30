@@ -1,29 +1,21 @@
 import { NextResponse } from 'next/server';
+import { sendClientConfirmationEmail } from '@/lib/brevo-email';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (!gmailPass) {
-    return NextResponse.json({ success: false, error: 'GMAIL_APP_PASSWORD not set' });
-  }
-
   try {
-    const nodemailer = await import('nodemailer');
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: 'darioegea@gmail.com', pass: gmailPass },
+    const result = await sendClientConfirmationEmail({
+      clientFirstName: 'Dario',
+      clientEmail: 'darioegea@gmail.com',
+      checkIn: '2026-04-10',
+      checkOut: '2026-04-17',
+      totalAmount: 840,
+      depositAmount: 120,
+      remainingBalance: 720,
     });
-
-    await transporter.sendMail({
-      from: '"Zeneidas Surf Garden" <darioegea@gmail.com>',
-      to: 'darioegea@gmail.com',
-      subject: 'Welcome to Zeneidas Surf Garden, Dario! 🌊',
-      html: '<h1>Test email from Zeneidas Surf Garden</h1><p>If you got this, Gmail SMTP is working!</p>',
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: result });
   } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message, code: err.code });
+    return NextResponse.json({ success: false, error: err.message });
   }
 }
