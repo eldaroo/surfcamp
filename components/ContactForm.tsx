@@ -1225,7 +1225,7 @@ const priceBreakdown = useMemo(
 
             {/* Payment Button */}
             <motion.button
-                onClick={() => handlePayment()}
+                onClick={() => handlePayment(1)}
                 disabled={isProcessingPayment}
                 whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
                 whileTap={{ scale: isProcessingPayment ? 1 : 0.98 }}
@@ -1249,19 +1249,6 @@ const priceBreakdown = useMemo(
                   </div>
                 )}
               </motion.button>
-              <div className="mt-3">
-                <button
-                  type="button"
-                  disabled={isProcessingPayment}
-                  onClick={handleTestPaymentLink}
-                  className="w-full py-3 px-4 rounded-lg text-sm font-semibold bg-gray-700 text-white hover:bg-gray-600 transition-all border border-gray-600"
-                >
-                  {locale === 'es' ? 'Payment link de prueba ($0)' : 'Test payment link ($0)'}
-                </button>
-                <p className="text-xs text-gray-400 text-center mt-2">
-                  {locale === 'es' ? 'Usalo solo para QA: confirma la reserva sin cobrar.' : 'For QA only: confirms booking without charging.'}
-                </p>
-              </div>
 
               {/* Waiting for Payment */}
               {isWaitingForPayment && (
