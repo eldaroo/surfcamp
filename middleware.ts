@@ -29,7 +29,7 @@ export function middleware(req: NextRequest) {
   if (!hasLocale) {
     const url = req.nextUrl.clone();
     url.pathname = `/${defaultLocale}${pathname}`;
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, { status: 301 });
   }
 
   return NextResponse.next();
