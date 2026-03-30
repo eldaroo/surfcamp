@@ -104,10 +104,10 @@ export async function POST(request: NextRequest) {
       let depositAmount: number;
       let paymentBreakdown: any = null;
 
-      // 🧪 If price is $0 (testing mode - either from env var or explicit $0), use $0 deposit
-      if (price === 0) {
-        depositAmount = 0;
-        console.log('🧪 [TESTING MODE] Using $0 payment for testing');
+      // 🧪 If price is $0 or $1 (testing mode), skip recalculation and use price directly
+      if (price === 0 || price === 1) {
+        depositAmount = price;
+        console.log(`🧪 [TESTING MODE] Using $${price} payment for testing`);
       } else if (surfPrograms.length > 0) {
         // Use new pricing formula if we have surf programs
         // For existing reservations, accommodation is already paid, so use 0
