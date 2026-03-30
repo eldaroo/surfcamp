@@ -1225,7 +1225,7 @@ const priceBreakdown = useMemo(
 
             {/* Payment Button */}
             <motion.button
-                onClick={() => handlePayment(1)}
+                onClick={() => handlePayment()}
                 disabled={isProcessingPayment}
                 whileHover={{ scale: isProcessingPayment ? 1 : 1.02 }}
                 whileTap={{ scale: isProcessingPayment ? 1 : 0.98 }}
