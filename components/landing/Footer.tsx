@@ -80,7 +80,7 @@ export default function Footer() {
             {/* Social Media Icons */}
             <div className="flex space-x-4">
               <a
-                href="https://www.instagram.com"
+                href="https://www.instagram.com/zeneidas.experience/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"

@@ -10,6 +10,16 @@ const blogSlugs = [
   "santa-teresa-surf-trip-checklist",
   "santa-teresa-surf-spots-map",
   "santa-teresa-surf-seasons-guide",
+  "best-surf-camps-costa-rica-2026",
+  "things-to-do-santa-teresa-costa-rica",
+  "santa-teresa-costa-rica-travel-guide",
+  "beginner-surf-lessons-santa-teresa",
+  "yoga-retreat-costa-rica-what-to-expect",
+  "ice-bath-benefits-surfers",
+  "how-to-get-to-santa-teresa-costa-rica",
+  "santa-teresa-vs-tamarindo-surfers",
+  "what-to-pack-surf-trip-costa-rica",
+  "surf-yoga-retreat-why-the-combo-works",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
