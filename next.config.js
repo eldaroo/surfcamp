@@ -13,7 +13,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors *; upgrade-insecure-requests"
+            value: "frame-ancestors *; upgrade-insecure-requests; report-uri /api/csp-report"
           }
         ],
       },
