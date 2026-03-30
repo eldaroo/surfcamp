@@ -1,5 +1,118 @@
 const ADMIN_EMAIL = 'darioegea@gmail.com';
 
+// ─── Client confirmation email ────────────────────────────────────────────────
+
+interface ClientConfirmationParams {
+  clientFirstName: string;
+  clientEmail: string;
+  checkIn: string;
+  checkOut: string;
+  totalAmount: number;
+  depositAmount: number;
+  remainingBalance: number;
+}
+
+export async function sendClientConfirmationEmail(params: ClientConfirmationParams): Promise<boolean> {
+  const { clientFirstName, clientEmail, checkIn, checkOut, totalAmount, depositAmount, remainingBalance } = params;
+
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  if (!gmailPass) {
+    console.error('❌ [GMAIL] GMAIL_APP_PASSWORD not configured');
+    return false;
+  }
+
+  const formatDate = (d: string) => {
+    const parts = d.split('T')[0].split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+      .toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  const html = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:arial,helvetica,sans-serif;font-size:16px;color:#3b3f44;line-height:1.5">
+
+  <!-- View in browser -->
+  <div style="text-align:center;padding:5px 30px;font-size:12px;color:#858588">
+  </div>
+
+  <!-- Header / Logo -->
+  <div style="background:#ffffff;text-align:center;padding:20px 30px">
+    <img src="https://img.mailinblue.com/6729432/images/content_library/original/656752a46309a364926d7a0d.png" width="200" alt="Zeneidas Surf Garden" style="display:inline-block">
+  </div>
+
+  <!-- Banner -->
+  <div style="max-width:600px;margin:0 auto;padding:20px 0;text-align:center">
+    <h1 style="margin:0 0 8px;font-size:32px;color:#1F2D3D;font-family:arial,helvetica,sans-serif">Welcome to Zeneidas Surf Garden!</h1>
+    <p style="margin:0 0 16px">We are excited to share this experience with you :)</p>
+    <img src="https://img.mailinblue.com/6729432/images/content_library/original/6567533f44dbda5b2eb773d1.jpg"
+      style="width:100%;max-width:570px;border-radius:58px;display:block;margin:0 auto">
+  </div>
+
+  <!-- Body -->
+  <div style="max-width:600px;margin:0 auto;padding:20px 0">
+
+    <h3 style="font-size:24px;color:#1F2D3D;margin:0 0 12px">Hi ${clientFirstName}, hope you are doing well!<br>I'm Daro from the Zeneidas Surf Garden family!</h3>
+
+    <p style="margin:0 0 16px">
+      We are thrilled to welcome you to our house in Santa Teresa, Costa Rica! We are looking forward to hosting you for this fantastic experience filled with surf adventures and relaxation in this surfing paradise.<br><br>
+      <strong>Arrival:</strong> ${formatDate(checkIn)}<br>
+      <strong>Departure:</strong> ${formatDate(checkOut)}
+    </p>
+
+    <hr style="border:none;border-top:3px double #4A4A4A;margin:30px 0">
+
+    <p style="margin:0 0 16px">
+      <strong>Investment for the experience:</strong> US$${totalAmount}<br>
+      <strong>Deposit:</strong> US$${depositAmount}<br>
+      <strong>Remaining Balance:</strong> US$${remainingBalance}
+    </p>
+    <p style="margin:0 0 16px"><em>Kindly note that <strong>the remaining payment will be settled in cash upon your arrival.</strong></em></p>
+
+    <hr style="border:none;border-top:3px solid #4A4A4A;margin:30px 0">
+
+    <p style="margin:0 0 16px"><strong>Rest assured, you don't need to worry about a thing! Just inform us of your arrival date and time, and from there, all you have to do is enjoy to the fullest!</strong></p>
+
+    <!-- Quote -->
+    <div style="text-align:center;border:2px solid #fbd878;border-radius:21px;padding:12px 5px;margin:15px auto;width:72%;box-sizing:border-box">
+      <p style="margin:0;font-style:italic"><strong>"Let the waves carry you where the light can not"</strong></p>
+      <p style="margin:0"><em>– Mohit Kaushik</em></p>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#eff2f7;text-align:center;padding:20px;max-width:600px;margin:0 auto">
+    <p style="margin:0 0 12px">
+      <strong>Any Questions or Doubts?</strong><br>
+      <strong>Check <a href="https://santateresasurfcamp.com" style="color:#fbd878;text-decoration:underline">our website</a> and don't hesitate to <a href="https://wa.link/cm8ykz" style="color:#fbd878;text-decoration:underline">chat with us</a>!</strong>
+    </p>
+  </div>
+
+</body>
+</html>`;
+
+  try {
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: ADMIN_EMAIL, pass: gmailPass },
+    });
+
+    await transporter.sendMail({
+      from: `"Zeneidas Surf Garden" <${ADMIN_EMAIL}>`,
+      to: clientEmail,
+      subject: `Welcome to Zeneidas Surf Garden, ${clientFirstName}! 🌊`,
+      html,
+    });
+
+    console.log('✅ [GMAIL] Client confirmation email sent to', clientEmail);
+    return true;
+  } catch (error: any) {
+    console.error('❌ [GMAIL] Client confirmation email error:', error.message);
+    return false;
+  }
+}
+
 interface AdminNotificationParams {
   bookingReference: string;
   clientFullName: string;
