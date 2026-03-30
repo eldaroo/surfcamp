@@ -509,7 +509,7 @@ export default function PaymentSection() {
               participant_fees: "none"
             },
             pricing: {
-              price: isTestMode ? 0 : Math.round(activitiesTotal), // 🧪 Force $0 for test mode
+              price: isTestMode ? 1 : Math.round(activitiesTotal), // 🧪 Force $1 for test mode
               payment_plan: {
                 allow_auto_payment: false,
                 allow_partial_payment: false,
@@ -606,7 +606,7 @@ export default function PaymentSection() {
               participant_fees: "none"
             },
             pricing: {
-              price: isTestMode ? 0 : Math.round(total), // 🧪 Force $0 for test mode - otherwise TOTAL price (backend will calculate deposit)
+              price: isTestMode ? 1 : Math.round(total), // 🧪 Force $1 for test mode - otherwise TOTAL price (backend will calculate deposit)
               payment_plan: {
                 allow_auto_payment: false,
                 allow_partial_payment: false,
@@ -903,7 +903,7 @@ export default function PaymentSection() {
             </div>
           ) : (
             <button
-              onClick={() => handlePayment(false)}
+              onClick={() => handlePayment(true)}
               disabled={isProcessing}
               className="w-full px-6 py-4 bg-gradient-to-r from-amber-300 to-amber-400 text-slate-900 rounded-xl font-bold text-base shadow-lg hover:from-amber-200 hover:to-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
