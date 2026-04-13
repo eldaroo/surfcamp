@@ -27,6 +27,10 @@ const AccommodationsShowcase = dynamic(() => import('./landing').then(mod => ({ 
   loading: () => <div className="h-screen bg-slate-900" />,
 });
 
+const RealClassMoments = dynamic(() => import('./landing').then(mod => ({ default: mod.RealClassMoments })), {
+  loading: () => <div className="h-96 bg-slate-100" />,
+});
+
 interface LandingPageProps {
   bookingWidget?: React.ReactNode;
 }
@@ -68,33 +72,38 @@ export default function LandingPage({ bookingWidget }: LandingPageProps) {
 
         {!landingSectionsHidden && (
           <>
+            {/* Real Class Moments */}
+            <section id="real-class-moments" className="order-4 lg:order-4">
+              <RealClassMoments />
+            </section>
+
             {/* Accommodations Showcase */}
-            <section id="accommodation" className="order-4 lg:order-5">
+            <section id="accommodation" className="order-5 lg:order-5">
               <AccommodationsShowcase />
             </section>
 
             {/* CTA Banner */}
-            <div className="order-5 lg:order-6">
+            <div className="order-6 lg:order-6">
               <CTABanner />
             </div>
 
             {/* Stories Slider */}
-            <section id="stories" className="order-6 lg:order-7">
+            <section id="stories" className="order-7 lg:order-7">
               <StoriesSlider />
             </section>
 
             {/* Not Included Section */}
-            <div className="order-7 lg:order-8">
+            <div className="order-8 lg:order-8">
               <NotIncludedSection />
             </div>
 
             {/* FAQs Section */}
-            <section id="faqs" className="order-8 lg:order-9">
+            <section id="faqs" className="order-9 lg:order-9">
               <FAQSection />
             </section>
 
             {/* Final CTA Banner */}
-            <div className="order-9 lg:order-10">
+            <div className="order-10 lg:order-10">
               <CTABanner />
             </div>
           </>

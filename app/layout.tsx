@@ -4,6 +4,7 @@ import Script from 'next/script';
 import Providers from '@/components/Providers';
 import SchemaOrg from '@/components/SchemaOrg';
 import { Metadata } from 'next';
+import { classPhotosManifest } from '@/lib/classPhotos';
 // import LenisProvider from '@/components/LenisProvider'; // Disabled for performance
 
 const bochanSerif = localFont({
@@ -51,10 +52,10 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/assets/Surf.jpg',
+        url: classPhotosManifest.pages.home.openGraph,
         width: 1200,
         height: 630,
-        alt: 'Santa Teresa Surf Camp - Zeneidas Surf'
+        alt: 'Real surf lesson moments in Santa Teresa - Zeneidas Surf Garden',
       }
     ]
   },
@@ -62,7 +63,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Zeneidas Surf Garden | Surf & Yoga Experience in Santa Teresa, Costa Rica',
     description: 'Premier Santa Teresa surf camp with surf lessons, yoga & wellness activities in Costa Rica',
-    images: ['/assets/Surf.jpg']
+    images: [classPhotosManifest.pages.home.openGraph],
   },
   robots: {
     index: true,
@@ -80,7 +81,6 @@ export const metadata: Metadata = {
     // google: 'tu-codigo-de-verificacion',
   },
   alternates: {
-    canonical: 'https://santateresasurfcamp.com',
     languages: {
       'es': 'https://santateresasurfcamp.com/es',
       'en': 'https://santateresasurfcamp.com/en',

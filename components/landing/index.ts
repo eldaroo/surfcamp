@@ -9,4 +9,5 @@ export { default as NotIncludedSection } from './NotIncludedSection';
 export { default as FAQSection } from './FAQSection';
 export { default as ActivitiesShowcase } from './ActivitiesShowcase';
 export { default as AccommodationsShowcase } from './AccommodationsShowcase';
+export { default as RealClassMoments } from './RealClassMoments';
 export { SunDecorator, MoonDecorator, ArrowDecorator } from './Decorators';

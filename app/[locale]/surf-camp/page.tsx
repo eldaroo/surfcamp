@@ -1,7 +1,14 @@
 import { Metadata } from 'next';
 import { Navigation, Footer } from '@/components/landing';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Check, Users, Calendar, Award, Waves, Heart } from 'lucide-react';
+import {
+  classPhotosManifest,
+  getClassPhoto,
+  getClassPhotoAlt,
+  getClassPhotos,
+} from '@/lib/classPhotos';
 
 type PageProps = {
   params: { locale: 'en' | 'es' };
@@ -35,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? 'Programas de surf de varios días en Santa Teresa, Costa Rica. Clases para todos los niveles, coaching profesional y experiencia completa de surf y yoga frente al mar.'
         : 'Multi-day surf programs in Santa Teresa, Costa Rica. All-level surf lessons, professional coaching, and complete surf & yoga beachfront experience.',
       locale: isSpanish ? 'es_ES' : 'en_US',
-      images: ['/assets/Surf.jpg'],
+      images: [classPhotosManifest.pages.surfCamp.openGraph],
       type: 'website',
     },
   };
@@ -361,6 +368,39 @@ export default function SurfCampPage({ params }: PageProps) {
   };
 
   const t = content[locale];
+  const heroPhoto = getClassPhoto(classPhotosManifest.pages.surfCamp.heroId);
+  const programPhotos = getClassPhotos(
+    classPhotosManifest.collections.surfCampProgramCards
+  );
+  const coachMoments = getClassPhotos(
+    classPhotosManifest.collections.surfCampCoachMoments
+  );
+
+  const programInActionCopy =
+    locale === 'es'
+      ? {
+          title: 'Programas en Acción',
+          subtitle:
+            'Cada plan incluye sesiones reales en el agua con foco técnico y progresión personalizada.',
+        }
+      : {
+          title: 'Programs in Action',
+          subtitle:
+            'Each plan includes real ocean sessions with technical focus and personalized progression.',
+        };
+
+  const coachMomentsCopy =
+    locale === 'es'
+      ? {
+          title: 'Momentos Reales de Coach + Alumno',
+          subtitle:
+            'Confianza, cercanía y acompañamiento continuo durante todo el programa.',
+        }
+      : {
+          title: 'Real Coach + Student Moments',
+          subtitle:
+            'Trust, close support, and continuous guidance throughout the entire program.',
+        };
 
   return (
     <>
@@ -369,10 +409,23 @@ export default function SurfCampPage({ params }: PageProps) {
       <main className="min-h-screen bg-white">
         {/* Hero Section */}
         <section className="relative h-[70vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: 'url(/assets/Surf.jpg)' }}
-          >
+          <div className="absolute inset-0">
+            <Image
+              src={heroPhoto.mobile.src}
+              alt={getClassPhotoAlt(heroPhoto, locale)}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover md:hidden"
+            />
+            <Image
+              src={heroPhoto.desktop.src}
+              alt={getClassPhotoAlt(heroPhoto, locale)}
+              fill
+              priority
+              sizes="100vw"
+              className="hidden md:block object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
           </div>
 
@@ -477,8 +530,50 @@ export default function SurfCampPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* What's Included Section */}
+        {/* Program in Action */}
         <section className="py-20 bg-white">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
+                {programInActionCopy.title}
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                {programInActionCopy.subtitle}
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {t.programs.options.map((program, index) => {
+                const photo = programPhotos[index];
+                return (
+                  <article
+                    key={program.duration}
+                    className="rounded-2xl overflow-hidden border border-gray-200 shadow-md bg-white"
+                  >
+                    <div className="relative aspect-[4/3]">
+                      <Image
+                        src={photo.desktop.src}
+                        alt={getClassPhotoAlt(photo, locale)}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-xl font-heading font-bold text-gray-900 mb-1">
+                        {program.duration}
+                      </h3>
+                      <p className="text-[#163237] font-semibold">{program.sessions}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* What's Included Section */}
+        <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4 max-w-4xl">
             <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-12 text-center">
               {t.included.title}
@@ -625,6 +720,37 @@ export default function SurfCampPage({ params }: PageProps) {
                       </p>
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Coach + Student Moments */}
+        <section className="py-20 bg-gray-50">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="text-center mb-10">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
+                {coachMomentsCopy.title}
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                {coachMomentsCopy.subtitle}
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {coachMoments.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-md"
+                >
+                  <Image
+                    src={photo.desktop.src}
+                    alt={getClassPhotoAlt(photo, locale)}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
+                    loading="lazy"
+                  />
                 </div>
               ))}
             </div>

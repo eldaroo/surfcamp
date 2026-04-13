@@ -1,7 +1,14 @@
 import { Metadata } from 'next';
 import { Navigation, Footer } from '@/components/landing';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Users, Clock, Target, Video, MapPin, Trophy } from 'lucide-react';
+import {
+  classPhotosManifest,
+  getClassPhoto,
+  getClassPhotoAlt,
+  getClassPhotos,
+} from '@/lib/classPhotos';
 
 type PageProps = {
   params: { locale: 'en' | 'es' };
@@ -35,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         ? 'Clases de surf individuales en Santa Teresa, Costa Rica. Coaching personalizado para todos los niveles con instructores certificados en las mejores olas.'
         : 'Individual surf lessons in Santa Teresa, Costa Rica. Personalized coaching for all levels with certified instructors in world-class waves.',
       locale: isSpanish ? 'es_ES' : 'en_US',
-      images: ['/assets/Surf.jpg'],
+      images: [classPhotosManifest.pages.surfLessons.openGraph],
       type: 'website',
     },
   };
@@ -351,6 +358,39 @@ export default function SurfLessonsPage({ params }: PageProps) {
   };
 
   const t = content[locale];
+  const heroPhoto = getClassPhoto(classPhotosManifest.pages.surfLessons.heroId);
+  const realResultsPhotos = getClassPhotos(
+    classPhotosManifest.collections.surfLessonsResults
+  );
+  const expectMomentsPhotos = getClassPhotos(
+    classPhotosManifest.collections.surfLessonsExpectMoments
+  );
+
+  const realResultsCopy =
+    locale === 'es'
+      ? {
+          title: 'Resultados Reales de Nuestros Alumnos',
+          subtitle:
+            'Progreso auténtico en clases de surf para adultos principiantes e intermedios en Santa Teresa.',
+        }
+      : {
+          title: 'Real Student Results in Santa Teresa',
+          subtitle:
+            'Authentic progression from beginner and intermediate adults in real surf lessons.',
+        };
+
+  const expectMomentsCopy =
+    locale === 'es'
+      ? {
+          title: 'Momentos Reales de las Sesiones',
+          subtitle:
+            'Así se ven las clases en el agua: coaching cercano, feedback y celebración de progreso.',
+        }
+      : {
+          title: 'Real Session Moments',
+          subtitle:
+            'How classes look in the water: close coaching, live feedback, and progress celebration.',
+        };
 
   return (
     <>
@@ -359,10 +399,23 @@ export default function SurfLessonsPage({ params }: PageProps) {
       <main className="min-h-screen bg-white">
         {/* Hero Section */}
         <section className="relative h-[70vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: 'url(/assets/Surf.jpg)' }}
-          >
+          <div className="absolute inset-0">
+            <Image
+              src={heroPhoto.mobile.src}
+              alt={getClassPhotoAlt(heroPhoto, locale)}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover md:hidden"
+            />
+            <Image
+              src={heroPhoto.desktop.src}
+              alt={getClassPhotoAlt(heroPhoto, locale)}
+              fill
+              priority
+              sizes="100vw"
+              className="hidden md:block object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
           </div>
 
@@ -397,8 +450,41 @@ export default function SurfLessonsPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Lesson Types Section */}
+        {/* Real Student Results */}
         <section className="py-20 bg-gray-50">
+          <div className="container mx-auto px-4 max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
+                {realResultsCopy.title}
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                {realResultsCopy.subtitle}
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {realResultsPhotos.map((photo) => (
+                <article
+                  key={photo.id}
+                  className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-md"
+                >
+                  <div className="relative aspect-[3/4]">
+                    <Image
+                      src={photo.desktop.src}
+                      alt={getClassPhotoAlt(photo, locale)}
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                      className="object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Lesson Types Section */}
+        <section className="py-20 bg-white">
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
@@ -446,7 +532,7 @@ export default function SurfLessonsPage({ params }: PageProps) {
         </section>
 
         {/* What to Expect Section */}
-        <section className="py-20 bg-white">
+        <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-heading font-bold text-gray-900 mb-4">
@@ -478,6 +564,34 @@ export default function SurfLessonsPage({ params }: PageProps) {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-14">
+              <div className="text-center mb-8">
+                <h3 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-3">
+                  {expectMomentsCopy.title}
+                </h3>
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                  {expectMomentsCopy.subtitle}
+                </p>
+              </div>
+              <div className="grid md:grid-cols-3 gap-5">
+                {expectMomentsPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-md"
+                  >
+                    <Image
+                      src={photo.desktop.src}
+                      alt={getClassPhotoAlt(photo, locale)}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>

@@ -1,194 +1,46 @@
-'use client';
+import type { Metadata } from 'next';
+import HomePageClient from '@/components/HomePageClient';
+import { classPhotosManifest } from '@/lib/classPhotos';
 
-import { useMemo, useEffect, type ReactNode, type ComponentType } from "react";
-import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
-import { useI18n } from "@/lib/i18n";
-import { useBookingStore } from "@/lib/store";
-import StepLoader from "@/components/StepLoader";
-import SuccessPage from "@/components/SuccessPage";
-
-const StepLoaderFallback = () => <StepLoader />;
-
-const DateSelector = dynamic(() => import("@/components/DateSelector"), {
-  loading: StepLoaderFallback,
-});
-const AccommodationSelector = dynamic(
-  () => import("@/components/AccommodationSelector"),
-  { loading: StepLoaderFallback }
-);
-const ActivitySelector = dynamic(() => import("@/components/ActivitySelector"), {
-  loading: StepLoaderFallback,
-});
-const ContactForm = dynamic(() => import("@/components/ContactForm"), {
-  loading: StepLoaderFallback,
-});
-const PaymentSection = dynamic(() => import("@/components/PaymentSection"), {
-  loading: StepLoaderFallback,
-});
-const FindReservation = dynamic(() => import("@/components/FindReservation"), {
-  loading: StepLoaderFallback,
-});
-const LandingPage = dynamic(() => import("@/components/LandingPage"));
-
-const stepComponents: Record<string, ComponentType> = {
-  dates: DateSelector,
-  accommodation: AccommodationSelector,
-  activities: ActivitySelector,
-  contact: ContactForm,
-  payment: PaymentSection,
-  success: SuccessPage,
-  'find-reservation': FindReservation,
+type PageProps = {
+  params: { locale: 'en' | 'es' };
 };
 
+export function generateMetadata({ params }: PageProps): Metadata {
+  const isSpanish = params.locale === 'es';
+  const base = 'https://santateresasurfcamp.com';
+
+  const title = isSpanish
+    ? 'Zeneidas Surf Garden | Surf Camp y Yoga en Santa Teresa, Costa Rica'
+    : 'Zeneidas Surf Garden | Surf Camp & Yoga in Santa Teresa, Costa Rica';
+
+  const description = isSpanish
+    ? 'El mejor surf camp en Santa Teresa, Costa Rica. Clases de surf para todos los niveles, yoga frente al mar, alojamiento en la playa y más. Reservá tu experiencia.'
+    : 'The best surf camp in Santa Teresa, Costa Rica. Surf lessons for all levels, oceanfront yoga, beachfront accommodation, ice baths and breathwork. Book your experience.';
+
+  return {
+    title,
+    description,
+    keywords: isSpanish
+      ? ['surf camp santa teresa', 'clases de surf costa rica', 'surf camp costa rica', 'yoga santa teresa', 'alojamiento santa teresa']
+      : ['surf camp santa teresa', 'surf lessons santa teresa', 'surf camp costa rica', 'yoga retreat santa teresa', 'santa teresa costa rica'],
+    alternates: {
+      canonical: `${base}/${params.locale}`,
+      languages: {
+        en: `${base}/en`,
+        es: `${base}/es`,
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${base}/${params.locale}`,
+      locale: isSpanish ? 'es_ES' : 'en_US',
+      images: [classPhotosManifest.pages.home.openGraph],
+    },
+  };
+}
+
 export default function HomePage() {
-  const { t, locale } = useI18n();
-  const {
-    currentStep,
-    bookingData,
-    selectedRoom,
-    selectedActivities,
-    setCurrentStep,
-  } = useBookingStore();
-
-  const isReadyForPayment = Boolean(
-    bookingData.checkIn &&
-      bookingData.checkOut &&
-      bookingData.guests &&
-      selectedRoom &&
-      bookingData.contactInfo
-  );
-
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "es-ES"),
-    [locale]
-  );
-
-  const dateRange = useMemo(() => {
-    if (!bookingData.checkIn || !bookingData.checkOut) return "-";
-    const checkIn = dateFormatter.format(new Date(bookingData.checkIn));
-    const checkOut = dateFormatter.format(new Date(bookingData.checkOut));
-    return `${checkIn} - ${checkOut}`;
-  }, [bookingData.checkIn, bookingData.checkOut, dateFormatter]);
-
-  const activitySummary = useMemo(() => {
-    if (!selectedActivities.length) {
-      return t("activities.noActivities");
-    }
-    return selectedActivities.map((activity) => activity.name).join(", ");
-  }, [selectedActivities, t]);
-
-  const confirmationSummary = useMemo(
-    () => [
-      {
-        label: t("dates.checkIn"),
-        value: dateRange,
-      },
-      {
-        label: t("dates.guests"),
-        value: bookingData.guests ?? "-",
-      },
-      {
-        label: t("accommodation.title"),
-        value: selectedRoom?.roomTypeName ?? "-",
-      },
-      {
-        label: t("activities.title"),
-        value: activitySummary,
-      },
-    ],
-    [activitySummary, bookingData.guests, dateRange, selectedRoom?.roomTypeName, t]
-  );
-
-  // Listen for payment-confirmed event dispatched by PaymentSection.
-  // This is the most reliable way to trigger the redirect: a global window event
-  // fires synchronously regardless of React batching or background-tab deferral.
-  useEffect(() => {
-    const onPaymentConfirmed = () => {
-      console.log('🎉 [PAGE] surfcamp:payment-confirmed event received — going to success');
-      fetch('/api/client-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: 'page-listener-fired', order_id: 'unknown' }),
-      }).catch(() => {});
-      setCurrentStep('success');
-    };
-    window.addEventListener('surfcamp:payment-confirmed', onPaymentConfirmed);
-    return () => window.removeEventListener('surfcamp:payment-confirmed', onPaymentConfirmed);
-  }, [setCurrentStep]);
-
-  useEffect(() => {
-    const preloadChain: Record<string, ComponentType[]> = {
-      dates: [AccommodationSelector],
-      accommodation: [ActivitySelector],
-      activities: [ContactForm],
-      contact: [PaymentSection],
-      payment: [SuccessPage],
-    };
-
-    preloadChain[currentStep]?.forEach((Component) => {
-      const preload = (Component as unknown as { preload?: () => void }).preload;
-      if (typeof preload === "function") {
-        preload();
-      }
-    });
-  }, [currentStep]);
-
-  let content: ReactNode;
-
-  if (currentStep === "confirmation") {
-    content = (
-      <div className="card p-8 text-center">
-        <h2 className="mb-4 text-2xl font-bold font-heading">
-          {t("booking.steps.confirmation.title")}
-        </h2>
-        <div className="mb-6 space-y-2 text-sm text-slate-200">
-          {confirmationSummary.map(({ label, value }) => (
-            <div key={label}>
-              <span className="font-semibold">{label}:</span> {value}
-            </div>
-          ))}
-        </div>
-        <button
-          className="btn-primary"
-          onClick={() => isReadyForPayment && setCurrentStep("payment")}
-          disabled={!isReadyForPayment}
-        >
-          {t("common.continue")}
-        </button>
-        {!isReadyForPayment && (
-          <div className="mt-4 text-warm-600">
-            {t("booking.validation.completeAllData")}
-          </div>
-        )}
-      </div>
-    );
-  } else {
-    const StepComponent = stepComponents[currentStep] ?? DateSelector;
-    content = <StepComponent />;
-  }
-
-  return (
-    <LandingPage
-      bookingWidget={
-        <main id="booking" className="container mx-auto px-4 pb-0 md:pb-0 scroll-mt-20">
-          <div className="mx-auto max-w-6xl pb-0 lg:pb-0">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="w-full"
-            >
-              <motion.div
-                className="organic-hover"
-                transition={{ duration: 0.3 }}
-              >
-                {content}
-              </motion.div>
-            </motion.div>
-          </div>
-        </main>
-      }
-    />
-  );
+  return <HomePageClient />;
 }

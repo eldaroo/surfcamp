@@ -1,0 +1,392 @@
+{
+  "generatedAt": "2026-04-13T03:58:29.675Z",
+  "sourceDir": "public/assets/Fotos Clases",
+  "outputDir": "public/assets/class-photos",
+  "settings": {
+    "desktop": {
+      "width": 1920,
+      "quality": 78,
+      "format": "webp"
+    },
+    "mobile": {
+      "width": 768,
+      "quality": 74,
+      "format": "webp"
+    },
+    "openGraph": {
+      "width": 1200,
+      "height": 630,
+      "quality": 82,
+      "format": "jpg"
+    }
+  },
+  "images": [
+    {
+      "id": "sl-hero",
+      "source": "1000011997.jpg",
+      "slug": "surf-lessons-hero-real-beginner-surf-01",
+      "altEn": "Adult beginner surfing in Santa Teresa Costa Rica during a real lesson at Zeneidas Surf Garden",
+      "altEs": "Adulto principiante surfeando en Santa Teresa Costa Rica durante una clase real en Zeneidas Surf Garden",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-hero-real-beginner-surf-01-d.webp",
+        "width": 1799,
+        "height": 1199,
+        "sizeBytes": 221884
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-hero-real-beginner-surf-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 44088
+      }
+    },
+    {
+      "id": "sc-hero",
+      "source": "1000009607.jpg",
+      "slug": "surf-camp-hero-student-coach-jeep-arrival-01",
+      "altEn": "Real surf camp students arriving with coach in Santa Teresa Costa Rica before class",
+      "altEs": "Estudiantes reales del surf camp llegando con coach en Santa Teresa Costa Rica antes de la clase",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-hero-student-coach-jeep-arrival-01-d.webp",
+        "width": 1920,
+        "height": 1280,
+        "sizeBytes": 650034
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-hero-student-coach-jeep-arrival-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 113090
+      }
+    },
+    {
+      "id": "home-moment-01",
+      "source": "1000009297.jpg",
+      "slug": "surf-lessons-student-instructor-ocean-celebration-01",
+      "altEn": "Student and surf instructor celebrating progress in the ocean at Santa Teresa Costa Rica",
+      "altEs": "Alumno e instructora de surf celebrando progreso en el mar en Santa Teresa Costa Rica",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-student-instructor-ocean-celebration-01-d.webp",
+        "width": 1920,
+        "height": 1280,
+        "sizeBytes": 174072
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-student-instructor-ocean-celebration-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 43356
+      }
+    },
+    {
+      "id": "home-moment-02",
+      "source": "1000011993.jpg",
+      "slug": "surf-camp-student-beach-boardwalk-01",
+      "altEn": "Surf student walking with board on Santa Teresa beach after a coaching session",
+      "altEs": "Alumna de surf caminando con tabla por la playa de Santa Teresa después de una sesión de coaching",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-student-beach-boardwalk-01-d.webp",
+        "width": 1580,
+        "height": 1053,
+        "sizeBytes": 133914
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-student-beach-boardwalk-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 42492
+      }
+    },
+    {
+      "id": "home-moment-03",
+      "source": "1000012007.jpg",
+      "slug": "surf-lessons-student-water-celebration-01",
+      "altEn": "Adult beginner surfer smiling in the water after catching waves in Santa Teresa",
+      "altEs": "Surfista principiante adulta sonriendo en el agua tras agarrar olas en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-student-water-celebration-01-d.webp",
+        "width": 1677,
+        "height": 1118,
+        "sizeBytes": 186166
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-student-water-celebration-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 48064
+      }
+    },
+    {
+      "id": "home-moment-04",
+      "source": "1000012014.jpg",
+      "slug": "surf-lessons-group-highfive-beach-01",
+      "altEn": "Group surf lesson high five moment on Santa Teresa beach Costa Rica",
+      "altEs": "Momento de high five en clase grupal de surf en la playa de Santa Teresa Costa Rica",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-group-highfive-beach-01-d.webp",
+        "width": 1838,
+        "height": 1225,
+        "sizeBytes": 167876
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-group-highfive-beach-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 41648
+      }
+    },
+    {
+      "id": "home-moment-05",
+      "source": "1000009585.jpg",
+      "slug": "surf-lessons-student-instructor-highfive-01",
+      "altEn": "Student and coach high five after a successful surf lesson in Santa Teresa",
+      "altEs": "Alumna y coach chocando manos tras una clase de surf exitosa en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-student-instructor-highfive-01-d.webp",
+        "width": 1920,
+        "height": 1280,
+        "sizeBytes": 201086
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-student-instructor-highfive-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 39398
+      }
+    },
+    {
+      "id": "sl-result-01",
+      "source": "1000009286.jpg",
+      "slug": "surf-lessons-adult-beginner-riding-wave-01",
+      "altEn": "Adult beginner riding a small wave during surf lessons in Santa Teresa Costa Rica",
+      "altEs": "Adulta principiante montando una ola pequeña durante clases de surf en Santa Teresa Costa Rica",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-01-d.webp",
+        "width": 1733,
+        "height": 1155,
+        "sizeBytes": 165430
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 38766
+      }
+    },
+    {
+      "id": "sl-result-02",
+      "source": "1000011998.jpg",
+      "slug": "surf-lessons-adult-beginner-riding-wave-02",
+      "altEn": "Real student surfing whitewater with instructor nearby in Santa Teresa",
+      "altEs": "Alumna real surfeando espuma con instructora cerca en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-02-d.webp",
+        "width": 1898,
+        "height": 1266,
+        "sizeBytes": 201366
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-02-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 40100
+      }
+    },
+    {
+      "id": "sl-result-03",
+      "source": "1000009568.jpg",
+      "slug": "surf-lessons-adult-beginner-riding-wave-03",
+      "altEn": "Beginner surfer improving stance and balance on a lesson wave in Santa Teresa",
+      "altEs": "Surfista principiante mejorando postura y equilibrio en una ola de clase en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-03-d.webp",
+        "width": 1052,
+        "height": 1577,
+        "sizeBytes": 130456
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-03-m.webp",
+        "width": 768,
+        "height": 1151,
+        "sizeBytes": 71646
+      }
+    },
+    {
+      "id": "sl-result-04",
+      "source": "1000012018.jpg",
+      "slug": "surf-lessons-adult-beginner-riding-wave-04",
+      "altEn": "Student riding a wave with confidence in Santa Teresa Costa Rica surf class",
+      "altEs": "Alumno montando una ola con confianza en una clase de surf en Santa Teresa Costa Rica",
+      "desktop": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-04-d.webp",
+        "width": 1828,
+        "height": 1219,
+        "sizeBytes": 143266
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-lessons-adult-beginner-riding-wave-04-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 32264
+      }
+    },
+    {
+      "id": "sc-program-core",
+      "source": "1000009576.jpg",
+      "slug": "surf-camp-adult-beginner-riding-wave-01",
+      "altEn": "Core surf program student practicing technique in Santa Teresa Costa Rica",
+      "altEs": "Alumno del programa Core practicando técnica en Santa Teresa Costa Rica",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-01-d.webp",
+        "width": 1122,
+        "height": 1683,
+        "sizeBytes": 134428
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-01-m.webp",
+        "width": 768,
+        "height": 1152,
+        "sizeBytes": 62982
+      }
+    },
+    {
+      "id": "sc-program-intensive",
+      "source": "1000012017.jpg",
+      "slug": "surf-camp-adult-beginner-riding-wave-02",
+      "altEn": "Intensive surf program student riding waves with stable posture in Santa Teresa",
+      "altEs": "Alumno del programa Intensive surfeando con postura estable en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-02-d.webp",
+        "width": 1165,
+        "height": 1748,
+        "sizeBytes": 149008
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-02-m.webp",
+        "width": 768,
+        "height": 1152,
+        "sizeBytes": 67058
+      }
+    },
+    {
+      "id": "sc-program-elite",
+      "source": "1000012002.jpg",
+      "slug": "surf-camp-adult-beginner-riding-wave-03",
+      "altEn": "Elite surf program student training advanced balance in Santa Teresa",
+      "altEs": "Alumno del programa Elite entrenando equilibrio avanzado en Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-03-d.webp",
+        "width": 1054,
+        "height": 1581,
+        "sizeBytes": 86982
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-adult-beginner-riding-wave-03-m.webp",
+        "width": 768,
+        "height": 1152,
+        "sizeBytes": 46814
+      }
+    },
+    {
+      "id": "sc-coach-moment-01",
+      "source": "1000009602.jpg",
+      "slug": "surf-camp-coach-student-ocean-moment-01",
+      "altEn": "Coach and student sharing a real surf camp moment in the ocean at Santa Teresa",
+      "altEs": "Coach y alumno compartiendo un momento real del surf camp en el mar de Santa Teresa",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-coach-student-ocean-moment-01-d.webp",
+        "width": 1876,
+        "height": 1250,
+        "sizeBytes": 239058
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-coach-student-ocean-moment-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 63478
+      }
+    },
+    {
+      "id": "sc-coach-moment-02",
+      "source": "1000009295.jpg",
+      "slug": "surf-camp-coach-student-beach-moment-01",
+      "altEn": "Surf coach portrait on Santa Teresa beach highlighting local experience and trust",
+      "altEs": "Retrato de coach de surf en la playa de Santa Teresa que refuerza experiencia local y confianza",
+      "desktop": {
+        "src": "/assets/class-photos/surf-camp-coach-student-beach-moment-01-d.webp",
+        "width": 1920,
+        "height": 1280,
+        "sizeBytes": 82480
+      },
+      "mobile": {
+        "src": "/assets/class-photos/surf-camp-coach-student-beach-moment-01-m.webp",
+        "width": 768,
+        "height": 512,
+        "sizeBytes": 19236
+      }
+    }
+  ],
+  "collections": {
+    "homeMoments": [
+      "home-moment-01",
+      "home-moment-02",
+      "home-moment-03",
+      "home-moment-04",
+      "home-moment-05"
+    ],
+    "surfLessonsResults": [
+      "sl-result-01",
+      "sl-result-02",
+      "sl-result-03",
+      "sl-result-04"
+    ],
+    "surfLessonsExpectMoments": [
+      "home-moment-01",
+      "home-moment-03",
+      "home-moment-05"
+    ],
+    "surfCampProgramCards": [
+      "sc-program-core",
+      "sc-program-intensive",
+      "sc-program-elite"
+    ],
+    "surfCampCoachMoments": [
+      "sc-coach-moment-01",
+      "sc-coach-moment-02"
+    ]
+  },
+  "pages": {
+    "home": {
+      "heroId": "home-moment-01",
+      "openGraph": "/assets/class-photos/og-home.jpg"
+    },
+    "surfLessons": {
+      "heroId": "sl-hero",
+      "openGraph": "/assets/class-photos/og-surf-lessons.jpg"
+    },
+    "surfCamp": {
+      "heroId": "sc-hero",
+      "openGraph": "/assets/class-photos/og-surf-camp.jpg"
+    }
+  },
+  "openGraphGenerated": {
+    "home": {
+      "src": "/assets/class-photos/og-home.jpg",
+      "width": 1200,
+      "height": 630,
+      "sizeBytes": 106500
+    },
+    "surfLessons": {
+      "src": "/assets/class-photos/og-surf-lessons.jpg",
+      "width": 1200,
+      "height": 630,
+      "sizeBytes": 113240
+    },
+    "surfCamp": {
+      "src": "/assets/class-photos/og-surf-camp.jpg",
+      "width": 1200,
+      "height": 630,
+      "sizeBytes": 214443
+    }
+  }
+}
