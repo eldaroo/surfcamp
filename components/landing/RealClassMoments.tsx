@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
@@ -38,6 +38,20 @@ export default function RealClassMoments() {
 
   const current = photos[currentIndex];
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const preloaded = new Set<string>();
+
+    for (const photo of photos) {
+      if (preloaded.has(photo.desktop.src)) continue;
+      preloaded.add(photo.desktop.src);
+
+      const img = new window.Image();
+      img.src = photo.desktop.src;
+    }
+  }, [photos]);
+
   return (
     <section className="py-16 bg-gradient-to-b from-[#f9fbfc] to-white">
       <div className="container mx-auto px-4">
@@ -56,10 +70,12 @@ export default function RealClassMoments() {
               <Image
                 src={current.desktop.src}
                 alt={getClassPhotoAlt(current, locale as 'en' | 'es')}
+                key={current.id}
                 fill
                 sizes="(max-width: 1024px) 100vw, 60vw"
                 className="object-cover"
-                loading="lazy"
+                loading="eager"
+                priority
               />
               <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
                 <p className="text-white text-sm md:text-base font-medium">
