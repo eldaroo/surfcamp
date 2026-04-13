@@ -84,33 +84,35 @@ export default function RealClassMoments() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 grid grid-cols-2 gap-4">
-            {photos.map((photo, index) => (
-              <button
-                type="button"
-                key={photo.id}
-                onClick={() => setCurrentIndex(index)}
-                className={`relative aspect-[4/5] rounded-xl overflow-hidden border-2 transition-all ${
-                  index === currentIndex
-                    ? 'border-[#163237] shadow-lg'
-                    : 'border-transparent hover:border-[#163237]/40'
-                }`}
-                aria-label={
-                  locale === 'es'
-                    ? `Abrir foto ${index + 1}`
-                    : `Open photo ${index + 1}`
-                }
-              >
-                <Image
-                  src={photo.mobile.src}
-                  alt={getClassPhotoAlt(photo, locale as 'en' | 'es')}
-                  fill
-                  sizes="(max-width: 1024px) 45vw, 20vw"
-                  className="object-cover"
-                  loading="lazy"
-                />
-              </button>
-            ))}
+          <div className="lg:col-span-5">
+            <div className="grid grid-cols-2 gap-4 lg:h-[34rem] lg:grid-flow-col lg:grid-rows-2 lg:auto-cols-[clamp(10rem,11vw,12.5rem)] lg:auto-rows-fr lg:overflow-x-auto lg:overflow-y-hidden lg:pb-1">
+              {photos.map((photo, index) => (
+                <button
+                  type="button"
+                  key={photo.id}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`relative aspect-[4/5] lg:aspect-auto lg:h-full rounded-xl overflow-hidden border-2 transition-all ${
+                    index === currentIndex
+                      ? 'border-[#163237] shadow-lg'
+                      : 'border-transparent hover:border-[#163237]/40'
+                  }`}
+                  aria-label={
+                    locale === 'es'
+                      ? `Abrir foto ${index + 1}`
+                      : `Open photo ${index + 1}`
+                  }
+                >
+                  <Image
+                    src={photo.mobile.src}
+                    alt={getClassPhotoAlt(photo, locale as 'en' | 'es')}
+                    fill
+                    sizes="(max-width: 1024px) 45vw, 12rem"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
