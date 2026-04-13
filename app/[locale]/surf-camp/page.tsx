@@ -416,7 +416,7 @@ export default function SurfCampPage({ params }: PageProps) {
               fill
               priority
               sizes="100vw"
-              className="object-cover md:hidden"
+              className="object-cover object-top md:hidden"
             />
             <Image
               src={heroPhoto.desktop.src}
@@ -424,7 +424,7 @@ export default function SurfCampPage({ params }: PageProps) {
               fill
               priority
               sizes="100vw"
-              className="hidden md:block object-cover"
+              className="hidden md:block object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
           </div>
