@@ -85,13 +85,19 @@ export default function RealClassMoments() {
           </div>
 
           <div className="lg:col-span-5">
-            <div className="grid grid-cols-2 gap-4 lg:h-[34rem] lg:grid-flow-col lg:grid-rows-2 lg:auto-cols-[clamp(10rem,11vw,12.5rem)] lg:auto-rows-fr lg:overflow-x-auto lg:overflow-y-hidden lg:pb-1">
+            <div
+              className="grid grid-cols-2 gap-4 lg:h-[34rem] lg:grid-flow-col lg:grid-rows-2 lg:auto-cols-[clamp(10rem,11vw,12.5rem)] lg:auto-rows-fr lg:overflow-x-auto lg:overflow-y-hidden lg:pb-4 lg:pr-2 lg:snap-x lg:snap-mandatory lg:[&::-webkit-scrollbar]:h-2 lg:[&::-webkit-scrollbar-track]:rounded-full lg:[&::-webkit-scrollbar-track]:bg-slate-200/60 lg:[&::-webkit-scrollbar-thumb]:rounded-full lg:[&::-webkit-scrollbar-thumb]:bg-slate-400/80"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(148, 163, 184, 0.9) transparent',
+              }}
+            >
               {photos.map((photo, index) => (
                 <button
                   type="button"
                   key={photo.id}
                   onClick={() => setCurrentIndex(index)}
-                  className={`relative aspect-[4/5] lg:aspect-auto lg:h-full rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`relative aspect-[4/5] lg:aspect-auto lg:h-full rounded-xl overflow-hidden border-2 transition-all lg:snap-start ${
                     index === currentIndex
                       ? 'border-[#163237] shadow-lg'
                       : 'border-transparent hover:border-[#163237]/40'
@@ -112,6 +118,11 @@ export default function RealClassMoments() {
                   />
                 </button>
               ))}
+            </div>
+
+            <div className="mt-3 hidden items-center justify-end gap-2 pr-2 text-xs font-medium text-slate-500 lg:flex">
+              <span>{locale === 'es' ? 'Deslizá para ver más fotos' : 'Scroll to see more photos'}</span>
+              <ChevronRight className="h-4 w-4" />
             </div>
           </div>
         </div>
