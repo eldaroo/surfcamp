@@ -34,6 +34,58 @@ type ApiResult = {
   payloadSent?: Record<string, unknown> | null;
 };
 
+function formatMoney(value: number) {
+  return `$${Math.round(value).toLocaleString('en-US')}`;
+}
+
+// Builds a bilingual (ES + EN) reservation breakdown the operator can copy and
+// send to the guest alongside the WeTravel link. All figures come straight from
+// what the backend already computed — total entered by the operator, deposit and
+// remaining balance derived in calculateWeTravelPayment — so the message can
+// never disagree with the link that was generated.
+function buildBreakdownMessage(form: MinimalForm, result: ApiResult): string {
+  const breakdown = result.paymentBreakdown;
+  if (!breakdown) return '';
+
+  const name = form.fullName.trim() || 'Guest';
+  const reserved = result.tripTitle || 'Surf booking';
+  const total = formatMoney(form.totalPrice);
+  const deposit = formatMoney(breakdown.depositAmount);
+  const remaining = formatMoney(breakdown.remainingBalance);
+  const dates = form.checkIn && form.checkOut ? `${form.checkIn} → ${form.checkOut}` : '';
+  const link = result.paymentUrl || '';
+
+  const es = [
+    `¡Hola ${name}! 🏄`,
+    `Este es el resumen de tu reserva en Santa Teresa Surf Camp:`,
+    ``,
+    `📋 Reserva: ${reserved}`,
+    dates ? `📅 Fechas: ${dates}` : '',
+    `💰 Total: ${total} USD`,
+    `✅ Depósito (pagás ahora con este link): ${deposit} USD`,
+    `💵 Saldo pendiente: ${remaining} USD — se paga EN EFECTIVO en recepción, a tu llegada.`,
+    link ? `\n🔗 Pagá tu depósito acá:\n${link}` : '',
+  ]
+    .filter((line) => line !== '')
+    .join('\n');
+
+  const en = [
+    `Hi ${name}! 🏄`,
+    `Here is the summary of your booking at Santa Teresa Surf Camp:`,
+    ``,
+    `📋 Booking: ${reserved}`,
+    dates ? `📅 Dates: ${dates}` : '',
+    `💰 Total: ${total} USD`,
+    `✅ Deposit (you pay now with this link): ${deposit} USD`,
+    `💵 Remaining balance: ${remaining} USD — to be paid IN CASH at reception, on arrival.`,
+    link ? `\n🔗 Pay your deposit here:\n${link}` : '',
+  ]
+    .filter((line) => line !== '')
+    .join('\n');
+
+  return `${es}\n\n———————————\n\n${en}`;
+}
+
 export default function HomePage() {
   const [form, setForm] = useState<MinimalForm>({
     fullName: '',
@@ -44,6 +96,10 @@ export default function HomePage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ApiResult | null>(null);
+  // Snapshot of the form at submit time, so the breakdown message keeps showing
+  // the values that produced the link even if the operator edits the form after.
+  const [submitted, setSubmitted] = useState<MinimalForm | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const participantSummary = useMemo(() => {
     if (!form.surfProgram) {
@@ -57,6 +113,8 @@ export default function HomePage() {
     event.preventDefault();
     setIsSubmitting(true);
     setResult(null);
+    setCopied(false);
+    setSubmitted(form);
 
     try {
       const response = await fetch('/api/generate-link', {
@@ -80,6 +138,20 @@ export default function HomePage() {
 
   function updateField<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  const breakdownMessage =
+    submitted && result?.paymentBreakdown ? buildBreakdownMessage(submitted, result) : '';
+
+  async function handleCopyBreakdown() {
+    if (!breakdownMessage) return;
+    try {
+      await navigator.clipboard.writeText(breakdownMessage);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
   }
 
   return (
@@ -234,6 +306,25 @@ export default function HomePage() {
                   {result.paymentUrl}
                 </a>
               </div>
+            </div>
+          )}
+
+          {breakdownMessage && (
+            <div className="breakdown-box">
+              <div className="breakdown-head">
+                <strong>Breakdown message</strong>
+                <button
+                  type="button"
+                  className="button secondary breakdown-copy"
+                  onClick={handleCopyBreakdown}
+                >
+                  {copied ? 'Copied ✓' : 'Copy message'}
+                </button>
+              </div>
+              <p className="small" style={{ marginTop: 4 }}>
+                Bilingual ES/EN summary to send to the guest alongside the link.
+              </p>
+              <pre className="breakdown-text">{breakdownMessage}</pre>
             </div>
           )}
 
