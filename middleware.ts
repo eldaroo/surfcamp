@@ -14,6 +14,10 @@ export function middleware(req: NextRequest) {
     pathname === "/robots.txt" ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
+    // Herramienta interna (noindex): vive en /linkgenerator, fuera de [locale].
+    // Sin esta exclusión el redirect la manda a /en/linkgenerator → 404.
+    pathname === "/linkgenerator" ||
+    pathname.startsWith("/linkgenerator/") ||
     pathname.match(/\.[^/]+$/); // archivos (.png, .js, .ico, etc)
 
   if (isSpecialPath) {
@@ -37,5 +41,5 @@ export function middleware(req: NextRequest) {
 
 // Opcional pero recomendable: limitar el matcher
 export const config = {
-  matcher: ["/((?!sitemap.xml|robots.txt|_next|api|.*\\..*).*)"],
+  matcher: ["/((?!sitemap.xml|robots.txt|_next|api|linkgenerator|.*\\..*).*)"],
 };
